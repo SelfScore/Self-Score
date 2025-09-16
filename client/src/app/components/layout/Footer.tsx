@@ -32,6 +32,7 @@ const Footer: React.FC = () => {
         px: { xs: 3, md: 6 },
       }}
     >
+      
       <Container maxWidth="xl">
         {/* Main Footer Content */}
         <Box
