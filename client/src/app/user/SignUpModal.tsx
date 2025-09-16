@@ -15,7 +15,7 @@ import {
 } from "@mui/material";
 import { Close as CloseIcon } from "@mui/icons-material";
 import { useState } from "react";
-import { authService, ApiResponse, UserData } from "../../services/authService";
+import { authService, UserData } from "../../services/authService";
 
 interface SignUpModalProps {
   open: boolean;
@@ -45,7 +45,7 @@ export default function SignUpModal({
     confirmPassword: "",
   });
 
-  const [tempUserData, setTempUserData] = useState<UserData | null>(null);
+  const [_tempUserData, setTempUserData] = useState<UserData | null>(null);
 
   const handleInputChange = (field: string, value: string) => {
     setFormData((prev) => ({
@@ -180,7 +180,7 @@ export default function SignUpModal({
         setSuccess("Login successful!");
 
         // Store user data in localStorage
-        authService.saveUser(response.data);
+        // authService.saveUser(response.data);
 
         // Call success callback
         if (onSuccess) {

@@ -13,11 +13,11 @@ export default function Info() {
   // For example: 0 = only Level 1, 1 = Level 1 & 2, 2 = Level 1, 2 & 3, etc.
   const highestUnlockedLevel = 1; // Level 2 is unlocked, so Level 1 & 2 are available
 
-  // Generate unlocked levels array based on highest unlocked level
-  const unlockedLevels = Array.from(
-    { length: highestUnlockedLevel + 1 },
-    (_, i) => i
-  );
+  // // Generate unlocked levels array based on highest unlocked level
+  // const unlockedLevels = Array.from(
+  //   { length: highestUnlockedLevel + 1 },
+  //   (_, i) => i
+  // );
 
   const levels = [
     {

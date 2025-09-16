@@ -11,12 +11,12 @@ import {
   Container,
   Paper,
 } from "@mui/material";
-import { useState, useEffect } from "react";
+import { useState, useEffect, Suspense } from "react";
 import { useRouter, useSearchParams } from "next/navigation";
 import { useAuth } from "../../../hooks/useAuth";
 import NextLink from "next/link";
 
-export default function VerifyEmailPage() {
+function VerifyEmailContent() {
   const router = useRouter();
   const searchParams = useSearchParams();
   const { verifyEmail, resendVerification, isLoading, error, clearError } =
@@ -219,5 +219,24 @@ export default function VerifyEmailPage() {
         </Box>
       </Paper>
     </Container>
+  );
+}
+
+export default function VerifyEmailPage() {
+  return (
+    <Suspense
+      fallback={
+        <Container maxWidth="sm" sx={{ mt: 8, mb: 8 }}>
+          <Paper elevation={3} sx={{ p: 4, borderRadius: 3 }}>
+            <Box sx={{ textAlign: "center" }}>
+              <CircularProgress />
+              <Typography sx={{ mt: 2 }}>Loading...</Typography>
+            </Box>
+          </Paper>
+        </Container>
+      }
+    >
+      <VerifyEmailContent />
+    </Suspense>
   );
 }

@@ -14,10 +14,10 @@ export default function AboutLevels() {
   const highestUnlockedLevel = 1; // Level 2 is unlocked, so Level 1 & 2 are available
 
   // Generate unlocked levels array based on highest unlocked level
-  const unlockedLevels = Array.from(
-    { length: highestUnlockedLevel + 1 },
-    (_, i) => i
-  );
+  // const _unlockedLevels = Array.from(
+  //   { length: highestUnlockedLevel + 1 },
+  //   (_, i) => i
+  // );
 
   const levels = [
     {
@@ -206,17 +206,19 @@ export default function AboutLevels() {
           <Box sx={{ textAlign: "center", mt: 2 }}>
             <button
               style={{
-              background: "#E87A42",
-              color: "#fff",
-              border: "none",
-              borderRadius: "25px",
-              padding: "12px 32px",
-              fontWeight: "bold",
-              fontSize: "1rem",
-              cursor: "pointer",
-              transition: "background 0.2s",
+                background: "#E87A42",
+                color: "#fff",
+                border: "none",
+                borderRadius: "25px",
+                padding: "12px 32px",
+                fontWeight: "bold",
+                fontSize: "1rem",
+                cursor: "pointer",
+                transition: "background 0.2s",
               }}
-              onClick={() => { router.push("/user"); }}
+              onClick={() => {
+                router.push("/user");
+              }}
             >
               Start Test
             </button>

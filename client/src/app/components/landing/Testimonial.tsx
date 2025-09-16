@@ -107,7 +107,7 @@ export default function Testimonial() {
   };
 
   // Create an infinite loop effect by duplicating testimonials
-  const extendedTestimonials = [...testimonials, ...testimonials];
+  // const extendedTestimonials = [...testimonials, ...testimonials];
 
   return (
     <Box

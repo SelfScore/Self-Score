@@ -16,7 +16,7 @@ function AuthInitializer({ children }: { children: React.ReactNode }) {
       try {
         await authService.getCurrentUser();
       } catch (error) {
-        console.log("User not authenticated or session expired");
+        console.log("User not authenticated or session expired : ", error);
         // This is expected if user is not logged in
       }
     };

@@ -1,7 +1,6 @@
 "use client";
 
 import {
-  AppBar,
   Typography,
   Button,
   Box,
@@ -9,7 +8,6 @@ import {
   Drawer,
   List,
   ListItem,
-  ListItemText,
   useMediaQuery,
   useTheme,
   Container,

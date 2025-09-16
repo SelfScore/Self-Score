@@ -31,7 +31,7 @@ const Slider: React.FC<SliderProps> = ({
   // Use external value if provided, otherwise use internal state
   const currentValue = value !== undefined ? value : internalValue;
 
-  const handleChange = (event: Event, newValue: number | number[]) => {
+  const handleChange = (_event: Event, newValue: number | number[]) => {
     const singleValue = Array.isArray(newValue) ? newValue[0] : newValue;
 
     // Update internal state if no external onChange is provided

@@ -1,7 +1,8 @@
 import { useAppSelector, useAppDispatch } from '../store/hooks';
-import { loginSuccess, logout, setError, clearError } from '../store/slices/authSlice';
+// import { loginSuccess, logout, setError, clearError } from '../store/slices/authSlice';
+import { clearError } from '../store/slices/authSlice';
 import { authService } from '../services/authService';
-import type { UserData, LoginData, SignUpData, VerifyEmailData } from '../services/authService';
+import type {  LoginData, SignUpData, VerifyEmailData } from '../services/authService';
 
 export const useAuth = () => {
   const dispatch = useAppDispatch();

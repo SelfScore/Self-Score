@@ -1,6 +1,7 @@
 "use client";
 
 import React from "react";
+import Image from "next/image";
 import {
   Box,
   Typography,
@@ -63,11 +64,11 @@ const Footer: React.FC = () => {
                     height: 60,
                   }}
                 >
-                  <img
+                  <Image
                     src="/images/logos/LogoWithText.png"
                     alt="Life Score Logo"
-                    height="60"
-                    width="120"
+                    height={60}
+                    width={120}
                     style={{
                       objectFit: "contain",
                       display: "block",

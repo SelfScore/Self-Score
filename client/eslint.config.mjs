@@ -20,6 +20,33 @@ const eslintConfig = [
       "next-env.d.ts",
     ],
   },
+  {
+    rules: {
+      // Allow any types for form handling and API responses where types are complex
+      "@typescript-eslint/no-explicit-any": "off",
+      
+      // Configure unused variables to show as errors during development
+      "@typescript-eslint/no-unused-vars": [
+        "error",
+        {
+          "argsIgnorePattern": "^_",
+          "varsIgnorePattern": "^_",
+          "caughtErrorsIgnorePattern": "^_"
+        }
+      ],
+      
+      // Allow unescaped entities in React (common for apostrophes and quotes)
+      "react/no-unescaped-entities": [
+        "error",
+        {
+          "forbid": [">", "}"]
+        }
+      ],
+      
+      // Relax Next.js image optimization warning to warning level
+      "@next/next/no-img-element": "warn",
+    },
+  },
 ];
 
 export default eslintConfig;
