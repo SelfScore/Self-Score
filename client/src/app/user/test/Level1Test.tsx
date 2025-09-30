@@ -162,40 +162,96 @@ export default function Level1Test() {
 
   const submitTestAnswers = async () => {
     try {
-      // For now, we'll just log the answers
-      // In a real app, you'd submit each answer to the backend
-      console.log("Level 1 Test Answers:", answers);
+      // Get the authenticated user
+      const user = authService.getCurrentUserFromStore();
+      if (!user || !user.userId) {
+        throw new Error("User not authenticated");
+      }
 
-      // Example: Submit each answer to backend
-      // const userId = "user123"; // Get from auth context
-      // for (const [questionId, selectedOptionIndex] of Object.entries(answers)) {
-      //   await questionsApi.submitResponse({
-      //     userId,
-      //     level: 1,
-      //     questionId,
-      //     selectedOptionIndex
-      //   });
-      // }
+      // Calculate the score before submission
+      const calculatedScore = calculateUserScore();
 
-      // Keep answers in session storage even after submission
-      // This allows users to review their responses or continue later
+      // Convert answers object to responses array format
+      const responses = Object.entries(answers).map(
+        ([questionId, selectedOptionIndex]) => ({
+          questionId,
+          selectedOptionIndex,
+        })
+      );
 
-      alert("Level 1 Test submitted successfully!");
+      if (responses.length === 0) {
+        throw new Error("No responses to submit");
+      }
 
-      // Optionally redirect to results page or next level
-      // router.push("/user/test/results");
+      console.log("Submitting Level 1 responses:", {
+        userId: user.userId,
+        responses,
+        calculatedScore,
+      });
+
+      // Submit all Level 1 responses in one API call
+      const response = await questionsApi.submitLevel1Response(
+        user.userId,
+        responses
+      );
+
+      if (response.success) {
+        // Clear answers from session storage after successful submission
+        sessionStorage.removeItem(STORAGE_KEY);
+
+        console.log("Level 1 Test submitted successfully:", response.data);
+
+        alert(
+          `Level 1 Test submitted successfully! Your score: ${calculatedScore}/900. ${
+            response.data?.savedCount || responses.length
+          } responses saved.`
+        );
+
+        // Optionally redirect to results page or next level
+        // router.push("/user/test/results");
+      } else {
+        throw new Error(response.message || "Failed to submit test");
+      }
     } catch (err) {
       console.error("Error submitting test:", err);
-      alert("Failed to submit test. Please try again.");
+      // Keep data in session storage if submission fails
+      const errorMessage =
+        err instanceof Error
+          ? err.message
+          : "Failed to submit test. Please try again.";
+      alert(errorMessage);
+      throw err; // Re-throw to handle in calling function
     }
+  };
+
+  // Calculate user score based on slider responses
+  const calculateUserScore = (): number => {
+    // Each response is multiplied by 15
+    // With 6 questions, max possible raw score = 6 * 10 * 15 = 900
+    // Min possible raw score = 6 * 0 * 15 = 0
+
+    const totalRawScore = Object.values(answers).reduce((sum, response) => {
+      return sum + response * 15;
+    }, 0);
+
+    // Apply minimum score logic: if below 350, show 350
+    const finalScore = Math.max(totalRawScore, 350);
+
+    // Ensure we don't exceed maximum score of 900
+    return Math.min(finalScore, 900);
   };
 
   const handleAuthSuccess = async (userData: any) => {
     console.log("User authenticated:", userData);
     setShowSignUpModal(false);
 
-    // Now submit the test answers
-    await submitTestAnswers();
+    try {
+      // Now submit the test answers
+      await submitTestAnswers();
+    } catch (err) {
+      // Error already handled in submitTestAnswers
+      console.error("Failed to submit test after authentication:", err);
+    }
   };
 
   // Clear saved data function (useful for testing or reset)
@@ -312,7 +368,8 @@ export default function Level1Test() {
         }}
       >
         This test evaluates your self-awareness and understanding of your
-        current life situation.
+        current life situation. Rate each statement from 0-10 to calculate your
+        awareness score (350-900 points).
       </Typography>
 
       {/* Progress Bar */}
@@ -361,10 +418,10 @@ export default function Level1Test() {
         {currentQuestion.questionType === "slider-scale" ? (
           /* Slider for slider-scale questions */
           <Slider
-            value={answers[currentQuestion._id] || 5} // Default to middle value
+            value={answers[currentQuestion._id] || 0} // Default to 0
             onChange={(value) => handleAnswerChange(currentQuestion._id, value)}
-            label="Rate your response (1-10)"
-            min={1}
+            label="Rate your response (0-10)"
+            min={0}
             max={10}
           />
         ) : (
@@ -465,17 +522,19 @@ export default function Level1Test() {
         ) : (
           <Button
             onClick={handleNext}
-            disabled={answers[currentQuestion._id] === undefined}
+            disabled={!currentQuestion || !(currentQuestion._id in answers)}
             sx={{
               background:
-                answers[currentQuestion._id] !== undefined ? "#E87A42" : "#ccc",
+                currentQuestion && currentQuestion._id in answers
+                  ? "#E87A42"
+                  : "#ccc",
               color: "#fff",
               borderRadius: "25px",
               padding: "10px 24px",
               fontWeight: "bold",
               "&:hover": {
                 background:
-                  answers[currentQuestion._id] !== undefined
+                  currentQuestion && currentQuestion._id in answers
                     ? "#D16A35"
                     : "#ccc",
               },
@@ -501,6 +560,21 @@ export default function Level1Test() {
       >
         Answered: {Object.keys(answers).length} / {questions.length}
       </Typography>
+
+      {/* Current Score Preview */}
+      {Object.keys(answers).length > 0 && (
+        <Typography
+          variant="body2"
+          sx={{
+            mt: 1,
+            textAlign: "center",
+            color: "#E87A42",
+            fontWeight: "600",
+          }}
+        >
+          Current Score: {calculateUserScore()} / 900
+        </Typography>
+      )}
 
       {/* Progress Saved Indicator */}
       <Typography

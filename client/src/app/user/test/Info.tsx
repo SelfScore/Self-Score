@@ -70,74 +70,109 @@ export default function Info() {
         sx={{
           width: "100%",
           maxWidth: "80%",
-          backgroundColor: "#E0E0E0",
-          borderRadius: "50px",
           p: 2,
-          mx: "auto", // Center horizontally
+          mt: 10,
+          mx: "auto", 
         }}
       >
         {/* Level Boxes Container */}
         <Box
           sx={{
-            display: "grid",
-            gridTemplateColumns: {
-              xs: "1fr",
-              sm: "repeat(2, 1fr)",
-              md: "repeat(4, 1fr)",
-            },
-            gap: 3,
+            width: "100%",
+            maxWidth: { xs: "100%", md: "80%" },
+            p: 0.5,
+            mx: "auto",
           }}
         >
-          {levels.map((level, index) => (
-            <Box
-              key={level.id}
-              onClick={() => handleLevelClick(index)}
-              sx={{
-                backgroundColor:
-                  activeTab === index ? "#E87A42" : "transparent",
-                color: activeTab === index ? "#F9F8F6" : "#2B2B2B",
-                borderRadius: "50px",
-                p: 1,
-                textAlign: "center",
-                cursor: isLevelUnlocked(index) ? "pointer" : "not-allowed",
-                opacity: isLevelUnlocked(index) ? 1 : 0.4,
-                transition: "all 0.3s ease",
-                display: "flex",
-                flexDirection: "row",
-                alignItems: "center",
-                gap: 1,
-                minHeight: "40px",
-                justifyContent: "center",
-                // "&:hover": {
-                // transform: isLevelUnlocked(index)
-                //   ? "translateY(-2px)"
-                //   : "none",
-                // boxShadow: isLevelUnlocked(index)
-                //   ? "0 6px 20px rgba(232, 122, 66, 0.3)"
-                //   : "none",
-                // },
-              }}
-            >
-              {!isLevelUnlocked(index) && (
-                <LockIcon
-                  sx={{
-                    fontSize: "28px",
-                    mb: 1,
-                    color: activeTab === index ? "#F9F8F6" : "#2B2B2B",
-                  }}
-                />
-              )}
-              <Typography
-                variant="h6"
+          {/* Connected Progress Bar Container */}
+          <Box
+            sx={{
+              display: "flex",
+              position: "relative",
+              height: { xs: "32px", md: "40px" },
+              maxWidth: { xs: "100%", md: "70%" },
+              mx: "auto",
+              overflow: "hidden",
+            }}
+          >
+            {levels.map((level, index) => (
+              <Box
+                key={level.id}
+                onClick={() => handleLevelClick(index)}
                 sx={{
-                  fontWeight: "bold",
-                  fontSize: "1.1rem",
+                  flex: 1,
+                  position: "relative",
+                  cursor: isLevelUnlocked(index) ? "pointer" : "not-allowed",
+                  zIndex: levels.length - index, // Higher z-index for earlier items
+                  marginLeft: index === 0 ? "0" : "-15px", // Overlap segments
                 }}
               >
-                {level.title}
-              </Typography>
-            </Box>
-          ))}
+                <Box
+                  sx={{
+                    height: "100%",
+                    backgroundColor:
+                      activeTab === index
+                        ? "#307E8D"
+                        : isLevelUnlocked(index)
+                        ? "#CACACA80"
+                        : "#CACACA80",
+                    position: "relative",
+                    display: "flex",
+                    alignItems: "center",
+                    justifyContent: "center",
+                    color:
+                      activeTab === index || isLevelUnlocked(index)
+                        ? "#fff"
+                        : "#666",
+                    transition: "all 0.3s ease",
+                    clipPath:
+                      index === levels.length - 1
+                        ? "polygon(0 0, 100% 0, 100% 100%, 0 100%, 20px 50%)"
+                        : index === 0
+                        ? "polygon(0 0, calc(100% - 20px) 0, 100% 50%, calc(100% - 20px) 100%, 0 100%)"
+                        : "polygon(0 0, calc(100% - 20px) 0, 100% 50%, calc(100% - 20px) 100%, 0 100%, 20px 50%)",
+                    opacity: isLevelUnlocked(index) ? 1 : 0.7,
+                    borderRadius:
+                      index === 0
+                        ? "25px 0 0 25px"
+                        : index === levels.length - 1
+                        ? "0 25px 25px 0"
+                        : "0",
+                  }}
+                >
+                  <Box
+                    sx={{
+                      display: "flex",
+                      alignItems: "center",
+                      gap: { xs: 0.5, md: 1 },
+                      justifyContent: "center",
+                      px: index === 0 ? { xs: 1, md: 2 } : { xs: 1.5, md: 3 }, // Extra padding for overlapped segments
+                    }}
+                  >
+                    {!isLevelUnlocked(index) && (
+                      <LockIcon
+                        sx={{
+                          fontSize: { xs: "16px", md: "20px" },
+                          color: "inherit",
+                        }}
+                      />
+                    )}
+                    <Typography
+                      variant="body1"
+                      sx={{
+                        fontWeight: activeTab === index ? "bold" : "500",
+                        fontSize: { xs: "0.75rem", md: "1rem" },
+                        fontFamily: "Source Sans Pro",
+                        whiteSpace: "nowrap",
+                      }}
+                    >
+                      {level.title}
+                    </Typography>
+                  </Box>
+                </Box>
+              </Box>
+            ))}
+          </Box>
         </Box>
       </Box>
 

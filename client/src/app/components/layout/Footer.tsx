@@ -32,7 +32,6 @@ const Footer: React.FC = () => {
         px: { xs: 3, md: 6 },
       }}
     >
-      
       <Container maxWidth="xl">
         {/* Main Footer Content */}
         <Box
@@ -43,7 +42,7 @@ const Footer: React.FC = () => {
               sm: "repeat(2, 1fr)",
               md: "repeat(4, 1fr)",
             },
-            gap: { xs: 4, md: 6 },
+            gap: { xs: 3, sm: 4, md: 6 },
             mb: 4,
           }}
         >
@@ -83,13 +82,15 @@ const Footer: React.FC = () => {
               variant="body2"
               sx={{
                 mb: 3,
-                lineHeight: 1.6,
-                color: "#E0E0E0", // Grey Color
+                lineHeight: 1.2,
+                fontSize: { xs: "16px", md: "18px" },
+                fontFamily: "source sans pro",
+                color: "#FFFFFF", // Grey Color
               }}
             >
               Transform your life through comprehensive assessment and
               personalized guidance. Discover your potential and unlock your
-              path to personal growth.
+              path to personal growth with SelfScore.
             </Typography>
 
             {/* Social Media Icons */}
@@ -98,7 +99,9 @@ const Footer: React.FC = () => {
                 variant="subtitle2"
                 sx={{
                   fontWeight: "bold",
+                  fontFamily: "Faustina",
                   mb: 1,
+                  fontSize: "20px",
                   color: "#F9F8F6", // White Color
                 }}
               >
@@ -163,36 +166,41 @@ const Footer: React.FC = () => {
               variant="h6"
               sx={{
                 fontWeight: "bold",
+                fontSize: { xs: "20px", md: "28px" },
+                fontFamily: "Faustina",
                 mb: 3,
-                color: "#E87A42", // Primary Color
+                color: "#B6B6B6", // Primary Color
               }}
             >
               Quick Links
             </Typography>
             <Box component="ul" sx={{ listStyle: "none", p: 0, m: 0 }}>
               {[
-                "Home",
-                "About Us",
-                "Take Assessment",
-                "Levels",
-                "Contact",
-                "Privacy Policy",
-                "Terms of Service",
+                { name: "Home", href: "/" },
+                { name: "About Us", href: "/#about" },
+                { name: "Take Assessment", href: "/user/test" },
+                { name: "Levels", href: "/#levels" },
+                { name: "Contact", href: "/#contact" },
+                { name: "Privacy Policy", href: "/privacy-policy" },
+                { name: "Terms & Conditions", href: "/terms-conditions" },
+                { name: "Refund Policy", href: "/refund-policy" },
               ].map((item) => (
-                <Box key={item} component="li" sx={{ mb: 1 }}>
+                <Box key={item.name} component="li" sx={{ mb: 1 }}>
                   <Link
-                    href="#"
+                    href={item.href}
                     sx={{
                       color: "#E0E0E0", // Grey Color
                       textDecoration: "none",
-                      fontSize: "0.9rem",
+                      fontSize: "18px",
+                      fontWeight: "500",
+                      fontFamily: "Faustina",
                       "&:hover": {
                         color: "#E87A42", // Primary Color
                         textDecoration: "underline",
                       },
                     }}
                   >
-                    {item}
+                    {item.name}
                   </Link>
                 </Box>
               ))}
@@ -206,7 +214,9 @@ const Footer: React.FC = () => {
               sx={{
                 fontWeight: "bold",
                 mb: 3,
-                color: "#E87A42", // Primary Color
+                fontFamily: "Faustina",
+                fontSize: { xs: "20px", md: "28px" },
+                color: "#B6B6B6", // Primary Color
               }}
             >
               Our Services
@@ -227,7 +237,9 @@ const Footer: React.FC = () => {
                     sx={{
                       color: "#E0E0E0", // Grey Color
                       textDecoration: "none",
-                      fontSize: "0.9rem",
+                      fontSize: { xs: "16px", md: "18px" },
+                      fontWeight: "500",
+                      fontFamily: "Faustina",
                       "&:hover": {
                         color: "#E87A42", // Primary Color
                         textDecoration: "underline",
@@ -248,7 +260,9 @@ const Footer: React.FC = () => {
               sx={{
                 fontWeight: "bold",
                 mb: 3,
-                color: "#E87A42", // Primary Color
+                fontFamily: "Faustina",
+                fontSize: { xs: "20px", md: "28px" },
+                color: "#B6B6B6", // Primary Color
               }}
             >
               Contact Info
@@ -270,17 +284,19 @@ const Footer: React.FC = () => {
                   }}
                 />
                 <Link
-                  href="mailto:info@lifescore.com"
+                  href="mailto:info@selfscore.com"
                   sx={{
                     color: "#E0E0E0", // Grey Color
                     textDecoration: "none",
-                    fontSize: "0.9rem",
+                    fontSize: { xs: "16px", md: "18px" },
+                    fontWeight: "500",
+                    fontFamily: "Faustina",
                     "&:hover": {
                       color: "#E87A42", // Primary Color
                     },
                   }}
                 >
-                  info@lifescore.com
+                  info@selfscore.com
                 </Link>
               </Box>
 
@@ -304,7 +320,9 @@ const Footer: React.FC = () => {
                   sx={{
                     color: "#E0E0E0", // Grey Color
                     textDecoration: "none",
-                    fontSize: "0.9rem",
+                    fontSize: { xs: "16px", md: "18px" },
+                    fontWeight: "500",
+                    fontFamily: "Faustina",
                     "&:hover": {
                       color: "#E87A42", // Primary Color
                     },
@@ -334,7 +352,9 @@ const Footer: React.FC = () => {
                   variant="body2"
                   sx={{
                     color: "#E0E0E0", // Grey Color
-                    fontSize: "0.9rem",
+                    fontSize: { xs: "16px", md: "18px" },
+                    fontWeight: "500",
+                    fontFamily: "Faustina",
                     lineHeight: 1.4,
                   }}
                 >
@@ -375,7 +395,7 @@ const Footer: React.FC = () => {
               textAlign: { xs: "center", md: "left" },
             }}
           >
-            © 2025 LifeScore. All rights reserved.
+            © 2025 SelfScore. All rights reserved.
           </Typography>
 
           <Box
@@ -387,7 +407,7 @@ const Footer: React.FC = () => {
             }}
           >
             <Link
-              href="#"
+              href="/privacy-policy"
               sx={{
                 color: "#E0E0E0", // Grey Color
                 textDecoration: "none",
@@ -400,7 +420,7 @@ const Footer: React.FC = () => {
               Privacy Policy
             </Link>
             <Link
-              href="#"
+              href="/terms-conditions"
               sx={{
                 color: "#E0E0E0", // Grey Color
                 textDecoration: "none",
@@ -410,10 +430,10 @@ const Footer: React.FC = () => {
                 },
               }}
             >
-              Terms of Service
+              Terms & Conditions
             </Link>
             <Link
-              href="#"
+              href="/refund-policy"
               sx={{
                 color: "#E0E0E0", // Grey Color
                 textDecoration: "none",
@@ -423,7 +443,7 @@ const Footer: React.FC = () => {
                 },
               }}
             >
-              Cookie Policy
+              Refund Policy
             </Link>
           </Box>
         </Box>

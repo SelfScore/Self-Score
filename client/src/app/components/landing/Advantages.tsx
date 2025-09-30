@@ -7,7 +7,7 @@ import {
   Container as MUIContainer,
 } from "@mui/material";
 import { styled } from "@mui/material/styles";
-import AddIcon from "@mui/icons-material/Add";
+import DescriptionIcon from '@mui/icons-material/Description';
 
 // Styled components
 const Container = styled(Box)(({ theme }) => ({
@@ -16,7 +16,7 @@ const Container = styled(Box)(({ theme }) => ({
   justifyContent: "center",
   alignItems: "center",
   minHeight: "100vh",
-  backgroundColor: "#F9F8F6", // White Color
+  backgroundColor: "#fff", // White Color
   padding: theme.spacing(4),
 }));
 
@@ -40,28 +40,30 @@ const CircularContainer = styled(Box)(({ theme }) => ({
   },
 }));
 
-const Circle = styled(Box)<{ size: number; opacity: number }>(
-  ({ size, opacity, theme }) => ({
-    position: "absolute",
-    width: `${size}px`,
-    height: `${size}px`,
-    borderRadius: "50%",
-    backgroundColor: `rgba(232, 122, 66, ${opacity})`, // Primary Color with varying opacity
-    border: "2px solid rgba(232, 122, 66, 0.2)",
-    [theme.breakpoints.down("md")]: {
-      width: `${size * 0.83}px`, // 500/600 ratio
-      height: `${size * 0.83}px`,
-    },
-    [theme.breakpoints.down("sm")]: {
-      width: `${size * 0.67}px`, // 400/600 ratio
-      height: `${size * 0.67}px`,
-    },
-    [theme.breakpoints.down("xs")]: {
-      width: `${size * 0.53}px`, // 320/600 ratio
-      height: `${size * 0.53}px`,
-    },
-  })
-);
+const Circle = styled(Box)<{
+  size: number;
+  bgcolor: string;
+  bordercolor: string;
+}>(({ size, bgcolor, bordercolor, theme }) => ({
+  position: "absolute",
+  width: `${size}px`,
+  height: `${size}px`,
+  borderRadius: "50%",
+  backgroundColor: `${bgcolor}`, // Circle Color
+  border: `2px solid ${bordercolor}`,
+  [theme.breakpoints.down("md")]: {
+    width: `${size * 0.83}px`, // 500/600 ratio
+    height: `${size * 0.83}px`,
+  },
+  [theme.breakpoints.down("sm")]: {
+    width: `${size * 0.50}px`, // 400/600 ratio
+    height: `${size * 0.50}px`,
+  },
+  [theme.breakpoints.down("xs")]: {
+    width: `${size * 0.53}px`, // 320/600 ratio
+    height: `${size * 0.53}px`,
+  },
+}));
 
 const CenterIcon = styled(Box)(({ theme }) => ({
   position: "absolute",
@@ -72,7 +74,7 @@ const CenterIcon = styled(Box)(({ theme }) => ({
   display: "flex",
   justifyContent: "center",
   alignItems: "center",
-  zIndex: 10,
+  zIndex: 1,
   [theme.breakpoints.down("md")]: {
     width: 65,
     height: 65,
@@ -82,8 +84,8 @@ const CenterIcon = styled(Box)(({ theme }) => ({
     height: 55,
   },
   [theme.breakpoints.down("xs")]: {
-    width: 45,
-    height: 45,
+    width: 35,
+    height: 35,
   },
 }));
 
@@ -94,11 +96,16 @@ const TraitLabel = styled(Paper)<{
   right?: number;
 }>(({ theme, top, bottom, left, right }) => ({
   position: "absolute",
-  padding: theme.spacing(1.5, 3),
-  backgroundColor: "rgba(0, 95, 115, 0.9)", // Accent Color with transparency
-  borderRadius: 25,
+  // padding: theme.spacing(1.5, 3),
+  height: "48px",
+  width: "260px",
+  display: "flex",
+  justifyContent: "center",
+  alignItems: "center",
+  backgroundColor: "#005F73", // Accent Color with transparency
+  borderRadius: 32,
   border: "none",
-  boxShadow: "0 4px 12px rgba(0, 95, 115, 0.15)",
+  // boxShadow: "0 4px 12px rgba(0, 95, 115, 0.15)",
   zIndex: 5,
   top: top ? `${top}px` : "auto",
   bottom: bottom ? `${bottom}px` : "auto",
@@ -106,44 +113,39 @@ const TraitLabel = styled(Paper)<{
   right: right ? `${right}px` : "auto",
   transform: "translate(-50%, -50%)",
   [theme.breakpoints.down("md")]: {
+    height: "40px",
+    width: "220px",
     padding: theme.spacing(1.2, 2.5),
-    top: top ? `${top * 0.83}px` : "auto",
-    bottom: bottom ? `${bottom * 0.83}px` : "auto",
-    left: left ? `${left * 0.83}px` : "auto",
-    right: right ? `${right * 0.83}px` : "auto",
   },
   [theme.breakpoints.down("sm")]: {
+    height: "28px",
+    width: "140px",
     padding: theme.spacing(1, 2),
     borderRadius: 20,
-    top: top ? `${top * 0.67}px` : "auto",
-    bottom: bottom ? `${bottom * 0.67}px` : "auto",
-    left: left ? `${left * 0.67}px` : "auto",
-    right: right ? `${right * 0.67}px` : "auto",
   },
   [theme.breakpoints.down("xs")]: {
+    height: "32px",
+    width: "150px",
     padding: theme.spacing(0.8, 1.5),
     borderRadius: 15,
-    top: top ? `${top * 0.53}px` : "auto",
-    bottom: bottom ? `${bottom * 0.53}px` : "auto",
-    left: left ? `${left * 0.53}px` : "auto",
-    right: right ? `${right * 0.53}px` : "auto",
   },
 }));
 
 const TraitText = styled(Typography)(({ theme }) => ({
   color: "#F9F8F6", // White Color for text on accent background
-  fontWeight: 600,
-  fontSize: "16px",
+  fontWeight: 500,
+  fontFamily: "faustina",
+  fontSize: "20px",
   textAlign: "center",
   whiteSpace: "nowrap",
   [theme.breakpoints.down("md")]: {
-    fontSize: "14px",
+    fontSize: "16px",
   },
   [theme.breakpoints.down("sm")]: {
-    fontSize: "12px",
+    fontSize: "14px",
   },
   [theme.breakpoints.down("xs")]: {
-    fontSize: "10px",
+    fontSize: "12px",
     whiteSpace: "normal",
   },
 }));
@@ -166,40 +168,43 @@ const Advantages: React.FC = () => {
             variant="h2"
             component="h2"
             sx={{
-              fontWeight: "bold",
-              color: "#005F73",
+              fontWeight: 700,
+              fontFamily: "faustina",
+              color: "#000000",
+              lineHeight: "100%",
               mb: 3,
-              fontSize: { xs: "2rem", sm: "2.5rem", md: "3rem" },
+              fontSize: { xs: "2rem", sm: "2.5rem", md: "28px" },
             }}
           >
-            Advantages of taking this test
+            Advantage of taking the test
           </Typography>
           <Typography
             variant="h6"
             sx={{
               color: "#2B2B2B",
-              maxWidth: "600px",
+              maxWidth: "900px",
+              fontFamily: "Source Sans Pro",
               mx: "auto",
               lineHeight: 1.6,
-              fontSize: { xs: "1rem", sm: "1.1rem", md: "1.25rem" },
+              fontSize: { xs: "1rem", sm: "1.1rem", md: "18px" },
             }}
           >
-            Explore the five key dimensions of personality that shape who you
-            are and unlock insights for personal growth and development.
+            Most people are caught in “eat, drink, and be merry.” But what about
+            mind purification, the ability to live fully in the present moment?
           </Typography>
         </Box>
       </MUIContainer>
 
       <CircularContainer>
         {/* Concentric circles */}
-        <Circle size={500} opacity={0.08} />
-        <Circle size={400} opacity={0.12} />
-        <Circle size={300} opacity={0.16} />
-        <Circle size={200} opacity={0.2} />
+        <Circle size={554} bgcolor="#F7EFE8" bordercolor="#F4D7C6" />
+        <Circle size={449} bgcolor="#F5E1D4" bordercolor="#F4D7C6" />
+        <Circle size={370} bgcolor="#F3D1BD" bordercolor="#F4D7C6" />
+        <Circle size={233} bgcolor="#F7EFE8" bordercolor="#F1C0A5" />
 
         {/* Center icon */}
         <CenterIcon>
-          <AddIcon
+          <DescriptionIcon
             sx={{
               color: "white",
               fontSize: { xs: 28, sm: 32, md: 36, lg: 40 },
@@ -208,28 +213,64 @@ const Advantages: React.FC = () => {
         </CenterIcon>
 
         {/* Trait labels positioned around the circle */}
-        <TraitLabel top={50} left={300}>
-          <TraitText>Openness to experience</TraitText>
+        <TraitLabel
+          sx={{
+            top: { xs: "7%", sm: "6%", md: "25px" },
+            left: { xs: "50%", sm: "50%", md: "300px" },
+            transform: "translate(-50%, -50%)",
+          }}
+        >
+          <TraitText>Self-Awareness</TraitText>
         </TraitLabel>
 
-        <TraitLabel top={180} left={120}>
-          <TraitText>Neuroticism</TraitText>
+        <TraitLabel
+          sx={{
+            top: { xs: "30%", sm: "32%", md: "180px" },
+            left: { xs: "15%", sm: "0%", md: "40px" },
+            transform: "translate(-50%, -50%)",
+          }}
+        >
+          <TraitText>Emotional Clarity</TraitText>
         </TraitLabel>
 
-        <TraitLabel top={180} right={-50}>
-          <TraitText>Conscientiousness</TraitText>
+        <TraitLabel
+          sx={{
+            top: { xs: "30%", sm: "32%", md: "180px" },
+            right: { xs: "16%", sm: "0%", md: "50px" },
+            transform: "translate(50%, -50%)",
+          }}
+        >
+          <TraitText>Inner Balance</TraitText>
         </TraitLabel>
 
-        <TraitLabel bottom={180} left={120}>
-          <TraitText>Agreeableness</TraitText>
+        <TraitLabel
+          sx={{
+            bottom: { xs: "30%", sm: "32%", md: "160px" },
+            left: { xs: "15%", sm: "0%", md: "40px" },
+            transform: "translate(-50%, 50%)",
+          }}
+        >
+          <TraitText>Mental Focus</TraitText>
         </TraitLabel>
 
-        <TraitLabel bottom={180} right={-40}>
-          <TraitText>Extraversion</TraitText>
+        <TraitLabel
+          sx={{
+            bottom: { xs: "30%", sm: "32%", md: "160px" },
+            right: { xs: "16%", sm: "0%", md: "50px" },
+            transform: "translate(50%, 50%)",
+          }}
+        >
+          <TraitText>Personal Growth</TraitText>
         </TraitLabel>
 
-        <TraitLabel bottom={20} left={300}>
-          <TraitText>See it live in action</TraitText>
+        <TraitLabel
+          sx={{
+            bottom: { xs: "8%", sm: "6%", md: "30px" },
+            left: { xs: "50%", sm: "50%", md: "300px" },
+            transform: "translate(-50%, 50%)",
+          }}
+        >
+          <TraitText>Lasting Peace</TraitText>
         </TraitLabel>
       </CircularContainer>
     </Container>

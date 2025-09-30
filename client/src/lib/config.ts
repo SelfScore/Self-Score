@@ -13,6 +13,7 @@ export const API_ENDPOINTS = {
   // Question responses endpoints  
   RESPONSES: {
     CREATE: '/api/questions-response',
+    CREATE_LEVEL1: '/api/questions-response/level1',
     GET_USER_RESPONSES: (userId: string) => `/api/questions-response/user/${userId}`,
   },
   

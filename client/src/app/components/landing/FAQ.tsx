@@ -9,6 +9,7 @@ import {
   AccordionDetails,
 } from "@mui/material";
 import ExpandMoreIcon from "@mui/icons-material/ExpandMore";
+import FAQIcon from "../../../../public/images/LandingPage/FAQ.png";
 
 const FAQ: React.FC = () => {
   const [expanded, setExpanded] = useState<string | false>(false);
@@ -21,39 +22,39 @@ const FAQ: React.FC = () => {
   const faqData = [
     {
       id: "panel1",
-      question: "What is a personality assessment and how does it work?",
+      question: "What is a self-score?",
       answer:
-        "Our personality assessment is a comprehensive evaluation tool that analyzes the Big Five personality traits: Openness, Conscientiousness, Extraversion, Agreeableness, and Neuroticism. Through a series of carefully designed questions, we measure your tendencies and preferences to provide personalized insights into your behavior patterns and potential for growth.",
+        "A self-score is a reflection of your inner life, your awareness, clarity, peace, and overall state of happiness. Unlike a credit score that only measures finances, a Self Score gives you insight into your emotional and spiritual well-being, helping you see where you stand in life.",
     },
     {
       id: "panel2",
-      question: "How long does the assessment take to complete?",
+      question: "Why should I take this test?",
       answer:
-        "The complete assessment typically takes 15-20 minutes to finish. We recommend taking it when you have uninterrupted time to ensure the most accurate results. The assessment is designed to be thorough yet efficient, providing comprehensive insights without being overwhelming.",
+        "The test helps you turn inward and understand yourself more deeply. It uncovers hidden strengths and blind spots, guiding you toward balance, peace, and growth. By knowing your Self Score, you begin a journey of transformation that can bring clarity, purpose, and harmony into everyday life.",
     },
     {
       id: "panel3",
-      question: "Are my results private and secure?",
+      question: " How does the test work?",
       answer:
-        "Absolutely. We take your privacy very seriously. All assessment data is encrypted and stored securely. Your results are completely confidential and will never be shared with third parties without your explicit consent. You have full control over your data and can access, modify, or delete it at any time.",
+        "You simply answer a set of thoughtful and reflective questions designed to assess your personality, self-awareness, and state of mind. Each question invites you to pause, reflect, and be honest. Based on your responses, you’ll receive a score along with insights that show you where you are in your personal journey.",
     },
     {
       id: "panel4",
-      question: "Can I retake the assessment if my results change over time?",
+      question: " Are the results accurate?",
       answer:
-        "Yes, you can retake the assessment whenever you feel your personality or circumstances have significantly changed. We actually recommend periodic reassessment as personal growth and life experiences can influence your personality traits. There's no limit to how many times you can take the assessment.",
+        "The test is designed as a tool for self-inquiry rather than judgment. The accuracy depends on your honesty and openness while answering. The more truthful you are, the deeper the insights you’ll gain, making your results a meaningful guide for self-improvement and personal growth.",
     },
     {
       id: "panel5",
-      question: "What makes your assessment different from others?",
+      question: "Which test should I choose, basic, moderate, or detailed?",
       answer:
-        "Our assessment combines scientific rigor with practical application. We use validated psychological research while focusing on actionable insights for personal development. Our four-level progressive system provides not just results, but a clear path for growth and improvement tailored to your unique personality profile.",
+        "Each test offers a different depth of exploration. The basic test is quick and easy, ideal if you want a starting point. The moderate test offers more balance and detail. The detailed test goes deeper into your personality and consciousness, perfect if you are ready for an advanced level of reflection.",
     },
     {
       id: "panel6",
-      question: "How do I interpret my results?",
+      question: "What happens after I get my score?",
       answer:
-        "Each assessment comes with a detailed report explaining your scores across all five personality dimensions. We provide clear explanations of what each trait means, how it manifests in daily life, and specific recommendations for personal development. Our reports are designed to be easily understood without requiring psychological expertise.",
+        "Once you receive your self-score, you’ll also get insights about your inner state along with suggestions for improvement. This may include practices for self-awareness, balance, and peace of mind. It’s not the end of the journey; it’s the beginning of living more consciously, with clarity and a deeper connection to yourself.",
     },
   ];
 
@@ -61,128 +62,152 @@ const FAQ: React.FC = () => {
     <Box
       sx={{
         width: "100%",
-        backgroundColor: "#F9F8F6",
+        backgroundColor: "#F7F7F7",
         py: { xs: 6, md: 10 },
         px: { xs: 2, sm: 4, md: 6 },
       }}
     >
       <Container maxWidth="lg">
-        {/* Title and Subtitle Section */}
+        {/* Split Layout Container */}
         <Box
           sx={{
-            textAlign: "center",
-            mb: { xs: 6, md: 8 },
-            maxWidth: "800px",
-            mx: "auto",
+            display: "flex",
+            flexDirection: { xs: "column", md: "row" },
+            gap: { xs: 4, md: 6 },
+            alignItems: { xs: "center", md: "flex-start" },
           }}
         >
-          <Typography
-            variant="h2"
-            component="h2"
+          {/* Left Side - Title Section (30%) */}
+          <Box
             sx={{
-              fontWeight: "bold",
-              color: "#005F73",
-              mb: 3,
-              fontSize: { xs: "2rem", sm: "2.5rem", md: "3rem" },
+              flex: { xs: "none", md: "0 0 30%" },
+              width: { xs: "100%", md: "30%" },
+              textAlign: { xs: "center", md: "left" },
+              position: { md: "sticky" },
+              top: { md: "2rem" },
             }}
           >
-            Frequently Asked Questions
-          </Typography>
-          <Typography
-            variant="h6"
-            sx={{
-              color: "#2B2B2B",
-              maxWidth: "600px",
-              mx: "auto",
-              lineHeight: 1.6,
-              fontSize: { xs: "1rem", sm: "1.1rem", md: "1.25rem" },
-            }}
-          >
-            Find answers to common questions about our personality assessment
-            and how it can help you on your journey of personal growth.
-          </Typography>
-        </Box>
-
-        {/* FAQ Accordions */}
-        <Box sx={{ maxWidth: "900px", mx: "auto" }}>
-          {faqData.map((faq) => (
-            <Accordion
-              key={faq.id}
-              expanded={expanded === faq.id}
-              onChange={handleChange(faq.id)}
+            <Box>
+              <img
+                src={FAQIcon.src}
+                alt="FAQ Icon"
+                style={{ width: "60px", height: "60px", marginBottom: "16px" }}
+              />
+            </Box>
+            <Typography
+              variant="h2"
+              component="h2"
               sx={{
-                mb: 2,
-                borderRadius: "12px !important",
-                boxShadow: "0 2px 8px rgba(0, 95, 115, 0.08)",
-                "&:before": {
-                  display: "none",
-                },
-                "&.Mui-expanded": {
-                  margin: "0 0 16px 0",
-                  boxShadow: "0 4px 16px rgba(0, 95, 115, 0.12)",
-                },
+                fontWeight: "bold",
+                fontFamily: "faustina",
+                color: "#000",
+                mb: 3,
+                fontSize: { xs: "2rem", sm: "2.5rem", md: "40px" },
+                lineHeight: 1.2,
               }}
             >
-              <AccordionSummary
-                expandIcon={
-                  <ExpandMoreIcon
-                    sx={{
-                      color: "#E87A42",
-                      fontSize: { xs: "1.5rem", md: "2rem" },
-                    }}
-                  />
-                }
+              Frequently <br /> Asked <br /> Questions
+            </Typography>
+            {/* <Typography
+              variant="h6"
+              sx={{
+                color: "#2B2B2B",
+                lineHeight: 1.6,
+                fontSize: { xs: "1rem", sm: "1.1rem", md: "1.25rem" },
+                display: { xs: "block", md: "block" },
+              }}
+            >
+              Find answers to common questions about our personality assessment
+              and how it can help you on your journey of personal growth.
+            </Typography> */}
+          </Box>
+
+          {/* Right Side - FAQ Accordions (70%) */}
+          <Box
+            sx={{
+              flex: { xs: "none", md: "0 0 65%" },
+              width: { xs: "100%", md: "70%" },
+            }}
+          >
+            {faqData.map((faq) => (
+              <Accordion
+                key={faq.id}
+                expanded={expanded === faq.id}
+                onChange={handleChange(faq.id)}
                 sx={{
-                  backgroundColor: "white",
-                  borderRadius: "12px",
-                  minHeight: { xs: 64, md: 72 },
+                  mb: 2,
+                  borderRadius: "10px !important",
+                  "&:before": {
+                    display: "none",
+                  },
                   "&.Mui-expanded": {
-                    minHeight: { xs: 64, md: 72 },
-                    borderBottomLeftRadius: 0,
-                    borderBottomRightRadius: 0,
+                    margin: "0 0 16px 0",
                   },
-                  "& .MuiAccordionSummary-content": {
-                    margin: { xs: "12px 0", md: "16px 0" },
+                }}
+              >
+                <AccordionSummary
+                  expandIcon={
+                    <ExpandMoreIcon
+                      sx={{
+                        color: "#E87A42",
+                        fontSize: { xs: "1.5rem", md: "2rem" },
+                      }}
+                    />
+                  }
+                  sx={{
+                    backgroundColor: "#E6E6E6",
+                    borderRadius: "12px",
+                    // border:"1px solid #3A3A3A33",
+                    height: { xs: 48, md: 56 },
                     "&.Mui-expanded": {
-                      margin: { xs: "12px 0", md: "16px 0" },
+                      minHeight: { xs: 64, md: 72 },
+                      borderBottomLeftRadius: 0,
+                      borderBottomRightRadius: 0,
                     },
-                  },
-                }}
-              >
-                <Typography
-                  variant="h6"
-                  sx={{
-                    fontWeight: 600,
-                    color: "#005F73",
-                    fontSize: { xs: "1rem", sm: "1.1rem", md: "1.25rem" },
-                    lineHeight: 1.4,
+                    "& .MuiAccordionSummary-content": {
+                      margin: { xs: "12px 0", md: "16px 0" },
+                      "&.Mui-expanded": {
+                        margin: { xs: "12px 0", md: "16px 0" },
+                      },
+                    },
                   }}
                 >
-                  {faq.question}
-                </Typography>
-              </AccordionSummary>
-              <AccordionDetails
-                sx={{
-                  backgroundColor: "white",
-                  borderBottomLeftRadius: "12px",
-                  borderBottomRightRadius: "12px",
-                  padding: { xs: 2, md: 3 },
-                  borderTop: "1px solid #f0f0f0",
-                }}
-              >
-                <Typography
-                  variant="body1"
+                  <Typography
+                    variant="h6"
+                    sx={{
+                      fontWeight: 600,
+                      fontFamily: "source sans pro",
+                      color: "#2B2B2B",
+                      fontSize: { xs: "1rem", sm: "1.1rem", md: "20px" },
+                      lineHeight: "100%",
+                    }}
+                  >
+                    {faq.question}
+                  </Typography>
+                </AccordionSummary>
+                <AccordionDetails
                   sx={{
-                    color: "#2B2B2B",
-                    fontSize: { xs: "0.95rem", md: "1.1rem" },
-                    lineHeight: 1.6,
+                    backgroundColor: "white",
+                    borderBottomLeftRadius: "12px",
+                    borderBottomRightRadius: "12px",
+                    padding: { xs: 2, md: 3 },
                   }}
                 >
-                  {faq.answer}
-                </Typography>
-              </AccordionDetails>
-            </Accordion>
-          ))}
+                  <Typography
+                    variant="body1"
+                    sx={{
+                      color: "#2B2B2B",
+                      fontFamily: "Source Sans Pro",
+                      fontSize: { xs: "0.95rem", md: "1.1rem" },
+                      lineHeight: 1.6,
+                    }}
+                  >
+                    {faq.answer}
+                  </Typography>
+                </AccordionDetails>
+              </Accordion>
+            ))}
+          </Box>
         </Box>
       </Container>
     </Box>

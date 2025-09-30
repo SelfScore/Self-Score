@@ -6,7 +6,6 @@ import {
   Typography,
   Container,
   TextField,
-  Button,
   Paper,
   InputAdornment,
 } from "@mui/material";
@@ -17,6 +16,7 @@ import {
   Message as MessageIcon,
   Send as SendIcon,
 } from "@mui/icons-material";
+import ButtonSelfScore from "../ui/ButtonSelfScore";
 
 interface FormData {
   name: string;
@@ -92,7 +92,7 @@ const ContactUs: React.FC = () => {
     <Box
       sx={{
         width: "100%",
-        backgroundColor: "#F9F8F6", // White Color
+        backgroundColor: "#fff", // White Color
         py: { xs: 6, md: 10 },
         px: { xs: 2, sm: 4, md: 6 },
       }}
@@ -111,10 +111,11 @@ const ContactUs: React.FC = () => {
             variant="h2"
             component="h2"
             sx={{
-              fontWeight: "bold",
-              color: "#005F73", // Accent Color
+              fontWeight: "700",
+              fontFamily: "faustina",
+              color: "#000", // Accent Color
               mb: 3,
-              fontSize: { xs: "2rem", sm: "2.5rem", md: "3rem" },
+              fontSize: { xs: "2rem", sm: "2.5rem", md: "28px" },
             }}
           >
             Contact Us
@@ -125,7 +126,8 @@ const ContactUs: React.FC = () => {
               color: "#2B2B2B", // Black Color
               maxWidth: "600px",
               mx: "auto",
-              lineHeight: 1.6,
+              fontFamily: "source sans pro",
+              lineHeight: 1.2,
               fontSize: { xs: "1rem", sm: "1.1rem", md: "1.25rem" },
             }}
           >
@@ -150,9 +152,10 @@ const ContactUs: React.FC = () => {
               component="h3"
               sx={{
                 fontWeight: "bold",
-                color: "#005F73", // Accent Color
+                color: "#000", // Accent Color
                 mb: 3,
-                fontSize: { xs: "1.5rem", sm: "2rem", md: "2.25rem" },
+                fontFamily: "faustina",
+                fontSize: { xs: "1.5rem", sm: "2rem", md: "28px" },
               }}
             >
               Get in Touch
@@ -162,8 +165,9 @@ const ContactUs: React.FC = () => {
               variant="body1"
               paragraph
               sx={{
-                fontSize: "1.1rem",
-                lineHeight: 1.7,
+                fontSize: "20px",
+                fontFamily: "Source Sans Pro",
+                lineHeight: 1.2,
                 color: "#2B2B2B", // Black Color
                 mb: 4,
               }}
@@ -173,34 +177,6 @@ const ContactUs: React.FC = () => {
               assessment, need technical support, or want to learn more about
               our services, our team is ready to help.
             </Typography>
-
-            {/* Contact Info */}
-            <Box sx={{ mb: 4 }}>
-              <Typography
-                variant="h6"
-                sx={{
-                  fontWeight: "bold",
-                  color: "#005F73", // Accent Color
-                  mb: 2,
-                }}
-              >
-                Why Contact Us?
-              </Typography>
-              <Box component="ul" sx={{ pl: 0, listStyle: "none" }}>
-                <Typography component="li" sx={{ mb: 1, fontSize: "1rem",color: "#2B2B2B", }}>
-                  • Assessment questions and guidance
-                </Typography>
-                <Typography component="li" sx={{ mb: 1, fontSize: "1rem",color: "#2B2B2B", }}>
-                  • Technical support and troubleshooting
-                </Typography>
-                <Typography component="li" sx={{ mb: 1, fontSize: "1rem",color: "#2B2B2B", }}>
-                  • Personalized coaching consultations
-                </Typography>
-                <Typography component="li" sx={{ mb: 1, fontSize: "1rem",color: "#2B2B2B", }}>
-                  • Partnership and collaboration opportunities
-                </Typography>
-              </Box>
-            </Box>
           </Box>
 
           {/* Right Side - Contact Form */}
@@ -216,19 +192,19 @@ const ContactUs: React.FC = () => {
                 border: "1px solid #E0E0E0", // Grey Color
               }}
             >
-              <Typography
+              {/* <Typography
                 variant="h5"
                 component="h4"
                 sx={{
                   fontWeight: "bold",
-                  color: "#005F73", // Accent Color
+                  fontFamily: "faustina",
+                  color: "#000", // Accent Color
                   mb: 3,
                   textAlign: "center",
                 }}
               >
                 Send us a Message
-              </Typography>
-
+              </Typography> */}
               {/* Name Field */}
               <TextField
                 fullWidth
@@ -247,7 +223,6 @@ const ContactUs: React.FC = () => {
                   ),
                 }}
               />
-
               {/* Email Field */}
               <TextField
                 fullWidth
@@ -267,7 +242,6 @@ const ContactUs: React.FC = () => {
                   ),
                 }}
               />
-
               {/* Subject Field */}
               {/* <TextField
                 fullWidth
@@ -286,7 +260,6 @@ const ContactUs: React.FC = () => {
                   ),
                 }}
               /> */}
-
               {/* Message Field */}
               <TextField
                 fullWidth
@@ -310,32 +283,12 @@ const ContactUs: React.FC = () => {
                   ),
                 }}
               />
-
               {/* Submit Button */}
-              <Box sx={{ textAlign: "center" }}>
-                <Button
+                <ButtonSelfScore
                   type="submit"
-                  variant="contained"
-                  size="large"
+                  text="Send Message"
                   startIcon={<SendIcon />}
-                  sx={{
-                    backgroundColor: "#E87A42", // Primary Color
-                    color: "#F9F8F6", // White Color
-                    px: 4,
-                    py: 1.5,
-                    borderRadius: "50px",
-                    fontWeight: "bold",
-                    fontSize: "1.1rem",
-                    textTransform: "none",
-                    "&:hover": {
-                      backgroundColor: "#005F73", // Accent Color
-                    },
-                    transition: "all 0.3s ease",
-                  }}
-                >
-                  Send Message
-                </Button>
-              </Box>
+                />
             </Paper>
           </Box>
         </Box>

@@ -1,11 +1,11 @@
 "use client";
 
 import React from "react";
-import { Box, Typography, Container, Card, CardContent } from "@mui/material";
-import { FormatQuote } from "@mui/icons-material";
+import { Box, Typography, Container } from "@mui/material";
 import Slider from "react-slick";
 import "slick-carousel/slick/slick.css";
 import "slick-carousel/slick/slick-theme.css";
+import NavigateNextIcon from "@mui/icons-material/NavigateNext";
 
 interface Testimonial {
   id: number;
@@ -74,11 +74,51 @@ const testimonials: Testimonial[] = [
 ];
 
 export default function Testimonial() {
-  const renderStars = (rating: number) => {
-    return "★".repeat(rating);
-  };
-
   // React Slick settings
+  // Custom Next Arrow
+  function NextArrow(props: any) {
+    const { className, style, onClick } = props;
+    return (
+      <div
+        className={className}
+        style={{
+          ...style,
+          display: "flex",
+          alignItems: "center",
+          justifyContent: "center",
+        }}
+        onClick={onClick}
+      >
+        <NavigateNextIcon sx={{ color: "#FF4F00", fontSize: "2rem" }} />
+      </div>
+    );
+  }
+
+  // Custom Prev Arrow
+  function PrevArrow(props: any) {
+    const { className, style, onClick } = props;
+    return (
+      <div
+        className={className}
+        style={{
+          ...style,
+          display: "flex",
+          alignItems: "center",
+          justifyContent: "center",
+        }}
+        onClick={onClick}
+      >
+        <NavigateNextIcon
+          sx={{
+            color: "#FF4F00",
+            fontSize: "2rem",
+            transform: "rotate(180deg)",
+          }}
+        />
+      </div>
+    );
+  }
+
   const settings = {
     dots: true,
     infinite: true,
@@ -88,6 +128,8 @@ export default function Testimonial() {
     autoplay: true,
     autoplaySpeed: 3000,
     pauseOnHover: true,
+    nextArrow: <NextArrow />,
+    prevArrow: <PrevArrow />,
     responsive: [
       {
         breakpoint: 1024,
@@ -113,24 +155,36 @@ export default function Testimonial() {
     <Box
       sx={{
         width: "100%",
-        backgroundColor: "#F9F8F6", // White Color
+        backgroundColor: "#fff", // White Color
         py: { xs: 6, md: 10 },
         px: { xs: 2, sm: 4, md: 6 },
         "& .slick-dots": {
           bottom: "-50px",
           "& li button:before": {
-            color: "#E87A42", // Primary Color
+            color: "#FF4F00", // Primary Color
             fontSize: "12px",
           },
           "& li.slick-active button:before": {
-            color: "#E87A42", // Primary Color
+            color: "#FF4F00", // Primary Color
           },
         },
         "& .slick-prev, & .slick-next": {
           zIndex: 2,
+          width: "40px",
+          height: "40px",
+          display: "flex !important",
+          alignItems: "center",
+          justifyContent: "center",
+          background: "#fff",
+          borderRadius: "50%",
+          border: "2px solid #FF4F00",
+          // boxShadow: "0 2px 8px rgba(0,0,0,0.08)",
           "&:before": {
-            color: "#E87A42", // Primary Color
-            fontSize: "24px",
+            display: "none",
+          },
+          "& svg": {
+            color: "#FF4F00",
+            fontSize: "2rem",
           },
         },
         "& .slick-prev": {
@@ -155,10 +209,11 @@ export default function Testimonial() {
             variant="h2"
             component="h2"
             sx={{
-              fontWeight: "bold",
-              color: "#005F73", // Accent Color
+              fontWeight: "700",
+              color: "#000", // Accent Color
               mb: 3,
-              fontSize: { xs: "2rem", sm: "2.5rem", md: "3rem" },
+              fontFamily: "faustina",
+              fontSize: { xs: "2rem", sm: "2.5rem", md: "28px" },
             }}
           >
             What Our Users Say
@@ -167,10 +222,11 @@ export default function Testimonial() {
             variant="h6"
             sx={{
               color: "#2B2B2B", // Black Color
-              maxWidth: "600px",
+              maxWidth: "500px",
               mx: "auto",
+              fontFamily: "Source Sans Pro",
               lineHeight: 1.6,
-              fontSize: { xs: "1rem", sm: "1.1rem", md: "1.25rem" },
+              fontSize: { xs: "1rem", sm: "1.1rem", md: "18px" },
             }}
           >
             Discover how our life assessment has helped thousands of people
@@ -179,82 +235,114 @@ export default function Testimonial() {
         </Box>
 
         {/* React Slick Carousel */}
-        <Box sx={{ mx: { xs: 2, sm: 4 }, mb: 6 }}>
-          <Slider {...settings}>
+        <Box sx={{ mx: "auto", mb: 6, maxWidth: { xs: "95%", md: "80%" } }}>
+          <Slider
+            {...settings}
+            // sx={{
+            //   display: "flex",
+            //   justifyContent: "center",
+            //   alignItems: "center",
+            // }}
+          >
             {testimonials.map((testimonial) => (
-              <Box key={testimonial.id} sx={{ px: 1.5 }}>
-                <Card
+              <Box
+                key={testimonial.id}
+                sx={{
+                  px: 0.1, // Further reduced gap between cards
+                  display: "flex",
+                  justifyContent: "center",
+                }}
+              >
+                <Box
                   sx={{
-                    backgroundColor: "#FFFFFF",
+                    width: { xs: 260, sm: 276 },
+                    height: { xs: 260, sm: 279 },
+                    opacity: 1,
                     borderRadius: "20px",
-                    boxShadow: "0 8px 32px rgba(0, 95, 115, 0.1)",
-                    border: "1px solid #E0E0E0", // Grey Color
-                    height: "400px", // Fixed height for consistency
+                    backgroundColor: "#EFEFEF",
+                    display: "flex",
+                    flexDirection: "column",
+                    justifyContent: "space-between",
+                    p: { xs: 2.5, sm: 3 },
+                    boxSizing: "border-box",
                     transition: "transform 0.3s ease, box-shadow 0.3s ease",
                     "&:hover": {
-                      transform: "translateY(-5px)",
+                      // transform: "translateY(-5px)",
                       boxShadow: "0 12px 40px rgba(0, 95, 115, 0.15)",
                     },
+                    mx: "auto", // Center the card
                   }}
                 >
-                  <CardContent
+                  {/* Icon on top left */}
+                  <Typography
                     sx={{
-                      p: { xs: 3, sm: 4 },
-                      height: "100%",
-                      display: "flex",
-                      flexDirection: "column",
+                      color: "#FF4F00",
+                      fontSize: "64px",
+                      fontFamily: "faustina",
+                      fontWeight: 700,
+                      mt: -4,
+                      mb: -2,
+                      ml: -2,
                     }}
                   >
-                    {/* Quote Icon */}
-                    <FormatQuote
-                      sx={{
-                        fontSize: 30,
-                        color: "#E87A42", // Primary Color
-                        mb: 2,
-                        opacity: 0.7,
-                      }}
-                    />
+                    ‘
+                  </Typography>
 
-                    {/* Testimonial Content */}
-                    <Typography
-                      variant="body1"
+                  {/* Testimonial Content */}
+                  <Typography
+                    variant="body1"
+                    sx={{
+                      fontSize: { xs: "0.9rem", sm: "16px" },
+                      fontFamily: "Source Sans Pro",
+                      lineHeight: 1.2,
+                      color: "#2B2B2B",
+                      fontStyle: "regular",
+                      flex: 1,
+                      mb: 2,
+                      mt: -4,
+                      display: "-webkit-box",
+                      WebkitLineClamp: 4,
+                      WebkitBoxOrient: "vertical",
+                      overflow: "hidden",
+                    }}
+                  >
+                    "{testimonial.content}"
+                  </Typography>
+
+                  {/* User Info at the bottom */}
+                  <Box sx={{ display: "flex", alignItems: "center", mt: 2 }}>
+                    {/* Placeholder for user image */}
+                    <Box
                       sx={{
-                        fontSize: { xs: "0.9rem", sm: "1rem" },
-                        lineHeight: 1.6,
-                        color: "#2B2B2B", // Black Color
-                        mb: 3,
-                        fontStyle: "italic",
-                        flex: 1,
-                        display: "-webkit-box",
-                        WebkitLineClamp: 4,
-                        WebkitBoxOrient: "vertical",
-                        overflow: "hidden",
+                        width: { xs: 36, sm: 40 },
+                        height: { xs: 36, sm: 40 },
+                        borderRadius: "50%",
+                        backgroundColor: "#FF4F00",
+                        display: "flex",
+                        alignItems: "center",
+                        justifyContent: "center",
+                        color: "#fff",
+                        fontWeight: "bold",
+                        fontSize: { xs: "1rem", sm: "1.1rem" },
+                        mr: 2,
+                        flexShrink: 0,
                       }}
                     >
-                      "{testimonial.content}"
-                    </Typography>
-
-                    {/* Rating */}
-                    <Typography
-                      sx={{
-                        fontSize: "1.2rem",
-                        color: "#E87A42", // Primary Color
-                        mb: 2,
-                        textAlign: "center",
-                      }}
-                    >
-                      {renderStars(testimonial.rating)}
-                    </Typography>
-
-                    {/* User Info */}
-                    <Box sx={{ textAlign: "center" }}>
+                      {testimonial.name
+                        .split(" ")
+                        .map((n) => n[0])
+                        .join("")
+                        .toUpperCase()}
+                    </Box>
+                    <Box>
                       <Typography
                         variant="h6"
                         sx={{
-                          fontWeight: "bold",
-                          color: "#005F73", // Accent Color
-                          mb: 0.5,
-                          fontSize: { xs: "1rem", sm: "1.1rem" },
+                          fontWeight: "500",
+                          fontFamily: "faustina",
+                          color: "#000",
+                          fontSize: { xs: "0.9rem", sm: "16px" },
+                          lineHeight: 1,
                         }}
                       >
                         {testimonial.name}
@@ -262,16 +350,17 @@ export default function Testimonial() {
                       <Typography
                         variant="body2"
                         sx={{
-                          color: "#2B2B2B", // Black Color
+                          color: "#2B2B2B",
+                          fontFamily: "Source Sans Pro",
                           opacity: 0.8,
-                          fontSize: { xs: "0.8rem", sm: "0.9rem" },
+                          fontSize: { xs: "0.75rem", sm: "12px" },
                         }}
                       >
                         {testimonial.role} at {testimonial.company}
                       </Typography>
                     </Box>
-                  </CardContent>
-                </Card>
+                  </Box>
+                </Box>
               </Box>
             ))}
           </Slider>

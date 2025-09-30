@@ -7,7 +7,7 @@ export default function AboutUs() {
     <Box
       sx={{
         width: "100%",
-        backgroundColor: "#F9F8F6",
+        backgroundColor: "#fff",
         py: { xs: 6, md: 10 },
         px: { xs: 2, sm: 4, md: 6 },
       }}

@@ -68,7 +68,7 @@ function TestContent() {
         minHeight: "100vh",
       }}
     >
-      <Box sx={{ mb: 3 }}>
+      <Box sx={{ mb: 1, ml: { xs: 0, lg: 6 }, mt: 10 }}>
         <button
           style={{
             background: "transparent",

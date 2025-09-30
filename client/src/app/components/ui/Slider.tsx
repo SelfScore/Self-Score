@@ -26,7 +26,7 @@ const Slider: React.FC<SliderProps> = ({
   disabled = false,
 }) => {
   // Internal state for when no external value is provided
-  const [internalValue, setInternalValue] = useState<number>(5);
+  const [internalValue, setInternalValue] = useState<number>(0);
 
   // Use external value if provided, otherwise use internal state
   const currentValue = value !== undefined ? value : internalValue;
@@ -69,93 +69,96 @@ const Slider: React.FC<SliderProps> = ({
         </Typography>
       )}
 
-    <Box
-      sx={{
-        width: "100%",
-        maxWidth: 500,
-        mx: "auto",
-        px: 2,
-      }}
-    >
-      <SliderTab
-        value={currentValue}
-        onChange={handleChange}
-        getAriaValueText={valuetext}
-        valueLabelDisplay="on"
-        step={step}
-        marks={Array.from({ length: Math.floor((max - min) / step) + 1 }, (_, i) => ({
-        value: min + i * step,
-        label: (min + i * step).toString(),
-        }))}
-        min={min}
-        max={max}
-        disabled={disabled}
+      <Box
         sx={{
-        color: "#005F73",
-        height: 8,
-        "& .MuiSlider-track": {
-          backgroundColor: "#005F73",
-          border: "none",
-          height: 8,
-          borderRadius: 4,
-        },
-        "& .MuiSlider-rail": {
-          backgroundColor: "#E5E7EB",
-          height: 8,
-          borderRadius: 4,
-        },
-        "& .MuiSlider-thumb": {
-          backgroundColor: "#005F73",
-          border: "3px solid #fff",
-          boxShadow: "0 2px 8px rgba(0, 95, 115, 0.3)",
-          width: 24,
-          height: 24,
-          "&:focus, &:hover, &.Mui-active, &.Mui-focusVisible": {
-            boxShadow: "0 0 0 8px rgba(0, 95, 115, 0.16)",
-            backgroundColor: "#005F73",
-          },
-          "&:before": {
-            display: "none",
-          },
-        },
-        "& .MuiSlider-valueLabel": {
-          backgroundColor: "#005F73",
-          borderRadius: "8px",
-          padding: "4px 8px",
-          fontSize: "0.875rem",
-          fontWeight: 600,
-          "&:before": {
-            borderTop: "8px solid #005F73",
-          },
-        },
-        "& .MuiSlider-mark": {
-          backgroundColor: "#005F73",
-          height: 12,
-          width: 3,
-          borderRadius: 1,
-          "&.MuiSlider-markActive": {
-            backgroundColor: "#fff",
-          },
-        },
-        "& .MuiSlider-markLabel": {
-          color: "#666",
-          fontSize: "0.875rem",
-          fontWeight: 500,
-          marginTop: 2,
-        },
-        "&.Mui-disabled": {
-          color: "#ccc",
-          "& .MuiSlider-track": {
-            backgroundColor: "#ccc",
-          },
-          "& .MuiSlider-thumb": {
-            backgroundColor: "#ccc",
-            border: "3px solid #fff",
-          },
-        },
+          width: "100%",
+          maxWidth: 500,
+          mx: "auto",
+          px: 2,
         }}
-      />
-    </Box>
+      >
+        <SliderTab
+          value={currentValue}
+          onChange={handleChange}
+          getAriaValueText={valuetext}
+          valueLabelDisplay="on"
+          step={step}
+          marks={Array.from(
+            { length: Math.floor((max - min) / step) + 1 },
+            (_, i) => ({
+              value: min + i * step,
+              label: (min + i * step).toString(),
+            })
+          )}
+          min={min}
+          max={max}
+          disabled={disabled}
+          sx={{
+            color: "#005F73",
+            height: 8,
+            "& .MuiSlider-track": {
+              backgroundColor: "#005F73",
+              border: "none",
+              height: 8,
+              borderRadius: 4,
+            },
+            "& .MuiSlider-rail": {
+              backgroundColor: "#E5E7EB",
+              height: 8,
+              borderRadius: 4,
+            },
+            "& .MuiSlider-thumb": {
+              backgroundColor: "#005F73",
+              border: "3px solid #fff",
+              boxShadow: "0 2px 8px rgba(0, 95, 115, 0.3)",
+              width: 24,
+              height: 24,
+              "&:focus, &:hover, &.Mui-active, &.Mui-focusVisible": {
+                boxShadow: "0 0 0 8px rgba(0, 95, 115, 0.16)",
+                backgroundColor: "#005F73",
+              },
+              "&:before": {
+                display: "none",
+              },
+            },
+            "& .MuiSlider-valueLabel": {
+              backgroundColor: "#005F73",
+              borderRadius: "8px",
+              padding: "4px 8px",
+              fontSize: "0.875rem",
+              fontWeight: 600,
+              "&:before": {
+                borderTop: "8px solid #005F73",
+              },
+            },
+            "& .MuiSlider-mark": {
+              backgroundColor: "#005F73",
+              height: 12,
+              width: 3,
+              borderRadius: 1,
+              "&.MuiSlider-markActive": {
+                backgroundColor: "#fff",
+              },
+            },
+            "& .MuiSlider-markLabel": {
+              color: "#666",
+              fontSize: "0.875rem",
+              fontWeight: 500,
+              marginTop: 2,
+            },
+            "&.Mui-disabled": {
+              color: "#ccc",
+              "& .MuiSlider-track": {
+                backgroundColor: "#ccc",
+              },
+              "& .MuiSlider-thumb": {
+                backgroundColor: "#ccc",
+                border: "3px solid #fff",
+              },
+            },
+          }}
+        />
+      </Box>
 
       {/* <Box
         sx={{

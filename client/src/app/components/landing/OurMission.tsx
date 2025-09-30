@@ -5,46 +5,32 @@ export default function OurMission() {
     <Box
       sx={{
         textAlign: "center",
-        backgroundColor: "#F9F8F6",
-        // mb: 6,
+        background: "linear-gradient(360deg, #F3D1BD -88.02%, #F7EFE8 204.19%)",
         width: "100%",
-        // maxWidth: "800px",
         mx: "auto",
+        border: "4px solid #E6B79C99",
+        borderLeft: "none",
+        borderRight: "none",
+        py: { xs: 1.5, md: 2.2 },
+        px: { xs: 2, md: 0 },
       }}
     >
-      <hr
-        style={{
-          border: "none",
-          borderTop: "0.5px solid #ccc",
-          //   margin: "20px 0"
-          maxWidth:"80%",
-          margin:"auto"
-        }}
-      />
       <Typography
         variant="h2"
         component="h2"
         sx={{
-          fontWeight: "bold",
-          color: "#005F73",
-          //   mb: 3,
-          my:2,
-          fontSize: { xs: "2rem", sm: "2.5rem", md: "3rem" },
+          fontWeight: "700",
+          color: "#1A1A1A",
+          my: { xs: 1.5, md: 2 },
+          lineHeight: "100%",
+          fontSize: { xs: "1.2rem", sm: "1.8rem", md: "40px" },
+          wordBreak: "break-word",
+          hyphens: "auto",
         }}
       >
         ॐ असतो मा सद्गमय । तमसो मा ज्योतिर्गमय ।<br /> मृत्योर्मा अमृतं गमय । ॐ
         शान्तिः शान्तिः शान्तिः ॥
       </Typography>
-
-      <hr
-        style={{
-          border: "none",
-          borderTop: "0.5px solid #ccc",
-          //   margin: "20px 0"
-          maxWidth:"80%",
-          margin:"auto"
-        }}
-      />
     </Box>
   );
 }

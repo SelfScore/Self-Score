@@ -67,6 +67,14 @@ export const questionsApi = {
     return await api.post(API_ENDPOINTS.RESPONSES.CREATE, response);
   },
 
+  // Submit Level 1 question response (single or multiple)
+  submitLevel1Response: async (userId: string, responses: { questionId: string; selectedOptionIndex: number }[]): Promise<ResponseApiResponse> => {
+    return await api.post(API_ENDPOINTS.RESPONSES.CREATE_LEVEL1, {
+      userId,
+      responses
+    });
+  },
+
   // Get user responses
   getUserResponses: async (userId: string): Promise<ResponseApiResponse> => {
     return await api.get(API_ENDPOINTS.RESPONSES.GET_USER_RESPONSES(userId));

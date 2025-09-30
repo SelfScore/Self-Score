@@ -1,95 +1,130 @@
-import { Box, Typography, Button, Container } from "@mui/material";
+import { Box, Typography } from "@mui/material";
+import HomePageBG from "../../../../public/images/LandingPage/HomePage.png";
+import HomeSmile from "../../../../public/images/LandingPage/HomePageSmile.png";
+import ButtonSelfScore from "../ui/ButtonSelfScore";
+import VerifiedUserIcon from "@mui/icons-material/VerifiedUser";
 
 export default function HeroSection() {
   return (
     <Box
-      component="section"
       sx={{
-        background: "#F9F8F6",
-        display: "flex",
-        alignItems: "center",
-        justifyContent: "center",
-        position: "relative",
+        width: "100%",
         overflow: "hidden",
+        backgroundColor: "#fff",
       }}
     >
-      <Container
-        maxWidth="lg"
+      <Box
         sx={{
-          textAlign: "center",
-          px: { xs: 2, sm: 3 },
+          position: "relative",
+          border: "1px solid #3A3A3A66",
+          borderBottomLeftRadius: { xs: "40px", md: "80px" },
+          borderBottomRightRadius: { xs: "40px", md: "80px" },
+          marginBottom: { xs: 4, md: 8 },
         }}
       >
         <Box
           sx={{
-            maxWidth: "800px",
+            maxWidth: { xs: "100%", sm: "500px", md: "1001px" },
+            maxHeight: { xs: "500px", sm: "450px", md: "566px" },
             margin: "0 auto",
-            mt: { xs: 8, sm: 10, md: 12 },
+            mt: { xs: 12, sm: 6, md: 16 },
+            backgroundImage: `url(${HomePageBG.src})`,
+            backgroundSize: "cover",
+            backgroundPosition: "center",
+            textAlign: "center",
+            px: { xs: 2, sm: 3, md: 2 },
+            py: { xs: 4, sm: 6, md: 14 },
+            overflow: "hidden",
           }}
         >
+          <Box>
+            <Box
+              component="img"
+              src={HomeSmile.src}
+              alt="Hero Image"
+              sx={{
+                maxWidth: { xs: "70px", sm: "100px", md: "156px" },
+                width: "100%",
+                height: "auto",
+                objectFit: "contain",
+                mb: 2,
+                mt: { xs: 8, sm: 2, md: 5 },
+                display: "block",
+                mx: "auto",
+              }}
+            />
+          </Box>
           <Typography
             variant="h1"
             component="h1"
             sx={{
-              fontSize: { xs: "2rem", sm: "2.5rem", md: "3.5rem" },
+              fontFamily: "faustina",
+              fontSize: { xs: "1.8rem", sm: "2.2rem", md: "40px" },
               fontWeight: 700,
               lineHeight: 1.2,
-              color: "#005F73",
-              mb: 4,
-            //   textShadow: "2px 2px 4px rgba(0, 0, 0, 0.3)",
+              color: "#000",
+              mb: { xs: 3, md: 4 },
+              // mt: 8,
+              //   textShadow: "2px 2px 4px rgba(0, 0, 0, 0.3)",
             }}
           >
-            Transform Your Life with <br />
-            Personalized Life Scoring
+            Your Soul's Journey <br />
+            Starts Here.
           </Typography>
 
           <Typography
-            variant="h5"
-            component="p"
+            // variant="h5"
+            // component="p"
             sx={{
-              fontSize: { xs: "1rem", sm: "1.1rem", md: "1.25rem" },
-              lineHeight: 1.6,
+              fontFamily: "Source Sans Pro",
+              fontSize: { xs: "1rem", sm: "1.1rem", md: "18px" },
+              lineHeight: "125%",
               color: "#2B2B2B",
-              mb: 6,
-            //   opacity: 0.95,
+              mb: { xs: 4, md: 6 },
+              maxWidth: { xs: "100%", sm: "80%", md: "598px" },
+              mx: "auto",
+              px: { xs: 1, md: 0 },
+              //   opacity: 0.95,
             }}
           >
-            Discover your potential and track your progress across all life
-            dimensions. <br />
-            Get insights from certified consultants and build the life you've
-            always wanted. <br />
-            Start your transformation journey today.
+            You already know your credit score. But do you know your self-score,
+            your life score, your happiness score?
           </Typography>
 
-          <Button
-            variant="contained"
-            size="large"
+          <Box sx={{ display: "inline-block" }}>
+            <ButtonSelfScore text="Discover Your Path →" />
+          </Box>
+
+          <Box
             sx={{
-              backgroundColor: "#E87A42",
-              color: "#F9F8F6",
-              padding: { xs: "0.8rem 2rem", md: "1rem 2.5rem" },
-              fontSize: { xs: "1rem", md: "1.2rem" },
-              fontWeight: 600,
-              borderRadius: "50px",
-              mb: 10,
-              textTransform: "uppercase",
-              letterSpacing: "1px",
-              boxShadow: "0 8px 20px rgba(232, 122, 66, 0.3)",
-              transition: "all 0.3s ease",
-              "&:hover": {
-                backgroundColor: "#d66a35",
-                transform: "translateY(-2px)",
-                boxShadow: "0 12px 25px rgba(232, 122, 66, 0.4)",
-              },
-              "&:active": {
-                transform: "translateY(0)",
-              },
+              display: "flex",
+              justifyContent: "center",
+              alignItems: "center",
+              mt: { xs: 1, md: 2 },
             }}
           >
-            Take the Test
-          </Button>
+            <VerifiedUserIcon
+              sx={{
+                color: "#005F73",
+                mr: 1,
+                fontSize: { xs: "20px", md: "24px" },
+              }}
+            />
+            <Typography
+              variant="body2"
+              component="p"
+              sx={{
+                fontSize: { xs: "0.75rem", sm: "0.875rem", md: "18px" },
+                color: "#2B2B2B",
+                opacity: 1,
+                fontFamily: "Source Sans Pro",
+              }}
+            >
+              We protect your privacy. Your answers stay secure.
+            </Typography>
+          </Box>
         </Box>
-      </Container>
+      </Box>
     </Box>
   );
 }

@@ -11,8 +11,8 @@ export default function HomePage() {
   return (
     <main>
       <HeroSection />
-      <Advantages/>
       <AboutLevels />
+      <Advantages/>
       <AboutUs />
       <OurMission />
       <Testimonial/>
