@@ -2,6 +2,7 @@ import { Router } from 'express';
 import authRoutes from './auth';
 import questionRoutes from './questions';
 import questionsResponseRoutes from './questionsResponse';
+import subscriptionRoutes from './subscription';
 
 const router = Router();
 
@@ -9,6 +10,7 @@ const router = Router();
 router.use('/auth', authRoutes);
 router.use('/questions-response', questionsResponseRoutes);
 router.use('/questions', questionRoutes);
+router.use('/subscription', subscriptionRoutes);
 
 
 // Health check route

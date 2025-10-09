@@ -1,13 +1,15 @@
 "use client";
 
 import { Box, Typography, Container } from "@mui/material";
+import AboutUsIMG from "../../../../public/images/LandingPage/aboutus.jpg"
+import Image from "next/image";
 
 export default function AboutUs() {
   return (
     <Box
       sx={{
         width: "100%",
-        backgroundColor: "#fff",
+        backgroundColor: "#FAFAFA",
         py: { xs: 6, md: 10 },
         px: { xs: 2, sm: 4, md: 6 },
       }}
@@ -26,10 +28,11 @@ export default function AboutUs() {
             variant="h2"
             component="h2"
             sx={{
-              fontWeight: "bold",
-              color: "#005F73",
+              fontWeight: 700,
+              fontFamily: "faustina",
+              color: "#000",
               mb: 3,
-              fontSize: { xs: "2rem", sm: "2.5rem", md: "3rem" },
+              fontSize: { xs: "2rem", sm: "2.5rem", md: "28px" },
             }}
           >
             About Us
@@ -38,15 +41,15 @@ export default function AboutUs() {
             variant="h6"
             sx={{
               color: "#2B2B2B",
-              maxWidth: "600px",
+              maxWidth: "500px",
+              fontFamily: "source sans pro",
               mx: "auto",
               lineHeight: 1.6,
-              fontSize: { xs: "1rem", sm: "1.1rem", md: "1.25rem" },
+              fontSize: { xs: "1rem", sm: "1.1rem", md: "18px" },
             }}
           >
             We're dedicated to helping you transform your life through
-            comprehensive assessment and personalized guidance on your journey
-            to personal growth.
+            comprehensive assessment and personalized guidance.
           </Typography>
         </Box>
 
@@ -70,7 +73,7 @@ export default function AboutUs() {
               sx={{
                 position: "relative",
                 width: "100%",
-                height: { xs: "300px", md: "400px" },
+                height: { xs: "300px", md: "350px" },
                 borderRadius: "20px",
                 overflow: "hidden",
                 backgroundColor: "#F9F8F6",
@@ -79,33 +82,13 @@ export default function AboutUs() {
                 justifyContent: "center",
               }}
             >
-              {/* Placeholder for image - replace with your actual image */}
-              <Box
-                sx={{
-                  width: "80%",
-                  height: "80%",
-                  backgroundColor: "#E0E0E0",
-                  borderRadius: "15px",
-                  display: "flex",
-                  alignItems: "center",
-                  justifyContent: "center",
-                }}
-              >
-                <Typography
-                  variant="h6"
-                  sx={{ color: "#2B2B2B", textAlign: "center" }}
-                >
-                  Your Image Here
-                </Typography>
-              </Box>
-              {/* Uncomment and use this when you have an actual image
               <Image
-                src="/path-to-your-image.jpg"
+                src={AboutUsIMG}
                 alt="About Us"
                 fill
                 style={{ objectFit: "cover" }}
               />
-              */}
+             
             </Box>
           </Box>
 
@@ -120,10 +103,11 @@ export default function AboutUs() {
               variant="h4"
               component="h3"
               sx={{
-                fontWeight: "bold",
-                color: "#005F73",
+                fontWeight: 700,
+                color: "#000",
+                fontFamily: "faustina",
                 mb: 3,
-                fontSize: { xs: "1.5rem", sm: "2rem", md: "2.25rem" },
+                fontSize: { xs: "1.5rem", sm: "2rem", md: "28px" },
               }}
             >
               Empowering Your Life Journey
@@ -133,10 +117,12 @@ export default function AboutUs() {
               variant="body1"
               paragraph
               sx={{
-                fontSize: "1.1rem",
-                lineHeight: 1.7,
+                fontSize: "18px",
+                lineHeight: 1.2,
+                fontFamily: "source sans pro",
                 color: "#2B2B2B",
                 mb: 3,
+                fontWeight:"400",
               }}
             >
               At LifeScore, we believe that every individual has the potential
@@ -149,10 +135,12 @@ export default function AboutUs() {
               variant="body1"
               paragraph
               sx={{
-                fontSize: "1.1rem",
-                lineHeight: 1.7,
+                fontSize: "18px",
+                lineHeight: 1.2,
+                fontFamily: "source sans pro",
                 color: "#2B2B2B",
                 mb: 3,
+                fontWeight:"400",
               }}
             >
               Through our four-level progressive system, we provide personalized
@@ -160,18 +148,7 @@ export default function AboutUs() {
               transform self-awareness into meaningful life changes.
             </Typography>
 
-            <Typography
-              variant="body1"
-              sx={{
-                fontSize: "1.1rem",
-                lineHeight: 1.7,
-                color: "#2B2B2B",
-              }}
-            >
-              Whether you're just beginning your journey of self-discovery or
-              ready to take your personal development to the next level, we're
-              here to support you every step of the way.
-            </Typography>
+            
           </Box>
         </Box>
       </Container>

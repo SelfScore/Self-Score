@@ -1,23 +1,16 @@
 "use client";
 import React, { useState } from "react";
-import {
-  Box,
-  Typography,
-  Container,
-  Accordion,
-  AccordionSummary,
-  AccordionDetails,
-} from "@mui/material";
-import ExpandMoreIcon from "@mui/icons-material/ExpandMore";
+import { Box, Typography, Container } from "@mui/material";
 import FAQIcon from "../../../../public/images/LandingPage/FAQ.png";
+import CustomAccordion from "../ui/Accordian";
+import Image from "next/image";
 
 const FAQ: React.FC = () => {
   const [expanded, setExpanded] = useState<string | false>(false);
 
-  const handleChange =
-    (panel: string) => (_event: React.SyntheticEvent, isExpanded: boolean) => {
-      setExpanded(isExpanded ? panel : false);
-    };
+  const handleChange = (panel: string) => {
+    setExpanded(expanded === panel ? false : panel);
+  };
 
   const faqData = [
     {
@@ -62,7 +55,7 @@ const FAQ: React.FC = () => {
     <Box
       sx={{
         width: "100%",
-        backgroundColor: "#F7F7F7",
+        backgroundColor: "#FAFAFA",
         py: { xs: 6, md: 10 },
         px: { xs: 2, sm: 4, md: 6 },
       }}
@@ -88,7 +81,7 @@ const FAQ: React.FC = () => {
             }}
           >
             <Box>
-              <img
+              <Image
                 src={FAQIcon.src}
                 alt="FAQ Icon"
                 style={{ width: "60px", height: "60px", marginBottom: "16px" }}
@@ -108,18 +101,6 @@ const FAQ: React.FC = () => {
             >
               Frequently <br /> Asked <br /> Questions
             </Typography>
-            {/* <Typography
-              variant="h6"
-              sx={{
-                color: "#2B2B2B",
-                lineHeight: 1.6,
-                fontSize: { xs: "1rem", sm: "1.1rem", md: "1.25rem" },
-                display: { xs: "block", md: "block" },
-              }}
-            >
-              Find answers to common questions about our personality assessment
-              and how it can help you on your journey of personal growth.
-            </Typography> */}
           </Box>
 
           {/* Right Side - FAQ Accordions (70%) */}
@@ -130,82 +111,14 @@ const FAQ: React.FC = () => {
             }}
           >
             {faqData.map((faq) => (
-              <Accordion
+              <CustomAccordion
                 key={faq.id}
+                id={faq.id}
+                question={faq.question}
+                answer={faq.answer}
                 expanded={expanded === faq.id}
-                onChange={handleChange(faq.id)}
-                sx={{
-                  mb: 2,
-                  borderRadius: "10px !important",
-                  "&:before": {
-                    display: "none",
-                  },
-                  "&.Mui-expanded": {
-                    margin: "0 0 16px 0",
-                  },
-                }}
-              >
-                <AccordionSummary
-                  expandIcon={
-                    <ExpandMoreIcon
-                      sx={{
-                        color: "#E87A42",
-                        fontSize: { xs: "1.5rem", md: "2rem" },
-                      }}
-                    />
-                  }
-                  sx={{
-                    backgroundColor: "#E6E6E6",
-                    borderRadius: "12px",
-                    // border:"1px solid #3A3A3A33",
-                    height: { xs: 48, md: 56 },
-                    "&.Mui-expanded": {
-                      minHeight: { xs: 64, md: 72 },
-                      borderBottomLeftRadius: 0,
-                      borderBottomRightRadius: 0,
-                    },
-                    "& .MuiAccordionSummary-content": {
-                      margin: { xs: "12px 0", md: "16px 0" },
-                      "&.Mui-expanded": {
-                        margin: { xs: "12px 0", md: "16px 0" },
-                      },
-                    },
-                  }}
-                >
-                  <Typography
-                    variant="h6"
-                    sx={{
-                      fontWeight: 600,
-                      fontFamily: "source sans pro",
-                      color: "#2B2B2B",
-                      fontSize: { xs: "1rem", sm: "1.1rem", md: "20px" },
-                      lineHeight: "100%",
-                    }}
-                  >
-                    {faq.question}
-                  </Typography>
-                </AccordionSummary>
-                <AccordionDetails
-                  sx={{
-                    backgroundColor: "white",
-                    borderBottomLeftRadius: "12px",
-                    borderBottomRightRadius: "12px",
-                    padding: { xs: 2, md: 3 },
-                  }}
-                >
-                  <Typography
-                    variant="body1"
-                    sx={{
-                      color: "#2B2B2B",
-                      fontFamily: "Source Sans Pro",
-                      fontSize: { xs: "0.95rem", md: "1.1rem" },
-                      lineHeight: 1.6,
-                    }}
-                  >
-                    {faq.answer}
-                  </Typography>
-                </AccordionDetails>
-              </Accordion>
+                onChange={handleChange}
+              />
             ))}
           </Box>
         </Box>

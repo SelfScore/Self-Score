@@ -66,7 +66,16 @@ export class AuthController {
                 password: hashedPassword,
                 verifyCode,
                 verifyCodeExpiry: expiryDate, 
-                isVerified: false
+                isVerified: false,
+                subscription: {
+                    isActive: false,
+                    plan: 'free'
+                },
+                progress: {
+                    completedLevels: [],
+                    highestUnlockedLevel: 1,
+                    testScores: {}
+                }
             });
 
             await newUser.save();
@@ -74,7 +83,9 @@ export class AuthController {
             const userData: UserResponse = {
                 userId: (newUser._id as string).toString(),
                 email: newUser.email,
-                username: newUser.username
+                username: newUser.username,
+                subscription: newUser.subscription,
+                progress: newUser.progress
             };
 
             const response: ApiResponse<UserResponse> = {
@@ -146,7 +157,9 @@ export class AuthController {
                 userId: (user._id as string).toString(),
                 email: user.email,
                 username: user.username,
-                phoneNumber: user.phoneNumber
+                phoneNumber: user.phoneNumber,
+                subscription: user.subscription,
+                progress: user.progress
             };
 
             const token = generateToken(userData);
@@ -236,7 +249,9 @@ export class AuthController {
                 userId: (user._id as string).toString(),
                 email: user.email,
                 username: user.username,
-                phoneNumber: user.phoneNumber
+                phoneNumber: user.phoneNumber,
+                subscription: user.subscription,
+                progress: user.progress
             };
 
             const token = generateToken(userData);
@@ -357,7 +372,9 @@ export class AuthController {
                 userId: (user._id as string).toString(),
                 email: user.email,
                 username: user.username,
-                phoneNumber: user.phoneNumber
+                phoneNumber: user.phoneNumber,
+                subscription: user.subscription,
+                progress: user.progress
             };
 
             const response: ApiResponse<UserResponse> = {

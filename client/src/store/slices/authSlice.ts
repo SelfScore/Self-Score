@@ -7,11 +7,30 @@ export interface UserData {
   phoneNumber?: string;
 }
 
+export interface SubscriptionData {
+  isActive: boolean;
+  plan: 'free' | 'premium';
+  expiresAt?: Date;
+}
+
+export interface ProgressData {
+  completedLevels: number[];
+  highestUnlockedLevel: number;
+  testScores: {
+    level1?: number;
+    level2?: number;
+    level3?: number;
+    level4?: number;
+  };
+}
+
 interface AuthState {
   user: UserData | null;
   isAuthenticated: boolean;
   isLoading: boolean;
   error: string | null;
+  subscription: SubscriptionData | null;
+  progress: ProgressData | null;
 }
 
 const initialState: AuthState = {
@@ -19,6 +38,8 @@ const initialState: AuthState = {
   isAuthenticated: false,
   isLoading: false,
   error: null,
+  subscription: null,
+  progress: null,
 };
 
 const authSlice = createSlice({
@@ -36,8 +57,10 @@ const authSlice = createSlice({
     },
 
     // Login success
-    loginSuccess: (state, action: PayloadAction<UserData>) => {
-      state.user = action.payload;
+    loginSuccess: (state, action: PayloadAction<{user: UserData, subscription?: SubscriptionData, progress?: ProgressData}>) => {
+      state.user = action.payload.user;
+      state.subscription = action.payload.subscription || null;
+      state.progress = action.payload.progress || null;
       state.isAuthenticated = true;
       state.isLoading = false;
       state.error = null;
@@ -46,6 +69,8 @@ const authSlice = createSlice({
     // Logout
     logout: (state) => {
       state.user = null;
+      state.subscription = null;
+      state.progress = null;
       state.isAuthenticated = false;
       state.isLoading = false;
       state.error = null;
@@ -63,10 +88,22 @@ const authSlice = createSlice({
       }
     },
 
+    // Update subscription data
+    updateSubscription: (state, action: PayloadAction<SubscriptionData>) => {
+      state.subscription = action.payload;
+    },
+
+    // Update progress data
+    updateProgress: (state, action: PayloadAction<ProgressData>) => {
+      state.progress = action.payload;
+    },
+
     // Initialize auth state from localStorage (for hydration)
-    initializeAuth: (state, action: PayloadAction<UserData | null>) => {
+    initializeAuth: (state, action: PayloadAction<{user: UserData, subscription?: SubscriptionData, progress?: ProgressData} | null>) => {
       if (action.payload) {
-        state.user = action.payload;
+        state.user = action.payload.user;
+        state.subscription = action.payload.subscription || null;
+        state.progress = action.payload.progress || null;
         state.isAuthenticated = true;
       }
     },
@@ -80,6 +117,8 @@ export const {
   logout,
   clearError,
   updateUser,
+  updateSubscription,
+  updateProgress,
   initializeAuth,
 } = authSlice.actions;
 

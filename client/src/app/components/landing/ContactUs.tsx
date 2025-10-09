@@ -6,16 +6,17 @@ import {
   Typography,
   Container,
   TextField,
-  Paper,
-  InputAdornment,
+  Link,
+  // Paper,
+  // InputAdornment,
 } from "@mui/material";
-import {
-  Email as EmailIcon,
-  Person as PersonIcon,
-  // Subject as SubjectIcon,
-  Message as MessageIcon,
-  Send as SendIcon,
-} from "@mui/icons-material";
+// import {
+//   Email as EmailIcon,
+//   Person as PersonIcon,
+//   // Subject as SubjectIcon,
+//   Message as MessageIcon,
+//   Send as SendIcon,
+// } from "@mui/icons-material";
 import ButtonSelfScore from "../ui/ButtonSelfScore";
 
 interface FormData {
@@ -145,151 +146,185 @@ const ContactUs: React.FC = () => {
             alignItems: "flex-start",
           }}
         >
-          {/* Left Side - Text Content */}
-          <Box sx={{ flex: 1, pr: { md: 2 } }}>
-            <Typography
-              variant="h4"
-              component="h3"
-              sx={{
-                fontWeight: "bold",
-                color: "#000", // Accent Color
-                mb: 3,
-                fontFamily: "faustina",
-                fontSize: { xs: "1.5rem", sm: "2rem", md: "28px" },
-              }}
-            >
-              Get in Touch
-            </Typography>
-
-            <Typography
-              variant="body1"
-              paragraph
-              sx={{
-                fontSize: "20px",
-                fontFamily: "Source Sans Pro",
-                lineHeight: 1.2,
-                color: "#2B2B2B", // Black Color
-                mb: 4,
-              }}
-            >
-              We're committed to supporting you throughout your personal
-              development journey. Whether you have questions about our
-              assessment, need technical support, or want to learn more about
-              our services, our team is ready to help.
-            </Typography>
-          </Box>
-
           {/* Right Side - Contact Form */}
-          <Box sx={{ flex: 1 }}>
-            <Paper
+          <Box sx={{ flex: 1, maxWidth: "670px", mx: "auto" }}>
+            <Box
               component="form"
               onSubmit={handleSubmit}
               sx={{
                 p: { xs: 3, sm: 4 },
                 backgroundColor: "#FFFFFF",
-                borderRadius: "20px",
-                boxShadow: "0 8px 32px rgba(0, 95, 115, 0.1)",
-                border: "1px solid #E0E0E0", // Grey Color
+                borderRadius: "16px",
+                border: "1px solid #3A3A3A4D",
               }}
             >
-              {/* <Typography
-                variant="h5"
-                component="h4"
+              {/* Full Name Field */}
+              <Box sx={{ mb: 3 }}>
+                <Typography
+                  component="label"
+                  sx={{
+                    display: "block",
+                    fontFamily: "Source Sans Pro",
+                    mb: 1,
+                    fontSize: "16px",
+                    fontWeight: 500,
+                    color: "#2C3E50",
+                  }}
+                >
+                  Full Name<span style={{ color: "#FF5722" }}>*</span>
+                </Typography>
+                <TextField
+                  fullWidth
+                  name="name"
+                  placeholder="Amit Sunda"
+                  value={formData.name}
+                  onChange={handleChange}
+                  error={!!errors.name}
+                  helperText={errors.name}
+                  sx={{
+                    "& .MuiOutlinedInput-root": {
+                      backgroundColor: "#FFFFFF",
+                      borderRadius: "8px",
+                      "& fieldset": {
+                        borderColor: "#3A3A3A4D",
+                        borderWidth: "1px",
+                      },
+                      "&:hover fieldset": {
+                        borderColor: "#3A3A3A4D",
+                      },
+                      "&.Mui-focused fieldset": {
+                        borderColor: "#FF5722",
+                      },
+                    },
+                  }}
+                />
+              </Box>
+
+              {/* Email Address Field */}
+              <Box sx={{ mb: 3 }}>
+                <Typography
+                  component="label"
+                  sx={{
+                    display: "block",
+                    mb: 1,
+                    fontSize: "16px",
+                    fontWeight: 500,
+                    color: "#000",
+                  }}
+                >
+                  Email Address<span style={{ color: "#FF5722" }}>*</span>
+                </Typography>
+                <TextField
+                  fullWidth
+                  name="email"
+                  placeholder="you@example.com"
+                  type="email"
+                  value={formData.email}
+                  onChange={handleChange}
+                  error={!!errors.email}
+                  helperText={errors.email}
+                  sx={{
+                    "& .MuiOutlinedInput-root": {
+                      backgroundColor: "#FFFFFF",
+                      borderRadius: "8px",
+                      "& fieldset": {
+                        borderColor: "#3A3A3A4D",
+                        borderWidth: "1px",
+                      },
+                      "&:hover fieldset": {
+                        borderColor: "#3A3A3A4D",
+                      },
+                      "&.Mui-focused fieldset": {
+                        borderColor: "#FF5722",
+                      },
+                    },
+                  }}
+                />
+              </Box>
+
+              {/* Message Field */}
+              <Box sx={{ mb: 3 }}>
+                <Typography
+                  component="label"
+                  sx={{
+                    display: "block",
+                    mb: 1,
+                    fontSize: "16px",
+                    fontWeight: 500,
+                    color: "#000",
+                  }}
+                >
+                  Your Message<span style={{ color: "#FF5722" }}>*</span>
+                </Typography>
+                <TextField
+                  fullWidth
+                  name="message"
+                  placeholder="Tell us more about how we can help..."
+                  multiline
+                  rows={6}
+                  value={formData.message}
+                  onChange={handleChange}
+                  error={!!errors.message}
+                  helperText={errors.message}
+                  inputProps={{ maxLength: 1000 }}
+                  sx={{
+                    "& .MuiOutlinedInput-root": {
+                      backgroundColor: "#FFFFFF",
+                      borderRadius: "8px",
+                      alignItems: "flex-start",
+                      "& fieldset": {
+                        borderColor: "#3A3A3A4D",
+                        borderWidth: "1px",
+                      },
+                      "&:hover fieldset": {
+                        borderColor: "#3A3A3A4D",
+                      },
+                      "&.Mui-focused fieldset": {
+                        borderColor: "#FF5722",
+                      },
+                    },
+                  }}
+                />
+                <Typography
+                  sx={{
+                    textAlign: "right",
+                    fontSize: "14px",
+                    color: "#999",
+                    mt: 0.5,
+                  }}
+                >
+                  {formData.message.length}/1000
+                </Typography>
+              </Box>
+
+              {/* Submit Button */}
+              <ButtonSelfScore fullWidth text="Send Message" type="submit"></ButtonSelfScore>
+
+              {/* Privacy Policy Text */}
+              <Typography
                 sx={{
-                  fontWeight: "bold",
-                  fontFamily: "faustina",
-                  color: "#000", // Accent Color
-                  mb: 3,
                   textAlign: "center",
+                  fontSize: "14px",
+                  color: "#6B7280",
+                  mt: 2,
                 }}
               >
-                Send us a Message
-              </Typography> */}
-              {/* Name Field */}
-              <TextField
-                fullWidth
-                name="name"
-                label="Your Name"
-                value={formData.name}
-                onChange={handleChange}
-                error={!!errors.name}
-                helperText={errors.name}
-                sx={{ mb: 3 }}
-                InputProps={{
-                  startAdornment: (
-                    <InputAdornment position="start">
-                      <PersonIcon sx={{ color: "#E87A42" }} />
-                    </InputAdornment>
-                  ),
-                }}
-              />
-              {/* Email Field */}
-              <TextField
-                fullWidth
-                name="email"
-                label="Your Email"
-                type="email"
-                value={formData.email}
-                onChange={handleChange}
-                error={!!errors.email}
-                helperText={errors.email}
-                sx={{ mb: 3 }}
-                InputProps={{
-                  startAdornment: (
-                    <InputAdornment position="start">
-                      <EmailIcon sx={{ color: "#E87A42" }} />
-                    </InputAdornment>
-                  ),
-                }}
-              />
-              {/* Subject Field */}
-              {/* <TextField
-                fullWidth
-                name="subject"
-                label="Subject"
-                value={formData.subject}
-                onChange={handleChange}
-                error={!!errors.subject}
-                helperText={errors.subject}
-                sx={{ mb: 3 }}
-                InputProps={{
-                  startAdornment: (
-                    <InputAdornment position="start">
-                      <SubjectIcon sx={{ color: "#E87A42" }} />
-                    </InputAdornment>
-                  ),
-                }}
-              /> */}
-              {/* Message Field */}
-              <TextField
-                fullWidth
-                name="message"
-                label="Your Message"
-                multiline
-                rows={4}
-                value={formData.message}
-                onChange={handleChange}
-                error={!!errors.message}
-                helperText={errors.message}
-                sx={{ mb: 4 }}
-                InputProps={{
-                  startAdornment: (
-                    <InputAdornment
-                      position="start"
-                      sx={{ alignSelf: "flex-start", mt: 1 }}
-                    >
-                      <MessageIcon sx={{ color: "#E87A42" }} />
-                    </InputAdornment>
-                  ),
-                }}
-              />
-              {/* Submit Button */}
-                <ButtonSelfScore
-                  type="submit"
-                  text="Send Message"
-                  startIcon={<SendIcon />}
-                />
-            </Paper>
+                By submitting, you agree to our{" "}
+                <Link
+                  href="/privacy"
+                  sx={{
+                    color: "#FF5722",
+                    textDecoration: "none",
+                    "&:hover": {
+                      textDecoration: "underline",
+                    },
+                  }}
+                >
+                  Privacy Policy
+                </Link>
+                . We typically respond within 24 hours.
+              </Typography>
+            </Box>
           </Box>
         </Box>
       </Container>

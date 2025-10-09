@@ -58,7 +58,7 @@ export default function Header() {
 
   const navigationLinks = [
     { label: "Home", href: "/" },
-    { label: "Our Mission", href: "/mission" },
+    { label: "Our Mission", href: "/ourMission" },
     { label: "Contact Us", href: "/contact" },
     {
       label: "Self Score Test",

@@ -8,6 +8,21 @@ export interface User extends Document {
     verifyCode: string;
     isVerified: boolean;
     verifyCodeExpiry: Date;
+    subscription: {
+        isActive: boolean;
+        plan: 'free' | 'premium';
+        expiresAt?: Date;
+    };
+    progress: {
+        completedLevels: number[];
+        highestUnlockedLevel: number;
+        testScores: {
+            level1?: number;
+            level2?: number;
+            level3?: number;
+            level4?: number;
+        };
+    };
 }
 
 const UserSchema: Schema<User> = new Schema({
@@ -42,6 +57,37 @@ const UserSchema: Schema<User> = new Schema({
     phoneNumber: { 
         type: String, 
         required: [false, "Phone number is required"] 
+    },
+    subscription: {
+        isActive: { 
+            type: Boolean, 
+            default: false 
+        },
+        plan: { 
+            type: String, 
+            enum: ['free', 'premium'], 
+            default: 'free' 
+        },
+        expiresAt: { 
+            type: Date, 
+            required: false 
+        }
+    },
+    progress: {
+        completedLevels: {
+            type: [Number],
+            default: []
+        },
+        highestUnlockedLevel: {
+            type: Number,
+            default: 1 // Level 1 is always unlocked
+        },
+        testScores: {
+            level1: { type: Number, required: false },
+            level2: { type: Number, required: false },
+            level3: { type: Number, required: false },
+            level4: { type: Number, required: false }
+        }
     }
 }, {
     timestamps: true  // Adds createdAt and updatedAt fields

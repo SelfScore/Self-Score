@@ -5,14 +5,32 @@ import { Box, Typography } from "@mui/material";
 import { Suspense } from "react";
 import Level1Test from "./Level1Test";
 import Level2Test from "./Level2Test";
+import { useLevelAccess } from "../../../hooks/useLevelAccess";
+import SubscriptionRequired from "../../components/ui/SubscriptionRequired";
+import LevelLocked from "../../components/ui/LevelLocked";
 
 function TestContent() {
   const searchParams = useSearchParams();
   const router = useRouter();
-  const level = searchParams.get("level");
+  const level = parseInt(searchParams.get("level") || "1");
+  const { checkLevelAccess } = useLevelAccess();
 
+  // 🛡️ PROTECTION LOGIC
+  const access = checkLevelAccess(level);
+
+  if (!access.canAccess) {
+    if (access.reason === "SUBSCRIPTION_REQUIRED") {
+      return <SubscriptionRequired level={level} />;
+    }
+    if (access.reason === "LEVEL_LOCKED") {
+      return <LevelLocked level={level} />;
+    }
+  }
+
+  // 🎯 ORIGINAL TEST RENDERING
+  // 🎯 ORIGINAL TEST RENDERING
   const renderTestComponent = () => {
-    switch (level) {
+    switch (level.toString()) {
       case "1":
         return <Level1Test />;
       case "2":

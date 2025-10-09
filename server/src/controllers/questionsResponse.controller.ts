@@ -1,6 +1,8 @@
 import { Request, Response } from "express";
+import mongoose from "mongoose";
 import QuestionsResponseModel from "../models/questionsResponse";
 import QuestionModel from "../models/questions";
+import UserModel from "../models/user";
 
 // Save a user's question response
 export const createQuestionsResponse = async (req: Request, res: Response): Promise<Response> => {
@@ -46,13 +48,25 @@ export const createQuestionsResponse = async (req: Request, res: Response): Prom
 // Save a user's question response for Level 1 specifically
 export const createLevel1Response = async (req: Request, res: Response): Promise<Response> => {
     try {
+        console.log("Received Level 1 submission request:", JSON.stringify(req.body, null, 2)); // Debug incoming data
+        
         const { userId, responses } = req.body;
 
-        // Validate request structure - can handle single response or multiple responses
+        // Validate and convert userId to ObjectId
         if (!userId) {
             return res.status(400).json({
                 success: false,
                 message: "userId is required",
+            });
+        }
+
+        let userObjectId;
+        try {
+            userObjectId = new mongoose.Types.ObjectId(userId);
+        } catch (error) {
+            return res.status(400).json({
+                success: false,
+                message: "Invalid userId format",
             });
         }
 
@@ -98,8 +112,20 @@ export const createLevel1Response = async (req: Request, res: Response): Promise
                     continue;
                 }
 
+                // Convert questionId to ObjectId
+                let questionObjectId;
+                try {
+                    questionObjectId = new mongoose.Types.ObjectId(questionId);
+                } catch (error) {
+                    errors.push({
+                        questionId,
+                        error: 'Invalid questionId format'
+                    });
+                    continue;
+                }
+
                 // Check if question exists and is Level 1
-                const question = await QuestionModel.findById(questionId);
+                const question = await QuestionModel.findById(questionObjectId);
                 if (!question) {
                     errors.push({
                         questionId,
@@ -118,28 +144,26 @@ export const createLevel1Response = async (req: Request, res: Response): Promise
 
                 // Check if user has already answered this Level 1 question
                 const existingResponse = await QuestionsResponseModel.findOne({
-                    userId,
+                    userId: userObjectId,
                     level: 1,
-                    questionId
+                    questionId: questionObjectId
                 });
 
                 if (existingResponse) {
-                    errors.push({
-                        questionId,
-                        error: 'User has already answered this Level 1 question'
+                    // Update existing response instead of creating new one
+                    existingResponse.selectedOptionIndex = selectedOptionIndex;
+                    const updatedResponse = await existingResponse.save();
+                    savedResponses.push(updatedResponse.toObject());
+                } else {
+                    // Save new response
+                    const savedResponse = await QuestionsResponseModel.create({
+                        userId: userObjectId,
+                        level: 1,
+                        questionId: questionObjectId,
+                        selectedOptionIndex,
                     });
-                    continue;
+                    savedResponses.push(savedResponse.toObject());
                 }
-
-                // Save the response
-                const savedResponse = await QuestionsResponseModel.create({
-                    userId,
-                    level: 1,
-                    questionId,
-                    selectedOptionIndex,
-                });
-
-                savedResponses.push(savedResponse.toObject());
 
             } catch (error) {
                 errors.push({
@@ -155,6 +179,37 @@ export const createLevel1Response = async (req: Request, res: Response): Promise
 
         if (hasSuccesses && !hasErrors) {
             // All responses saved successfully
+            // Update user progress to unlock Level 2
+            try {
+                const user = await UserModel.findById(userObjectId);
+                if (user) {
+                    // Calculate score for Level 1 (same logic as frontend)
+                    const totalScore = savedResponses.reduce((sum, response) => {
+                        return sum + (response.selectedOptionIndex * 15);
+                    }, 0);
+                    const finalScore = Math.max(totalScore, 350); // Minimum score 350
+                    const cappedScore = Math.min(finalScore, 900); // Maximum score 900
+
+                    // Add Level 1 to completed levels if not already there
+                    if (!user.progress.completedLevels.includes(1)) {
+                        user.progress.completedLevels.push(1);
+                    }
+                    
+                    // Unlock Level 2 (set highest unlocked level to 2)
+                    user.progress.highestUnlockedLevel = Math.max(user.progress.highestUnlockedLevel, 2);
+                    
+                    // Save the Level 1 test score
+                    user.progress.testScores.level1 = cappedScore;
+                    
+                    await user.save();
+                    
+                    console.log(`User ${userId} completed Level 1 with score ${cappedScore}. Level 2 unlocked.`);
+                }
+            } catch (error) {
+                console.error("Error updating user progress:", error);
+                // Don't fail the response if progress update fails
+            }
+
             return res.status(201).json({
                 success: true,
                 message: savedResponses.length === 1 

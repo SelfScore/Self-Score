@@ -11,6 +11,21 @@ export interface UserResponse {
     username: string;
     phoneNumber?: string;
     isVerified?: boolean;
+    subscription?: {
+        isActive: boolean;
+        plan: 'free' | 'premium';
+        expiresAt?: Date;
+    };
+    progress?: {
+        completedLevels: number[];
+        highestUnlockedLevel: number;
+        testScores: {
+            level1?: number;
+            level2?: number;
+            level3?: number;
+            level4?: number;
+        };
+    };
 }
 
 export interface SignUpRequest {

@@ -15,6 +15,8 @@ import { questionsApi, Question } from "../../../services/questionsService";
 import { authService } from "../../../services/authService";
 import SignUpModal from "../SignUpModal";
 import Slider from "@/app/components/ui/Slider";
+import { useAppDispatch } from "../../../store/hooks";
+import { updateProgress } from "../../../store/slices/authSlice";
 
 export default function Level1Test() {
   const [answers, setAnswers] = useState<{ [key: string]: number }>({});
@@ -27,6 +29,7 @@ export default function Level1Test() {
 
   const router = useRouter();
   const searchParams = useSearchParams();
+  const dispatch = useAppDispatch();
 
   const STORAGE_KEY = "level1_test_answers";
 
@@ -164,6 +167,8 @@ export default function Level1Test() {
     try {
       // Get the authenticated user
       const user = authService.getCurrentUserFromStore();
+      console.log("Current user from store:", user); // Debug user data
+
       if (!user || !user.userId) {
         throw new Error("User not authenticated");
       }
@@ -175,7 +180,7 @@ export default function Level1Test() {
       const responses = Object.entries(answers).map(
         ([questionId, selectedOptionIndex]) => ({
           questionId,
-          selectedOptionIndex,
+          selectedOptionIndex: Number(selectedOptionIndex), // Ensure it's a number
         })
       );
 
@@ -189,6 +194,8 @@ export default function Level1Test() {
         calculatedScore,
       });
 
+      console.log("Sample response data:", responses[0]); // Debug first response
+
       // Submit all Level 1 responses in one API call
       const response = await questionsApi.submitLevel1Response(
         user.userId,
@@ -196,29 +203,41 @@ export default function Level1Test() {
       );
 
       if (response.success) {
+        // Update Redux store with new progress
+        const calculatedScore = calculateUserScore();
+        dispatch(
+          updateProgress({
+            completedLevels: [1], // Add level 1 to completed (backend handles merging)
+            highestUnlockedLevel: 2, // Unlock level 2
+            testScores: {
+              level1: calculatedScore,
+            },
+          })
+        );
+
         // Clear answers from session storage after successful submission
         sessionStorage.removeItem(STORAGE_KEY);
 
         console.log("Level 1 Test submitted successfully:", response.data);
 
-        alert(
-          `Level 1 Test submitted successfully! Your score: ${calculatedScore}/900. ${
-            response.data?.savedCount || responses.length
-          } responses saved.`
-        );
-
-        // Optionally redirect to results page or next level
-        // router.push("/user/test/results");
+        // Navigate to Level 1 analysis page
+        router.push("/user/analysis/level-1");
       } else {
         throw new Error(response.message || "Failed to submit test");
       }
-    } catch (err) {
+    } catch (err: any) {
       console.error("Error submitting test:", err);
+
+      // Extract server error message if available
+      let errorMessage = "Failed to submit test. Please try again.";
+      if (err?.response?.data?.message) {
+        errorMessage = err.response.data.message;
+        console.error("Server error details:", err.response.data);
+      } else if (err instanceof Error) {
+        errorMessage = err.message;
+      }
+
       // Keep data in session storage if submission fails
-      const errorMessage =
-        err instanceof Error
-          ? err.message
-          : "Failed to submit test. Please try again.";
       alert(errorMessage);
       throw err; // Re-throw to handle in calling function
     }
@@ -336,7 +355,7 @@ export default function Level1Test() {
     <Box
       sx={{
         width: "100%",
-        maxWidth: "800px",
+        maxWidth: "1200px",
         mx: "auto",
         p: 4,
         backgroundColor: "#F9F8F6",
@@ -348,9 +367,11 @@ export default function Level1Test() {
         variant="h4"
         gutterBottom
         sx={{
+          fontFamily:"Faustina",
           color: "#005F73",
           fontWeight: "bold",
-          textAlign: "center",
+          fontSize: "40px",
+          textAlign: "left",
           mb: 2,
         }}
       >
@@ -360,11 +381,12 @@ export default function Level1Test() {
       <Typography
         variant="body1"
         sx={{
-          fontSize: "1.1rem",
-          lineHeight: 1.7,
+          fontFamily: "Source Sans Pro",
+          fontSize: "20px",
+          lineHeight: 1.2,
           mb: 3,
-          textAlign: "center",
-          color: "#2B2B2B",
+          textAlign: "left",
+          color: "#6B7280",
         }}
       >
         This test evaluates your self-awareness and understanding of your
@@ -378,23 +400,37 @@ export default function Level1Test() {
           variant="body2"
           sx={{
             mb: 1,
-            textAlign: "center",
-            color: "#2B2B2B",
-            fontWeight: "500",
+            textAlign: "left",
+            color: "#6B7280",
+            fontSize: "20px",
+            fontWeight: "700",
           }}
         >
-          Question {currentQuestionIndex + 1} of {questions.length}
+          Question {currentQuestionIndex + 1}
+        </Typography>
+        <Typography
+          sx={{
+            mb: 2,
+            textAlign: "left",
+            color: "#000",
+            fontSize: "20px",
+            fontWeight: "600",
+            fontFamily: "Source Sans Pro",
+          }}
+        >
+          Here's an overview of your journey so far. Keep going to unlock deeper
+          insights about your happiness.
         </Typography>
         <LinearProgress
           variant="determinate"
           value={progress}
           sx={{
-            height: 8,
-            borderRadius: 4,
+            height: "14px",
+            borderRadius: "11998.8px",
             backgroundColor: "#E0E0E0",
             "& .MuiLinearProgress-bar": {
               backgroundColor: "#E87A42",
-              borderRadius: 4,
+              borderRadius: "11998.8px",
             },
           }}
         />
@@ -406,9 +442,10 @@ export default function Level1Test() {
           variant="h6"
           sx={{
             mb: 3,
+            fontFamily: "Source Sans Pro",
             color: "#2B2B2B",
             fontWeight: "600",
-            textAlign: "center",
+            textAlign: "left",
           }}
         >
           {currentQuestion.questionText}
@@ -548,47 +585,6 @@ export default function Level1Test() {
           </Button>
         )}
       </Box>
-
-      {/* Answer Status */}
-      <Typography
-        variant="body2"
-        sx={{
-          mt: 3,
-          textAlign: "center",
-          color: "#666",
-        }}
-      >
-        Answered: {Object.keys(answers).length} / {questions.length}
-      </Typography>
-
-      {/* Current Score Preview */}
-      {Object.keys(answers).length > 0 && (
-        <Typography
-          variant="body2"
-          sx={{
-            mt: 1,
-            textAlign: "center",
-            color: "#E87A42",
-            fontWeight: "600",
-          }}
-        >
-          Current Score: {calculateUserScore()} / 900
-        </Typography>
-      )}
-
-      {/* Progress Saved Indicator */}
-      <Typography
-        variant="caption"
-        sx={{
-          mt: 1,
-          textAlign: "center",
-          color: "#999",
-          fontSize: "0.75rem",
-          display: "block",
-        }}
-      >
-        ✓ Progress automatically saved
-      </Typography>
 
       {/* Sign Up Modal */}
       <SignUpModal

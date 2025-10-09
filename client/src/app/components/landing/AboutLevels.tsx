@@ -6,14 +6,15 @@ import { Lock as LockIcon } from "@mui/icons-material";
 import { useRouter } from "next/navigation";
 import ArrowDownwardIcon from "@mui/icons-material/ArrowDownward";
 import ButtonSelfScore from "../ui/ButtonSelfScore";
+import { useLevelAccess } from "../../../hooks/useLevelAccess";
 
 export default function AboutLevels() {
   const [activeTab, setActiveTab] = useState(0);
   const router = useRouter();
+  const { getHighestUnlockedLevel } = useLevelAccess();
 
-  // Define the highest unlocked level (0-based index)
-  // For example: 0 = only Level 1, 1 = Level 1 & 2, 2 = Level 1, 2 & 3, etc.
-  const highestUnlockedLevel = 1; // Level 2 is unlocked, so Level 1 & 2 are available
+  // Get dynamic highest unlocked level from user progress
+  const highestUnlockedLevel = getHighestUnlockedLevel() - 1; // Convert to 0-based index
 
   // Generate unlocked levels array based on highest unlocked level
   // const _unlockedLevels = Array.from(

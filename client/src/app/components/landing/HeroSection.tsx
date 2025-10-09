@@ -16,7 +16,7 @@ export default function HeroSection() {
       <Box
         sx={{
           position: "relative",
-          border: "1px solid #3A3A3A66",
+          border: "1px solid #3A3A3A66 ",
           borderBottomLeftRadius: { xs: "40px", md: "80px" },
           borderBottomRightRadius: { xs: "40px", md: "80px" },
           marginBottom: { xs: 4, md: 8 },

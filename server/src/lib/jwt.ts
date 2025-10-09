@@ -11,6 +11,15 @@ export interface TokenPayload {
     email: string;
     username: string;
     phoneNumber?: string;
+    subscription?: {
+        isActive: boolean;
+        plan: 'free' | 'premium';
+        expiresAt?: Date;
+    };
+    progress?: {
+        completedLevels: number[];
+        highestUnlockedLevel: number;
+    };
 }
 
 // Generate JWT token
@@ -19,7 +28,9 @@ export const generateToken = (userData: UserResponse): string => {
         userId: userData.userId,
         email: userData.email,
         username: userData.username,
-        phoneNumber: userData.phoneNumber
+        phoneNumber: userData.phoneNumber,
+        subscription: userData.subscription,
+        progress: userData.progress
     };
 
     return jwt.sign(payload, JWT_SECRET, {

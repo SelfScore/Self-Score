@@ -2,6 +2,12 @@ import React from "react";
 
 interface ButtonSelfScoreProps
   extends React.ButtonHTMLAttributes<HTMLButtonElement> {
+  text: string | React.ReactNode;
+  startIcon?: React.ReactNode;
+  endIcon?: React.ReactNode;
+  textStyle?: React.CSSProperties;
+  iconGap?: number | string;
+  // Style shortcuts (can be overridden by style prop)
   maxWidth?: number | string;
   height?: number | string;
   borderRadius?: number | string;
@@ -9,14 +15,16 @@ interface ButtonSelfScoreProps
   gap?: number | string;
   background?: string;
   opacity?: number;
-  style?: React.CSSProperties;
-  text: string;
-  textStyle?: React.CSSProperties;
-  startIcon?: React.ReactNode;
-  endIcon?: React.ReactNode;
+  fullWidth?: boolean;
+  fontSize?: string | number;
 }
 
 const ButtonSelfScore: React.FC<ButtonSelfScoreProps> = ({
+  text,
+  startIcon,
+  endIcon,
+  textStyle,
+  iconGap,
   maxWidth = 322,
   height = 40,
   borderRadius = 12,
@@ -24,48 +32,63 @@ const ButtonSelfScore: React.FC<ButtonSelfScoreProps> = ({
   gap = 10,
   background = "#FF4F00",
   opacity = 1,
+  fullWidth = false,
+  fontSize,
   style,
-  text,
-  textStyle,
-  startIcon,
-  endIcon,
   ...rest
 }) => {
+  const defaultFontSize = "clamp(14px, 2.5vw, 20px)";
+  const actualFontSize = fontSize || defaultFontSize;
+  const actualIconGap = iconGap !== undefined ? iconGap : gap;
+
+  // Default button styles - can be completely overridden by style prop
+  const defaultStyles: React.CSSProperties = {
+    maxWidth: fullWidth ? "100%" : maxWidth,
+    width: fullWidth ? "100%" : undefined,
+    height,
+    borderRadius,
+    padding,
+    gap,
+    background,
+    opacity,
+    border: "none",
+    cursor: "pointer",
+    display: "flex",
+    alignItems: "center",
+    justifyContent: "center",
+    minWidth: "140px",
+    fontSize: actualFontSize,
+    transition: "all 0.3s ease",
+  };
+
+  // Default text styles - can be completely overridden by textStyle prop
+  const defaultTextStyles: React.CSSProperties = {
+    color: "#fff",
+    fontWeight: 400,
+    fontSize: actualFontSize,
+    fontFamily: "Source Sans Pro",
+  };
+
   return (
     <button
       style={{
-        maxWidth,
-        height,
-        borderRadius,
-        padding,
-        gap,
-        background,
-        opacity,
-        border: "none",
-        cursor: "pointer",
-        display: "flex",
-        alignItems: "center",
-        justifyContent: "center",
-        minWidth: "140px",
-        fontSize: "clamp(14px, 2.5vw, 20px)",
-        transition: "all 0.3s ease",
-        ...style,
+        ...defaultStyles,
+        ...style, // Custom styles override defaults
       }}
       {...rest}
     >
-      {startIcon && <span style={{ marginRight: gap }}>{startIcon}</span>}
+      {startIcon && (
+        <span style={{ marginRight: actualIconGap }}>{startIcon}</span>
+      )}
       <span
         style={{
-          color: "#fff",
-          fontWeight: 400,
-          fontSize: "clamp(14px, 2.5vw, 20px)",
-          fontFamily: "Source Sans Pro",
-          ...textStyle,
+          ...defaultTextStyles,
+          ...textStyle, // Custom text styles override defaults
         }}
       >
         {text}
       </span>
-      {endIcon && <span style={{ marginLeft: gap }}>{endIcon}</span>}
+      {endIcon && <span style={{ marginLeft: actualIconGap }}>{endIcon}</span>}
     </button>
   );
 };

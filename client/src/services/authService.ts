@@ -14,6 +14,21 @@ export interface UserData {
   email: string;
   username: string;
   phoneNumber?: string;
+  subscription?: {
+    isActive: boolean;
+    plan: 'free' | 'premium';
+    expiresAt?: Date;
+  };
+  progress?: {
+    completedLevels: number[];
+    highestUnlockedLevel: number;
+    testScores: {
+      level1?: number;
+      level2?: number;
+      level3?: number;
+      level4?: number;
+    };
+  };
 }
 
 export interface SignUpData {
@@ -62,7 +77,16 @@ export const authService = {
       
       if (result.success && result.data) {
         // Save to Redux store only (cookies handle persistence now)
-        store.dispatch(loginSuccess(result.data));
+        store.dispatch(loginSuccess({
+          user: {
+            userId: result.data.userId,
+            email: result.data.email,
+            username: result.data.username,
+            phoneNumber: result.data.phoneNumber
+          },
+          subscription: result.data.subscription,
+          progress: result.data.progress
+        }));
       }
       
       return result;
@@ -85,7 +109,16 @@ export const authService = {
       
       if (result.success && result.data) {
         // Save to Redux store only (cookies handle persistence now)
-        store.dispatch(loginSuccess(result.data));
+        store.dispatch(loginSuccess({
+          user: {
+            userId: result.data.userId,
+            email: result.data.email,
+            username: result.data.username,
+            phoneNumber: result.data.phoneNumber
+          },
+          subscription: result.data.subscription,
+          progress: result.data.progress
+        }));
       }
       
       return result;
@@ -123,7 +156,16 @@ export const authService = {
       const result = response as unknown as ApiResponse<UserData>;
       
       if (result.success && result.data) {
-        store.dispatch(loginSuccess(result.data));
+        store.dispatch(loginSuccess({
+          user: {
+            userId: result.data.userId,
+            email: result.data.email,
+            username: result.data.username,
+            phoneNumber: result.data.phoneNumber
+          },
+          subscription: result.data.subscription,
+          progress: result.data.progress
+        }));
         return result.data;
       }
       
