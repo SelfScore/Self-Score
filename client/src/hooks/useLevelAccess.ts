@@ -5,6 +5,7 @@ export interface LevelAccess {
   reason: 'LEVEL_LOCKED' | 'SUBSCRIPTION_REQUIRED' | null;
 }
 
+
 export const useLevelAccess = () => {
   const { user, purchasedLevels, progress } = useAppSelector(state => state.auth);
   
