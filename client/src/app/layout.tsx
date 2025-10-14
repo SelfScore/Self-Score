@@ -31,7 +31,7 @@ const spaceGrotesk = Space_Grotesk({
 });
 
 export const metadata: Metadata = {
-  title: "Life Score - Transform Your Life",
+  title: "Self Score - Transform Your Life",
   description:
     "Discover your potential and track your progress across all life dimensions with personalized life scoring.",
 };
