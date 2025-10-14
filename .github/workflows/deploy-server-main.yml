@@ -45,8 +45,8 @@ jobs:
           username: ${{ secrets.AWS_USER_MAIN }}
           key: ${{ secrets.AWS_PRIVATE_KEY_MAIN }}
           script: |
-            mkdir -p /home/ubuntu/sarie-webapp/self-score/server-new
-            rm -rf /home/ubuntu/sarie-webapp/self-score/server-old
+            mkdir -p /home/ubuntu/self-score/server-new
+            rm -rf /home/ubuntu/self-score/server-old
 
       - name: Deploy Server Files
         uses: appleboy/scp-action@v0.1.7
@@ -55,7 +55,7 @@ jobs:
           username: ${{ secrets.AWS_USER_MAIN }}
           key: ${{ secrets.AWS_PRIVATE_KEY_MAIN }}
           source: "server/dist/, server/package*.json"
-          target: "/home/ubuntu/sarie-webapp/self-score/server-new/"
+          target: "/home/ubuntu/self-score/server-new/"
           strip_components: 1
           concurrency: 10
 
@@ -80,16 +80,16 @@ jobs:
               nvm use default 2>/dev/null || nvm use node 2>/dev/null || true
             fi
             
-            cd /home/ubuntu/sarie-webapp/self-score/server-new
+            cd /home/ubuntu/self-score/server-new
             npm ci --production --no-audit --prefer-offline
             
-            cd /home/ubuntu/sarie-webapp/self-score/
+            cd /home/ubuntu/self-score/
             
-            if [ -d "/home/ubuntu/sarie-webapp/self-score/server" ]; then
-              mv /home/ubuntu/sarie-webapp/self-score/server /home/ubuntu/sarie-webapp/self-score/server-old
+            if [ -d "/home/ubuntu/self-score/server" ]; then
+              mv /home/ubuntu/self-score/server /home/ubuntu/self-score/server-old
             fi
-            mv /home/ubuntu/sarie-webapp/self-score/server-new /home/ubuntu/sarie-webapp/self-score/server
-            sudo chown -R ubuntu:ubuntu /home/ubuntu/sarie-webapp/self-score/server
+            mv /home/ubuntu/self-score/server-new /home/ubuntu/self-score/server
+            sudo chown -R ubuntu:ubuntu /home/ubuntu/self-score/server
             
             if ! command -v pm2 >/dev/null 2>&1; then
               npm install -g pm2
@@ -131,4 +131,4 @@ jobs:
             $PM2_CMD list
             $PM2_CMD save
             
-            rm -rf /home/ubuntu/sarie-webapp/self-score/server-old
+            rm -rf /home/ubuntu/self-score/server-old
