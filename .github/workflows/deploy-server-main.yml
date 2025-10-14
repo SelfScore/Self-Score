@@ -1,0 +1,134 @@
+# .github/workflows/deploy-server-main.yml
+name: Deploy Server to AWS EC2 (main)
+
+on:
+  push:
+    branches:
+      - main
+    paths:
+      - 'server/**'
+
+jobs:
+  deploy-server:
+    name: Deploy Server
+    runs-on: ubuntu-latest
+
+    steps:
+      - name: Checkout Code
+        uses: actions/checkout@v4
+        with:
+          fetch-depth: 1
+
+      - name: Cache Server Dependencies
+        uses: actions/cache@v3
+        with:
+          path: server/node_modules
+          key: ${{ runner.os }}-server-${{ hashFiles('server/package-lock.json') }}
+          restore-keys: |
+            ${{ runner.os }}-server-
+
+      - name: Install and Build Server
+        run: |
+          cd server
+          npm ci
+          npm run build
+
+          if [ -d "dist/server/dist" ]; then
+            mv dist/server/dist/* dist/
+            rm -rf dist/server
+          fi
+
+      - name: Clean and Prepare Remote Server Directory
+        uses: appleboy/ssh-action@v0.1.7
+        with:
+          host: ${{ secrets.AWS_HOST_MAIN }}
+          username: ${{ secrets.AWS_USER_MAIN }}
+          key: ${{ secrets.AWS_PRIVATE_KEY_MAIN }}
+          script: |
+            mkdir -p /home/ubuntu/sarie-webapp/self-score/server-new
+            rm -rf /home/ubuntu/sarie-webapp/self-score/server-old
+
+      - name: Deploy Server Files
+        uses: appleboy/scp-action@v0.1.7
+        with:
+          host: ${{ secrets.AWS_HOST_MAIN }}
+          username: ${{ secrets.AWS_USER_MAIN }}
+          key: ${{ secrets.AWS_PRIVATE_KEY_MAIN }}
+          source: "server/dist/, server/package*.json"
+          target: "/home/ubuntu/sarie-webapp/self-score/server-new/"
+          strip_components: 1
+          concurrency: 10
+
+      - name: Install Dependencies and Restart PM2
+        uses: appleboy/ssh-action@v0.1.7
+        with:
+          host: ${{ secrets.AWS_HOST_MAIN }}
+          username: ${{ secrets.AWS_USER_MAIN }}
+          key: ${{ secrets.AWS_PRIVATE_KEY_MAIN }}
+          script: |
+            source ~/.bashrc 2>/dev/null || true
+            source ~/.bash_profile 2>/dev/null || true
+            source ~/.profile 2>/dev/null || true
+            
+            export NVM_DIR="$HOME/.nvm"
+            [ -s "$NVM_DIR/nvm.sh" ] && \. "$NVM_DIR/nvm.sh"
+            [ -s "$NVM_DIR/bash_completion" ] && \. "$NVM_DIR/bash_completion"
+            
+            export PATH="$PATH:/usr/local/bin:/usr/bin:/opt/node/bin:$HOME/.npm-global/bin:$HOME/.local/bin"
+            
+            if command -v nvm >/dev/null 2>&1; then
+              nvm use default 2>/dev/null || nvm use node 2>/dev/null || true
+            fi
+            
+            cd /home/ubuntu/sarie-webapp/self-score/server-new
+            npm ci --production --no-audit --prefer-offline
+            
+            cd /home/ubuntu/sarie-webapp/self-score/
+            
+            if [ -d "/home/ubuntu/sarie-webapp/self-score/server" ]; then
+              mv /home/ubuntu/sarie-webapp/self-score/server /home/ubuntu/sarie-webapp/self-score/server-old
+            fi
+            mv /home/ubuntu/sarie-webapp/self-score/server-new /home/ubuntu/sarie-webapp/self-score/server
+            sudo chown -R ubuntu:ubuntu /home/ubuntu/sarie-webapp/self-score/server
+            
+            if ! command -v pm2 >/dev/null 2>&1; then
+              npm install -g pm2
+              
+              NPM_GLOBAL_PATH=$(npm root -g 2>/dev/null | sed 's/node_modules$/bin/' 2>/dev/null || echo "")
+              if [ -n "$NPM_GLOBAL_PATH" ] && [ -d "$NPM_GLOBAL_PATH" ]; then
+                export PATH="$PATH:$NPM_GLOBAL_PATH"
+              fi
+              
+              if ! command -v pm2 >/dev/null 2>&1; then
+                PM2_LOCATIONS="/usr/local/bin/pm2 /usr/bin/pm2 $HOME/.npm-global/bin/pm2 $NPM_GLOBAL_PATH/pm2"
+                PM2_FOUND=""
+                for location in $PM2_LOCATIONS; do
+                  if [ -f "$location" ]; then
+                    PM2_FOUND="$location"
+                    break
+                  fi
+                done
+                
+                if [ -n "$PM2_FOUND" ]; then
+                  PM2_CMD="$PM2_FOUND"
+                else
+                  echo "ERROR: PM2 still not found after installation"
+                  exit 1
+                fi
+              else
+                PM2_CMD="pm2"
+              fi
+            else
+              PM2_CMD="pm2"
+            fi
+            
+            if $PM2_CMD list | grep -q "self-score"; then
+              $PM2_CMD reload ecosystem.config.js --only self-score
+            else
+              $PM2_CMD start ecosystem.config.js --only self-score
+            fi
+            
+            $PM2_CMD list
+            $PM2_CMD save
+            
+            rm -rf /home/ubuntu/sarie-webapp/self-score/server-old
