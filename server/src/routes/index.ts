@@ -3,6 +3,7 @@ import authRoutes from './auth';
 import questionRoutes from './questions';
 import questionsResponseRoutes from './questionsResponse';
 import subscriptionRoutes from './subscription';
+import paymentRoutes from './payment';
 
 const router = Router();
 
@@ -11,6 +12,7 @@ router.use('/auth', authRoutes);
 router.use('/questions-response', questionsResponseRoutes);
 router.use('/questions', questionRoutes);
 router.use('/subscription', subscriptionRoutes);
+router.use('/payment', paymentRoutes);
 
 
 // Health check route

@@ -67,9 +67,10 @@ export class AuthController {
                 verifyCode,
                 verifyCodeExpiry: expiryDate, 
                 isVerified: false,
-                subscription: {
-                    isActive: false,
-                    plan: 'free'
+                purchasedLevels: {
+                    level2: { purchased: false },
+                    level3: { purchased: false },
+                    level4: { purchased: false }
                 },
                 progress: {
                     completedLevels: [],
@@ -84,7 +85,7 @@ export class AuthController {
                 userId: (newUser._id as string).toString(),
                 email: newUser.email,
                 username: newUser.username,
-                subscription: newUser.subscription,
+                purchasedLevels: newUser.purchasedLevels,
                 progress: newUser.progress
             };
 
@@ -158,7 +159,7 @@ export class AuthController {
                 email: user.email,
                 username: user.username,
                 phoneNumber: user.phoneNumber,
-                subscription: user.subscription,
+                purchasedLevels: user.purchasedLevels,
                 progress: user.progress
             };
 
@@ -250,7 +251,7 @@ export class AuthController {
                 email: user.email,
                 username: user.username,
                 phoneNumber: user.phoneNumber,
-                subscription: user.subscription,
+                purchasedLevels: user.purchasedLevels,
                 progress: user.progress
             };
 
@@ -373,7 +374,7 @@ export class AuthController {
                 email: user.email,
                 username: user.username,
                 phoneNumber: user.phoneNumber,
-                subscription: user.subscription,
+                purchasedLevels: user.purchasedLevels,
                 progress: user.progress
             };
 

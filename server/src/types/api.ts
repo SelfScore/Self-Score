@@ -11,10 +11,22 @@ export interface UserResponse {
     username: string;
     phoneNumber?: string;
     isVerified?: boolean;
-    subscription?: {
-        isActive: boolean;
-        plan: 'free' | 'premium';
-        expiresAt?: Date;
+    purchasedLevels?: {
+        level2: {
+            purchased: boolean;
+            purchaseDate?: Date;
+            paymentId?: string;
+        };
+        level3: {
+            purchased: boolean;
+            purchaseDate?: Date;
+            paymentId?: string;
+        };
+        level4: {
+            purchased: boolean;
+            purchaseDate?: Date;
+            paymentId?: string;
+        };
     };
     progress?: {
         completedLevels: number[];

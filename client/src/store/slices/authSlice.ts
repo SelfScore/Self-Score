@@ -7,10 +7,22 @@ export interface UserData {
   phoneNumber?: string;
 }
 
-export interface SubscriptionData {
-  isActive: boolean;
-  plan: 'free' | 'premium';
-  expiresAt?: Date;
+export interface PurchasedLevelsData {
+  level2: {
+    purchased: boolean;
+    purchaseDate?: Date;
+    paymentId?: string;
+  };
+  level3: {
+    purchased: boolean;
+    purchaseDate?: Date;
+    paymentId?: string;
+  };
+  level4: {
+    purchased: boolean;
+    purchaseDate?: Date;
+    paymentId?: string;
+  };
 }
 
 export interface ProgressData {
@@ -29,7 +41,7 @@ interface AuthState {
   isAuthenticated: boolean;
   isLoading: boolean;
   error: string | null;
-  subscription: SubscriptionData | null;
+  purchasedLevels: PurchasedLevelsData | null;
   progress: ProgressData | null;
 }
 
@@ -38,7 +50,7 @@ const initialState: AuthState = {
   isAuthenticated: false,
   isLoading: false,
   error: null,
-  subscription: null,
+  purchasedLevels: null,
   progress: null,
 };
 
@@ -57,9 +69,9 @@ const authSlice = createSlice({
     },
 
     // Login success
-    loginSuccess: (state, action: PayloadAction<{user: UserData, subscription?: SubscriptionData, progress?: ProgressData}>) => {
+    loginSuccess: (state, action: PayloadAction<{user: UserData, purchasedLevels?: PurchasedLevelsData, progress?: ProgressData}>) => {
       state.user = action.payload.user;
-      state.subscription = action.payload.subscription || null;
+      state.purchasedLevels = action.payload.purchasedLevels || null;
       state.progress = action.payload.progress || null;
       state.isAuthenticated = true;
       state.isLoading = false;
@@ -69,7 +81,7 @@ const authSlice = createSlice({
     // Logout
     logout: (state) => {
       state.user = null;
-      state.subscription = null;
+      state.purchasedLevels = null;
       state.progress = null;
       state.isAuthenticated = false;
       state.isLoading = false;
@@ -88,9 +100,9 @@ const authSlice = createSlice({
       }
     },
 
-    // Update subscription data
-    updateSubscription: (state, action: PayloadAction<SubscriptionData>) => {
-      state.subscription = action.payload;
+    // Update purchased levels data
+    updatePurchasedLevels: (state, action: PayloadAction<PurchasedLevelsData>) => {
+      state.purchasedLevels = action.payload;
     },
 
     // Update progress data
@@ -99,10 +111,10 @@ const authSlice = createSlice({
     },
 
     // Initialize auth state from localStorage (for hydration)
-    initializeAuth: (state, action: PayloadAction<{user: UserData, subscription?: SubscriptionData, progress?: ProgressData} | null>) => {
+    initializeAuth: (state, action: PayloadAction<{user: UserData, purchasedLevels?: PurchasedLevelsData, progress?: ProgressData} | null>) => {
       if (action.payload) {
         state.user = action.payload.user;
-        state.subscription = action.payload.subscription || null;
+        state.purchasedLevels = action.payload.purchasedLevels || null;
         state.progress = action.payload.progress || null;
         state.isAuthenticated = true;
       }
@@ -117,7 +129,7 @@ export const {
   logout,
   clearError,
   updateUser,
-  updateSubscription,
+  updatePurchasedLevels,
   updateProgress,
   initializeAuth,
 } = authSlice.actions;

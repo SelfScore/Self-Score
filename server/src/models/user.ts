@@ -8,10 +8,22 @@ export interface User extends Document {
     verifyCode: string;
     isVerified: boolean;
     verifyCodeExpiry: Date;
-    subscription: {
-        isActive: boolean;
-        plan: 'free' | 'premium';
-        expiresAt?: Date;
+    purchasedLevels: {
+        level2: {
+            purchased: boolean;
+            purchaseDate?: Date;
+            paymentId?: string;
+        };
+        level3: {
+            purchased: boolean;
+            purchaseDate?: Date;
+            paymentId?: string;
+        };
+        level4: {
+            purchased: boolean;
+            purchaseDate?: Date;
+            paymentId?: string;
+        };
     };
     progress: {
         completedLevels: number[];
@@ -58,19 +70,48 @@ const UserSchema: Schema<User> = new Schema({
         type: String, 
         required: [false, "Phone number is required"] 
     },
-    subscription: {
-        isActive: { 
-            type: Boolean, 
-            default: false 
+    purchasedLevels: {
+        level2: {
+            purchased: { 
+                type: Boolean, 
+                default: false 
+            },
+            purchaseDate: { 
+                type: Date, 
+                required: false 
+            },
+            paymentId: { 
+                type: String, 
+                required: false 
+            }
         },
-        plan: { 
-            type: String, 
-            enum: ['free', 'premium'], 
-            default: 'free' 
+        level3: {
+            purchased: { 
+                type: Boolean, 
+                default: false 
+            },
+            purchaseDate: { 
+                type: Date, 
+                required: false 
+            },
+            paymentId: { 
+                type: String, 
+                required: false 
+            }
         },
-        expiresAt: { 
-            type: Date, 
-            required: false 
+        level4: {
+            purchased: { 
+                type: Boolean, 
+                default: false 
+            },
+            purchaseDate: { 
+                type: Date, 
+                required: false 
+            },
+            paymentId: { 
+                type: String, 
+                required: false 
+            }
         }
     },
     progress: {

@@ -1,11 +1,17 @@
 import mongoose, { Document, Schema } from "mongoose";
 
+export enum ScoringType {
+    POSITIVE_MULTIPLIER = "POSITIVE_MULTIPLIER",
+    NEGATIVE_MULTIPLIER = "NEGATIVE_MULTIPLIER"
+}
+
 export interface Question extends Document {
     level: number;
     questionText: string;
     options: string[];
     correctOptionIndex: number;
     questionType?: string; // e.g., "multiple-choice", "true-false"
+    scoringType?: ScoringType;
 }
 
 const QuestionSchema: Schema<Question> = new Schema({
@@ -43,6 +49,11 @@ const QuestionSchema: Schema<Question> = new Schema({
         type: String, 
         enum: ["multiple-choice", "slider-scale"],
         default: "multiple-choice"
+    },
+    scoringType: { 
+        type: String, 
+        enum: Object.values(ScoringType),
+        default: ScoringType.POSITIVE_MULTIPLIER
     }
 }, {
     timestamps: true  // Adds createdAt and updatedAt fields

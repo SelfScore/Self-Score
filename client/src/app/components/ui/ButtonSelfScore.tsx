@@ -29,7 +29,7 @@ const ButtonSelfScore: React.FC<ButtonSelfScoreProps> = ({
   height = 40,
   borderRadius = 12,
   padding = "10px 32px",
-  gap = 10,
+  gap = 5,
   background = "#FF4F00",
   opacity = 1,
   fullWidth = false,
@@ -78,17 +78,39 @@ const ButtonSelfScore: React.FC<ButtonSelfScoreProps> = ({
       {...rest}
     >
       {startIcon && (
-        <span style={{ marginRight: actualIconGap }}>{startIcon}</span>
+        <span
+          style={{
+            marginRight: actualIconGap,
+            display: "flex",
+            alignItems: "center",
+            justifyContent: "center",
+          }}
+        >
+          {startIcon}
+        </span>
       )}
       <span
         style={{
           ...defaultTextStyles,
           ...textStyle, // Custom text styles override defaults
+          display: "flex",
+          alignItems: "center",
         }}
       >
         {text}
       </span>
-      {endIcon && <span style={{ marginLeft: actualIconGap }}>{endIcon}</span>}
+      {endIcon && (
+        <span
+          style={{
+            marginLeft: actualIconGap,
+            display: "flex",
+            alignItems: "center",
+            justifyContent: "center",
+          }}
+        >
+          {endIcon}
+        </span>
+      )}
     </button>
   );
 };

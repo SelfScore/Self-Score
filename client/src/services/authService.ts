@@ -14,10 +14,22 @@ export interface UserData {
   email: string;
   username: string;
   phoneNumber?: string;
-  subscription?: {
-    isActive: boolean;
-    plan: 'free' | 'premium';
-    expiresAt?: Date;
+  purchasedLevels?: {
+    level2: {
+      purchased: boolean;
+      purchaseDate?: Date;
+      paymentId?: string;
+    };
+    level3: {
+      purchased: boolean;
+      purchaseDate?: Date;
+      paymentId?: string;
+    };
+    level4: {
+      purchased: boolean;
+      purchaseDate?: Date;
+      paymentId?: string;
+    };
   };
   progress?: {
     completedLevels: number[];
@@ -84,7 +96,7 @@ export const authService = {
             username: result.data.username,
             phoneNumber: result.data.phoneNumber
           },
-          subscription: result.data.subscription,
+          purchasedLevels: result.data.purchasedLevels,
           progress: result.data.progress
         }));
       }
@@ -116,7 +128,7 @@ export const authService = {
             username: result.data.username,
             phoneNumber: result.data.phoneNumber
           },
-          subscription: result.data.subscription,
+          purchasedLevels: result.data.purchasedLevels,
           progress: result.data.progress
         }));
       }
@@ -163,7 +175,7 @@ export const authService = {
             username: result.data.username,
             phoneNumber: result.data.phoneNumber
           },
-          subscription: result.data.subscription,
+          purchasedLevels: result.data.purchasedLevels,
           progress: result.data.progress
         }));
         return result.data;

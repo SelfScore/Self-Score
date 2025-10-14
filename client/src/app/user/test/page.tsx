@@ -8,6 +8,8 @@ import Level2Test from "./Level2Test";
 import { useLevelAccess } from "../../../hooks/useLevelAccess";
 import SubscriptionRequired from "../../components/ui/SubscriptionRequired";
 import LevelLocked from "../../components/ui/LevelLocked";
+import OutLineButton from "@/app/components/ui/OutLineButton";
+import ArrowBackIosIcon from '@mui/icons-material/ArrowBackIos';
 
 function TestContent() {
   const searchParams = useSearchParams();
@@ -81,28 +83,29 @@ function TestContent() {
     <Box
       sx={{
         width: "100%",
-        backgroundColor: "#F9F8F6",
+        backgroundColor: "#fff",
         p: 4,
         minHeight: "100vh",
       }}
     >
-      <Box sx={{ mb: 1, ml: { xs: 0, lg: 6 }, mt: 10 }}>
-        <button
+      <Box sx={{ mb: 1, ml: { xs: 0, lg: 8 }, mt: 10 }}>
+        <OutLineButton
+          startIcon={<ArrowBackIosIcon />}
           style={{
             background: "transparent",
-            color: "#005F73",
-            border: "2px solid #005F73",
-            borderRadius: "25px",
-            padding: "8px 20px",
-            fontWeight: "bold",
-            fontSize: "0.9rem",
+            color: "#3A3A3A",
+            border: "1px solid #3A3A3A",
+            borderRadius: "8px",
+            padding: "3.5px 14px",
+            fontWeight: 400,
+            fontSize: "18px",
             cursor: "pointer",
             transition: "all 0.2s",
           }}
           onClick={handleBackToInfo}
         >
-          ← Back to Levels
-        </button>
+          Back
+        </OutLineButton>
       </Box>
       {renderTestComponent()}
     </Box>

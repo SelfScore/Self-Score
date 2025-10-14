@@ -3,6 +3,7 @@ import mongoose from "mongoose";
 import QuestionsResponseModel from "../models/questionsResponse";
 import QuestionModel from "../models/questions";
 import UserModel from "../models/user";
+import TestSubmissionModel from "../models/testSubmission";
 
 // Save a user's question response
 export const createQuestionsResponse = async (req: Request, res: Response): Promise<Response> => {
@@ -190,6 +191,15 @@ export const createLevel1Response = async (req: Request, res: Response): Promise
                     const finalScore = Math.max(totalScore, 350); // Minimum score 350
                     const cappedScore = Math.min(finalScore, 900); // Maximum score 900
 
+                    // Create test submission record for this attempt
+                    await TestSubmissionModel.create({
+                        userId: userObjectId,
+                        level: 1,
+                        score: cappedScore,
+                        totalQuestions: savedResponses.length,
+                        submittedAt: new Date()
+                    });
+
                     // Add Level 1 to completed levels if not already there
                     if (!user.progress.completedLevels.includes(1)) {
                         user.progress.completedLevels.push(1);
@@ -198,7 +208,7 @@ export const createLevel1Response = async (req: Request, res: Response): Promise
                     // Unlock Level 2 (set highest unlocked level to 2)
                     user.progress.highestUnlockedLevel = Math.max(user.progress.highestUnlockedLevel, 2);
                     
-                    // Save the Level 1 test score
+                    // Save the Level 1 test score (latest score)
                     user.progress.testScores.level1 = cappedScore;
                     
                     await user.save();
@@ -253,13 +263,248 @@ export const createLevel1Response = async (req: Request, res: Response): Promise
     }
 };
 
+// Generic function to submit responses for any level (2, 3, 4)
+export const submitLevelResponses = async (req: Request, res: Response): Promise<Response> => {
+    try {
+        console.log("Received level submission request:", JSON.stringify(req.body, null, 2));
+        
+        const { userId, level, responses } = req.body;
+
+        // Validate userId
+        if (!userId) {
+            return res.status(400).json({
+                success: false,
+                message: "userId is required",
+            });
+        }
+
+        // Validate level
+        if (!level || ![2, 3, 4].includes(level)) {
+            return res.status(400).json({
+                success: false,
+                message: "Valid level (2, 3, or 4) is required",
+            });
+        }
+
+        // Convert userId to ObjectId
+        let userObjectId;
+        try {
+            userObjectId = new mongoose.Types.ObjectId(userId);
+        } catch (error) {
+            return res.status(400).json({
+                success: false,
+                message: "Invalid userId format",
+            });
+        }
+
+        // Check if user exists and has purchased this level
+        const user = await UserModel.findById(userObjectId);
+        if (!user) {
+            return res.status(404).json({
+                success: false,
+                message: "User not found",
+            });
+        }
+
+        // Check if level is purchased (for levels 2-4)
+        if (level > 1) {
+            const levelKey = `level${level}` as 'level2' | 'level3' | 'level4';
+            if (!user.purchasedLevels[levelKey].purchased) {
+                return res.status(403).json({
+                    success: false,
+                    message: `Please purchase Level ${level} to submit responses`,
+                });
+            }
+        }
+
+        // Validate responses
+        if (!Array.isArray(responses) || responses.length === 0) {
+            return res.status(400).json({
+                success: false,
+                message: "At least one response is required",
+            });
+        }
+
+        const savedResponses = [];
+        const errors = [];
+
+        // Process each response
+        for (const responseData of responses) {
+            try {
+                const { questionId, selectedOptionIndex } = responseData;
+
+                if (!questionId || selectedOptionIndex === undefined) {
+                    errors.push({
+                        questionId: questionId || 'unknown',
+                        error: 'questionId and selectedOptionIndex are required'
+                    });
+                    continue;
+                }
+
+                let questionObjectId;
+                try {
+                    questionObjectId = new mongoose.Types.ObjectId(questionId);
+                } catch (error) {
+                    errors.push({
+                        questionId,
+                        error: 'Invalid questionId format'
+                    });
+                    continue;
+                }
+
+                // Check for existing response
+                const existingResponse = await QuestionsResponseModel.findOne({
+                    userId: userObjectId,
+                    questionId: questionObjectId,
+                });
+
+                if (existingResponse) {
+                    existingResponse.selectedOptionIndex = selectedOptionIndex;
+                    const updatedResponse = await existingResponse.save();
+                    savedResponses.push(updatedResponse.toObject());
+                } else {
+                    const savedResponse = await QuestionsResponseModel.create({
+                        userId: userObjectId,
+                        level,
+                        questionId: questionObjectId,
+                        selectedOptionIndex,
+                    });
+                    savedResponses.push(savedResponse.toObject());
+                }
+
+            } catch (error) {
+                errors.push({
+                    questionId: responseData.questionId || 'unknown',
+                    error: error instanceof Error ? error.message : 'Unknown error'
+                });
+            }
+        }
+
+        // If all responses saved, calculate score and update user progress
+        if (savedResponses.length > 0 && errors.length === 0) {
+            try {
+                // Fetch all questions to get their scoringType
+                const questionIds = savedResponses.map(r => r.questionId);
+                const questions = await QuestionModel.find({ _id: { $in: questionIds } });
+                
+                // Create a map for quick lookup
+                const questionMap = new Map(
+                    questions.map(q => [(q._id as string).toString(), q])
+                );
+
+                // Calculate score based on level-specific logic
+                let calculatedScore = 0;
+                
+                if (level === 1) {
+                    // Level 1: All questions use +15 multiplier
+                    calculatedScore = savedResponses.reduce((sum, response) => {
+                        return sum + (response.selectedOptionIndex * 15);
+                    }, 0);
+                } else {
+                    // Level 2+: Use scoringType from each question
+                    calculatedScore = savedResponses.reduce((sum, response) => {
+                        const questionId = response.questionId.toString();
+                        const question = questionMap.get(questionId);
+                        if (!question) return sum;
+                        
+                        // Apply multiplier based on scoringType
+                        const multiplier = question.scoringType === 'NEGATIVE_MULTIPLIER' ? -10 : 15;
+                        return sum + (response.selectedOptionIndex * multiplier);
+                    }, 0);
+                }
+                
+                // Calculate final score
+                const finalScore = level === 1 
+                    ? Math.max(calculatedScore, 350)  // Level 1: minimum is 350
+                    : 350 + calculatedScore;          // Level 2+: base 350 + calculated score
+                
+                const cappedScore = Math.max(350, Math.min(finalScore, 900)); // Ensure within 350-900 range
+
+                // Create test submission record for this attempt
+                await TestSubmissionModel.create({
+                    userId: userObjectId,
+                    level: level,
+                    score: cappedScore,
+                    totalQuestions: savedResponses.length,
+                    submittedAt: new Date()
+                });
+
+                // Update user progress
+                if (!user.progress.completedLevels.includes(level)) {
+                    user.progress.completedLevels.push(level);
+                }
+
+                // Unlock next level if exists
+                const nextLevel = level + 1;
+                if (nextLevel <= 4) {
+                    user.progress.highestUnlockedLevel = Math.max(
+                        user.progress.highestUnlockedLevel, 
+                        nextLevel
+                    );
+                }
+
+                // Save score (latest score)
+                const levelKey = `level${level}` as 'level1' | 'level2' | 'level3' | 'level4';
+                user.progress.testScores[levelKey] = cappedScore;
+
+                await user.save();
+
+                console.log(`User ${userId} completed Level ${level} with score ${cappedScore} (calculated: ${calculatedScore})`);
+
+                return res.status(201).json({
+                    success: true,
+                    message: `Level ${level} responses saved successfully`,
+                    data: {
+                        savedCount: savedResponses.length,
+                        responses: savedResponses,
+                        score: cappedScore,
+                        nextLevelUnlocked: nextLevel <= 4 ? nextLevel : null
+                    }
+                });
+            } catch (error) {
+                console.error("Error updating user progress:", error);
+            }
+        }
+
+        // Partial or failed responses
+        if (savedResponses.length > 0 && errors.length > 0) {
+            return res.status(207).json({
+                success: true,
+                message: `${savedResponses.length} responses saved, ${errors.length} failed`,
+                data: {
+                    savedCount: savedResponses.length,
+                    errorCount: errors.length,
+                    responses: savedResponses,
+                    errors
+                }
+            });
+        }
+
+        return res.status(400).json({
+            success: false,
+            message: "Failed to save responses",
+            data: {
+                errorCount: errors.length,
+                errors
+            }
+        });
+
+    } catch (error) {
+        return res.status(500).json({
+            success: false,
+            message: "Error saving level responses",
+            error: error instanceof Error ? error.message : error,
+        });
+    }
+};
+
 // Get all responses of a user
 export const getUserResponses = async (req: Request, res: Response): Promise<Response> => {
     try {
         const { userId } = req.params;
 
         const responses = await QuestionsResponseModel.find({ userId })
-            .populate("questionId", "questionText options correctOptionIndex level");
+            .populate("questionId", "questionText options correctOptionIndex level scoringType questionType");
 
         return res.status(200).json({
             success: true,
@@ -270,6 +515,53 @@ export const getUserResponses = async (req: Request, res: Response): Promise<Res
         return res.status(500).json({
             success: false,
             message: "Error fetching user responses",
+            error: error instanceof Error ? error.message : error,
+        });
+    }
+};
+
+// Get user's test history with scores and dates (all attempts)
+export const getUserTestHistory = async (req: Request, res: Response): Promise<Response> => {
+    try {
+        const { userId } = req.params;
+
+        // Validate userId
+        let userObjectId;
+        try {
+            userObjectId = new mongoose.Types.ObjectId(userId);
+        } catch (error) {
+            return res.status(400).json({
+                success: false,
+                message: "Invalid userId format",
+            });
+        }
+
+        // Get all test submissions for this user
+        const testSubmissions = await TestSubmissionModel
+            .find({ userId: userObjectId })
+            .sort({ submittedAt: -1 }) // Most recent first
+            .lean();
+
+        // Transform the data to match expected format
+        const testHistory = testSubmissions.map((submission: any) => ({
+            _id: submission._id.toString(),
+            level: submission.level,
+            score: submission.score,
+            totalQuestions: submission.totalQuestions,
+            timeSpent: submission.timeSpent,
+            submittedAt: submission.submittedAt,
+            date: submission.submittedAt,
+        }));
+
+        return res.status(200).json({
+            success: true,
+            count: testHistory.length,
+            data: testHistory,
+        });
+    } catch (error) {
+        return res.status(500).json({
+            success: false,
+            message: "Error fetching user test history",
             error: error instanceof Error ? error.message : error,
         });
     }

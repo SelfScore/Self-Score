@@ -275,7 +275,7 @@ export default function Header() {
         border: "1px solid #3A3A3A33",
         boxShadow: "none",
         top: 0,
-        width: { xs: "98%", sm: "95%", md: "90%", lg: "89%" },
+        width: { xs: "98%", sm: "95%", md: "90%", lg: "1280px" },
         borderRadius: { xs: "12px", md: "16px" },
         mx: "auto",
         my: { xs: "8px", md: "14px" },

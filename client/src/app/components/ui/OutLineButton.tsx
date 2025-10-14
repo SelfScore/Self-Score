@@ -12,6 +12,20 @@ const OutLineButton: React.FC<ButtonProps> = ({ children, sx, ...props }) => {
         fontWeight: 400,
         textTransform: "none",
         fontSize: { xs: "1rem", md: "20px" },
+        display: "flex",
+        alignItems: "center",
+        justifyContent: "center",
+        gap: "4px",
+        "& .MuiButton-startIcon": {
+          margin: 0,
+          display: "flex",
+          alignItems: "center",
+        },
+        "& .MuiButton-endIcon": {
+          margin: 0,
+          display: "flex",
+          alignItems: "center",
+        },
         ...sx,
       }}
       {...props}

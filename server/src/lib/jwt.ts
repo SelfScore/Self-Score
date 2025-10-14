@@ -11,10 +11,22 @@ export interface TokenPayload {
     email: string;
     username: string;
     phoneNumber?: string;
-    subscription?: {
-        isActive: boolean;
-        plan: 'free' | 'premium';
-        expiresAt?: Date;
+    purchasedLevels?: {
+        level2: {
+            purchased: boolean;
+            purchaseDate?: Date;
+            paymentId?: string;
+        };
+        level3: {
+            purchased: boolean;
+            purchaseDate?: Date;
+            paymentId?: string;
+        };
+        level4: {
+            purchased: boolean;
+            purchaseDate?: Date;
+            paymentId?: string;
+        };
     };
     progress?: {
         completedLevels: number[];
@@ -29,7 +41,7 @@ export const generateToken = (userData: UserResponse): string => {
         email: userData.email,
         username: userData.username,
         phoneNumber: userData.phoneNumber,
-        subscription: userData.subscription,
+        purchasedLevels: userData.purchasedLevels,
         progress: userData.progress
     };
 

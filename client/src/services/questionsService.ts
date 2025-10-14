@@ -9,6 +9,7 @@ export interface Question {
   level: number;
   correctOptionIndex?: number;
   questionType?: string; // "multiple-choice" or "slider-scale"
+  scoringType?: 'POSITIVE_MULTIPLIER' | 'NEGATIVE_MULTIPLIER'; // Scoring type for the question
   userResponse?: {
     selectedOptionIndex: number;
     answeredAt: string;
@@ -75,8 +76,22 @@ export const questionsApi = {
     });
   },
 
+  // Submit responses for any level (2, 3, 4) - Generic submission
+  submitLevelResponse: async (userId: string, level: number, responses: { questionId: string; selectedOptionIndex: number }[]): Promise<ResponseApiResponse> => {
+    return await api.post(API_ENDPOINTS.RESPONSES.SUBMIT_LEVEL, {
+      userId,
+      level,
+      responses
+    });
+  },
+
   // Get user responses
   getUserResponses: async (userId: string): Promise<ResponseApiResponse> => {
     return await api.get(API_ENDPOINTS.RESPONSES.GET_USER_RESPONSES(userId));
+  },
+
+  // Get user test history with scores and dates
+  getUserTestHistory: async (userId: string): Promise<ResponseApiResponse> => {
+    return await api.get(`/api/questions-response/test-history/${userId}`);
   },
 };

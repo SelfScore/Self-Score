@@ -1,7 +1,8 @@
-import { Box, Button, Typography } from "@mui/material";
+import { Box, Typography } from "@mui/material";
 import ButtonSelfScore from "../ui/ButtonSelfScore";
 import YogoPersonIMG from "../../../../public/images/ourMission/YogaPerson.webp";
 import Image from "next/image";
+import OutLineButton from "../ui/OutLineButton";
 
 export default function HeroSection() {
   return (
@@ -76,11 +77,12 @@ export default function HeroSection() {
           }}
         >
           <ButtonSelfScore text="Take the Happiness Test →" />
-          <Button
+          <OutLineButton
             variant="outlined"
             color="primary"
             sx={{
               borderRadius: "12px",
+              padding: { xs: "6.75px 14px", md: "1px 20px" },
               border: "1px solid #FF4F00",
               color: "#FF4F00",
               fontWeight: 400,
@@ -89,28 +91,30 @@ export default function HeroSection() {
             }}
           >
             Learn More
-          </Button>
+          </OutLineButton>
         </Box>
       </Box>
 
       {/* yoga person  */}
         <Box
-            sx={{
-            width: "100%",
-            height: { xs: "200px", md: "300px" },
-            mt: { xs: 4, md: 6 },
+          sx={{
+            width: "100vw",
             position: "relative",
-            
+            left: "50%",
+            right: "50%",
+            ml: "-50vw",
+            mr: "-50vw",
+            height: { xs: "200px", md: "589px" },
+            mt: { xs: 4, md: 6 },
             overflow: "hidden",
-            // p: 0 !important,
-            }}
+          }}
         >
-            <Image
+          <Image
             src={YogoPersonIMG}
             alt="Yoga Person"
             fill
             style={{ objectFit: "cover" }}
-            />
+          />
         </Box>
 
     </Box>

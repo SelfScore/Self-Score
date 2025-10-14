@@ -1,6 +1,6 @@
 "use client";
 
-import { useParams } from "next/navigation";
+import { useParams, useRouter } from "next/navigation";
 import { useEffect, useState } from "react";
 import {
   Box,
@@ -9,13 +9,23 @@ import {
   Alert,
   Typography,
   Button,
+  Paper,
+  Stack,
 } from "@mui/material";
-import TestAnalysis from "../components/TestAnalysis";
 import { questionsApi } from "../../../../services/questionsService";
 import { authService } from "../../../../services/authService";
+import OutLineButton from "@/app/components/ui/OutLineButton";
+import ArrowBackIosIcon from "@mui/icons-material/ArrowBackIos";
+import ButtonSelfScore from "@/app/components/ui/ButtonSelfScore";
+import DownloadIcon from "@mui/icons-material/Download";
+import FileUploadIcon from "@mui/icons-material/FileUpload";
+import ArrowForwardIcon from "@mui/icons-material/ArrowForward";
+import RefreshIcon from "@mui/icons-material/Refresh";
+import SpeedIcon from "@mui/icons-material/Speed";
 
 export default function LevelAnalysisPage() {
   const params = useParams();
+  const router = useRouter();
   const [loading, setLoading] = useState(true);
   const [checkingAuth, setCheckingAuth] = useState(true);
   const [error, setError] = useState<string>("");
@@ -75,28 +85,87 @@ export default function LevelAnalysisPage() {
           return;
         }
 
-        // Calculate score using the same logic as Level1Test.tsx
+        // Calculate score using level-specific logic
         const validResponses = levelResponses.filter(
           (response: any) =>
             response.questionId && response.selectedOptionIndex !== undefined
         );
 
-        // Calculate raw score: each response (0-10) multiplied by 15
-        const totalRawScore = validResponses.reduce(
-          (acc: number, response: any) => {
-            return acc + response.selectedOptionIndex * 15;
-          },
-          0
+        console.log(
+          `\n========== LEVEL ${levelNumber} ANALYSIS SCORE CALCULATION ==========`
         );
 
-        // Apply minimum score logic: if below 350, show 350
-        const finalScore = Math.max(totalRawScore, 350);
+        let calculatedScore = 0;
 
-        // Ensure we don't exceed maximum score of 900
-        const score = Math.min(finalScore, 900);
+        if (levelNumber === 1) {
+          // Level 1: All questions use +15 multiplier
+          calculatedScore = validResponses.reduce(
+            (acc: number, response: any) => {
+              return acc + response.selectedOptionIndex * 15;
+            },
+            0
+          );
+        } else {
+          // Level 2+: Use scoringType from each question
+          calculatedScore = validResponses.reduce(
+            (acc: number, response: any, index: number) => {
+              // Get scoringType from the populated questionId
+              const question = response.questionId;
+              if (question && question.scoringType) {
+                const multiplier =
+                  question.scoringType === "NEGATIVE_MULTIPLIER" ? -10 : 15;
+                const questionScore = response.selectedOptionIndex * multiplier;
 
-        // Level 1 always has 6 questions
-        const totalQuestions = 6;
+                console.log(`Question ${index + 1}:`);
+                console.log(`  - Type: ${question.scoringType}`);
+                console.log(
+                  `  - Selected Option: ${response.selectedOptionIndex}`
+                );
+                console.log(`  - Multiplier: ${multiplier}`);
+                console.log(
+                  `  - Score: ${response.selectedOptionIndex} × ${multiplier} = ${questionScore}`
+                );
+
+                return acc + questionScore;
+              }
+              // Default to positive multiplier if scoringType not found
+              console.log(
+                `Question ${index + 1}: Missing scoringType, using default +15`
+              );
+              return acc + response.selectedOptionIndex * 15;
+            },
+            0
+          );
+
+          console.log(`\nTotal Calculated Score: ${calculatedScore}`);
+        }
+
+        // Calculate final score based on level
+        let finalScore;
+        if (levelNumber === 1) {
+          // Level 1: minimum is 350
+          finalScore = Math.max(calculatedScore, 350);
+        } else {
+          // Level 2+: base 350 + calculated score
+          finalScore = 350 + calculatedScore;
+
+          console.log(`\nFinal Score Calculation:`);
+          console.log(`  - Base Score: 350`);
+          console.log(`  - Calculated Score: ${calculatedScore}`);
+          console.log(
+            `  - Final Score (before capping): 350 + ${calculatedScore} = ${finalScore}`
+          );
+        }
+
+        // Ensure score is within 350-900 range
+        const score = Math.max(350, Math.min(finalScore, 900));
+
+        console.log(`  - Capped Score (350-900): ${score}`);
+        console.log(
+          `================================================================\n`
+        );
+
+        const totalQuestions = validResponses.length;
 
         setAnalysisData({
           level: levelNumber,
@@ -116,6 +185,68 @@ export default function LevelAnalysisPage() {
 
     fetchAnalysisData();
   }, [level, levelNumber]);
+
+  // Score interpretation based on ranges
+  const getScoreInterpretation = (score: number): string => {
+    if (score >= 350 && score < 500) {
+      return "You're in a calm space, a perfect foundation for growth and self-discovery.";
+    } else if (score >= 500 && score < 650) {
+      return "You're radiating balance and calm, a beautiful space to grow from here.";
+    } else if (score >= 650 && score < 800) {
+      return "You're energized and driven, channeling your energy into meaningful action.";
+    } else {
+      return "You're experiencing high energy levels. Remember to find moments of balance.";
+    }
+  };
+
+  // Mock distribution data for the bar chart
+  const distributionData = [
+    { range: "350-450", count: 120, percentage: 15 },
+    { range: "450-550", count: 180, percentage: 22 },
+    { range: "550-650", count: 210, percentage: 26 },
+    { range: "650-750", count: 240, percentage: 30 },
+    { range: "750-850", count: 140, percentage: 17 },
+    { range: "850-900", count: 110, percentage: 14 },
+  ];
+
+  // Find user's position
+  const getUserBarIndex = (score: number) => {
+    return distributionData.findIndex((d) => {
+      const [min, max] = d.range.split("-").map(Number);
+      return score >= min && score < max;
+    });
+  };
+
+  // Calculate position on the scale (350-900 range)
+  const getPositionPercentage = (score: number): number => {
+    return ((score - 350) / (900 - 350)) * 100;
+  };
+
+  const handleRetake = () => {
+    router.push(`/user/test?level=${analysisData.level}`);
+  };
+
+  const handleDashboard = () => {
+    router.push("/user/dashboard");
+  };
+
+  const handleDownload = () => {
+    console.log("Download report");
+  };
+
+  const handleShare = () => {
+    console.log("Share results");
+  };
+
+  const handleNextLevel = () => {
+    if (analysisData) {
+      router.push(`/user/test?level=${analysisData.level + 1}`);
+    }
+  };
+
+  const handleBack = () => {
+    router.push(`/user`);
+  };
 
   if (loading) {
     return (
@@ -164,9 +295,445 @@ export default function LevelAnalysisPage() {
     );
   }
 
+  if (!analysisData) {
+    return null;
+  }
+
+  const maxCount = Math.max(...distributionData.map((d) => d.count));
+  const userBarIndex = getUserBarIndex(analysisData.score);
+  const scorePercentage = ((analysisData.score - 350) / (900 - 350)) * 100;
+
   return (
-    <Container maxWidth="md">
-      <TestAnalysis data={analysisData} />
-    </Container>
+    <Box sx={{ minHeight: "100vh", bgcolor: "background.default", py: 4 }}>
+      <Container sx={{ mt: 12 }}>
+        <OutLineButton
+          startIcon={<ArrowBackIosIcon />}
+          style={{
+            background: "transparent",
+            color: "#3A3A3A",
+            border: "1px solid #3A3A3A",
+            borderRadius: "8px",
+            padding: "3.5px 14px",
+            fontWeight: 400,
+            fontSize: "18px",
+            cursor: "pointer",
+            transition: "all 0.2s",
+          }}
+          onClick={handleBack}
+        >
+          Back
+        </OutLineButton>
+        {/* Header */}
+        <Box sx={{ textAlign: "center", mb: 6 }}>
+          <Typography
+            sx={{
+              fontSize: "40px",
+              fontWeight: 700,
+              fontFamily: "faustina",
+              color: "#005F73",
+            }}
+          >
+            Level {analysisData.level} Completed
+          </Typography>
+          <Typography
+            sx={{
+              fontSize: "18px",
+              fontWeight: 400,
+              fontFamily: "source sans pro",
+              color: "#6B7280",
+              lineHeight: "26px",
+              maxWidth: "700px",
+              mx: "auto",
+              my: { xs: 2, md: 3 },
+            }}
+          >
+            This test evaluates your self-awareness and understanding of your
+            current life situations. Rate each statement from 0-10 to calculate
+            your awareness score (350-900) points.
+          </Typography>
+        </Box>
+
+        {/* Score Card */}
+        <Paper
+          elevation={0}
+          sx={{
+            p: 4,
+            mb: 4,
+            borderRadius: "16px",
+            bgcolor: "#F7F7F7",
+            border: "1px solid #3A3A3A4D",
+            // maxWidth: { xs: "100%", md: "1280px" }
+          }}
+        >
+          <Typography
+            sx={{
+              mb: 4,
+              fontSize: "32px",
+              fontWeight: 700,
+              fontFamily: "faustina",
+              textAlign: "center",
+              color: "#2B2B2B",
+            }}
+          >
+            Your Level {analysisData.level} Score
+          </Typography>
+
+          {/* Circular Score Display */}
+          <Box sx={{ display: "flex", justifyContent: "center", mb: 4 }}>
+            <Box sx={{ position: "relative", width: 243, height: 243 }}>
+              <svg
+                width="243"
+                height="243"
+                viewBox="0 0 243 243"
+                style={{ transform: "rotate(-90deg)" }}
+              >
+                {/* Background circle */}
+                <circle
+                  cx="121.5"
+                  cy="121.5"
+                  r="100"
+                  fill="none"
+                  stroke="#e5e7eb"
+                  strokeWidth="16"
+                />
+                {/* Progress circle */}
+                <circle
+                  cx="121.5"
+                  cy="121.5"
+                  r="100"
+                  fill="none"
+                  stroke="#508B28"
+                  strokeWidth="16"
+                  strokeDasharray={`${(scorePercentage / 100) * (2 * Math.PI * 100)} ${2 * Math.PI * 100}`}
+                  strokeLinecap="round"
+                  style={{ transition: "all 1s" }}
+                />
+              </svg>
+              <Box
+                sx={{
+                  position: "absolute",
+                  top: 0,
+                  left: 0,
+                  right: 0,
+                  bottom: 0,
+                  display: "flex",
+                  flexDirection: "column",
+                  alignItems: "center",
+                  justifyContent: "center",
+                }}
+              >
+                <Typography
+                  sx={{
+                    fontSize: "67px",
+                    fontFamily: "source sans pro",
+                    fontWeight: 700,
+                    color: "#1F2937",
+                  }}
+                >
+                  {analysisData.score}
+                </Typography>
+                <Typography
+                  sx={{
+                    fontWeight: 700,
+                    fontSize: "24px",
+                    color: "#6B7280",
+                  }}
+                >
+                  out of 900
+                </Typography>
+              </Box>
+            </Box>
+          </Box>
+
+          {/* Action Buttons */}
+          <Stack
+            direction="row"
+            spacing={2}
+            justifyContent="center"
+            flexWrap="wrap"
+            sx={{ mb: 3, gap: 2 }}
+          >
+            <ButtonSelfScore
+              startIcon={<DownloadIcon />}
+              text="Download Report"
+              background="#005F73"
+              borderRadius="16px"
+              padding="12px 12px"
+              fontSize="1rem"
+              onClick={handleDownload}
+            />
+            <ButtonSelfScore
+              startIcon={<FileUploadIcon />}
+              text="Share"
+              background="#5C5C5C"
+              borderRadius="16px"
+              padding="12px 12px"
+              fontSize="1rem"
+              onClick={handleShare}
+            />
+            <ButtonSelfScore
+              startIcon={<ArrowForwardIcon />}
+              text="Next Level"
+              background="#FF4F00"
+              borderRadius="16px"
+              padding="12px 12px"
+              fontSize="1rem"
+              onClick={handleNextLevel}
+            />
+          </Stack>
+
+          {/* Interpretation */}
+          <Typography
+            // variant="body1"
+            textAlign="center"
+            fontStyle="normal"
+            color="#4B5563"
+            fontFamily={"Source Sans Pro"}
+            fontSize={"18px"}
+          >
+            {getScoreInterpretation(analysisData.score)}
+          </Typography>
+        </Paper>
+
+        {/* Score Scale & Distribution */}
+        <Paper
+          elevation={0}
+          sx={{
+            p: 4,
+            borderRadius: 4,
+            bgcolor: "#f7f7f7",
+            border: "1px solid #3A3A3A4D",
+          }}
+        >
+          <Typography
+            variant="h5"
+            fontWeight="bold"
+            textAlign="center"
+            gutterBottom
+            sx={{ mb: 8 }}
+          >
+            What do the scores mean?
+          </Typography>
+
+          {/* Score Scale */}
+          <Box sx={{ mb: 6 }}>
+            <Box sx={{ position: "relative", mb: 2 }}>
+              <Box
+                sx={{
+                  height: 8,
+                  background:
+                    "linear-gradient(90deg, #E9F3F5 0%, #87D55D 33.33%, #FDE8D5 66.67%, #E88C73 100%)",
+                  borderRadius: 1,
+                }}
+              />
+              <Box
+                sx={{
+                  position: "absolute",
+                  top: "-150%",
+                  left: `${getPositionPercentage(analysisData.score)}%`,
+                  transform: "translate(-50%, -50%)",
+                }}
+              >
+                <Box
+                  sx={{
+                    bgcolor: "#FF4F00",
+                    color: "white",
+                    px: 1.5,
+                    py: 0.5,
+                    borderRadius: "4px",
+                    fontSize: "12px",
+                    fontWeight: "500",
+                    mb: 0.5,
+                    textAlign: "center",
+                  }}
+                >
+                  You
+                </Box>
+                <Box
+                  sx={{
+                    width: 24,
+                    height: 24,
+                    bgcolor: "#FF4F00",
+                    borderRadius: "50%",
+                    border: "4px solid white",
+                    boxShadow: 2,
+                    mx: "auto",
+                  }}
+                />
+              </Box>
+            </Box>
+
+            <Box sx={{ display: "flex", justifyContent: "space-between" }}>
+              <Box>
+                <Typography variant="body2" fontWeight="600">
+                  Calm
+                </Typography>
+                <Typography variant="caption" color="text.secondary">
+                  (Score: 350)
+                </Typography>
+              </Box>
+              <Box sx={{ textAlign: "center" }}>
+                <Typography variant="body2" fontWeight="600">
+                  Balanced
+                </Typography>
+                <Typography variant="caption" color="text.secondary">
+                  (Score: 500)
+                </Typography>
+              </Box>
+              <Box sx={{ textAlign: "center" }}>
+                <Typography variant="body2" fontWeight="600">
+                  Energized
+                </Typography>
+                <Typography variant="caption" color="text.secondary">
+                  (Score: 750)
+                </Typography>
+              </Box>
+              <Box sx={{ textAlign: "right" }}>
+                <Typography variant="body2" fontWeight="600">
+                  Overwhelmed
+                </Typography>
+                <Typography variant="caption" color="text.secondary">
+                  (Score: 900)
+                </Typography>
+              </Box>
+            </Box>
+          </Box>
+
+          {/* Distribution Chart */}
+          <Box sx={{ mb: 4 }}>
+            <Typography
+              variant="body1"
+              textAlign="center"
+              fontSize={"20px"}
+              fontWeight="400"
+              sx={{ mb: 8 }}
+            >
+              Where do{" "}
+              <Box component="span" sx={{ color: "#E87A42" }}>
+                you
+              </Box>{" "}
+              stand?
+            </Typography>
+
+            <Box
+              sx={{
+                display: "flex",
+                alignItems: "flex-end",
+                justifyContent: "center",
+                gap: 1.5,
+                mb: 2,
+              }}
+            >
+              {distributionData.map((bar, index) => (
+                <Box
+                  key={index}
+                  sx={{
+                    display: "flex",
+                    flexDirection: "column",
+                    alignItems: "center",
+                    gap: 1,
+                    flex: 1,
+                    maxWidth: "47px",
+                  }}
+                >
+                  <Box sx={{ position: "relative", width: "100%" }}>
+                    {index === userBarIndex && (
+                      <Box
+                        sx={{
+                          position: "absolute",
+                          top: -32,
+                          left: "50%",
+                          transform: "translateX(-50%)",
+                          color: "#FF4F00",
+                          px: 1,
+                          py: 0.5,
+                          borderRadius: 1,
+                          fontSize: "0.875rem",
+                          fontWeight: "bold",
+                          whiteSpace: "nowrap",
+                        }}
+                      >
+                        {analysisData.score}
+                      </Box>
+                    )}
+                    <Box
+                      sx={{
+                        width: "100%",
+                        borderTopLeftRadius: 4,
+                        borderTopRightRadius: 4,
+                        bgcolor: index === userBarIndex ? "#FF4F00" : "#919191",
+                        height: `${(bar.count / maxCount) * 100}px`,
+                        maxHeight: "125px",
+                        transition: "all 0.5s",
+                      }}
+                    />
+                  </Box>
+                </Box>
+              ))}
+            </Box>
+          </Box>
+
+          {/* Bottom Actions */}
+          <Stack
+            direction="row"
+            spacing={2}
+            justifyContent="center"
+            flexWrap="wrap"
+            sx={{ gap: 2 }}
+          >
+            <ButtonSelfScore
+              startIcon={<RefreshIcon />}
+              text="Retake"
+              background="#FF4F00"
+              borderRadius="16px"
+              padding="12px 12px"
+              fontSize="1rem"
+              onClick={handleRetake}
+            />
+            <OutLineButton
+              startIcon={<SpeedIcon />}
+              style={{
+                background: "transparent",
+                color: "#374151",
+                border: "1px solid #939393",
+                borderRadius: "16px",
+                padding: "3.5px 14px",
+                fontWeight: 400,
+                fontSize: "18px",
+                cursor: "pointer",
+                transition: "all 0.2s",
+              }}
+              onClick={handleDashboard}
+            >
+              DashBoard
+            </OutLineButton>
+          </Stack>
+        </Paper>
+
+        {/* Quote */}
+        <Box sx={{ textAlign: "center", mt: 6 }}>
+          <Typography
+            fontStyle="italic"
+            color="#000000"
+            fontSize={"28px"}
+            fontWeight={400}
+            fontFamily={"Playfair Display"}
+          >
+            "Progress is not perfection — it's awareness."
+          </Typography>
+          <Typography
+            sx={{
+              fontSize: "14px",
+              fontWeight: 400,
+              color: "#000000",
+              fontFamily: "source sans pro",
+            }}
+          >
+            Explore your next challenge and see how you can improve your
+            SelfScore.
+          </Typography>
+        </Box>
+      </Container>
+    </Box>
   );
 }

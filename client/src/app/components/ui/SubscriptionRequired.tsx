@@ -1,9 +1,9 @@
 "use client";
 
-import { useState } from "react";
 import { Box, Typography, Button, Card, CardContent } from "@mui/material";
 import { Lock as LockIcon, Star as StarIcon } from "@mui/icons-material";
 import { useRouter } from "next/navigation";
+import BuyLevelButton from "./BuyLevelButton";
 
 interface SubscriptionRequiredProps {
   level: number;
@@ -12,12 +12,7 @@ interface SubscriptionRequiredProps {
 export default function SubscriptionRequired({
   level,
 }: SubscriptionRequiredProps) {
-  const [showModal, setShowModal] = useState(false);
   const router = useRouter();
-
-  const handleSubscribe = () => {
-    setShowModal(true);
-  };
 
   const handleGoToLevel1 = () => {
     router.push("/user/test?level=1");
@@ -135,22 +130,9 @@ export default function SubscriptionRequired({
               flexWrap: "wrap",
             }}
           >
-            <Button
-              onClick={handleSubscribe}
-              sx={{
-                background: "#E87A42",
-                color: "#fff",
-                borderRadius: "25px",
-                padding: "12px 32px",
-                fontWeight: "bold",
-                fontSize: "1rem",
-                "&:hover": {
-                  background: "#D16A35",
-                },
-              }}
-            >
-              Subscribe Now
-            </Button>
+            {/* Integrated Buy Level Button for Stripe Payment */}
+            <BuyLevelButton level={level} />
+
             <Button
               onClick={handleGoToLevel1}
               variant="outlined"
@@ -173,55 +155,6 @@ export default function SubscriptionRequired({
           </Box>
         </CardContent>
       </Card>
-
-      {/* Subscription Modal Placeholder */}
-      {showModal && (
-        <Box
-          sx={{
-            position: "fixed",
-            top: 0,
-            left: 0,
-            width: "100%",
-            height: "100%",
-            background: "rgba(0,0,0,0.5)",
-            display: "flex",
-            alignItems: "center",
-            justifyContent: "center",
-            zIndex: 1000,
-          }}
-          onClick={() => setShowModal(false)}
-        >
-          <Box
-            sx={{
-              background: "white",
-              p: 4,
-              borderRadius: "16px",
-              maxWidth: "400px",
-              width: "90%",
-              textAlign: "center",
-            }}
-            onClick={(e) => e.stopPropagation()}
-          >
-            <Typography variant="h5" sx={{ mb: 2, fontWeight: "bold" }}>
-              Subscription Coming Soon!
-            </Typography>
-            <Typography variant="body1" sx={{ mb: 3 }}>
-              We're working on integrating payment options. Stay tuned for
-              premium features!
-            </Typography>
-            <Button
-              onClick={() => setShowModal(false)}
-              sx={{
-                background: "#E87A42",
-                color: "white",
-                "&:hover": { background: "#D16A35" },
-              }}
-            >
-              Close
-            </Button>
-          </Box>
-        </Box>
-      )}
     </Box>
   );
 }

@@ -83,6 +83,8 @@ const FAQ: React.FC = () => {
             <Box>
               <Image
                 src={FAQIcon.src}
+                width={60}
+                height={60}
                 alt="FAQ Icon"
                 style={{ width: "60px", height: "60px", marginBottom: "16px" }}
               />

@@ -1,14 +1,15 @@
+import dotenv from 'dotenv';
+
+// Load environment variables FIRST before any other imports
+dotenv.config();
+
 import express, { Application } from 'express';
 import cors from 'cors';
-import dotenv from 'dotenv';
 import cookieParser from 'cookie-parser';
 import dbConnect from './lib/dbConnect';
 import routes from './routes';
 import { errorHandler, notFound } from './middleware/errorHandler';
 import { requestLogger } from './middleware/logger';
-
-// Load environment variables
-dotenv.config();
 
 // Create Express app
 const app: Application = express();
@@ -27,6 +28,17 @@ app.use(cors({
     methods: ['GET', 'POST', 'PUT', 'DELETE', 'OPTIONS'],
     allowedHeaders: ['Content-Type', 'Authorization', 'X-Requested-With']
 }));
+
+// Stripe webhook needs raw body for signature verification
+// Must be before express.json()
+app.post('/api/payment/webhook', 
+    express.raw({ type: 'application/json' }),
+    async (req, res, next) => {
+        // Import and use the webhook handler directly
+        const { PaymentController } = await import('./controllers/payment.controller');
+        PaymentController.handleWebhook(req, res);
+    }
+);
 
 app.use(express.json({ limit: '10mb' }));
 app.use(express.urlencoded({ extended: true, limit: '10mb' }));

@@ -14,6 +14,7 @@ export const API_ENDPOINTS = {
   RESPONSES: {
     CREATE: '/api/questions-response',
     CREATE_LEVEL1: '/api/questions-response/level1',
+    SUBMIT_LEVEL: '/api/questions-response/submit-level',
     GET_USER_RESPONSES: (userId: string) => `/api/questions-response/user/${userId}`,
   },
   

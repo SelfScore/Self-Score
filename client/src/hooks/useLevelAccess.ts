@@ -6,7 +6,7 @@ export interface LevelAccess {
 }
 
 export const useLevelAccess = () => {
-  const { user, subscription, progress } = useAppSelector(state => state.auth);
+  const { user, purchasedLevels, progress } = useAppSelector(state => state.auth);
   
   const checkLevelAccess = (level: number): LevelAccess => {
     // Level 1 is always accessible
@@ -24,9 +24,12 @@ export const useLevelAccess = () => {
       return { canAccess: false, reason: 'LEVEL_LOCKED' };
     }
     
-    // Check subscription for levels 2+
-    if (level > 1 && (!subscription || !subscription.isActive)) {
-      return { canAccess: false, reason: 'SUBSCRIPTION_REQUIRED' };
+    // Check if level is purchased for levels 2+
+    if (level > 1) {
+      const levelKey = `level${level}` as 'level2' | 'level3' | 'level4';
+      if (!purchasedLevels || !purchasedLevels[levelKey].purchased) {
+        return { canAccess: false, reason: 'SUBSCRIPTION_REQUIRED' };
+      }
     }
     
     return { canAccess: true, reason: null };
@@ -41,7 +44,12 @@ export const useLevelAccess = () => {
   };
   
   const hasActiveSubscription = (): boolean => {
-    return subscription?.isActive || false;
+    // Check if any level is purchased
+    return purchasedLevels ? (
+      purchasedLevels.level2.purchased || 
+      purchasedLevels.level3.purchased || 
+      purchasedLevels.level4.purchased
+    ) : false;
   };
   
   const getTestScore = (level: number): number | undefined => {
@@ -64,7 +72,7 @@ export const useLevelAccess = () => {
     getTestScore,
     // Direct access to state
     user,
-    subscription,
+    purchasedLevels,
     progress
   };
 };
