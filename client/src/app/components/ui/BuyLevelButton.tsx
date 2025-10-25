@@ -1,30 +1,53 @@
 "use client";
 
-import { Button, CircularProgress } from "@mui/material";
+import { CircularProgress } from "@mui/material";
 import { useState } from "react";
 import { paymentService } from "../../../services/paymentService";
 import { getLevelPrice, formatPrice } from "../../../lib/stripe";
 import LockOpenIcon from "@mui/icons-material/LockOpen";
+import { useAuth } from "../../../hooks/useAuth";
+import SignUpModal from "../../user/SignUpModal";
+import ButtonSelfScore from "./ButtonSelfScore";
 
 interface BuyLevelButtonProps {
   level: number;
   disabled?: boolean;
   fullWidth?: boolean;
-  variant?: "contained" | "outlined" | "text";
 }
+
+// Helper to get bundle text
+const getBundleText = (level: number): string => {
+  switch (level) {
+    case 2:
+      return "Unlock Level 2";
+    case 3:
+      return "Unlock Levels 2 & 3";
+    case 4:
+      return "Unlock Levels 2, 3 & 4";
+    default:
+      return `Unlock Level ${level}`;
+  }
+};
 
 export default function BuyLevelButton({
   level,
   disabled = false,
   fullWidth = false,
-  variant = "contained",
 }: BuyLevelButtonProps) {
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState("");
+  const [showSignUpModal, setShowSignUpModal] = useState(false);
+  const { isAuthenticated } = useAuth();
 
   const price = getLevelPrice(level);
 
   const handlePurchase = async () => {
+    // Check if user is authenticated
+    if (!isAuthenticated) {
+      setShowSignUpModal(true);
+      return;
+    }
+
     setLoading(true);
     setError("");
 
@@ -51,25 +74,41 @@ export default function BuyLevelButton({
     return null;
   }
 
+  const bundleText = getBundleText(level);
+
   return (
     <>
-      <Button
-        variant={variant}
+      {/* Sign Up Modal for non-authenticated users */}
+      <SignUpModal
+        open={showSignUpModal}
+        onClose={() => setShowSignUpModal(false)}
+        onSuccess={() => {
+          setShowSignUpModal(false);
+          // After successful sign up/login, attempt purchase again
+          handlePurchase();
+        }}
+      />
+
+      <ButtonSelfScore
+        text={
+          loading ? "Processing..." : `${bundleText} - ${formatPrice(price)}`
+        }
+        startIcon={
+          loading ? (
+            <CircularProgress size={20} sx={{ color: "#fff" }} />
+          ) : (
+            <LockOpenIcon />
+          )
+        }
         onClick={handlePurchase}
         disabled={disabled || loading}
         fullWidth={fullWidth}
-        startIcon={loading ? <CircularProgress size={20} /> : <LockOpenIcon />}
-        sx={{
-          bgcolor: variant === "contained" ? "#E87A42" : undefined,
-          "&:hover": {
-            bgcolor: variant === "contained" ? "#D16A35" : undefined,
-          },
+        background="#FF4F00"
+        style={{
+          opacity: disabled || loading ? 0.6 : 1,
+          cursor: disabled || loading ? "not-allowed" : "pointer",
         }}
-      >
-        {loading
-          ? "Processing..."
-          : `Buy Level ${level} - ${formatPrice(price)}`}
-      </Button>
+      />
       {error && (
         <div style={{ color: "red", fontSize: "14px", marginTop: "8px" }}>
           {error}

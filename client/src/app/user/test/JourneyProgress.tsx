@@ -124,7 +124,7 @@ export default function JourneyProgress() {
               lineHeight: { xs: 1.5, md: 1.6 },
             }}
           >
-            You've completed {highestUnlockedLevel} out of 4 happiness
+            You've Unlocked {highestUnlockedLevel} out of 4 happiness
             assessment levels
           </Typography>
         </Box>

@@ -53,16 +53,7 @@ export class PaymentController {
                 return;
             }
 
-            // Check if previous level is completed (sequential unlocking)
-            const previousLevel = level - 1;
-            if (!user.progress.completedLevels.includes(previousLevel)) {
-                const response: ApiResponse = {
-                    success: false,
-                    message: `Please complete Level ${previousLevel} before purchasing Level ${level}`
-                };
-                res.status(403).json(response);
-                return;
-            }
+            // NOTE: Removed previous level completion check - users can purchase any level anytime
 
             // Get price for the level
             const priceInCents = getLevelPrice(level);
@@ -75,7 +66,19 @@ export class PaymentController {
                 return;
             }
 
-            // Create Stripe Checkout Session
+            // Create Stripe Checkout Session with bundle description
+            let productName = `LifeScore Level ${level} Access`;
+            let productDescription = `One-time purchase to unlock Level ${level} assessment`;
+            
+            // Add bundle description for Level 3 and 4
+            if (level === 3) {
+                productName = `LifeScore Levels 2 & 3 Bundle`;
+                productDescription = `Unlock both Level 2 and Level 3 assessments`;
+            } else if (level === 4) {
+                productName = `LifeScore Complete Bundle (Levels 2, 3 & 4)`;
+                productDescription = `Unlock all premium assessments: Levels 2, 3, and 4`;
+            }
+
             const session = await stripe.checkout.sessions.create({
                 payment_method_types: ['card'],
                 line_items: [
@@ -83,8 +86,8 @@ export class PaymentController {
                         price_data: {
                             currency: CURRENCY,
                             product_data: {
-                                name: `LifeScore Level ${level} Access`,
-                                description: `One-time purchase to unlock Level ${level} assessment`,
+                                name: productName,
+                                description: productDescription,
                             },
                             unit_amount: priceInCents,
                         },
@@ -191,18 +194,34 @@ export class PaymentController {
                 payment.stripePaymentIntentId = session.payment_intent as string;
                 await payment.save();
 
-                // Update user's purchased levels
+                // Update user's purchased levels - unlock bundle based on purchased level
                 const user = await UserModel.findById(payment.userId);
                 if (user) {
-                    const levelKey = `level${payment.level}` as 'level2' | 'level3' | 'level4';
-                    user.purchasedLevels[levelKey].purchased = true;
-                    user.purchasedLevels[levelKey].purchaseDate = new Date();
-                    user.purchasedLevels[levelKey].paymentId = (payment._id as string).toString();
+                    // Determine which levels to unlock based on purchase
+                    const levelsToUnlock: Array<2 | 3 | 4> = [];
+                    if (payment.level === 2) {
+                        levelsToUnlock.push(2);
+                    } else if (payment.level === 3) {
+                        levelsToUnlock.push(2, 3);
+                    } else if (payment.level === 4) {
+                        levelsToUnlock.push(2, 3, 4);
+                    }
+
+                    // Unlock all levels in the bundle
+                    levelsToUnlock.forEach(level => {
+                        const levelKey = `level${level}` as 'level2' | 'level3' | 'level4';
+                        if (!user.purchasedLevels[levelKey].purchased) {
+                            user.purchasedLevels[levelKey].purchased = true;
+                            user.purchasedLevels[levelKey].purchaseDate = new Date();
+                            user.purchasedLevels[levelKey].paymentId = (payment._id as string).toString();
+                        }
+                    });
                     
-                    // Unlock the level
+                    // Unlock highest level purchased (for UI purposes)
+                    const highestPurchasedLevel = Math.max(...levelsToUnlock);
                     user.progress.highestUnlockedLevel = Math.max(
                         user.progress.highestUnlockedLevel, 
-                        payment.level
+                        highestPurchasedLevel
                     );
                     
                     await user.save();
@@ -310,22 +329,38 @@ export class PaymentController {
         payment.stripePaymentIntentId = session.payment_intent as string;
         await payment.save();
 
-        // Update user
+        // Update user - unlock bundle based on purchased level
         const user = await UserModel.findById(payment.userId);
         if (user) {
-            const levelKey = `level${payment.level}` as 'level2' | 'level3' | 'level4';
-            user.purchasedLevels[levelKey].purchased = true;
-            user.purchasedLevels[levelKey].purchaseDate = new Date();
-            user.purchasedLevels[levelKey].paymentId = (payment._id as string).toString();
+            // Determine which levels to unlock based on purchase
+            const levelsToUnlock: Array<2 | 3 | 4> = [];
+            if (payment.level === 2) {
+                levelsToUnlock.push(2);
+            } else if (payment.level === 3) {
+                levelsToUnlock.push(2, 3);
+            } else if (payment.level === 4) {
+                levelsToUnlock.push(2, 3, 4);
+            }
+
+            // Unlock all levels in the bundle
+            levelsToUnlock.forEach(level => {
+                const levelKey = `level${level}` as 'level2' | 'level3' | 'level4';
+                if (!user.purchasedLevels[levelKey].purchased) {
+                    user.purchasedLevels[levelKey].purchased = true;
+                    user.purchasedLevels[levelKey].purchaseDate = new Date();
+                    user.purchasedLevels[levelKey].paymentId = (payment._id as string).toString();
+                }
+            });
             
-            // Unlock the level
+            // Unlock highest level purchased
+            const highestPurchasedLevel = Math.max(...levelsToUnlock);
             user.progress.highestUnlockedLevel = Math.max(
                 user.progress.highestUnlockedLevel, 
-                payment.level
+                highestPurchasedLevel
             );
             
             await user.save();
-            console.log(`Level ${payment.level} unlocked for user ${user._id}`);
+            console.log(`Levels ${levelsToUnlock.join(', ')} unlocked for user ${user._id}`);
         }
     }
 

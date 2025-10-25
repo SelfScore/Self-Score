@@ -4,10 +4,13 @@ export interface User extends Document {
     username: string;
     email: string;
     password: string;
+    countryCode: string;
     phoneNumber: string;
     verifyCode: string;
     isVerified: boolean;
     verifyCodeExpiry: Date;
+    resetPasswordToken?: string;
+    resetPasswordExpiry?: Date;
     purchasedLevels: {
         level2: {
             purchased: boolean;
@@ -66,9 +69,21 @@ const UserSchema: Schema<User> = new Schema({
         type: Boolean, 
         default: false 
     },
+    countryCode: {
+        type: String,
+        required: [true, "Country code is required"]
+    },
     phoneNumber: { 
         type: String, 
-        required: [false, "Phone number is required"] 
+        required: [true, "Phone number is required"] 
+    },
+    resetPasswordToken: {
+        type: String,
+        required: false
+    },
+    resetPasswordExpiry: {
+        type: Date,
+        required: false
     },
     purchasedLevels: {
         level2: {

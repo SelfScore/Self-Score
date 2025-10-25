@@ -17,10 +17,11 @@ export const getStripe = () => {
 };
 
 // Level pricing for display (in USD)
+// Bundle pricing: Level 2 = $5, Level 3 = $10 (includes L2), Level 4 = $25 (includes L2+L3)
 export const LEVEL_PRICES = {
-  2: 1,  // $1.00
-  3: 2,  // $2.00
-  4: 3,  // $3.00
+  2: 5,   // $5.00 - Level 2 only
+  3: 10,  // $10.00 - Levels 2 + 3 bundle
+  4: 25,  // $25.00 - Levels 2 + 3 + 4 bundle
 } as const;
 
 export const getLevelPrice = (level: number): number | null => {

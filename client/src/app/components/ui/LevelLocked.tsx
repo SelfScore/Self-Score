@@ -29,7 +29,7 @@ export default function LevelLocked({ level }: LevelLockedProps) {
         width: "100%",
         maxWidth: "600px",
         mx: "auto",
-        p: 4,
+        pt: 14,
         textAlign: "center",
       }}
     >

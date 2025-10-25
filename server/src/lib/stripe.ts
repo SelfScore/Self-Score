@@ -13,10 +13,11 @@ export const stripe = new Stripe(stripeSecretKey || 'sk_test_dummy', {
 });
 
 // Level pricing configuration (in cents)
+// Bundle pricing: Level 2 = $5, Level 3 = $10 (includes L2), Level 4 = $25 (includes L2+L3)
 export const LEVEL_PRICES = {
-    2: 100,  // $1.00 USD
-    3: 200,  // $2.00 USD
-    4: 300,  // $3.00 USD
+    2: 500,   // $5.00 USD - Level 2 only
+    3: 1000,  // $10.00 USD - Levels 2 + 3 bundle
+    4: 2500,  // $25.00 USD - Levels 2 + 3 + 4 bundle
 } as const;
 
 export const CURRENCY = 'usd';

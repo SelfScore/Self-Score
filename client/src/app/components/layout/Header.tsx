@@ -60,9 +60,10 @@ export default function Header() {
     { label: "Home", href: "/" },
     { label: "Our Mission", href: "/ourMission" },
     { label: "Contact Us", href: "/contact" },
+    { label: "Blogs", href: "/blogs" },
     {
       label: "Self Score Test",
-      href: "/user/test",
+      href: "/selfscoretest",
       variant: "contained",
       FreeChip: true,
     },

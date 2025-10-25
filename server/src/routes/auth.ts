@@ -22,4 +22,10 @@ router.get('/me', authMiddleware, AuthController.getCurrentUser);
 // POST /api/auth/logout - Logout user
 router.post('/logout', AuthController.logout);
 
+// POST /api/auth/forgot-password - Request password reset
+router.post('/forgot-password', AuthController.forgotPassword);
+
+// POST /api/auth/reset-password - Reset password with token
+router.post('/reset-password', AuthController.resetPassword);
+
 export default router;

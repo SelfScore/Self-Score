@@ -9,27 +9,26 @@ import { useLevelAccess } from "../../../hooks/useLevelAccess";
 import SubscriptionRequired from "../../components/ui/SubscriptionRequired";
 import LevelLocked from "../../components/ui/LevelLocked";
 import OutLineButton from "@/app/components/ui/OutLineButton";
-import ArrowBackIosIcon from '@mui/icons-material/ArrowBackIos';
+import ArrowBackIosIcon from "@mui/icons-material/ArrowBackIos";
 
 function TestContent() {
   const searchParams = useSearchParams();
   const router = useRouter();
   const level = parseInt(searchParams.get("level") || "1");
-  const { checkLevelAccess } = useLevelAccess();
+  const { checkTestAttemptAccess } = useLevelAccess();
 
-  // 🛡️ PROTECTION LOGIC
-  const access = checkLevelAccess(level);
+  // 🛡️ PROTECTION LOGIC - Check if user can attempt the test
+  const attemptAccess = checkTestAttemptAccess(level);
 
-  if (!access.canAccess) {
-    if (access.reason === "SUBSCRIPTION_REQUIRED") {
+  if (!attemptAccess.canAttempt) {
+    if (attemptAccess.reason === "SUBSCRIPTION_REQUIRED") {
       return <SubscriptionRequired level={level} />;
     }
-    if (access.reason === "LEVEL_LOCKED") {
+    if (attemptAccess.reason === "PREVIOUS_LEVEL_NOT_COMPLETED") {
       return <LevelLocked level={level} />;
     }
   }
 
-  // 🎯 ORIGINAL TEST RENDERING
   // 🎯 ORIGINAL TEST RENDERING
   const renderTestComponent = () => {
     switch (level.toString()) {
@@ -76,7 +75,7 @@ function TestContent() {
   };
 
   const handleBackToInfo = () => {
-    router.push("/user");
+    router.push("/testInfo");
   };
 
   return (

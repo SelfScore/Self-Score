@@ -54,9 +54,8 @@ export default function AboutLevels() {
   ];
 
   const handleLevelClick = (index: number) => {
-    if (isLevelUnlocked(index)) {
-      setActiveTab(index);
-    }
+    // All levels are now clickable - removed unlock restriction
+    setActiveTab(index);
   };
 
   const isLevelUnlocked = (index: number) => index <= highestUnlockedLevel;
@@ -189,7 +188,7 @@ export default function AboutLevels() {
                 sx={{
                   flex: 1,
                   position: "relative",
-                  cursor: isLevelUnlocked(index) ? "pointer" : "not-allowed",
+                  cursor: "pointer", // All levels are now clickable
                   zIndex: levels.length - index, // Higher z-index for earlier items
                   marginLeft: index === 0 ? "0" : "-15px", // Overlap segments
                 }}
@@ -310,21 +309,18 @@ export default function AboutLevels() {
                 color: "#2B2B2B",
               }}
             >
-              {isLevelUnlocked(activeTab)
-                ? levels[activeTab].description
-                : "Complete the previous level to unlock this content."}
+              {levels[activeTab].description}
             </Typography>
 
-            {isLevelUnlocked(activeTab) && (
-              <Box sx={{ textAlign: "center", mt: 2 }}>
-                <ButtonSelfScore
-                  onClick={() => {
-                    router.push("/user");
-                  }}
-                  text="Discover Your Starting Point"
-                />
-              </Box>
-            )}
+            {/* Always show button - let navigation handle restrictions */}
+            <Box sx={{ textAlign: "center", mt: 2 }}>
+              <ButtonSelfScore
+                onClick={() => {
+                  router.push(`/testInfo?level=${activeTab + 1}`);
+                }}
+                text="Discover Your Starting Point"
+              />
+            </Box>
           </Box>
 
           {/* guidelines box */}

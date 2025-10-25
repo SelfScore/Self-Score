@@ -14,14 +14,17 @@ import {
 } from "@mui/material";
 import { questionsApi } from "../../../../services/questionsService";
 import { authService } from "../../../../services/authService";
+import { useAppSelector, useAppDispatch } from "../../../../store/hooks";
+import { loginSuccess } from "../../../../store/slices/authSlice";
 import OutLineButton from "@/app/components/ui/OutLineButton";
 import ArrowBackIosIcon from "@mui/icons-material/ArrowBackIos";
 import ButtonSelfScore from "@/app/components/ui/ButtonSelfScore";
-import DownloadIcon from "@mui/icons-material/Download";
+// import DownloadIcon from "@mui/icons-material/Download";
 import FileUploadIcon from "@mui/icons-material/FileUpload";
 import ArrowForwardIcon from "@mui/icons-material/ArrowForward";
 import RefreshIcon from "@mui/icons-material/Refresh";
 import SpeedIcon from "@mui/icons-material/Speed";
+import DownloadReportButton from "@/app/components/ui/DownloadReportButton";
 
 export default function LevelAnalysisPage() {
   const params = useParams();
@@ -30,6 +33,12 @@ export default function LevelAnalysisPage() {
   const [checkingAuth, setCheckingAuth] = useState(true);
   const [error, setError] = useState<string>("");
   const [analysisData, setAnalysisData] = useState<any>(null);
+  const {
+    progress: userProgress,
+    isAuthenticated,
+    user,
+  } = useAppSelector((state) => state.auth);
+  const dispatch = useAppDispatch();
 
   const level = params.level as string;
   const levelNumber = parseInt(level.split("-")[1]); // Extract number from "level-1"
@@ -45,6 +54,7 @@ export default function LevelAnalysisPage() {
         let user;
         try {
           user = await authService.getCurrentUser();
+          console.log("getCurrentUser response:", user);
         } catch (_err) {
           console.log("Failed to check authentication status");
         }
@@ -63,6 +73,32 @@ export default function LevelAnalysisPage() {
         if (!user?.userId) {
           setError("User data not found");
           return;
+        }
+
+        // Log user progress data for debugging
+        console.log("User Progress from Redux (initial):", userProgress);
+        console.log("User data from server:", user);
+        console.log("Is Authenticated:", isAuthenticated);
+
+        // Always update Redux with the latest server data to keep in sync
+        if (user.progress) {
+          console.log("Updating Redux with server progress data...");
+          dispatch(
+            loginSuccess({
+              user: {
+                userId: user.userId,
+                email: user.email,
+                username: user.username,
+                phoneNumber: user.phoneNumber,
+              },
+              purchasedLevels: user.purchasedLevels,
+              progress: user.progress,
+            })
+          );
+          console.log(
+            "Redux updated successfully with progress:",
+            user.progress
+          );
         }
 
         // Fetch user's responses for this level
@@ -105,8 +141,73 @@ export default function LevelAnalysisPage() {
             },
             0
           );
+        } else if (levelNumber === 2) {
+          // Level 2: (350 + Level1Score) - |Level2Score|
+          // Get Level 1 score from user progress (try Redux first, then server data)
+          let level1Score = userProgress?.testScores?.level1;
+
+          // If not in Redux, try to get from server user data
+          if (!level1Score && user.progress?.testScores?.level1) {
+            level1Score = user.progress.testScores.level1;
+          }
+
+          // Fallback to 350 if still not found
+          level1Score = level1Score || 350;
+
+          console.log(
+            `  - Level 1 Score (from Redux): ${userProgress?.testScores?.level1}`
+          );
+          console.log(
+            `  - Level 1 Score (from Server): ${user.progress?.testScores?.level1}`
+          );
+          console.log(`  - Level 1 Score (final): ${level1Score}`);
+
+          // Calculate Level 2 raw score (all NEGATIVE_MULTIPLIER questions)
+          const level2RawScore = validResponses.reduce(
+            (acc: number, response: any, index: number) => {
+              const question = response.questionId;
+              if (question && question.scoringType) {
+                const multiplier =
+                  question.scoringType === "NEGATIVE_MULTIPLIER" ? -10 : 15;
+                const questionScore = response.selectedOptionIndex * multiplier;
+
+                console.log(`Question ${index + 1}:`);
+                console.log(`  - Type: ${question.scoringType}`);
+                console.log(
+                  `  - Selected Option: ${response.selectedOptionIndex}`
+                );
+                console.log(`  - Multiplier: ${multiplier}`);
+                console.log(
+                  `  - Score: ${response.selectedOptionIndex} × ${multiplier} = ${questionScore}`
+                );
+
+                return acc + questionScore;
+              }
+              // Default to negative multiplier for Level 2
+              console.log(
+                `Question ${index + 1}: Missing scoringType, using default -10`
+              );
+              return acc + response.selectedOptionIndex * -10;
+            },
+            0
+          );
+
+          console.log(`\nLevel 2 Raw Score: ${level2RawScore}`);
+
+          // Take absolute value of Level 2 score
+          const level2AbsoluteScore = Math.abs(level2RawScore);
+          console.log(`Level 2 Absolute Score: ${level2AbsoluteScore}`);
+
+          // Final formula: (350 + level1Score) - |level2Score|
+          calculatedScore = 350 + level1Score - level2AbsoluteScore;
+
+          console.log(`\nFinal Score Calculation:`);
+          console.log(
+            `  - Formula: (350 + ${level1Score}) - ${level2AbsoluteScore}`
+          );
+          console.log(`  - Result: ${calculatedScore}`);
         } else {
-          // Level 2+: Use scoringType from each question
+          // Level 3+: Use scoringType from each question (original logic)
           calculatedScore = validResponses.reduce(
             (acc: number, response: any, index: number) => {
               // Get scoringType from the populated questionId
@@ -145,8 +246,11 @@ export default function LevelAnalysisPage() {
         if (levelNumber === 1) {
           // Level 1: minimum is 350
           finalScore = Math.max(calculatedScore, 350);
+        } else if (levelNumber === 2) {
+          // Level 2: already calculated with full formula
+          finalScore = calculatedScore;
         } else {
-          // Level 2+: base 350 + calculated score
+          // Level 3+: base 350 + calculated score
           finalScore = 350 + calculatedScore;
 
           console.log(`\nFinal Score Calculation:`);
@@ -230,9 +334,9 @@ export default function LevelAnalysisPage() {
     router.push("/user/dashboard");
   };
 
-  const handleDownload = () => {
-    console.log("Download report");
-  };
+  // const handleDownload = () => {
+  //   console.log("Download report");
+  // };
 
   const handleShare = () => {
     console.log("Share results");
@@ -404,7 +508,9 @@ export default function LevelAnalysisPage() {
                   fill="none"
                   stroke="#508B28"
                   strokeWidth="16"
-                  strokeDasharray={`${(scorePercentage / 100) * (2 * Math.PI * 100)} ${2 * Math.PI * 100}`}
+                  strokeDasharray={`${
+                    (scorePercentage / 100) * (2 * Math.PI * 100)
+                  } ${2 * Math.PI * 100}`}
                   strokeLinecap="round"
                   style={{ transition: "all 1s" }}
                 />
@@ -453,15 +559,21 @@ export default function LevelAnalysisPage() {
             flexWrap="wrap"
             sx={{ mb: 3, gap: 2 }}
           >
-            <ButtonSelfScore
-              startIcon={<DownloadIcon />}
-              text="Download Report"
-              background="#005F73"
-              borderRadius="16px"
-              padding="12px 12px"
-              fontSize="1rem"
-              onClick={handleDownload}
-            />
+            {user && (
+              <DownloadReportButton
+                userData={{
+                  username: user.username,
+                  email: user.email,
+                  phoneNumber: user.phoneNumber || "",
+                  reportDate: new Date().toISOString(),
+                  level: levelNumber,
+                  score: analysisData.score,
+                  maxScore: 900,
+                }}
+                variant="contained"
+                size="large"
+              />
+            )}
             <ButtonSelfScore
               startIcon={<FileUploadIcon />}
               text="Share"
@@ -681,6 +793,7 @@ export default function LevelAnalysisPage() {
             flexWrap="wrap"
             sx={{ gap: 2 }}
           >
+            
             <ButtonSelfScore
               startIcon={<RefreshIcon />}
               text="Retake"

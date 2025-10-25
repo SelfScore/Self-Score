@@ -8,13 +8,20 @@ import {
   Link,
   Alert,
   CircularProgress,
-  Container,
-  Paper,
+  Checkbox,
+  FormControlLabel,
+  InputAdornment,
+  IconButton,
 } from "@mui/material";
 import { useState, useEffect } from "react";
 import { useRouter } from "next/navigation";
 import { useAuth } from "../../../hooks/useAuth";
 import NextLink from "next/link";
+import Image from "next/image";
+import EmailIcon from "@mui/icons-material/Email";
+import LockIcon from "@mui/icons-material/Lock";
+import Visibility from "@mui/icons-material/Visibility";
+import VisibilityOff from "@mui/icons-material/VisibilityOff";
 
 export default function SignInPage() {
   const router = useRouter();
@@ -25,6 +32,8 @@ export default function SignInPage() {
     password: "",
   });
   const [localError, setLocalError] = useState("");
+  const [rememberMe, setRememberMe] = useState(false);
+  const [showPassword, setShowPassword] = useState(false);
 
   // Redirect if already authenticated
   useEffect(() => {
@@ -98,103 +107,308 @@ export default function SignInPage() {
   };
 
   return (
-    <Container maxWidth="sm" sx={{ mt: 8, mb: 8 }}>
-      <Paper elevation={3} sx={{ p: 4, borderRadius: 3 }}>
-        <Box sx={{ textAlign: "center", mb: 4 }}>
-          <Typography
-            variant="h4"
-            sx={{ fontWeight: "bold", color: "#005F73", mb: 2 }}
-          >
-            Welcome Back
-          </Typography>
-          <Typography variant="body1" sx={{ color: "#666" }}>
-            Sign in to continue your LifeScore journey
-          </Typography>
-        </Box>
-
-        {(error || localError) && (
-          <Alert severity="error" sx={{ mb: 3 }}>
-            {error || localError}
-          </Alert>
-        )}
-
-        <Box component="form" onSubmit={handleSubmit}>
-          <TextField
-            label="Email"
-            type="email"
-            value={formData.email}
-            onChange={(e) => handleInputChange("email", e.target.value)}
-            fullWidth
-            margin="normal"
-            required
-            disabled={isLoading}
-          />
-
-          <TextField
-            label="Password"
-            type="password"
-            value={formData.password}
-            onChange={(e) => handleInputChange("password", e.target.value)}
-            fullWidth
-            margin="normal"
-            required
-            disabled={isLoading}
-          />
-
-          <Button
-            type="submit"
-            fullWidth
-            disabled={isLoading}
+    <Box
+      sx={{
+        minHeight: "100vh",
+        display: "flex",
+        alignItems: "center",
+        justifyContent: "center",
+        bgcolor: "#FFFFFF",
+        py: { xs: 2, sm: 3, md: 4 },
+      }}
+    >
+      <Box
+        sx={{
+          display: "flex",
+          flexDirection: { xs: "column", md: "row" },
+          width: "100%",
+          alignItems: { xs: "center", md: "flex-start" },
+          gap: { xs: 3, md: 3 },
+          marginTop: { xs: 8, md: 12 },
+        }}
+      >
+        {/* Left Side - Image */}
+        <Box
+          sx={{
+            position: "relative",
+            display: { xs: "none", md: "block" },
+            width: { md: "48%", lg: "50%" },
+            minHeight: "798px",
+            flexShrink: 0,
+          }}
+        >
+          <Box
             sx={{
-              mt: 3,
-              mb: 2,
-              py: 1.5,
-              background: "#E87A42",
-              color: "#fff",
-              fontWeight: "bold",
-              fontSize: "1.1rem",
-              "&:hover": { background: "#D16A35" },
-              "&:disabled": { background: "#ccc" },
+              position: "relative",
+              height: "582px",
+              width: "100%",
+              maxWidth: "690px",
             }}
           >
-            {isLoading ? (
-              <CircularProgress size={24} sx={{ color: "#fff" }} />
-            ) : (
-              "Sign In"
-            )}
-          </Button>
-
-          <Box sx={{ textAlign: "center", mt: 2 }}>
-            <Typography variant="body2" sx={{ color: "#666", mb: 1 }}>
-              Don't have an account?{" "}
-              <Link
-                component={NextLink}
-                href="/auth/signup"
-                sx={{
-                  color: "#E87A42",
-                  fontWeight: "bold",
-                  textDecoration: "none",
-                }}
-              >
-                Create Account
-              </Link>
-            </Typography>
-
-            <Link
-              component={NextLink}
-              href="/auth/forgot-password"
-              sx={{
-                color: "#005F73",
-                textDecoration: "none",
-                fontSize: "0.9rem",
-                "&:hover": { textDecoration: "underline" },
+            <Image
+              src="/images/LandingPage/AuthImg.webp"
+              alt="Authentication"
+              fill
+              style={{
+                objectFit: "cover",
+                borderTopRightRadius: "60px",
+                borderBottomRightRadius: "60px",
               }}
-            >
-              Forgot your password?
-            </Link>
+              priority
+            />
           </Box>
         </Box>
-      </Paper>
-    </Container>
+
+        {/* Right Side - Form */}
+        <Box
+          sx={{
+            width: { xs: "100%", md: "48%", lg: "50%" },
+            maxWidth: { xs: "627px", md: "627px" },
+            px: { xs: 2, sm: 3, md: 0 },
+            display: "flex",
+            flexDirection: "column",
+            flexShrink: 0,
+          }}
+        >
+          <Box sx={{ textAlign: { xs: "center", md: "centre" }, mb: 4 }}>
+            <Typography
+              sx={{
+                fontWeight: "700",
+                color: "#000",
+                mb: 0,
+                fontSize: { xs: "1.75rem", sm: "2rem", md: "40px" },
+                fontFamily: "Faustina",
+              }}
+            >
+              Welcome Back
+            </Typography>
+            <Typography
+              sx={{
+                color: "#6B7280",
+                fontSize: { xs: "16px", md: "18px" },
+                fontWeight: 400,
+                fontFamily: "Source Sans Pro",
+              }}
+            >
+              Sign in to continue your self-discovery journey
+            </Typography>
+          </Box>
+
+          {(error || localError) && (
+            <Alert severity="error" sx={{ mb: 3 }}>
+              {error || localError}
+            </Alert>
+          )}
+
+          <Box
+            sx={{
+              border: "1px solid #3A3A3A4D",
+              borderRadius: "16px",
+              py: { xs: 3, md: 4 },
+              px: { xs: 2, md: 2.5 },
+              width: "100%",
+              bgcolor: "#FFFFFF",
+            }}
+            component="form"
+            onSubmit={handleSubmit}
+          >
+            <Typography
+              sx={{
+                mb: 1,
+                color: "#2C3E50",
+                fontWeight: 400,
+                fontFamily: "Source Sans Pro",
+                fontSize: "16px",
+              }}
+            >
+              Email Address<span style={{ color: "#FF5722" }}>*</span>
+            </Typography>
+            <TextField
+              placeholder="Enter your email"
+              type="email"
+              value={formData.email}
+              onChange={(e) => handleInputChange("email", e.target.value)}
+              fullWidth
+              required
+              disabled={isLoading}
+              InputProps={{
+                startAdornment: (
+                  <InputAdornment position="start">
+                    <EmailIcon sx={{ color: "#999" }} />
+                  </InputAdornment>
+                ),
+              }}
+              sx={{
+                mb: 2,
+                "& .MuiOutlinedInput-root": {
+                  height: "48px",
+                  borderRadius: "8px",
+                  bgcolor: "#FFFFFF",
+                  "& fieldset": { border: "1px solid #3A3A3A4D" },
+                  "&:hover fieldset": { border: "1px solid #3A3A3A4D" },
+                  "&.Mui-focused fieldset": { border: "1px solid #FF5722" },
+                },
+                "& input:-webkit-autofill": {
+                  WebkitBoxShadow: "0 0 0 100px #FFFFFF inset",
+                  WebkitTextFillColor: "#000000",
+                },
+                "& input:-webkit-autofill:hover": {
+                  WebkitBoxShadow: "0 0 0 100px #FFFFFF inset",
+                  WebkitTextFillColor: "#000000",
+                },
+                "& input:-webkit-autofill:focus": {
+                  WebkitBoxShadow: "0 0 0 100px #FFFFFF inset",
+                  WebkitTextFillColor: "#000000",
+                },
+              }}
+            />
+
+            <Typography
+              sx={{
+                mb: 1,
+                color: "#2C3E50",
+                fontWeight: 400,
+                fontFamily: "Source Sans Pro",
+                fontSize: "16px",
+              }}
+            >
+              Password<span style={{ color: "#FF5722" }}>*</span>
+            </Typography>
+            <TextField
+              placeholder="Enter your password"
+              type={showPassword ? "text" : "password"}
+              value={formData.password}
+              onChange={(e) => handleInputChange("password", e.target.value)}
+              fullWidth
+              required
+              disabled={isLoading}
+              InputProps={{
+                startAdornment: (
+                  <InputAdornment position="start">
+                    <LockIcon sx={{ color: "#999" }} />
+                  </InputAdornment>
+                ),
+                endAdornment: (
+                  <InputAdornment position="end">
+                    <IconButton
+                      onClick={() => setShowPassword(!showPassword)}
+                      edge="end"
+                    >
+                      {showPassword ? <VisibilityOff /> : <Visibility />}
+                    </IconButton>
+                  </InputAdornment>
+                ),
+              }}
+              sx={{
+                mb: 2,
+                "& .MuiOutlinedInput-root": {
+                  height: "48px",
+                  borderRadius: "8px",
+                  bgcolor: "#FFFFFF",
+                  "& fieldset": { border: "1px solid #3A3A3A4D" },
+                  "&:hover fieldset": { border: "1px solid #3A3A3A4D" },
+                  "&.Mui-focused fieldset": { border: "1px solid #FF5722" },
+                },
+                "& input:-webkit-autofill": {
+                  WebkitBoxShadow: "0 0 0 100px #FFFFFF inset",
+                  WebkitTextFillColor: "#000000",
+                },
+                "& input:-webkit-autofill:hover": {
+                  WebkitBoxShadow: "0 0 0 100px #FFFFFF inset",
+                  WebkitTextFillColor: "#000000",
+                },
+                "& input:-webkit-autofill:focus": {
+                  WebkitBoxShadow: "0 0 0 100px #FFFFFF inset",
+                  WebkitTextFillColor: "#000000",
+                },
+              }}
+            />
+
+            <Box
+              sx={{
+                display: "flex",
+                justifyContent: "space-between",
+                alignItems: "center",
+                mb: 3,
+              }}
+            >
+              <FormControlLabel
+                control={
+                  <Checkbox
+                    checked={rememberMe}
+                    onChange={(e) => setRememberMe(e.target.checked)}
+                    sx={{
+                      color: "#999",
+                      "&.Mui-checked": { color: "#FF5722" },
+                    }}
+                  />
+                }
+                label={
+                  <Typography variant="body2" sx={{ color: "#666" }}>
+                    Remember me
+                  </Typography>
+                }
+              />
+              <Link
+                component={NextLink}
+                href="/auth/forgot-password"
+                sx={{
+                  color: "#0066cc",
+                  textDecoration: "none",
+                  fontSize: "0.9rem",
+                  "&:hover": { textDecoration: "underline" },
+                }}
+              >
+                Forgot Password?
+              </Link>
+            </Box>
+
+            <Button
+              type="submit"
+              fullWidth
+              disabled={isLoading}
+              sx={{
+                py: 1.5,
+                background: "#FF5722",
+                color: "#fff",
+                fontWeight: "600",
+                fontSize: "1.1rem",
+                borderRadius: "12px",
+                textTransform: "none",
+                height: "40px",
+                fontFamily: "Source Sans Pro",
+                "&:hover": { background: "#E64A19" },
+                "&:disabled": { background: "#ccc", opacity: 0.7 },
+                mb: 2,
+              }}
+            >
+              {isLoading ? (
+                <CircularProgress size={24} sx={{ color: "#fff" }} />
+              ) : (
+                "Login"
+              )}
+            </Button>
+
+            <Box sx={{ textAlign: "center" }}>
+              <Typography variant="body2" sx={{ color: "#666" }}>
+                Don't have an account?{" "}
+                <Link
+                  component={NextLink}
+                  href="/auth/signup"
+                  sx={{
+                    color: "#0066cc",
+                    fontWeight: "600",
+                    textDecoration: "none",
+                    "&:hover": { textDecoration: "underline" },
+                  }}
+                >
+                  Sign Up
+                </Link>
+              </Typography>
+            </Box>
+          </Box>
+        </Box>
+      </Box>
+    </Box>
   );
 }

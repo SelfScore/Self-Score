@@ -9,6 +9,20 @@ interface SubscriptionRequiredProps {
   level: number;
 }
 
+// Helper to get bundle description
+const getBundleDescription = (level: number): string => {
+  switch (level) {
+    case 2:
+      return "Level 2 assessment";
+    case 3:
+      return "Level 2 and Level 3 assessments";
+    case 4:
+      return "Level 2, Level 3, and Level 4 assessments (Complete Bundle)";
+    default:
+      return `Level ${level} assessment`;
+  }
+};
+
 export default function SubscriptionRequired({
   level,
 }: SubscriptionRequiredProps) {
@@ -17,6 +31,8 @@ export default function SubscriptionRequired({
   const handleGoToLevel1 = () => {
     router.push("/user/test?level=1");
   };
+
+  const bundleDescription = getBundleDescription(level);
 
   return (
     <Box
@@ -79,9 +95,11 @@ export default function SubscriptionRequired({
               fontFamily: "Source Sans Pro",
             }}
           >
-            Level {level} is part of our premium assessment suite. Unlock
-            advanced insights and personalized recommendations with a
-            subscription.
+            {level === 4
+              ? `Get access to all premium assessments (Levels 2, 3 & 4) with our complete bundle.`
+              : level === 3
+              ? `Get access to Levels 2 & 3 with this bundle purchase.`
+              : `Unlock ${bundleDescription} to access advanced insights and personalized recommendations.`}
           </Typography>
 
           {/* Features List */}
@@ -95,10 +113,16 @@ export default function SubscriptionRequired({
                 textAlign: "center",
               }}
             >
-              Premium Features:
+              {level === 4
+                ? "Complete Bundle Includes:"
+                : level === 3
+                ? "Bundle Includes:"
+                : "Premium Features:"}
             </Typography>
             {[
-              "Advanced level assessments",
+              level >= 3
+                ? "Multiple level assessments"
+                : "Advanced level assessment",
               "Detailed progress analytics",
               "Personalized improvement plans",
               "Priority support",

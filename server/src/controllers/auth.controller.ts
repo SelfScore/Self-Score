@@ -1,12 +1,16 @@
 import { Request, Response } from 'express';
 import bcrypt from 'bcryptjs';
+import crypto from 'crypto';
 import UserModel from '../models/user';
 import { signUpSchema } from '../schemas/signUpSchema';
 import { loginSchema } from '../schemas/loginSchema';
 import { verifyEmailSchema } from '../schemas/verifyEmailSchema';
 import { resendVerificationSchema } from '../schemas/resendVerificationSchema';
+import { forgotPasswordSchema } from '../schemas/forgotPasswordSchema';
+import { resetPasswordSchema } from '../schemas/resetPasswordSchema';
 import { checkDatabaseConnection } from '../lib/dbUtils';
 import { generateToken, getCookieOptions } from '../lib/jwt';
+import { sendVerificationEmail, sendPasswordResetEmail } from '../lib/email';
 import { ApiResponse, UserResponse } from '../types/api';
 
 export class AuthController {
@@ -21,11 +25,12 @@ export class AuthController {
         }
         
         try {
-            const { username, email, phoneNumber, password, confirmPassword } = req.body;
+            const { username, email, countryCode, phoneNumber, password, confirmPassword } = req.body;
             
             const validationResult = signUpSchema.safeParse({
                 username,
                 email,
+                countryCode,
                 phoneNumber,
                 password,
                 confirmPassword
@@ -62,6 +67,7 @@ export class AuthController {
             const newUser = new UserModel({
                 username,
                 email,
+                countryCode,
                 phoneNumber,
                 password: hashedPassword,
                 verifyCode,
@@ -81,17 +87,28 @@ export class AuthController {
 
             await newUser.save();
 
+            // Send verification email using Resend
+            const emailSent = await sendVerificationEmail(newUser.email, newUser.username, verifyCode);
+            
+            if (!emailSent) {
+                console.warn('⚠️  Failed to send verification email, but user was created');
+            }
+
             const userData: UserResponse = {
                 userId: (newUser._id as string).toString(),
                 email: newUser.email,
                 username: newUser.username,
+                countryCode: newUser.countryCode,
+                phoneNumber: newUser.phoneNumber,
                 purchasedLevels: newUser.purchasedLevels,
                 progress: newUser.progress
             };
 
             const response: ApiResponse<UserResponse> = {
                 success: true,
-                message: "User registered successfully. Please check your email for verification code.",
+                message: emailSent 
+                    ? "User registered successfully. Please check your email for verification code."
+                    : "User registered successfully. Verification email could not be sent.",
                 data: userData
             };
 
@@ -230,7 +247,7 @@ export class AuthController {
                 return;
             }
 
-            const isValidCode = user.verifyCode === verifyCode || verifyCode === "111111";
+            const isValidCode = user.verifyCode === verifyCode;
             
             if (!isValidCode) {
                 const response: ApiResponse = {
@@ -321,9 +338,14 @@ export class AuthController {
             user.verifyCodeExpiry = expiryDate;
             await user.save();
 
+            // Send verification email using Resend
+            const emailSent = await sendVerificationEmail(user.email, user.username, verifyCode);
+
             const response: ApiResponse = {
                 success: true,
-                message: "Verification code resent successfully. Please check your email."
+                message: emailSent 
+                    ? "Verification code resent successfully. Please check your email."
+                    : "Verification code generated but email could not be sent. Please try again."
             };
 
             res.status(200).json(response);
@@ -409,6 +431,135 @@ export class AuthController {
 
         } catch (error) {
             console.error("Error in logout route:", error);
+            const response: ApiResponse = {
+                success: false,
+                message: "Internal Server Error"
+            };
+            res.status(500).json(response);
+        }
+    }
+
+    // Forgot Password - Send reset link
+    static async forgotPassword(req: Request, res: Response): Promise<void> {
+        try {
+            const { email } = req.body;
+
+            const validationResult = forgotPasswordSchema.safeParse({ email });
+
+            if (!validationResult.success) {
+                const response: ApiResponse = {
+                    success: false,
+                    message: "Validation failed",
+                    errors: validationResult.error.issues
+                };
+                res.status(400).json(response);
+                return;
+            }
+
+            const user = await UserModel.findOne({ email });
+
+            // Return error if user doesn't exist
+            if (!user) {
+                const response: ApiResponse = {
+                    success: false,
+                    message: "User with this email does not exist"
+                };
+                res.status(404).json(response);
+                return;
+            }
+
+            if (!user.isVerified) {
+                const response: ApiResponse = {
+                    success: false,
+                    message: "Please verify your email before resetting password"
+                };
+                res.status(400).json(response);
+                return;
+            }
+
+            // Generate reset token
+            const resetToken = crypto.randomBytes(32).toString('hex');
+            const hashedToken = crypto.createHash('sha256').update(resetToken).digest('hex');
+            
+            const expiryDate = new Date();
+            expiryDate.setHours(expiryDate.getHours() + 1); // 1 hour expiry
+
+            user.resetPasswordToken = hashedToken;
+            user.resetPasswordExpiry = expiryDate;
+            await user.save();
+
+            // Send password reset email
+            const emailSent = await sendPasswordResetEmail(user.email, user.username, resetToken);
+
+            const response: ApiResponse = {
+                success: true,
+                message: emailSent 
+                    ? "Password reset link has been sent to your email."
+                    : "Reset token generated but email could not be sent. Please try again."
+            };
+
+            res.status(200).json(response);
+
+        } catch (error) {
+            console.error("Error in forgot password route:", error);
+            const response: ApiResponse = {
+                success: false,
+                message: "Internal Server Error"
+            };
+            res.status(500).json(response);
+        }
+    }
+
+    // Reset Password - Update password with token
+    static async resetPassword(req: Request, res: Response): Promise<void> {
+        try {
+            const { token, password, confirmPassword } = req.body;
+
+            const validationResult = resetPasswordSchema.safeParse({ token, password, confirmPassword });
+
+            if (!validationResult.success) {
+                const response: ApiResponse = {
+                    success: false,
+                    message: "Validation failed",
+                    errors: validationResult.error.issues
+                };
+                res.status(400).json(response);
+                return;
+            }
+
+            // Hash the token to compare with stored hash
+            const hashedToken = crypto.createHash('sha256').update(token).digest('hex');
+
+            const user = await UserModel.findOne({
+                resetPasswordToken: hashedToken,
+                resetPasswordExpiry: { $gt: new Date() } // Token must not be expired
+            });
+
+            if (!user) {
+                const response: ApiResponse = {
+                    success: false,
+                    message: "Invalid or expired reset token"
+                };
+                res.status(400).json(response);
+                return;
+            }
+
+            // Update password
+            const hashedPassword = await bcrypt.hash(password, 10);
+            user.password = hashedPassword;
+            user.resetPasswordToken = undefined;
+            user.resetPasswordExpiry = undefined;
+            await user.save();
+
+            const response: ApiResponse = {
+                success: true,
+                message: "Password reset successfully. You can now log in with your new password."
+            };
+
+            res.status(200).json(response);
+
+        } catch (error) {
+            console.error("Error in reset password route:", error);
             const response: ApiResponse = {
                 success: false,
                 message: "Internal Server Error"

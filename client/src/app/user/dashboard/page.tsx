@@ -22,10 +22,10 @@ import { questionsApi } from "../../../services/questionsService";
 import BrainIMG from "../../../../public/images/DashBoard/Mind.png";
 import Image from "next/image";
 import ButtonSelfScore from "@/app/components/ui/ButtonSelfScore";
-import DownloadIcon from "@mui/icons-material/Download";
 import OutLineButton from "@/app/components/ui/OutLineButton";
 import RefreshIcon from "@mui/icons-material/Refresh";
 import FileUploadIcon from "@mui/icons-material/FileUpload";
+import DownloadReportButton from "@/app/components/ui/DownloadReportButton";
 
 interface TestHistoryItem {
   _id: string;
@@ -400,14 +400,16 @@ export default function UserDashboard() {
                     mt: "auto",
                   }}
                 >
-                  <ButtonSelfScore
-                    startIcon={<DownloadIcon />}
-                    text="Download Report"
-                    background="#005F73"
-                    borderRadius="16px"
-                    padding="12px 12px"
-                    fontSize="1rem"
-                    // onClick={handleDownload}
+                  <DownloadReportButton
+                    userData={{
+                      username: user.username,
+                      email: user.email,
+                      phoneNumber: user.phoneNumber || "",
+                      reportDate: lastTestDate,
+                      level: lastCompletedLevel,
+                      score: lastTestScore,
+                      maxScore: 900,
+                    }}
                   />
                   <OutLineButton
                     startIcon={<RefreshIcon />}
@@ -422,7 +424,9 @@ export default function UserDashboard() {
                       cursor: "pointer",
                       transition: "all 0.2s",
                     }}
-                    // onClick={handleDashboard}
+                    onClick={() =>
+                      router.push(`/user/test?level=${lastCompletedLevel}`)
+                    }
                   >
                     Retake
                   </OutLineButton>
@@ -693,14 +697,16 @@ export default function UserDashboard() {
                       </Box>
 
                       <Box sx={{ display: "flex", gap: 1 }}>
-                        <ButtonSelfScore
-                          startIcon={<DownloadIcon />}
-                          text="Download Report"
-                          background="#005F73"
-                          borderRadius="16px"
-                          padding="12px 12px"
-                          fontSize="1rem"
-                          // onClick={handleDownload}
+                        <DownloadReportButton
+                          userData={{
+                            username: user.username,
+                            email: user.email,
+                            phoneNumber: user.phoneNumber || "",
+                            reportDate: test.date,
+                            level: test.level,
+                            score: test.score,
+                            maxScore: 900,
+                          }}
                         />
                         <OutLineButton
                           startIcon={<FileUploadIcon />}

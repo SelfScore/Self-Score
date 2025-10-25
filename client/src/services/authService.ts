@@ -13,6 +13,7 @@ export interface UserData {
   userId: string;
   email: string;
   username: string;
+  countryCode?: string;
   phoneNumber?: string;
   purchasedLevels?: {
     level2: {
@@ -46,6 +47,7 @@ export interface UserData {
 export interface SignUpData {
   username: string;
   email: string;
+  countryCode: string;
   phoneNumber: string;
   password: string;
   confirmPassword: string;

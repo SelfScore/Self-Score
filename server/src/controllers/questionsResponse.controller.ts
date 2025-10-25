@@ -400,8 +400,31 @@ export const submitLevelResponses = async (req: Request, res: Response): Promise
                     calculatedScore = savedResponses.reduce((sum, response) => {
                         return sum + (response.selectedOptionIndex * 15);
                     }, 0);
+                } else if (level === 2) {
+                    // Level 2: (350 + Level1Score) - |Level2Score|
+                    // Get Level 1 score from user's progress
+                    const level1Score = user.progress.testScores.level1 || 350;
+                    
+                    // Calculate Level 2 raw score (all NEGATIVE_MULTIPLIER questions)
+                    const level2RawScore = savedResponses.reduce((sum, response) => {
+                        const questionId = response.questionId.toString();
+                        const question = questionMap.get(questionId);
+                        if (!question) return sum;
+                        
+                        const multiplier = question.scoringType === 'NEGATIVE_MULTIPLIER' ? -10 : 15;
+                        return sum + (response.selectedOptionIndex * multiplier);
+                    }, 0);
+                    
+                    // Take absolute value of Level 2 score
+                    const level2AbsoluteScore = Math.abs(level2RawScore);
+                    
+                    // Final formula: (350 + level1Score) - |level2Score|
+                    calculatedScore = (350 + level1Score) - level2AbsoluteScore;
+                    
+                    // Note: calculatedScore will be used below to calculate finalScore
+                    // For Level 2, we don't add 350 again since it's already in the formula
                 } else {
-                    // Level 2+: Use scoringType from each question
+                    // Level 3+: Use scoringType from each question (original logic)
                     calculatedScore = savedResponses.reduce((sum, response) => {
                         const questionId = response.questionId.toString();
                         const question = questionMap.get(questionId);
@@ -414,9 +437,14 @@ export const submitLevelResponses = async (req: Request, res: Response): Promise
                 }
                 
                 // Calculate final score
-                const finalScore = level === 1 
-                    ? Math.max(calculatedScore, 350)  // Level 1: minimum is 350
-                    : 350 + calculatedScore;          // Level 2+: base 350 + calculated score
+                let finalScore;
+                if (level === 1) {
+                    finalScore = Math.max(calculatedScore, 350);  // Level 1: minimum is 350
+                } else if (level === 2) {
+                    finalScore = calculatedScore;  // Level 2: already calculated with full formula
+                } else {
+                    finalScore = 350 + calculatedScore;  // Level 3+: base 350 + calculated score
+                }
                 
                 const cappedScore = Math.max(350, Math.min(finalScore, 900)); // Ensure within 350-900 range
 
