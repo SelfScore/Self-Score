@@ -8,30 +8,30 @@ export const getScoreRanges = (): ScoreRange[] => {
     {
       min: 0,
       max: 350,
-      label: 'Calm',
+      label: 'Seeker',
       color: '#90EE90',
-      description: 'You are in a calm state with minimal emotional stress.'
+      description: 'You are in a Seeker state with minimal emotional stress.'
     },
     {
       min: 351,
       max: 500,
-      label: 'Balanced',
+      label: 'Learner',
       color: '#90EE90',
       description: 'You maintain a good balance in your emotional awareness.'
     },
     {
       min: 501,
       max: 750,
-      label: 'Energized',
+      label: 'Evolver',
       color: '#FFA500',
-      description: 'You are emotionally aware and energized.'
+      description: 'You are emotionally aware and evolving.'
     },
     {
       min: 751,
       max: 900,
-      label: 'Overwhelmed',
+      label: 'Awakened',
       color: '#FFB6C1',
-      description: 'You may be feeling emotionally overwhelmed.'
+      description: 'You may be feeling emotionally Awakened.'
     }
   ];
 };
@@ -39,15 +39,15 @@ export const getScoreRanges = (): ScoreRange[] => {
 // Get score interpretation based on score value
 export const getScoreInterpretation = (score: number): {
   range: ScoreRange;
-  position: 'Calm' | 'Balanced' | 'Energized' | 'Overwhelmed';
+  position: 'Seeker' | 'Learner' | 'Evolver' | 'Awakened';
 } => {
   const ranges = getScoreRanges();
   const range = ranges.find(r => score >= r.min && score <= r.max) || ranges[0];
   
-  if (score <= 350) return { range, position: 'Calm' };
-  if (score <= 500) return { range, position: 'Balanced' };
-  if (score <= 750) return { range, position: 'Energized' };
-  return { range, position: 'Overwhelmed' };
+  if (score <= 350) return { range, position: 'Seeker' };
+  if (score <= 500) return { range, position: 'Learner' };
+  if (score <= 750) return { range, position: 'Evolver' };
+  return { range, position: 'Awakened' };
 };
 
 // Get detailed meaning based on score

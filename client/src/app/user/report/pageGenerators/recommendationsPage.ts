@@ -5,39 +5,42 @@ import { ReportContent } from '../types';
 export const generateRecommendationsPage = (content: ReportContent): string => {
   return `
     <div style="
-      background: linear-gradient(135deg, #F5F5DC 0%, #E8E8D0 100%);
+      background: #FFFFFF;
       padding: 40px;
       height: 100%;
       display: flex;
       flex-direction: column;
-      font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif;
+      font-family: 'Faustina', 'Source Sans Pro', -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif;
       position: relative;
+      background-image: url('/images/Report/BGImg.jpg');
+      background-size: cover;
+      background-position: center;
+      background-repeat: no-repeat;
     ">
+      <!-- Backdrop Blur Layer -->
+      <div style="
+        position: absolute;
+        top: 0;
+        left: 0;
+        width: 100%;
+        height: 100%;
+        background: rgba(255, 255, 255, 0.7);
+        backdrop-filter: blur(19px);
+        -webkit-backdrop-filter: blur(19px);
+        z-index: 0;
+      "></div>
+
       <!-- Logo -->
-      <div style="margin-bottom: 40px;">
-        <div style="display: flex; align-items: center; gap: 8px;">
-          <div style="
-            width: 32px;
-            height: 32px;
-            background: #E87A42;
-            border-radius: 50%;
-            display: flex;
-            align-items: center;
-            justify-content: center;
-          ">
-            <div style="
-              width: 16px;
-              height: 16px;
-              background: white;
-              border-radius: 50%;
-            "></div>
-          </div>
-          <span style="
-            font-size: 20px;
-            font-weight: 700;
-            color: #2B2B2B;
-          ">SELF SCORE</span>
-        </div>
+      <div style="margin-bottom: 40px; position: relative; z-index: 1;">
+        <img 
+          src="/images/logos/LogoWithText.png" 
+          alt="Self Score Logo" 
+          style="
+            width: 150px;
+            height: auto;
+            object-fit: contain;
+          "
+        />
       </div>
 
       <!-- Title -->
@@ -46,15 +49,20 @@ export const generateRecommendationsPage = (content: ReportContent): string => {
         font-weight: 700;
         color: #2B2B2B;
         margin: 0 0 8px 0;
+        position: relative;
+        z-index: 1;
       ">Your Personalized Recommendations</h2>
       
       <p style="
         font-size: 14px;
         color: #666;
         margin: 0 0 32px 0;
+        position: relative;
+        z-index: 1;
       ">Here's what can help you strengthen your emotional foundation:</p>
 
       <!-- Recommendations -->
+      <div style="position: relative; z-index: 1;">
       ${content.recommendations.map(rec => `
         <div style="
           display: flex;
@@ -135,53 +143,35 @@ export const generateRecommendationsPage = (content: ReportContent): string => {
         ">${content.proTip}</p>
       </div>
 
-      <!-- CTA -->
+      <!-- CTA Button -->
       <div style="
-        background: #E87A42;
-        color: white;
-        border-radius: 12px;
-        padding: 16px 24px;
-        text-align: center;
+        display: flex;
+        justify-content: left;
         margin-top: auto;
+        margin-bottom: 70px;
+        position: relative;
+        z-index: 1;
       ">
         <div style="
-          font-size: 18px;
-          font-weight: 700;
-          margin-bottom: 8px;
-        ">👑 Unlock Level 2 Test</div>
-        <div style="
-          display: flex;
+          background: #FF4F00;
+          color: #FFFFFF;
+          border-radius: 12px;
+          padding: 10px 32px;
+          text-align: center;
+          cursor: pointer;
+          border: none;
+          display: inline-flex;
           align-items: center;
           justify-content: center;
           gap: 8px;
-          font-size: 12px;
+          min-height: 40px;
+          font-family: 'Source Sans Pro', -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif;
         ">
-          <svg width="16" height="16" viewBox="0 0 16 16" fill="none">
-            <path d="M8 0L10 6H16L11 10L13 16L8 12L3 16L5 10L0 6H6L8 0Z" fill="white"/>
-          </svg>
-          <span>100% Secure payments</span>
+          <span style="
+            font-size: 18px;
+            font-weight: 400;
+          ">👑 Unlock Level 2 Test</span>
         </div>
-      </div>
-
-      <!-- Background Image -->
-      <div style="
-        position: absolute;
-        bottom: 0;
-        right: 0;
-        width: 35%;
-        height: 35%;
-        opacity: 0.1;
-      ">
-        <img 
-          src="/images/Report/People.webp" 
-          alt="Background" 
-          style="
-            width: 100%;
-            height: 100%;
-            object-fit: contain;
-            object-position: bottom right;
-          "
-        />
       </div>
 
       <!-- Page Number -->
@@ -194,7 +184,11 @@ export const generateRecommendationsPage = (content: ReportContent): string => {
         border-radius: 20px;
         font-size: 12px;
         color: #666;
-      ">3 / 10</div>
+        z-index: 10;
+        display: flex;
+        align-items: center;
+        justify-content: center;
+      ">6 / 10</div>
     </div>
   `;
 };

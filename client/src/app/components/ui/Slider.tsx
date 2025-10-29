@@ -85,10 +85,13 @@ const Slider: React.FC<SliderProps> = ({
           step={step}
           marks={Array.from(
             { length: Math.floor((max - min) / step) + 1 },
-            (_, i) => ({
-              value: min + i * step,
-              label: (min + i * step).toString(),
-            })
+            (_, i) => {
+              const value = min + i * step;
+              return {
+                value: value,
+                label: value.toString(),
+              };
+            }
           )}
           min={min}
           max={max}
@@ -158,26 +161,87 @@ const Slider: React.FC<SliderProps> = ({
             },
           }}
         />
-      </Box>
 
-      {/* <Box
-        sx={{
-          display: "flex",
-          justifyContent: "space-between",
-          mt: 2,
-          px: 2,
-          color: "#666",
-          fontSize: "0.75rem",
-          fontWeight: 500,
-        }}
-      >
-        <Typography variant="caption" sx={{ color: "#666" }}>
-          Strongly Disagree
-        </Typography>
-        <Typography variant="caption" sx={{ color: "#666" }}>
-          Strongly Agree
-        </Typography>
-      </Box> */}
+        {/* Descriptive labels below 0, 5, and 10 */}
+        <Box
+          sx={{
+            position: "relative",
+            mt: 2,
+            width: "100%",
+          }}
+        >
+          {/* Label at 0 - Never / Not at all */}
+          <Box
+            sx={{
+              position: "absolute",
+              left: "0%",
+              transform: "translateX(-60%)",
+            }}
+          >
+            <Typography
+              variant="caption"
+              sx={{
+                color: "#888",
+                fontSize: "0.7rem",
+                fontWeight: 400,
+                display: "block",
+                lineHeight: 1.3,
+                whiteSpace: "nowrap",
+              }}
+            >
+              Never
+            </Typography>
+          </Box>
+
+          {/* Label at 5 - Sometimes / Neutral */}
+          <Box
+            sx={{
+              position: "absolute",
+              left: "50%",
+              transform: "translateX(-50%)",
+            }}
+          >
+            <Typography
+              variant="caption"
+              sx={{
+                color: "#888",
+                fontSize: "0.7rem",
+                fontWeight: 400,
+                display: "block",
+                lineHeight: 1.3,
+                whiteSpace: "nowrap",
+                textAlign: "center",
+              }}
+            >
+              Sometimes
+            </Typography>
+          </Box>
+
+          {/* Label at 10 - Always / Fully */}
+          <Box
+            sx={{
+              position: "absolute",
+              right: "0%",
+              transform: "translateX(60%)",
+            }}
+          >
+            <Typography
+              variant="caption"
+              sx={{
+                color: "#888",
+                fontSize: "0.7rem",
+                fontWeight: 400,
+                display: "block",
+                lineHeight: 1.3,
+                whiteSpace: "nowrap",
+                textAlign: "right",
+              }}
+            >
+              Always
+            </Typography>
+          </Box>
+        </Box>
+      </Box>
     </Box>
   );
 };

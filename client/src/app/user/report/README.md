@@ -47,10 +47,10 @@ src/app/user/report/
 
 ### Level 1 (out of 900):
 
-- **Calm**: 0-350 (Green)
+- **Seeker**: 0-350 (Green)
 - **Balanced**: 351-500 (Green)
-- **Energized**: 501-750 (Orange) - "You" position
-- **Overwhelmed**: 751-900 (Pink)
+- **Evolver**: 501-750 (Orange) - "You" position
+- **Awakened**: 751-900 (Pink)
 
 ### Score Zones (Semi-circular gauge):
 

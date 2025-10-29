@@ -102,8 +102,7 @@ export default function AboutLevels() {
           }}
         >
           Our life scoring system comprises four progressive levels, each
-          corresponding to a distinct stage of personal development. Take the
-          assessment to start your journey.
+          corresponding to a distinct stage of personal development.
         </Typography>
       </Box>
 
@@ -356,6 +355,13 @@ export default function AboutLevels() {
                 There are no right or wrong answers. Your responses will help
                 you understand your current stage and guide you on your personal
                 growth journey.
+              </Typography>
+              <Typography sx={{ fontSize: { xs: "14px", md: "16px" } }}>
+                <strong>Before You Begin:</strong> Approach the test with an
+                open mind and a calm heart. Leave aside expectations,
+                distractions, and comparisons. Remember, this journey isn’t
+                about achieving a perfect score, it’s about understanding,
+                awareness, and progress toward inner peace and wholeness.
               </Typography>
               <Typography sx={{ mt: 1, fontSize: { xs: "14px", md: "16px" } }}>
                 <strong>Time Commitment:</strong> The assessment takes

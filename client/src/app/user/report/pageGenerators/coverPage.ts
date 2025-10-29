@@ -3,40 +3,29 @@
 export const generateCoverPage = (username: string, level: number): string => {
   return `
     <div style="
-      background: linear-gradient(135deg, #F5F5DC 0%, #E8E8D0 100%);
+      background: #FFFFFF;
       padding: 40px;
       height: 100%;
       display: flex;
       flex-direction: column;
-      font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif;
+      font-family: 'Faustina', 'Source Sans Pro', -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif;
       position: relative;
+      background-image: url('/images/Report/BGImg.jpg');
+      background-size: cover;
+      background-position: center;
+      background-repeat: no-repeat;
     ">
       <!-- Logo -->
       <div style="margin-bottom: 60px;">
-        <div style="display: flex; align-items: center; gap: 8px;">
-          <div style="
-            width: 32px;
-            height: 32px;
-            background: #E87A42;
-            border-radius: 50%;
-            display: flex;
-            align-items: center;
-            justify-content: center;
-          ">
-            <div style="
-              width: 16px;
-              height: 16px;
-              background: white;
-              border-radius: 50%;
-            "></div>
-          </div>
-          <span style="
-            font-size: 20px;
-            font-weight: 700;
-            color: #2B2B2B;
-            letter-spacing: 0.5px;
-          ">SELF SCORE</span>
-        </div>
+        <img 
+          src="/images/logos/LogoWithText.png" 
+          alt="Self Score Logo" 
+          style="
+            width: 150px;
+            height: auto;
+            object-fit: contain;
+          "
+        />
       </div>
 
       <!-- Title Section -->
@@ -64,47 +53,25 @@ export const generateCoverPage = (username: string, level: number): string => {
         ">A snapshot of where you stand emotionally and mentally and where to go next.</p>
       </div>
 
-      <!-- Tree Image Placeholder -->
-      <div style="
-        flex: 1;
-        display: flex;
-        align-items: flex-end;
-        justify-content: flex-end;
-        position: relative;
-      ">
-        <img 
-          src="/images/Report/People.webp" 
-          alt="Tree" 
-          style="
-            max-width: 450px;
-            width: 100%;
-            height: auto;
-            object-fit: contain;
-          "
-        />
-      </div>
+      <!-- Spacer to push name to bottom -->
+      <div style="flex: 1;"></div>
 
       <!-- Name Section -->
       <div style="
-        position: absolute;
-        bottom: 100px;
-        left: 40px;
+        border-left: 4px solid #0C677A;
+        padding-left: 16px;
+        margin-bottom: 60px;
       ">
         <div style="
-          border-left: 4px solid #0C677A;
-          padding-left: 16px;
-        ">
-          <div style="
-            font-size: 14px;
-            color: #666;
-            margin-bottom: 4px;
-          ">Name</div>
-          <div style="
-            font-size: 24px;
-            font-weight: 700;
-            color: #2B2B2B;
-          ">${username}</div>
-        </div>
+          font-size: 14px;
+          color: #666;
+          margin-bottom: 4px;
+        ">Name</div>
+        <div style="
+          font-size: 24px;
+          font-weight: 700;
+          color: #2B2B2B;
+        ">${username}</div>
       </div>
     </div>
   `;

@@ -13,39 +13,42 @@ export const generateScoreSummaryPage = (userData: UserReportData): string => {
   
   return `
     <div style="
-      background: linear-gradient(135deg, #F5F5DC 0%, #E8E8D0 100%);
+      background: #FFFFFF;
       padding: 40px;
       height: 100%;
       display: flex;
       flex-direction: column;
-      font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif;
+      font-family: 'Faustina', 'Source Sans Pro', -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif;
       position: relative;
+      background-image: url('/images/Report/BGImg.jpg');
+      background-size: cover;
+      background-position: center;
+      background-repeat: no-repeat;
     ">
+      <!-- Backdrop Blur Layer -->
+      <div style="
+        position: absolute;
+        top: 0;
+        left: 0;
+        width: 100%;
+        height: 100%;
+        background: rgba(255, 255, 255, 0.7);
+        backdrop-filter: blur(19px);
+        -webkit-backdrop-filter: blur(19px);
+        z-index: 0;
+      "></div>
+
       <!-- Logo -->
-      <div style="margin-bottom: 40px;">
-        <div style="display: flex; align-items: center; gap: 8px;">
-          <div style="
-            width: 32px;
-            height: 32px;
-            background: #E87A42;
-            border-radius: 50%;
-            display: flex;
-            align-items: center;
-            justify-content: center;
-          ">
-            <div style="
-              width: 16px;
-              height: 16px;
-              background: white;
-              border-radius: 50%;
-            "></div>
-          </div>
-          <span style="
-            font-size: 20px;
-            font-weight: 700;
-            color: #2B2B2B;
-          ">SELF SCORE</span>
-        </div>
+      <div style="margin-bottom: 40px; position: relative; z-index: 1;">
+        <img 
+          src="/images/logos/LogoWithText.png" 
+          alt="Self Score Logo" 
+          style="
+            width: 150px;
+            height: auto;
+            object-fit: contain;
+          "
+        />
       </div>
 
       <!-- Title -->
@@ -54,31 +57,40 @@ export const generateScoreSummaryPage = (userData: UserReportData): string => {
         font-weight: 700;
         color: #2B2B2B;
         margin: 0 0 8px 0;
+        position: relative;
+        z-index: 1;
+        
       ">Your Self Score Summary</h2>
       
       <p style="
         font-size: 14px;
         color: #666;
         margin: 0 0 32px 0;
+        position: relative;
+        z-index: 1;
+        font-family: 'Source Sans Pro', -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif;
       ">Based on your responses, here's how your current emotional awareness stands.</p>
 
       <!-- Score Box -->
       <div style="
-        background: white;
-        border: 2px solid #E0E0E0;
+        background: #F7F7F780;
+        border: 1px solid #3A3A3A4D;
         border-radius: 16px;
         padding: 24px;
         margin-bottom: 32px;
         display: flex;
         justify-content: space-between;
         align-items: center;
+        position: relative;
+        z-index: 1;
       ">
-        <div style="flex: 1;">
+        <div style="flex: 1; font-family: 'Source Sans Pro', -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif;">
           <h3 style="
             font-size: 24px;
             font-weight: 700;
             color: #2B2B2B;
             margin: 0 0 12px 0;
+            font-family: 'Faustina', 'Source Sans Pro', -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif;
           ">Level ${userData.level} Score</h3>
           
           <div style="display: flex; align-items: center; gap: 8px; margin-bottom: 16px;">
@@ -120,7 +132,7 @@ export const generateScoreSummaryPage = (userData: UserReportData): string => {
               cy="90"
               r="70"
               fill="none"
-              stroke="#4CAF50"
+              stroke="#508B28"
               stroke-width="20"
               stroke-dasharray="${2 * Math.PI * 70}"
               stroke-dashoffset="${2 * Math.PI * 70 * (1 - percentage / 100)}"
@@ -157,25 +169,23 @@ export const generateScoreSummaryPage = (userData: UserReportData): string => {
         font-weight: 700;
         color: #2B2B2B;
         margin: 0 0 24px 0;
+        position: relative;
+        z-index: 1;
       ">Where do you Stand</h3>
 
       <!-- Slider -->
       <div style="
         position: relative;
         margin-bottom: 32px;
+        position: relative;
+        z-index: 1;
       ">
         <div style="
-          display: flex;
-          height: 60px;
-          border-radius: 30px;
-          overflow: hidden;
+          height: 8px;
+          border-radius: 4px;
+          background: linear-gradient(90deg, #E9F3F5 0%, #87D55D 33.33%, #FDE8D5 66.67%, #E88C73 100%);
           position: relative;
-        ">
-          <div style="flex: 1; background: #90EE90;"></div>
-          <div style="flex: 1; background: #90EE90;"></div>
-          <div style="flex: 1; background: #FFA500;"></div>
-          <div style="flex: 1; background: #FFB6C1;"></div>
-        </div>
+        "></div>
 
         <!-- You marker -->
         <div style="
@@ -192,10 +202,11 @@ export const generateScoreSummaryPage = (userData: UserReportData): string => {
             font-size: 14px;
             font-weight: 700;
             white-space: nowrap;
+            font-family: 'Source Sans Pro', -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif;
           ">You</div>
           <div style="
             width: 3px;
-            height: 60px;
+            height: 48px;
             background: #E87A42;
             margin: 0 auto;
           "></div>
@@ -214,21 +225,22 @@ export const generateScoreSummaryPage = (userData: UserReportData): string => {
           justify-content: space-between;
           margin-top: 12px;
           padding: 0 20px;
+          font-family: 'Source Sans Pro', -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif;
         ">
           <div style="text-align: left;">
-            <div style="font-size: 12px; font-weight: 600; color: #2B2B2B;">Calm</div>
+            <div style="font-size: 12px; font-weight: 600; color: #2B2B2B;">Seeker</div>
             <div style="font-size: 11px; color: #666;">(Score: 350)</div>
           </div>
           <div style="text-align: center;">
-            <div style="font-size: 12px; font-weight: 600; color: #2B2B2B;">Balanced</div>
+            <div style="font-size: 12px; font-weight: 600; color: #2B2B2B;">Learner</div>
             <div style="font-size: 11px; color: #666;">(Score: 500)</div>
           </div>
           <div style="text-align: center;">
-            <div style="font-size: 12px; font-weight: 600; color: #2B2B2B;">Energized</div>
+            <div style="font-size: 12px; font-weight: 600; color: #2B2B2B;">Evolver</div>
             <div style="font-size: 11px; color: #666;">(Score: 750)</div>
           </div>
           <div style="text-align: right;">
-            <div style="font-size: 12px; font-weight: 600; color: #2B2B2B;">Overwhelmed</div>
+            <div style="font-size: 12px; font-weight: 600; color: #2B2B2B;">Awakened</div>
             <div style="font-size: 11px; color: #666;">(Score: 900)</div>
           </div>
         </div>
@@ -236,15 +248,20 @@ export const generateScoreSummaryPage = (userData: UserReportData): string => {
 
       <!-- Meaning Box -->
       <div style="
-        background: #FFE4E1;
-        border-radius: 12px;
+        background: #FFEBE4;
+        border-radius: 16px;
+        border: 1px solid #FF6B354D;
         padding: 20px 24px;
+        position: relative;
+        z-index: 1;
+        font-family: 'Source Sans Pro', -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif;
       ">
         <h4 style="
           font-size: 18px;
           font-weight: 700;
           color: #2B2B2B;
           margin: 0 0 12px 0;
+          font-family: 'Faustina', 'Source Sans Pro', -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif;
         ">Your Self Score Meaning</h4>
         
         <p style="
@@ -253,27 +270,6 @@ export const generateScoreSummaryPage = (userData: UserReportData): string => {
           margin: 0;
           line-height: 1.6;
         ">${meaning}</p>
-      </div>
-
-      <!-- Background Image -->
-      <div style="
-        position: absolute;
-        bottom: 0;
-        right: 0;
-        width: 40%;
-        height: 40%;
-        opacity: 0.1;
-      ">
-        <img 
-          src="/images/Report/People.webp" 
-          alt="Background" 
-          style="
-            width: 100%;
-            height: 100%;
-            object-fit: contain;
-            object-position: bottom right;
-          "
-        />
       </div>
 
       <!-- Page Number -->
@@ -286,6 +282,10 @@ export const generateScoreSummaryPage = (userData: UserReportData): string => {
         border-radius: 20px;
         font-size: 12px;
         color: #666;
+        z-index: 1;
+        display: flex;
+        align-items: center;
+        justify-content: center;
       ">3 / 10</div>
     </div>
   `;

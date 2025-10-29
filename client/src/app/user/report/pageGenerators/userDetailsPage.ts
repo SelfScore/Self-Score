@@ -9,53 +9,61 @@ export const generateUserDetailsPage = (userData: UserReportData): string => {
   
   return `
     <div style="
-      background: linear-gradient(135deg, #F5F5DC 0%, #E8E8D0 100%);
+      background: #FFFFFF;
       padding: 40px;
       height: 100%;
       display: flex;
       flex-direction: column;
-      font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif;
+      font-family: 'Faustina', 'Source Sans Pro', -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif;
       position: relative;
+      background-image: url('/images/Report/BGImg.jpg');
+      background-size: cover;
+      background-position: center;
+      background-repeat: no-repeat;
     ">
+      <!-- Backdrop Blur Layer -->
+      <div style="
+        position: absolute;
+        top: 0;
+        left: 0;
+        width: 100%;
+        height: 100%;
+        background: rgba(255, 255, 255, 0.7);
+        backdrop-filter: blur(19px);
+        -webkit-backdrop-filter: blur(19px);
+        z-index: 0;
+      "></div>
+
       <!-- Logo and Badge -->
       <div style="
         display: flex;
         justify-content: space-between;
         align-items: center;
         margin-bottom: 60px;
+        position: relative;
+        z-index: 1;
       ">
-        <div style="display: flex; align-items: center; gap: 8px;">
-          <div style="
-            width: 32px;
-            height: 32px;
-            background: #E87A42;
-            border-radius: 50%;
-            display: flex;
-            align-items: center;
-            justify-content: center;
-          ">
-            <div style="
-              width: 16px;
-              height: 16px;
-              background: white;
-              border-radius: 50%;
-            "></div>
-          </div>
-          <span style="
-            font-size: 20px;
-            font-weight: 700;
-            color: #2B2B2B;
-          ">SELF SCORE</span>
-        </div>
+        <img 
+          src="/images/logos/LogoWithText.png" 
+          alt="Self Score Logo" 
+          style="
+            width: 150px;
+            height: auto;
+            object-fit: contain;
+          "
+        />
 
         <div style="
-          background: #0C677A;
+          background: #005F73;
           color: white;
-          padding: 8px 20px;
-          border-radius: 20px;
+          padding: 6px 24px;
+          border-radius: 8px;
           font-size: 12px;
           font-weight: 600;
           letter-spacing: 0.5px;
+          height: 28px;
+          display: flex;
+          align-items: center;
         ">
           CURRENT ACTIVE PLAN - ${planBadge}
         </div>
@@ -67,6 +75,8 @@ export const generateUserDetailsPage = (userData: UserReportData): string => {
         font-weight: 700;
         color: #2B2B2B;
         margin: 0 0 24px 0;
+        position: relative;
+        z-index: 1;
       ">User Details</h2>
 
       <!-- Details Table -->
@@ -74,59 +84,62 @@ export const generateUserDetailsPage = (userData: UserReportData): string => {
         width: 100%;
         max-width: 600px;
         border-collapse: collapse;
-        background: white;
-        border: 1px solid #DDD;
+        background: rgba(247, 247, 247, 0.5);
+        border: 1px solid rgba(58, 58, 58, 0.3);
+        position: relative;
+        z-index: 1;
+        margin: 0 auto;
       ">
-        <tr style="border-bottom: 1px solid #DDD;">
+        <tr style="border-bottom: 1px solid rgba(58, 58, 58, 0.3);">
           <td style="
             padding: 16px 20px;
             font-weight: 600;
             color: #2B2B2B;
             width: 180px;
-            border-right: 1px solid #DDD;
+            border-right: 1px solid rgba(58, 58, 58, 0.3);
           ">Name</td>
           <td style="
             padding: 16px 20px;
-            color: #666;
+            color: #2B2B2B;
           ">${userData.username}</td>
         </tr>
         
-        <tr style="border-bottom: 1px solid #DDD;">
+        <tr style="border-bottom: 1px solid rgba(58, 58, 58, 0.3);">
           <td style="
             padding: 16px 20px;
             font-weight: 600;
             color: #2B2B2B;
-            border-right: 1px solid #DDD;
+            border-right: 1px solid rgba(58, 58, 58, 0.3);
           ">Email ID</td>
           <td style="
             padding: 16px 20px;
-            color: #666;
+            color: #2B2B2B;
           ">${userData.email}</td>
         </tr>
         
-        <tr style="border-bottom: 1px solid #DDD;">
+        <tr style="border-bottom: 1px solid rgba(58, 58, 58, 0.3);">
           <td style="
             padding: 16px 20px;
             font-weight: 600;
             color: #2B2B2B;
-            border-right: 1px solid #DDD;
+            border-right: 1px solid rgba(58, 58, 58, 0.3);
           ">Phone Number</td>
           <td style="
             padding: 16px 20px;
-            color: #666;
+            color: #2B2B2B;
           ">${userData.phoneNumber || 'Not provided'}</td>
         </tr>
         
-        <tr style="border-bottom: 1px solid #DDD;">
+        <tr style="border-bottom: 1px solid rgba(58, 58, 58, 0.3);">
           <td style="
             padding: 16px 20px;
             font-weight: 600;
             color: #2B2B2B;
-            border-right: 1px solid #DDD;
+            border-right: 1px solid rgba(58, 58, 58, 0.3);
           ">Report Date</td>
           <td style="
             padding: 16px 20px;
-            color: #666;
+            color: #2B2B2B;
           ">${formattedDate}</td>
         </tr>
         
@@ -135,36 +148,15 @@ export const generateUserDetailsPage = (userData: UserReportData): string => {
             padding: 16px 20px;
             font-weight: 600;
             color: #2B2B2B;
-            border-right: 1px solid #DDD;
+            border-right: 1px solid rgba(58, 58, 58, 0.3);
           ">Level ${userData.level} Score</td>
           <td style="
             padding: 16px 20px;
-            color: #666;
+            color: #2B2B2B;
             font-weight: 600;
           ">${userData.score} / ${userData.maxScore}</td>
         </tr>
       </table>
-
-      <!-- Background Image -->
-      <div style="
-        position: absolute;
-        bottom: 0;
-        right: 0;
-        width: 50%;
-        height: 50%;
-        opacity: 0.15;
-      ">
-        <img 
-          src="/images/Report/People.webp" 
-          alt="Background" 
-          style="
-            width: 100%;
-            height: 100%;
-            object-fit: contain;
-            object-position: bottom right;
-          "
-        />
-      </div>
 
       <!-- Page Number -->
       <div style="
@@ -176,6 +168,10 @@ export const generateUserDetailsPage = (userData: UserReportData): string => {
         border-radius: 20px;
         font-size: 12px;
         color: #666;
+        z-index: 1;
+        display: flex;
+        align-items: center;
+        justify-content: center;
       ">2 / 10</div>
     </div>
   `;

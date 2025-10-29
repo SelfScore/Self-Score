@@ -452,8 +452,7 @@ export default function LevelAnalysisPage() {
             }}
           >
             This test evaluates your self-awareness and understanding of your
-            current life situations. Rate each statement from 0-10 to calculate
-            your awareness score (350-900) points.
+            current life situations. 
           </Typography>
         </Box>
 
@@ -678,7 +677,7 @@ export default function LevelAnalysisPage() {
             <Box sx={{ display: "flex", justifyContent: "space-between" }}>
               <Box>
                 <Typography variant="body2" fontWeight="600">
-                  Calm
+                  Seeker
                 </Typography>
                 <Typography variant="caption" color="text.secondary">
                   (Score: 350)
@@ -686,7 +685,7 @@ export default function LevelAnalysisPage() {
               </Box>
               <Box sx={{ textAlign: "center" }}>
                 <Typography variant="body2" fontWeight="600">
-                  Balanced
+                  Learner
                 </Typography>
                 <Typography variant="caption" color="text.secondary">
                   (Score: 500)
@@ -694,7 +693,7 @@ export default function LevelAnalysisPage() {
               </Box>
               <Box sx={{ textAlign: "center" }}>
                 <Typography variant="body2" fontWeight="600">
-                  Energized
+                  Evolver
                 </Typography>
                 <Typography variant="caption" color="text.secondary">
                   (Score: 750)
@@ -702,7 +701,7 @@ export default function LevelAnalysisPage() {
               </Box>
               <Box sx={{ textAlign: "right" }}>
                 <Typography variant="body2" fontWeight="600">
-                  Overwhelmed
+                  Awakened
                 </Typography>
                 <Typography variant="caption" color="text.secondary">
                   (Score: 900)

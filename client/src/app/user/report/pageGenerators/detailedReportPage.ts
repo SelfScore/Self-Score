@@ -5,39 +5,42 @@ import { ReportContent } from '../types';
 export const generateDetailedReportPage = (content: ReportContent): string => {
   return `
     <div style="
-      background: linear-gradient(135deg, #F5F5DC 0%, #E8E8D0 100%);
+      background: #FFFFFF;
       padding: 40px;
       height: 100%;
       display: flex;
       flex-direction: column;
-      font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif;
+      font-family: 'Faustina', 'Source Sans Pro', -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif;
       position: relative;
+      background-image: url('/images/Report/BGImg.jpg');
+      background-size: cover;
+      background-position: center;
+      background-repeat: no-repeat;
     ">
+      <!-- Backdrop Blur Layer -->
+      <div style="
+        position: absolute;
+        top: 0;
+        left: 0;
+        width: 100%;
+        height: 100%;
+        background: rgba(255, 255, 255, 0.7);
+        backdrop-filter: blur(19px);
+        -webkit-backdrop-filter: blur(19px);
+        z-index: 0;
+      "></div>
+
       <!-- Logo -->
-      <div style="margin-bottom: 40px;">
-        <div style="display: flex; align-items: center; gap: 8px;">
-          <div style="
-            width: 32px;
-            height: 32px;
-            background: #E87A42;
-            border-radius: 50%;
-            display: flex;
-            align-items: center;
-            justify-content: center;
-          ">
-            <div style="
-              width: 16px;
-              height: 16px;
-              background: white;
-              border-radius: 50%;
-            "></div>
-          </div>
-          <span style="
-            font-size: 20px;
-            font-weight: 700;
-            color: #2B2B2B;
-          ">SELF SCORE</span>
-        </div>
+      <div style="margin-bottom: 40px; position: relative; z-index: 1;">
+        <img 
+          src="/images/logos/LogoWithText.png" 
+          alt="Self Score Logo" 
+          style="
+            width: 150px;
+            height: auto;
+            object-fit: contain;
+          "
+        />
       </div>
 
       <!-- Title -->
@@ -46,6 +49,8 @@ export const generateDetailedReportPage = (content: ReportContent): string => {
         font-weight: 700;
         color: #2B2B2B;
         margin: 0 0 8px 0;
+        position: relative;
+        z-index: 1;
       ">Detailed Report</h2>
       
       <p style="
@@ -54,10 +59,12 @@ export const generateDetailedReportPage = (content: ReportContent): string => {
         margin: 0 0 32px 0;
         padding-bottom: 16px;
         border-bottom: 2px solid #DDD;
+        position: relative;
+        z-index: 1;
       ">According to your self score, you posses these specific characteristics in life.</p>
 
       <!-- Characteristics List -->
-      <div style="margin-bottom: 32px;">
+      <div style="margin-bottom: 32px; position: relative; z-index: 1;">
         ${content.characteristics.map((char, index) => `
           <div style="margin-bottom: 24px;">
             <h3 style="
@@ -77,27 +84,6 @@ export const generateDetailedReportPage = (content: ReportContent): string => {
         `).join('')}
       </div>
 
-      <!-- Background Image -->
-      <div style="
-        position: absolute;
-        bottom: 0;
-        right: 0;
-        width: 45%;
-        height: 45%;
-        opacity: 0.1;
-      ">
-        <img 
-          src="/images/Report/People.webp" 
-          alt="Background" 
-          style="
-            width: 100%;
-            height: 100%;
-            object-fit: contain;
-            object-position: bottom right;
-          "
-        />
-      </div>
-
       <!-- Page Number -->
       <div style="
         position: absolute;
@@ -108,7 +94,11 @@ export const generateDetailedReportPage = (content: ReportContent): string => {
         border-radius: 20px;
         font-size: 12px;
         color: #666;
-      ">3 / 10</div>
+        z-index: 1;
+        display: flex;
+        align-items: center;
+        justify-content: center;
+      ">4 / 10</div>
     </div>
   `;
 };
