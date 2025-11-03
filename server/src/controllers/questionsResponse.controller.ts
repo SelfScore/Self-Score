@@ -401,7 +401,7 @@ export const submitLevelResponses = async (req: Request, res: Response): Promise
                         return sum + (response.selectedOptionIndex * 15);
                     }, 0);
                 } else if (level === 2) {
-                    // Level 2: (350 + Level1Score) - |Level2Score|
+                    // Level 2: Level1Score - |Level2Score|
                     // Get Level 1 score from user's progress
                     const level1Score = user.progress.testScores.level1 || 350;
                     
@@ -418,8 +418,8 @@ export const submitLevelResponses = async (req: Request, res: Response): Promise
                     // Take absolute value of Level 2 score
                     const level2AbsoluteScore = Math.abs(level2RawScore);
                     
-                    // Final formula: (350 + level1Score) - |level2Score|
-                    calculatedScore = (350 + level1Score) - level2AbsoluteScore;
+                    // Final formula: level1Score - |level2Score|
+                    calculatedScore = level1Score - level2AbsoluteScore;
                     
                     // Note: calculatedScore will be used below to calculate finalScore
                     // For Level 2, we don't add 350 again since it's already in the formula

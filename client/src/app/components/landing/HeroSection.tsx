@@ -1,10 +1,13 @@
+'use client';
 import { Box, Typography } from "@mui/material";
 import HomePageBG from "../../../../public/images/LandingPage/HomePage.png";
 import HomeSmile from "../../../../public/images/LandingPage/HomePageSmile.png";
 import ButtonSelfScore from "../ui/ButtonSelfScore";
 import VerifiedUserIcon from "@mui/icons-material/VerifiedUser";
+import { useRouter } from "next/navigation";
 
 export default function HeroSection() {
+  const router = useRouter();
   return (
     <Box
       sx={{
@@ -92,7 +95,12 @@ export default function HeroSection() {
           </Typography>
 
           <Box sx={{ display: "inline-block" }}>
-            <ButtonSelfScore text="Discover Your Path →" />
+            <ButtonSelfScore
+              onClick={() => {
+                router.push(`/testInfo?`);
+              }}
+              text="Discover Your Path →"
+            />
           </Box>
 
           <Box

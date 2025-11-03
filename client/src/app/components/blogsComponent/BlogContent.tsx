@@ -135,77 +135,74 @@ export default function BlogContent({ blog }: BlogContentProps) {
           />
         </Box>
 
-        {/* Introduction */}
-        <Typography
+        {/* WordPress HTML Content */}
+        <Box
           sx={{
             fontFamily: "Source Sans Pro",
             fontSize: { xs: "16px", md: "18px" },
             fontWeight: 400,
             color: "#374151",
             lineHeight: 1.8,
-            mb: 4,
-          }}
-        >
-          {blog.content.introduction}
-        </Typography>
-
-        {/* Sections */}
-        {blog.content.sections.map((section, index) => (
-          <Box key={index} sx={{ mb: 4 }}>
-            <Typography
-              sx={{
-                fontFamily: "Faustina",
-                fontSize: { xs: "22px", md: "28px" },
-                fontWeight: 700,
-                color: "#000000",
-                mb: 2,
-              }}
-            >
-              {section.heading}
-            </Typography>
-            {section.paragraphs.map((paragraph, pIndex) => (
-              <Typography
-                key={pIndex}
-                sx={{
-                  fontFamily: "Source Sans Pro",
-                  fontSize: { xs: "16px", md: "18px" },
-                  fontWeight: 400,
-                  color: "#374151",
-                  lineHeight: 1.8,
-                  mb: 2,
-                }}
-              >
-                {paragraph}
-              </Typography>
-            ))}
-          </Box>
-        ))}
-
-        {/* Conclusion */}
-        <Box sx={{ mt: 6 }}>
-          <Typography
-            sx={{
+            "& p": {
+              mb: 2,
+            },
+            "& h1, & h2, & h3, & h4, & h5, & h6": {
               fontFamily: "Faustina",
-              fontSize: { xs: "22px", md: "28px" },
               fontWeight: 700,
               color: "#000000",
+              mt: 4,
               mb: 2,
-            }}
-          >
-            {blog.content.conclusion.heading}
-          </Typography>
-          <Typography
-            sx={{
-              fontFamily: "Source Sans Pro",
-              fontSize: { xs: "16px", md: "18px" },
-              fontWeight: 400,
-              color: "#374151",
-              lineHeight: 1.8,
-            }}
-          >
-            {blog.content.conclusion.content}
-          </Typography>
-        </Box>
+            },
+            "& h2": {
+              fontSize: { xs: "22px", md: "28px" },
+            },
+            "& h3": {
+              fontSize: { xs: "20px", md: "24px" },
+            },
+            "& img": {
+              maxWidth: "100%",
+              height: "auto",
+              borderRadius: "8px",
+              my: 3,
+            },
+            "& a": {
+              color: "#FF5722",
+              textDecoration: "none",
+              "&:hover": {
+                textDecoration: "underline",
+              },
+            },
+            "& ul, & ol": {
+              pl: 3,
+              mb: 2,
+            },
+            "& li": {
+              mb: 1,
+            },
+            "& blockquote": {
+              borderLeft: "4px solid #FF5722",
+              pl: 2,
+              fontStyle: "italic",
+              color: "#4B5563",
+              my: 3,
+            },
+            "& code": {
+              backgroundColor: "#F3F4F6",
+              padding: "2px 6px",
+              borderRadius: "4px",
+              fontSize: "0.9em",
+              fontFamily: "monospace",
+            },
+            "& pre": {
+              backgroundColor: "#F3F4F6",
+              padding: 2,
+              borderRadius: "8px",
+              overflow: "auto",
+              my: 3,
+            },
+          }}
+          dangerouslySetInnerHTML={{ __html: blog.content }}
+        />
       </Container>
     </Box>
   );

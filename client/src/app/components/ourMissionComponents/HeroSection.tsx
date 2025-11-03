@@ -1,10 +1,14 @@
+// "use client";
 import { Box, Typography } from "@mui/material";
 import ButtonSelfScore from "../ui/ButtonSelfScore";
 import YogoPersonIMG from "../../../../public/images/ourMission/YogaPerson.webp";
 import Image from "next/image";
 import OutLineButton from "../ui/OutLineButton";
+// import { useRouter } from "next/navigation";
+import Link from "next/link";
 
 export default function HeroSection() {
+  // const router = useRouter();
   return (
     <Box
       sx={{
@@ -76,7 +80,14 @@ export default function HeroSection() {
             gap: 2,
           }}
         >
-          <ButtonSelfScore text="Take the Happiness Test →" />
+          <Link href="/testInfo">
+            <ButtonSelfScore
+              // onClick={() => {
+              //   router.push(`/testInfo?`);
+              // }}
+              text="Take the Happiness Test →"
+            />
+          </Link>
           <OutLineButton
             variant="outlined"
             color="primary"
@@ -96,27 +107,26 @@ export default function HeroSection() {
       </Box>
 
       {/* yoga person  */}
-        <Box
-          sx={{
-            width: "100vw",
-            position: "relative",
-            left: "50%",
-            right: "50%",
-            ml: "-50vw",
-            mr: "-50vw",
-            height: { xs: "200px", md: "589px" },
-            mt: { xs: 4, md: 6 },
-            overflow: "hidden",
-          }}
-        >
-          <Image
-            src={YogoPersonIMG}
-            alt="Yoga Person"
-            fill
-            style={{ objectFit: "cover" }}
-          />
-        </Box>
-
+      <Box
+        sx={{
+          width: "100vw",
+          position: "relative",
+          left: "50%",
+          right: "50%",
+          ml: "-50vw",
+          mr: "-50vw",
+          height: { xs: "200px", md: "589px" },
+          mt: { xs: 4, md: 6 },
+          overflow: "hidden",
+        }}
+      >
+        <Image
+          src={YogoPersonIMG}
+          alt="Yoga Person"
+          fill
+          style={{ objectFit: "cover" }}
+        />
+      </Box>
     </Box>
   );
 }

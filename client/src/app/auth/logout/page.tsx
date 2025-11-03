@@ -45,7 +45,7 @@ export default function LogoutPage() {
         Logging you out...
       </Typography>
       <Typography variant="body1" sx={{ color: "#666" }}>
-        Thank you for using LifeScore Assessment
+        Thank you for using SelfScore Assessment
       </Typography>
     </Box>
   );

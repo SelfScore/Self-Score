@@ -265,7 +265,7 @@ export default function LevelTest({ level }: LevelTestProps) {
       const finalScore = Math.max(totalRawScore, 350);
       return Math.min(finalScore, 900);
     } else if (level === 2) {
-      // Level 2: (350 + Level1Score) - |Level2Score|
+      // Level 2: Level1Score - |Level2Score|
       // Get Level 1 score from user progress
       const level1Score = userProgress?.testScores?.level1 || 350;
 
@@ -283,8 +283,8 @@ export default function LevelTest({ level }: LevelTestProps) {
       // Take absolute value of Level 2 score
       const level2AbsoluteScore = Math.abs(level2RawScore);
 
-      // Final formula: (350 + level1Score) - |level2Score|
-      const finalScore = 350 + level1Score - level2AbsoluteScore;
+      // Final formula: level1Score - |level2Score|
+      const finalScore = level1Score - level2AbsoluteScore;
 
       // Cap between 350-900
       return Math.max(350, Math.min(finalScore, 900));

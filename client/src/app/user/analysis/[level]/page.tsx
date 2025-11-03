@@ -142,7 +142,7 @@ export default function LevelAnalysisPage() {
             0
           );
         } else if (levelNumber === 2) {
-          // Level 2: (350 + Level1Score) - |Level2Score|
+          // Level 2: Level1Score - |Level2Score|
           // Get Level 1 score from user progress (try Redux first, then server data)
           let level1Score = userProgress?.testScores?.level1;
 
@@ -198,13 +198,11 @@ export default function LevelAnalysisPage() {
           const level2AbsoluteScore = Math.abs(level2RawScore);
           console.log(`Level 2 Absolute Score: ${level2AbsoluteScore}`);
 
-          // Final formula: (350 + level1Score) - |level2Score|
-          calculatedScore = 350 + level1Score - level2AbsoluteScore;
+          // Final formula: level1Score - |level2Score|
+          calculatedScore = level1Score - level2AbsoluteScore;
 
           console.log(`\nFinal Score Calculation:`);
-          console.log(
-            `  - Formula: (350 + ${level1Score}) - ${level2AbsoluteScore}`
-          );
+          console.log(`  - Formula: ${level1Score} - ${level2AbsoluteScore}`);
           console.log(`  - Result: ${calculatedScore}`);
         } else {
           // Level 3+: Use scoringType from each question (original logic)
@@ -452,7 +450,7 @@ export default function LevelAnalysisPage() {
             }}
           >
             This test evaluates your self-awareness and understanding of your
-            current life situations. 
+            current life situations.
           </Typography>
         </Box>
 
@@ -792,7 +790,6 @@ export default function LevelAnalysisPage() {
             flexWrap="wrap"
             sx={{ gap: 2 }}
           >
-            
             <ButtonSelfScore
               startIcon={<RefreshIcon />}
               text="Retake"

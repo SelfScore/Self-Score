@@ -10,7 +10,7 @@ export const resend = new Resend(resendApiKey || 'dummy-key');
 
 // Email sender configuration
 const FROM_EMAIL = process.env.FROM_EMAIL || 'onboarding@resend.dev';
-const APP_NAME = 'LifeScore';
+const APP_NAME = 'SelfScore';
 const CLIENT_URL = process.env.CLIENT_URL || 'http://localhost:3000';
 
 export interface EmailOptions {
