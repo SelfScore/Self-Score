@@ -1,4 +1,4 @@
-// "use client";
+"use client";
 import { Box, Typography } from "@mui/material";
 import ButtonSelfScore from "../ui/ButtonSelfScore";
 import YogoPersonIMG from "../../../../public/images/ourMission/YogaPerson.webp";
@@ -9,6 +9,16 @@ import Link from "next/link";
 
 export default function HeroSection() {
   // const router = useRouter();
+
+  const handleLearnMore = () => {
+    const whyWeBuildSection = document.getElementById("why-we-build");
+    if (whyWeBuildSection) {
+      whyWeBuildSection.scrollIntoView({
+        behavior: "smooth",
+        block: "start",
+      });
+    }
+  };
   return (
     <Box
       sx={{
@@ -89,6 +99,7 @@ export default function HeroSection() {
             />
           </Link>
           <OutLineButton
+            onClick={handleLearnMore}
             variant="outlined"
             color="primary"
             sx={{

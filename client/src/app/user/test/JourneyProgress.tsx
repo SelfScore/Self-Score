@@ -10,15 +10,10 @@ import OutLineButton from "@/app/components/ui/OutLineButton";
 
 export default function JourneyProgress() {
   const router = useRouter();
-  const {
-    getHighestUnlockedLevel,
-    isLevelCompleted,
-    getTestScore,
-    hasActiveSubscription,
-  } = useLevelAccess();
+  const { getHighestUnlockedLevel, isLevelCompleted, getTestScore } =
+    useLevelAccess();
 
   const highestUnlockedLevel = getHighestUnlockedLevel();
-  const isSubscribed = hasActiveSubscription();
 
   // Level configuration with names
   const levels = [
@@ -27,6 +22,19 @@ export default function JourneyProgress() {
     { id: 3, name: "Action" },
     { id: 4, name: "Mastery" },
   ];
+
+  // Get the highest completed level
+  const getHighestCompletedLevel = () => {
+    for (let i = levels.length; i >= 1; i--) {
+      if (isLevelCompleted(i)) {
+        return i;
+      }
+    }
+    return 0; // No level completed
+  };
+
+  const highestCompletedLevel = getHighestCompletedLevel();
+  const hasCompletedLevel1 = isLevelCompleted(1);
 
   // Determine card status for each level
   const getCardStatus = (
@@ -37,19 +45,19 @@ export default function JourneyProgress() {
     return "locked";
   };
 
-  // Handle Start Test
+  // Handle Start Test - Navigate to test page
   const handleStartTest = (level: number) => {
     router.push(`/user/test?level=${level}`);
   };
 
-  // Handle Retake Test
+  // Handle Retake Test - Navigate to test page (same as start)
   const handleRetakeTest = (level: number) => {
     router.push(`/user/test?level=${level}`);
   };
 
-  // Handle Unlock (Navigate to subscription page)
-  const handleUnlock = () => {
-    router.push("/user/subscription");
+  // Handle Unlock - Navigate to TestInfo page for that level (which has payment UI)
+  const handleUnlock = (level: number) => {
+    router.push(`/testInfo?level=${level}`);
   };
 
   return (
@@ -124,8 +132,8 @@ export default function JourneyProgress() {
               lineHeight: { xs: 1.5, md: 1.6 },
             }}
           >
-            You've Unlocked {highestUnlockedLevel} out of 4 happiness
-            assessment levels
+            You've Unlocked {highestUnlockedLevel} out of 4 happiness assessment
+            levels
           </Typography>
         </Box>
 
@@ -247,14 +255,14 @@ export default function JourneyProgress() {
                 maxScore={900}
                 onStartTest={() => handleStartTest(level.id)}
                 onRetakeTest={() => handleRetakeTest(level.id)}
-                onUnlock={handleUnlock}
+                onUnlock={() => handleUnlock(level.id)}
               />
             );
           })}
         </Box>
 
-        {/* Subscription CTA for non-subscribers */}
-        {!isSubscribed && (
+        {/* Unlock Your Full Potential section - Only show after Level 1 is completed */}
+        {hasCompletedLevel1 && (
           <Box
             sx={{
               mt: { xs: 6, sm: 8, md: 12 },
@@ -311,8 +319,8 @@ export default function JourneyProgress() {
             >
               <Box sx={{ width: { xs: "100%", sm: "auto" } }}>
                 <ButtonSelfScore
-                  text={<> Unlock Level {highestUnlockedLevel} Test</>}
-                  onClick={handleUnlock}
+                  text={<> Unlock Level {highestUnlockedLevel + 1} Test</>}
+                  onClick={() => handleUnlock(highestUnlockedLevel + 1)}
                   fontSize={"16px"}
                   fullWidth={true}
                   style={{
@@ -327,6 +335,7 @@ export default function JourneyProgress() {
               </Box>
 
               <OutLineButton
+                onClick={() => handleRetakeTest(highestCompletedLevel)}
                 sx={{
                   padding: { xs: "8px 16px", sm: "5px 14px" },
                   fontSize: { xs: "14px", sm: "15px", md: "16px" },
@@ -338,7 +347,7 @@ export default function JourneyProgress() {
                   minWidth: { xs: "100%", sm: "auto" },
                 }}
               >
-                Retake Level 1 Test
+                Retake Level {highestCompletedLevel} Test
               </OutLineButton>
             </Box>
           </Box>

@@ -165,3 +165,72 @@ export const sendPasswordResetEmail = async (
         html,
     });
 };
+
+// Send contact form notification to admin
+export const sendContactNotificationEmail = async (data: {
+    name: string;
+    email: string;
+    message: string;
+    messageId: string;
+}): Promise<boolean> => {
+    const adminEmail = process.env.ADMIN_EMAIL || process.env.FROM_EMAIL;
+    
+    if (!adminEmail || adminEmail === 'onboarding@resend.dev') {
+        console.warn('⚠️  ADMIN_EMAIL not configured. Skipping admin notification.');
+        return false;
+    }
+
+    const { name, email, message, messageId } = data;
+    const adminDashboardUrl = `${CLIENT_URL}/admin/messages`;
+    
+    const html = `
+        <!DOCTYPE html>
+        <html>
+        <head>
+            <meta charset="utf-8">
+            <meta name="viewport" content="width=device-width, initial-scale=1.0">
+            <title>New Contact Message</title>
+        </head>
+        <body style="font-family: Arial, sans-serif; line-height: 1.6; color: #333; max-width: 600px; margin: 0 auto; padding: 20px;">
+            <div style="background: linear-gradient(135deg, #005F73 0%, #0A9396 100%); padding: 30px; text-align: center; border-radius: 10px 10px 0 0;">
+                <h1 style="color: white; margin: 0; font-size: 28px;">${APP_NAME} - Admin</h1>
+            </div>
+            
+            <div style="background: #f9f9f9; padding: 30px; border-radius: 0 0 10px 10px;">
+                <h2 style="color: #005F73; margin-top: 0;">📧 New Contact Message</h2>
+                
+                <p style="font-size: 16px; color: #555;">
+                    You have received a new message from the contact form.
+                </p>
+                
+                <div style="background: white; padding: 20px; border-radius: 8px; margin: 20px 0; border-left: 4px solid #E87A42;">
+                    <p style="margin: 5px 0;"><strong>From:</strong> ${name}</p>
+                    <p style="margin: 5px 0;"><strong>Email:</strong> <a href="mailto:${email}" style="color: #0A9396;">${email}</a></p>
+                    <p style="margin: 5px 0;"><strong>Message ID:</strong> ${messageId}</p>
+                </div>
+                
+                <div style="background: white; padding: 20px; border-radius: 8px; margin: 20px 0;">
+                    <p style="margin: 0 0 10px 0;"><strong>Message:</strong></p>
+                    <p style="margin: 0; color: #555; white-space: pre-wrap;">${message}</p>
+                </div>
+                
+                <div style="text-align: center; margin: 30px 0;">
+                    <a href="${adminDashboardUrl}" style="display: inline-block; background: #E87A42; color: white; padding: 14px 30px; text-decoration: none; border-radius: 8px; font-weight: bold; font-size: 16px;">View in Dashboard</a>
+                </div>
+                
+                <div style="margin-top: 30px; padding-top: 20px; border-top: 1px solid #ddd;">
+                    <p style="font-size: 12px; color: #999; margin: 0;">
+                        © ${new Date().getFullYear()} ${APP_NAME}. All rights reserved.
+                    </p>
+                </div>
+            </div>
+        </body>
+        </html>
+    `;
+
+    return await sendEmail({
+        to: adminEmail,
+        subject: `New Contact Message from ${name}`,
+        html,
+    });
+};

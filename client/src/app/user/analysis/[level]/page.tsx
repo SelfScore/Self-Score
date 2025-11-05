@@ -286,6 +286,7 @@ export default function LevelAnalysisPage() {
     };
 
     fetchAnalysisData();
+    // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [level, levelNumber]);
 
   // Score interpretation based on ranges

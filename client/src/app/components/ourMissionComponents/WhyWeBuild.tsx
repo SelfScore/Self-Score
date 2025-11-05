@@ -7,6 +7,7 @@ import RemoveRedEyeIcon from "@mui/icons-material/RemoveRedEye";
 export default function WhyWeBuild() {
   return (
     <Box
+      id="why-we-build"
       sx={{
         width: "100%",
         backgroundColor: "#FFF",
@@ -31,7 +32,7 @@ export default function WhyWeBuild() {
             fontSize: { xs: "2rem", sm: "2.5rem", md: "28px" },
           }}
         >
-          Why We Build Self Score
+          Why We Built Self Score
         </Typography>
         <Typography
           sx={{

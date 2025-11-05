@@ -393,10 +393,39 @@ export class PaymentController {
 
             const payments = await PaymentModel.find({ userId }).sort({ createdAt: -1 });
 
+            // Enrich payments with Stripe receipt URLs for completed payments
+            const enrichedPayments = await Promise.all(
+                payments.map(async (payment) => {
+                    const paymentObj = payment.toObject();
+                    
+                    // Only fetch receipt URL for completed payments with payment intent
+                    if (payment.status === 'completed' && payment.stripePaymentIntentId) {
+                        try {
+                            const paymentIntent = await stripe.paymentIntents.retrieve(
+                                payment.stripePaymentIntentId
+                            );
+                            
+                            // Get the charge to access receipt URL
+                            if (paymentIntent.latest_charge) {
+                                const charge = await stripe.charges.retrieve(
+                                    paymentIntent.latest_charge as string
+                                );
+                                (paymentObj as any).receiptUrl = charge.receipt_url;
+                            }
+                        } catch (error) {
+                            console.error('Error fetching receipt URL:', error);
+                            // Continue without receipt URL
+                        }
+                    }
+                    
+                    return paymentObj;
+                })
+            );
+
             const response: ApiResponse = {
                 success: true,
                 message: "Payment history retrieved successfully",
-                data: payments
+                data: enrichedPayments
             };
 
             res.status(200).json(response);

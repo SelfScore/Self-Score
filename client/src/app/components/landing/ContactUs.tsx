@@ -7,6 +7,8 @@ import {
   Container,
   TextField,
   Link,
+  Snackbar,
+  Alert,
   // Paper,
   // InputAdornment,
 } from "@mui/material";
@@ -18,6 +20,7 @@ import {
 //   Send as SendIcon,
 // } from "@mui/icons-material";
 import ButtonSelfScore from "../ui/ButtonSelfScore";
+import { contactService } from "@/services/contactService";
 
 interface FormData {
   name: string;
@@ -35,6 +38,16 @@ const ContactUs: React.FC = () => {
   });
 
   const [errors, setErrors] = useState<Partial<FormData>>({});
+  const [submitting, setSubmitting] = useState(false);
+  const [snackbar, setSnackbar] = useState<{
+    open: boolean;
+    message: string;
+    severity: "success" | "error";
+  }>({
+    open: false,
+    message: "",
+    severity: "success",
+  });
 
   const handleChange = (
     e: React.ChangeEvent<HTMLInputElement | HTMLTextAreaElement>
@@ -67,9 +80,10 @@ const ContactUs: React.FC = () => {
       newErrors.email = "Please enter a valid email";
     }
 
-    if (!formData.subject.trim()) {
-      newErrors.subject = "Subject is required";
-    }
+    // Removed subject validation since it's not in the form
+    // if (!formData.subject.trim()) {
+    //   newErrors.subject = "Subject is required";
+    // }
 
     if (!formData.message.trim()) {
       newErrors.message = "Message is required";
@@ -79,13 +93,55 @@ const ContactUs: React.FC = () => {
     return Object.keys(newErrors).length === 0;
   };
 
-  const handleSubmit = (e: React.FormEvent) => {
+  const handleSnackbarClose = () => {
+    setSnackbar({ ...snackbar, open: false });
+  };
+
+  const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
-    if (validateForm()) {
-      console.log("Form submitted:", formData);
-      // Handle form submission here
-      alert("Thank you for your message! We'll get back to you soon.");
-      setFormData({ name: "", email: "", subject: "", message: "" });
+    console.log("Form submitted!", formData);
+
+    if (!validateForm()) {
+      console.log("Validation failed", errors);
+      return;
+    }
+
+    console.log("Validation passed, sending message...");
+    setSubmitting(true);
+
+    try {
+      const response = await contactService.sendMessage({
+        name: formData.name,
+        email: formData.email,
+        message: formData.message,
+      });
+      console.log("Response received:", response);
+
+      if (response.success) {
+        setSnackbar({
+          open: true,
+          message:
+            response.message ||
+            "Message sent successfully! We'll get back to you soon.",
+          severity: "success",
+        });
+
+        // Reset form
+        setFormData({ name: "", email: "", subject: "", message: "" });
+      } else {
+        throw new Error(response.message || "Failed to send message");
+      }
+    } catch (error: any) {
+      console.error("Error sending message:", error);
+      setSnackbar({
+        open: true,
+        message:
+          error.response?.data?.message ||
+          "Failed to send message. Please try again.",
+        severity: "error",
+      });
+    } finally {
+      setSubmitting(false);
     }
   };
 
@@ -298,7 +354,12 @@ const ContactUs: React.FC = () => {
               </Box>
 
               {/* Submit Button */}
-              <ButtonSelfScore fullWidth text="Send Message" type="submit"></ButtonSelfScore>
+              <ButtonSelfScore
+                fullWidth
+                text={submitting ? "Sending..." : "Send Message"}
+                type="submit"
+                disabled={submitting}
+              />
 
               {/* Privacy Policy Text */}
               <Typography
@@ -311,7 +372,7 @@ const ContactUs: React.FC = () => {
               >
                 By submitting, you agree to our{" "}
                 <Link
-                  href="/privacy"
+                  href="/privacy-policy"
                   sx={{
                     color: "#FF5722",
                     textDecoration: "none",
@@ -328,6 +389,23 @@ const ContactUs: React.FC = () => {
           </Box>
         </Box>
       </Container>
+
+      {/* Snackbar for notifications */}
+      <Snackbar
+        open={snackbar.open}
+        autoHideDuration={6000}
+        onClose={handleSnackbarClose}
+        anchorOrigin={{ vertical: "bottom", horizontal: "center" }}
+      >
+        <Alert
+          onClose={handleSnackbarClose}
+          severity={snackbar.severity}
+          variant="filled"
+          sx={{ width: "100%" }}
+        >
+          {snackbar.message}
+        </Alert>
+      </Snackbar>
     </Box>
   );
 };

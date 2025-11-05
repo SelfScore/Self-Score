@@ -524,7 +524,7 @@ export default function LevelTest({ level }: LevelTestProps) {
         {/* Conditional rendering based on question type */}
         {currentQuestion.questionType === "slider-scale" ? (
           <Slider
-            value={answers[currentQuestion._id] || 0}
+            value={answers[currentQuestion._id] ?? 0}
             onChange={(value) => handleAnswerChange(currentQuestion._id, value)}
             label="Rate your response (0-10)"
             min={0}

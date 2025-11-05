@@ -1,16 +1,7 @@
 "use client";
 
-import {
-  Box,
-  Typography,
-  Button,
-  Container,
-  Paper,
-  Grid,
-  Chip,
-} from "@mui/material";
-import { useAuth } from "../../../hooks/useAuth";
-import { useRouter } from "next/navigation";
+import { Box, Typography, Container, Paper, Grid, Chip } from "@mui/material";
+import { useParams } from "next/navigation";
 import { useEffect, useState } from "react";
 import {
   CheckCircle,
@@ -18,20 +9,18 @@ import {
   Assessment as AssessmentIcon,
   Layers,
 } from "@mui/icons-material";
-import { questionsApi } from "../../../services/questionsService";
-import {
-  paymentService,
-  PaymentHistory,
-} from "../../../services/paymentService";
-import BrainIMG from "../../../../public/images/DashBoard/Mind.png";
-import Image from "next/image";
-import ButtonSelfScore from "@/app/components/ui/ButtonSelfScore";
+import { PaymentHistory } from "../../../../services/paymentService";
 import OutLineButton from "@/app/components/ui/OutLineButton";
 import RefreshIcon from "@mui/icons-material/Refresh";
-import FileUploadIcon from "@mui/icons-material/FileUpload";
+import FileUploadIcon from "@mui/icons-material/FileUploadOutlined";
 import DownloadReportButton from "@/app/components/ui/DownloadReportButton";
 import ReceiptIcon from "@mui/icons-material/Receipt";
 import PaymentIcon from "@mui/icons-material/Payment";
+import AttachMoneyIcon from "@mui/icons-material/AttachMoney";
+import {
+  adminService,
+  UserDetailResponse,
+} from "../../../../services/adminService";
 
 interface TestHistoryItem {
   _id: string;
@@ -42,183 +31,96 @@ interface TestHistoryItem {
   attemptNumber?: number;
 }
 
-export default function UserDashboard() {
-  const { user, isAuthenticated, progress, purchasedLevels } = useAuth();
-  const router = useRouter();
+export default function AdminUserDetail() {
+  const params = useParams();
+  const userId = params.userId as string;
+
+  const [userDetail, setUserDetail] = useState<UserDetailResponse | null>(null);
   const [testHistory, setTestHistory] = useState<TestHistoryItem[]>([]);
-  const [loading, setLoading] = useState(true);
   const [transactionHistory, setTransactionHistory] = useState<
     PaymentHistory[]
   >([]);
-  const [loadingTransactions, setLoadingTransactions] = useState(true);
+  const [loading, setLoading] = useState(true);
 
   useEffect(() => {
-    if (!isAuthenticated) {
-      router.push("/auth/signin");
-    }
-  }, [isAuthenticated, router]);
+    fetchUserDetail();
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [userId]);
 
-  useEffect(() => {
-    const fetchTestHistory = async () => {
-      if (!user?.userId) {
-        setLoading(false);
-        return;
+  const fetchUserDetail = async () => {
+    setLoading(true);
+    try {
+      const response = await adminService.getUserById(userId);
+      setUserDetail(response);
+
+      // Transform test history
+      if (response.testHistory) {
+        const history: TestHistoryItem[] = response.testHistory.map(
+          (item: any, index: number) => {
+            return {
+              _id: item._id || `${userId}-level-${item.level}-${index}`,
+              level: item.level,
+              score: item.score,
+              date: new Date(item.submittedAt).toLocaleDateString(),
+              timeSpent: item.timeSpent
+                ? `${Math.floor(item.timeSpent / 60)}m ${item.timeSpent % 60}s`
+                : "N/A",
+            };
+          }
+        );
+        setTestHistory(history);
       }
 
-      try {
-        const response = await questionsApi.getUserTestHistory(user.userId);
-        if (response.success && response.data) {
-          // First, sort by level and date (oldest first) to calculate attempt numbers correctly
-          const sortedData = [...response.data].sort((a: any, b: any) => {
-            if (a.level !== b.level) {
-              return a.level - b.level; // Sort by level first
-            }
-            return new Date(a.date).getTime() - new Date(b.date).getTime(); // Then by date (oldest first)
-          });
-
-          // Count attempts per level
-          const levelAttemptCount: { [key: number]: number } = {};
-          sortedData.forEach((item: any) => {
-            if (!levelAttemptCount[item.level]) {
-              levelAttemptCount[item.level] = 0;
-            }
-            levelAttemptCount[item.level]++;
-          });
-
-          // Reset counters for assigning attempt numbers
-          const levelCurrentAttempt: { [key: number]: number } = {};
-
-          // Create a map of item._id to attempt number
-          const attemptMap: { [key: string]: number } = {};
-          sortedData.forEach((item: any) => {
-            if (!levelCurrentAttempt[item.level]) {
-              levelCurrentAttempt[item.level] = 0;
-            }
-            levelCurrentAttempt[item.level]++;
-            attemptMap[item._id] = levelCurrentAttempt[item.level];
-          });
-
-          // Now transform the original data (sorted by most recent first)
-          const history: TestHistoryItem[] = response.data.map(
-            (item: any, index: number) => {
-              return {
-                _id: item._id || `${user.userId}-level-${item.level}-${index}`,
-                level: item.level,
-                score: item.score,
-                date: new Date(item.date).toLocaleDateString(),
-                timeSpent: item.timeSpent
-                  ? `${Math.floor(item.timeSpent / 60)}m ${
-                      item.timeSpent % 60
-                    }s`
-                  : "N/A",
-                attemptNumber: attemptMap[item._id],
-              };
-            }
-          );
-          setTestHistory(history);
-        }
-      } catch (error) {
-        console.error("Error fetching test history:", error);
-        // Fallback to building from progress data if API fails
-        if (progress?.testScores) {
-          const history: TestHistoryItem[] = [];
-          Object.entries(progress.testScores).forEach(([key, score]) => {
-            if (score !== undefined) {
-              const level = parseInt(key.replace("level", ""));
-              history.push({
-                _id: `${user.userId}-level-${level}`,
-                level: level,
-                score: score,
-                date: new Date().toLocaleDateString(),
-                timeSpent: "N/A",
-              });
-            }
-          });
-          history.sort((a, b) => b.level - a.level);
-          setTestHistory(history);
-        }
-      } finally {
-        setLoading(false);
+      // Set transaction history
+      if (response.paymentHistory) {
+        const completedTransactions = response.paymentHistory.filter(
+          (payment: any) => payment.status === "completed"
+        );
+        setTransactionHistory(completedTransactions);
       }
-    };
-
-    if (isAuthenticated && user) {
-      fetchTestHistory();
-    } else {
+    } catch (error) {
+      console.error("Error fetching user details:", error);
+    } finally {
       setLoading(false);
     }
-  }, [isAuthenticated, user, progress]);
+  };
 
-  useEffect(() => {
-    const fetchTransactionHistory = async () => {
-      if (!user?.userId) {
-        setLoadingTransactions(false);
-        return;
-      }
-
-      try {
-        const response = await paymentService.getPaymentHistory();
-        if (response && Array.isArray(response)) {
-          // Filter only completed transactions
-          const completedTransactions = response.filter(
-            (payment) => payment.status === "completed"
-          );
-          setTransactionHistory(completedTransactions);
-        }
-      } catch (error) {
-        console.error("Error fetching transaction history:", error);
-      } finally {
-        setLoadingTransactions(false);
-      }
-    };
-
-    if (isAuthenticated && user) {
-      fetchTransactionHistory();
-    } else {
-      setLoadingTransactions(false);
-    }
-  }, [isAuthenticated, user]);
-
-  if (!isAuthenticated || !user) {
-    return null; // Will redirect via useEffect
+  if (loading || !userDetail) {
+    return (
+      <Container maxWidth="xl" sx={{ backgroundColor: "#ffffff", py: 14 }}>
+        <Typography sx={{ textAlign: "center", color: "#6B7280" }}>
+          Loading user details...
+        </Typography>
+      </Container>
+    );
   }
 
-  // Determine subscription plan
-  const hasAnyPurchase =
-    purchasedLevels?.level2.purchased ||
-    purchasedLevels?.level3.purchased ||
-    purchasedLevels?.level4.purchased;
-  const planType = hasAnyPurchase ? "PREMIUM" : "FREE";
-
-  // Get next available level
-  const nextLevel = progress?.highestUnlockedLevel || 1;
-  const completedLevels = progress?.completedLevels || [];
+  const user = userDetail.user;
+  const completedLevels = user.progress?.completedLevels || [];
   const totalLevels = 4;
 
-  // Get last test information (most recent test from history)
+  // Get last test information
   const lastTest = testHistory.length > 0 ? testHistory[0] : null;
   const lastCompletedLevel =
     lastTest?.level || completedLevels[completedLevels.length - 1] || 1;
   const lastTestScore =
     lastTest?.score ||
-    progress?.testScores?.[
-      `level${lastCompletedLevel}` as keyof typeof progress.testScores
+    user.progress?.testScores?.[
+      `level${lastCompletedLevel}` as keyof typeof user.progress.testScores
     ] ||
     0;
   const lastTestDate = lastTest?.date || new Date().toLocaleDateString();
-
-  // Calculate score percentage
   const scorePercentage = Math.round((lastTestScore / 900) * 100);
 
+  // Format total revenue
+  const totalRevenue = `$${(userDetail.totalRevenue / 100).toFixed(2)}`;
+
   return (
-    <Container maxWidth="xl" sx={{ backgroundColor: "#ffffff", py: 14 }}>
+    <Container maxWidth="xl" sx={{ backgroundColor: "#ffffff", py: 4 }}>
       <Box sx={{ maxWidth: "1280px", mx: "auto" }}>
-        {/* Header Section */}
+        {/* Header Section - User Details */}
         <Box
           sx={{
-            display: "flex",
-            alignItems: "center",
-            justifyContent: "space-between",
             mb: 3,
             p: 3,
             backgroundColor: "#FFF",
@@ -226,57 +128,122 @@ export default function UserDashboard() {
             border: "1px solid #3A3A3A4D",
           }}
         >
-          <Box sx={{ display: "flex", alignItems: "center", gap: 2 }}>
-            <Box
-              sx={{
-                width: 40,
-                height: 40,
-                borderRadius: "50%",
-                backgroundColor: "#0C677A",
-                display: "flex",
-                alignItems: "center",
-                justifyContent: "center",
-                color: "white",
-                fontSize: "18px",
-                fontWeight: 400,
-              }}
-            >
-              {user.username.substring(0, 2).toUpperCase()}
-            </Box>
-            <Typography
-              sx={{
-                fontWeight: 700,
-                color: "#2B2B2B",
-                fontSize: "24px",
-                fontFamily: "source Sans Pro",
-              }}
-            >
-              Welcome back, {user.username}
-            </Typography>
-          </Box>
-          <Chip
-            label={`CURRENT ACTIVE PLAN - ${planType}`}
+          <Typography
             sx={{
-              backgroundColor: "#f1f5f9",
-              color: "#475569",
-              fontWeight: 600,
-              px: 2,
-              py: 2.5,
-              fontSize: "0.875rem",
+              fontWeight: 700,
+              color: "#2B2B2B",
+              fontSize: "24px",
+              fontFamily: "Faustina",
+              mb: 2,
             }}
-          />
+          >
+            User Details
+          </Typography>
+
+          <Grid container spacing={3}>
+            <Grid size={{ xs: 12, md: 6 }}>
+              <Box sx={{ mb: 2 }}>
+                <Typography
+                  sx={{ fontSize: "14px", color: "#6B7280", mb: 0.5 }}
+                >
+                  Username
+                </Typography>
+                <Typography
+                  sx={{ fontSize: "16px", fontWeight: 500, color: "#2B2B2B" }}
+                >
+                  {user.username}
+                </Typography>
+              </Box>
+              <Box sx={{ mb: 2 }}>
+                <Typography
+                  sx={{ fontSize: "14px", color: "#6B7280", mb: 0.5 }}
+                >
+                  Email
+                </Typography>
+                <Typography
+                  sx={{ fontSize: "16px", fontWeight: 500, color: "#2B2B2B" }}
+                >
+                  {user.email}
+                </Typography>
+              </Box>
+              <Box>
+                <Typography
+                  sx={{ fontSize: "14px", color: "#6B7280", mb: 0.5 }}
+                >
+                  Phone Number
+                </Typography>
+                <Typography
+                  sx={{ fontSize: "16px", fontWeight: 500, color: "#2B2B2B" }}
+                >
+                  +{user.countryCode} {user.phoneNumber}
+                </Typography>
+              </Box>
+            </Grid>
+            <Grid size={{ xs: 12, md: 6 }}>
+              <Box sx={{ mb: 2 }}>
+                <Typography
+                  sx={{ fontSize: "14px", color: "#6B7280", mb: 0.5 }}
+                >
+                  Registration Date
+                </Typography>
+                <Typography
+                  sx={{ fontSize: "16px", fontWeight: 500, color: "#2B2B2B" }}
+                >
+                  {new Date(user.createdAt || "").toLocaleDateString("en-US", {
+                    month: "long",
+                    day: "numeric",
+                    year: "numeric",
+                  })}
+                </Typography>
+              </Box>
+              <Box sx={{ mb: 2 }}>
+                <Typography
+                  sx={{ fontSize: "14px", color: "#6B7280", mb: 0.5 }}
+                >
+                  Last Active
+                </Typography>
+                <Typography
+                  sx={{ fontSize: "16px", fontWeight: 500, color: "#2B2B2B" }}
+                >
+                  {new Date(user.lastActive).toLocaleDateString("en-US", {
+                    month: "long",
+                    day: "numeric",
+                    year: "numeric",
+                  })}
+                </Typography>
+              </Box>
+              <Box>
+                <Typography
+                  sx={{ fontSize: "14px", color: "#6B7280", mb: 0.5 }}
+                >
+                  Status
+                </Typography>
+                <Chip
+                  label={user.isVerified ? "Verified" : "Pending"}
+                  sx={{
+                    backgroundColor: user.isVerified
+                      ? "#51BB0020"
+                      : "#FFA50020",
+                    color: user.isVerified ? "#51BB00" : "#FFA500",
+                    fontWeight: 600,
+                    fontSize: "14px",
+                  }}
+                />
+              </Box>
+            </Grid>
+          </Grid>
         </Box>
 
         {/* Main Content Grid */}
         <Grid container spacing={3}>
-          {/* Level 1 Test Card */}
+          {/* Total Revenue Card (replaces Start Assessment) */}
           <Grid size={{ xs: 12, md: 3 }}>
             <Paper
               sx={{
                 p: 4,
                 height: "100%",
                 maxHeight: "204px",
-                background: "#FF4F00",
+                background: "#51BB00",
                 color: "white",
                 borderRadius: 4,
                 display: "flex",
@@ -291,28 +258,26 @@ export default function UserDashboard() {
                   width: 48,
                   height: 48,
                   borderRadius: "50%",
+                  backgroundColor: "rgba(255, 255, 255, 0.2)",
                   display: "flex",
                   alignItems: "center",
                   justifyContent: "center",
                 }}
               >
-                <Image src={BrainIMG.src} alt="Brain" width={48} height={48} />
+                <AttachMoneyIcon sx={{ fontSize: 32, color: "white" }} />
               </Box>
               <Typography
                 variant="h5"
                 sx={{ fontWeight: 400, fontSize: "20px" }}
               >
-                Level {nextLevel} Test
+                Total Revenue
               </Typography>
-              <ButtonSelfScore
-                text="Start Assessment"
-                textStyle={{ color: "#FF4F00", fontSize: "20px" }}
-                background="#F7F7F7"
-                borderRadius="16px"
-                padding="12px 24px"
-                fontSize="1rem"
-                onClick={() => router.push(`/testInfo?level=${nextLevel}`)}
-              />
+              <Typography
+                variant="h4"
+                sx={{ fontWeight: 700, fontSize: "28px" }}
+              >
+                {totalRevenue}
+              </Typography>
             </Paper>
           </Grid>
 
@@ -353,13 +318,7 @@ export default function UserDashboard() {
               >
                 Levels Completed ({completedLevels.length}/{totalLevels})
               </Typography>
-              <Box
-                sx={{
-                  display: "flex",
-                  justifyContent: "center",
-                  gap: 2,
-                }}
-              >
+              <Box sx={{ display: "flex", justifyContent: "center", gap: 2 }}>
                 {[1, 2, 3, 4].map((level) => (
                   <Box
                     key={level}
@@ -396,38 +355,23 @@ export default function UserDashboard() {
                 backgroundColor: "#F7F7F7",
               }}
             >
-              {/* Left Side - Info and Buttons */}
               <Box sx={{ flex: 1 }}>
                 <Typography
                   variant="h6"
                   sx={{ fontWeight: 600, mb: 1, color: "#1e293b" }}
                 >
-                  Your Last Test Score
+                  Last Test Score
                 </Typography>
                 <Box
-                  sx={{
-                    display: "flex",
-                    alignItems: "center",
-                    gap: 4,
-                    mb: 4,
-                  }}
+                  sx={{ display: "flex", alignItems: "center", gap: 4, mb: 4 }}
                 >
                   <Typography variant="body2" sx={{ color: "#64748b" }}>
                     Test Date: {lastTestDate}
                   </Typography>
-                  <Box
-                    sx={{
-                      display: "flex",
-                      alignItems: "center",
-                      gap: 1.5,
-                    }}
-                  >
+                  <Box sx={{ display: "flex", alignItems: "center", gap: 1.5 }}>
                     <AssessmentIcon sx={{ color: "#64748b", fontSize: 20 }} />
                     <Typography variant="body2" sx={{ color: "#64748b" }}>
                       Level {lastCompletedLevel}
-                      {/* {lastTest?.attemptNumber &&
-                        lastTest.attemptNumber > 1 &&
-                        ` (Attempt ${lastTest.attemptNumber})`} */}
                     </Typography>
                   </Box>
                 </Box>
@@ -461,19 +405,16 @@ export default function UserDashboard() {
                       padding: "3.5px 14px",
                       fontWeight: 400,
                       fontSize: "18px",
-                      cursor: "pointer",
-                      transition: "all 0.2s",
+                      cursor: "not-allowed",
+                      opacity: 0.6,
                     }}
-                    onClick={() =>
-                      router.push(`/user/test?level=${lastCompletedLevel}`)
-                    }
+                    disabled
                   >
                     Retake
                   </OutLineButton>
                 </Box>
               </Box>
 
-              {/* Right Side - Circular Progress */}
               <Box
                 sx={{
                   display: "flex",
@@ -482,12 +423,7 @@ export default function UserDashboard() {
                   ml: 4,
                 }}
               >
-                <Box
-                  sx={{
-                    position: "relative",
-                    display: "inline-flex",
-                  }}
-                >
+                <Box sx={{ position: "relative", display: "inline-flex" }}>
                   <Box
                     sx={{
                       width: 140,
@@ -554,30 +490,14 @@ export default function UserDashboard() {
               fontFamily: "Faustina",
             }}
           >
-            Your Test History
+            Test History
           </Typography>
 
-          {loading ? (
+          {testHistory.length === 0 ? (
             <Box sx={{ textAlign: "center", py: 4 }}>
               <Typography variant="body1" sx={{ color: "#64748b" }}>
-                Loading test history...
-              </Typography>
-            </Box>
-          ) : testHistory.length === 0 ? (
-            <Box sx={{ textAlign: "center", py: 4 }}>
-              <Typography variant="body1" sx={{ color: "#64748b", mb: 2 }}>
                 No test history yet
               </Typography>
-              <Button
-                variant="contained"
-                onClick={() => router.push("/user/test")}
-                sx={{
-                  backgroundColor: "#ff6b35",
-                  "&:hover": { backgroundColor: "#ff8c42" },
-                }}
-              >
-                Take Your First Test
-              </Button>
             </Box>
           ) : (
             <Box sx={{ display: "flex", flexDirection: "column", gap: 2 }}>
@@ -595,10 +515,6 @@ export default function UserDashboard() {
                       justifyContent: "space-between",
                       p: 3,
                       backgroundColor: "#FFF",
-                      // borderRadius: 2,
-                      "&:hover": {
-                        backgroundColor: "#FFF",
-                      },
                     }}
                   >
                     <Box
@@ -623,37 +539,16 @@ export default function UserDashboard() {
                         <TrendingUp sx={{ fontSize: 28, color: "white" }} />
                       </Box>
                       <Box sx={{ flex: 1 }}>
-                        <Box
+                        <Typography
                           sx={{
-                            display: "flex",
-                            alignItems: "center",
-                            gap: 2,
-                            mb: 0.5,
+                            fontWeight: 400,
+                            fontSize: "20px",
+                            fontFamily: "Source Sans Pro",
+                            color: "#3B3B3B",
                           }}
                         >
-                          <Typography
-                            sx={{
-                              fontWeight: 400,
-                              fontSize: "20px",
-                              fontFamily: "Source Sans Pro",
-                              color: "#3B3B3B",
-                            }}
-                          >
-                            Level {test.level} Assessment
-                          </Typography>
-                          {/* {test.attemptNumber && test.attemptNumber > 1 && (
-                            <Chip
-                              label={`Attempt ${test.attemptNumber}`}
-                              size="small"
-                              sx={{
-                                backgroundColor: "#FF4F0020",
-                                color: "#FF4F00",
-                                fontWeight: 600,
-                                fontSize: "12px",
-                              }}
-                            />
-                          )} */}
-                        </Box>
+                          Level {test.level} Assessment
+                        </Typography>
                         <Typography
                           variant="body2"
                           sx={{
@@ -668,7 +563,6 @@ export default function UserDashboard() {
                       </Box>
                     </Box>
 
-                    {/* verticsl line  */}
                     <Box
                       sx={{
                         width: "1px",
@@ -678,12 +572,9 @@ export default function UserDashboard() {
                       }}
                     />
 
-                    {/* Right Side - Score and Actions */}
-
                     <Box sx={{ display: "flex", alignItems: "center", gap: 4 }}>
                       <Box sx={{ minWidth: 200 }}>
                         <Typography
-                          // variant="h6"
                           sx={{
                             color: "#FF4F00",
                             fontWeight: 400,
@@ -707,7 +598,6 @@ export default function UserDashboard() {
                         </Typography>
                       </Box>
 
-                      {/* vertical line  */}
                       <Box
                         sx={{
                           width: "1px",
@@ -717,7 +607,6 @@ export default function UserDashboard() {
                         }}
                       />
 
-                      {/* Progress Bar Icon */}
                       <Box
                         sx={{
                           width: 100,
@@ -761,7 +650,6 @@ export default function UserDashboard() {
                             cursor: "pointer",
                             transition: "all 0.2s",
                           }}
-                          // onClick={handleDashboard}
                         >
                           Share
                         </OutLineButton>
@@ -774,8 +662,8 @@ export default function UserDashboard() {
           )}
         </Box>
 
-        {/* Transaction History Section - Only show if user has transactions */}
-        {!loadingTransactions && transactionHistory.length > 0 && (
+        {/* Transaction History Section */}
+        {transactionHistory.length > 0 && (
           <Box
             sx={{
               p: 4,
@@ -800,7 +688,6 @@ export default function UserDashboard() {
 
             <Box sx={{ display: "flex", flexDirection: "column", gap: 2 }}>
               {transactionHistory.map((transaction) => {
-                // Format date and time: Nov 4, 2025, 2:30 PM
                 const transactionDate = new Date(transaction.createdAt);
                 const formattedDate = transactionDate.toLocaleDateString(
                   "en-US",
@@ -819,13 +706,10 @@ export default function UserDashboard() {
                   }
                 );
                 const fullDateTime = `${formattedDate}, ${formattedTime}`;
-
-                // Format amount: $5.00
                 const formattedAmount = `$${(transaction.amount / 100).toFixed(
                   2
                 )}`;
 
-                // Determine levels unlocked based on purchase
                 let levelsUnlocked = "";
                 if (transaction.level === 2) {
                   levelsUnlocked = "Level 2";
@@ -845,9 +729,6 @@ export default function UserDashboard() {
                       justifyContent: "space-between",
                       p: 3,
                       backgroundColor: "#FFF",
-                      "&:hover": {
-                        backgroundColor: "#FFF",
-                      },
                     }}
                   >
                     <Box
@@ -915,7 +796,6 @@ export default function UserDashboard() {
                       </Box>
                     </Box>
 
-                    {/* Vertical line */}
                     <Box
                       sx={{
                         width: "1px",
@@ -925,7 +805,6 @@ export default function UserDashboard() {
                       }}
                     />
 
-                    {/* Amount */}
                     <Box sx={{ display: "flex", alignItems: "center", gap: 4 }}>
                       <Box sx={{ minWidth: 120 }}>
                         <Typography
@@ -952,7 +831,6 @@ export default function UserDashboard() {
                         </Typography>
                       </Box>
 
-                      {/* Vertical line */}
                       <Box
                         sx={{
                           width: "1px",
@@ -962,7 +840,6 @@ export default function UserDashboard() {
                         }}
                       />
 
-                      {/* Download Receipt Button */}
                       <OutLineButton
                         startIcon={<ReceiptIcon />}
                         style={{
@@ -977,7 +854,6 @@ export default function UserDashboard() {
                           transition: "all 0.2s",
                         }}
                         onClick={() => {
-                          // Open Stripe receipt in new tab (user can download from there)
                           if (transaction.receiptUrl) {
                             window.open(transaction.receiptUrl, "_blank");
                           } else {

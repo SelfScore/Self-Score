@@ -25,7 +25,7 @@ app.use(cors({
         'http://127.0.0.1:3001'
     ],
     credentials: true,
-    methods: ['GET', 'POST', 'PUT', 'DELETE', 'OPTIONS'],
+    methods: ['GET', 'POST', 'PUT', 'PATCH', 'DELETE', 'OPTIONS'],
     allowedHeaders: ['Content-Type', 'Authorization', 'X-Requested-With']
 }));
 
@@ -73,6 +73,14 @@ app.get('/', (req, res) => {
             questionsResponse: {
                 createResponse: 'POST /api/questions-response',
                 getUserResponses: 'GET /api/questions-response/user/:userId'
+            },
+            contact: {
+                sendMessage: 'POST /api/contact/send'
+            },
+            admin: {
+                messages: 'GET /api/admin/messages (requires admin auth)',
+                messageDetails: 'GET /api/admin/messages/:messageId (requires admin auth)',
+                updateMessage: 'PATCH /api/admin/messages/:messageId (requires admin auth)'
             },
             health: 'GET /api/health'
         }

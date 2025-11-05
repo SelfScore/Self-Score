@@ -34,7 +34,7 @@ export default function TestInfo({ initialLevel }: TestInfoProps) {
       title: "Level 1",
       name: "Awareness",
       duration: "2-3 Minutes",
-      questions: 5,
+      questions: 6,
       description: "Quick and easy questions that respect your time",
       questionsDetail: "Covering key areas of life satisfaction and well-being",
       isFree: true,

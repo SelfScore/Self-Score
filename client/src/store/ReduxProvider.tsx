@@ -5,12 +5,19 @@ import { store } from "./index";
 import { useEffect } from "react";
 import { useAppDispatch } from "./hooks";
 import { authService } from "../services/authService";
+import { usePathname } from "next/navigation";
 
 // Component to initialize auth state from backend
 function AuthInitializer({ children }: { children: React.ReactNode }) {
   const dispatch = useAppDispatch();
+  const pathname = usePathname();
 
   useEffect(() => {
+    // Skip auth initialization for admin routes
+    if (pathname?.startsWith("/admin")) {
+      return;
+    }
+
     // Initialize auth state from backend on app start
     const initializeAuth = async () => {
       try {
@@ -22,7 +29,7 @@ function AuthInitializer({ children }: { children: React.ReactNode }) {
     };
 
     initializeAuth();
-  }, [dispatch]);
+  }, [dispatch, pathname]);
 
   return <>{children}</>;
 }

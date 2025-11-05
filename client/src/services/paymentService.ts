@@ -34,6 +34,9 @@ export interface PaymentHistory {
   amount: number;
   currency: string;
   status: string;
+  stripeSessionId: string;
+  stripePaymentIntentId?: string;
+  receiptUrl?: string;
   createdAt: Date;
   updatedAt: Date;
 }

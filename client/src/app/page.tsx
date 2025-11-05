@@ -12,12 +12,12 @@ export default function HomePage() {
     <main>
       <HeroSection />
       <AboutLevels />
-      <Advantages/>
+      <Advantages />
       <AboutUs />
       <OurMission />
-      <Testimonial/>
-      <FAQ/>
-      <ContactUs/>
+      <Testimonial />
+      <FAQ />
+      <ContactUs />
     </main>
   );
 }

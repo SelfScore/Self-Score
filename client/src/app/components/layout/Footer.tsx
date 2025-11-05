@@ -1,5 +1,3 @@
-"use client";
-
 import React from "react";
 // import Image from "next/image";
 import { Box, Typography, Link } from "@mui/material";
@@ -51,7 +49,13 @@ const Footer: React.FC = () => {
         }}
       >
         {/* mail */}
-        <Box sx={{ display: "flex", alignItems: "center", width: { xs: "100%", md: "auto" } }}>
+        <Box
+          sx={{
+            display: "flex",
+            alignItems: "center",
+            width: { xs: "100%", md: "auto" },
+          }}
+        >
           <Box
             sx={{
               height: { xs: "36px", md: "40px" },
@@ -92,7 +96,13 @@ const Footer: React.FC = () => {
           </Box>
         </Box>
         {/* phone  */}
-        <Box sx={{ display: "flex", alignItems: "center", width: { xs: "100%", md: "auto" } }}>
+        <Box
+          sx={{
+            display: "flex",
+            alignItems: "center",
+            width: { xs: "100%", md: "auto" },
+          }}
+        >
           <Box
             sx={{
               height: { xs: "36px", md: "40px" },
@@ -133,7 +143,13 @@ const Footer: React.FC = () => {
           </Box>
         </Box>
         {/* address */}
-        <Box sx={{ display: "flex", alignItems: "center", width: { xs: "100%", md: "auto" } }}>
+        <Box
+          sx={{
+            display: "flex",
+            alignItems: "center",
+            width: { xs: "100%", md: "auto" },
+          }}
+        >
           <Box
             sx={{
               height: { xs: "36px", md: "40px" },
@@ -211,7 +227,11 @@ const Footer: React.FC = () => {
           sx={{ color: "#F7F7F7" }}
         >
           <InstagramIcon
-            sx={{ color: "#F7F7F7", height: { xs: "32px", md: "40px" }, width: { xs: "32px", md: "40px" } }}
+            sx={{
+              color: "#F7F7F7",
+              height: { xs: "32px", md: "40px" },
+              width: { xs: "32px", md: "40px" },
+            }}
           />
         </Link>
         <Link
@@ -221,7 +241,11 @@ const Footer: React.FC = () => {
           sx={{ color: "#F7F7F7" }}
         >
           <LinkedInIcon
-            sx={{ color: "#F7F7F7", height: { xs: "32px", md: "40px" }, width: { xs: "32px", md: "40px" } }}
+            sx={{
+              color: "#F7F7F7",
+              height: { xs: "32px", md: "40px" },
+              width: { xs: "32px", md: "40px" },
+            }}
           />
         </Link>
       </Box>
@@ -279,8 +303,16 @@ const Footer: React.FC = () => {
             &copy; {new Date().getFullYear()} SelfScore. All rights reserved.
           </Typography>
         </Box>
-        <Box sx={{ display: "flex", flexDirection: { xs: "column", sm: "row" }, gap: { xs: 2, sm: 3 }, alignItems: "center" }}>
-          <Typography
+        <Box
+          sx={{
+            display: "flex",
+            flexDirection: { xs: "column", sm: "row" },
+            gap: { xs: 2, sm: 3 },
+            alignItems: "center",
+          }}
+        >
+          <Link
+            href="/privacy-policy"
             sx={{
               fontFamily: "Source Sans Pro",
               fontWeight: 500,
@@ -291,9 +323,10 @@ const Footer: React.FC = () => {
               color: "#F7F7F7",
             }}
           >
-            Privacy Policy 
-          </Typography>
-          <Typography
+            Privacy Policy
+          </Link>
+          <Link
+            href="/terms-conditions"
             sx={{
               fontFamily: "Source Sans Pro",
               fontWeight: 500,
@@ -305,8 +338,9 @@ const Footer: React.FC = () => {
             }}
           >
             Terms of Service
-          </Typography>
-          <Typography
+          </Link>
+          <Link
+            href="/refund-policy"
             sx={{
               fontFamily: "Source Sans Pro",
               fontWeight: 500,
@@ -317,8 +351,8 @@ const Footer: React.FC = () => {
               color: "#F7F7F7",
             }}
           >
-            Cookie Policy
-          </Typography>
+            Refund Policy
+          </Link>
         </Box>
       </Box>
     </Box>

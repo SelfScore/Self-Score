@@ -4,6 +4,9 @@ import questionRoutes from './questions';
 import questionsResponseRoutes from './questionsResponse';
 import subscriptionRoutes from './subscription';
 import paymentRoutes from './payment';
+import adminRoutes from './admin';
+import adminAuthRoutes from './adminAuth';
+import contactRoutes from './contact';
 
 const router = Router();
 
@@ -13,6 +16,9 @@ router.use('/questions-response', questionsResponseRoutes);
 router.use('/questions', questionRoutes);
 router.use('/subscription', subscriptionRoutes);
 router.use('/payment', paymentRoutes);
+router.use('/contact', contactRoutes);
+router.use('/admin/auth', adminAuthRoutes);
+router.use('/admin', adminRoutes);
 
 
 // Health check route

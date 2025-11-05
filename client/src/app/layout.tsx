@@ -3,9 +3,7 @@ import { Geist, Geist_Mono, Faustina, Space_Grotesk } from "next/font/google";
 import "./globals.css";
 import { AppRouterCacheProvider } from "@mui/material-nextjs/v15-appRouter";
 import { ReduxProvider } from "../store/ReduxProvider";
-import Header from "./components/layout/Header";
-import Footer from "./components/layout/Footer";
-import { Box } from "@mui/material";
+import MainLayout from "./components/layout/MainLayout";
 
 const geistSans = Geist({
   variable: "--font-geist-sans",
@@ -48,11 +46,7 @@ export default function RootLayout({
       >
         <ReduxProvider>
           <AppRouterCacheProvider>
-            <Box position={"relative"} minHeight="100vh">
-              <Header />
-              {children}
-              <Footer />
-            </Box>
+            <MainLayout>{children}</MainLayout>
           </AppRouterCacheProvider>
         </ReduxProvider>
       </body>

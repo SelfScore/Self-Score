@@ -1,5 +1,5 @@
 import { Box, Typography } from "@mui/material";
-import React, { useState } from "react";
+import React, { useState, useRef } from "react";
 import SliderTab from "@mui/material/Slider";
 
 function valuetext(value: number) {
@@ -26,7 +26,9 @@ const Slider: React.FC<SliderProps> = ({
   disabled = false,
 }) => {
   // Internal state for when no external value is provided
+  // Initialize to midpoint so users can select min value (0) immediately
   const [internalValue, setInternalValue] = useState<number>(0);
+  const sliderRef = useRef<HTMLDivElement>(null);
 
   // Use external value if provided, otherwise use internal state
   const currentValue = value !== undefined ? value : internalValue;
@@ -41,6 +43,35 @@ const Slider: React.FC<SliderProps> = ({
 
     // Call external onChange if provided
     onChange?.(singleValue);
+  };
+
+  // Handle clicks on the rail to allow selecting any value including current one
+  const handleRailClick = (event: React.MouseEvent<HTMLDivElement>) => {
+    if (disabled) return;
+
+    const slider = sliderRef.current;
+    if (!slider) return;
+
+    const rect = slider.getBoundingClientRect();
+    const clickX = event.clientX - rect.left;
+    const percentage = clickX / rect.width;
+
+    // Calculate the value based on click position
+    let clickedValue = min + percentage * (max - min);
+
+    // Round to nearest step
+    clickedValue = Math.round(clickedValue / step) * step;
+
+    // Clamp to min/max
+    clickedValue = Math.max(min, Math.min(max, clickedValue));
+
+    // Update internal state if no external onChange is provided
+    if (value === undefined) {
+      setInternalValue(clickedValue);
+    }
+
+    // Always call onChange, even if value hasn't changed
+    onChange?.(clickedValue);
   };
 
   return (
@@ -70,11 +101,15 @@ const Slider: React.FC<SliderProps> = ({
       )}
 
       <Box
+        ref={sliderRef}
+        onClick={handleRailClick}
         sx={{
           width: "100%",
           maxWidth: 500,
           mx: "auto",
           px: 2,
+          position: "relative",
+          cursor: disabled ? "default" : "pointer",
         }}
       >
         <SliderTab
@@ -99,6 +134,7 @@ const Slider: React.FC<SliderProps> = ({
           sx={{
             color: "#005F73",
             height: 8,
+            pointerEvents: "none", // Disable default slider interaction
             "& .MuiSlider-track": {
               backgroundColor: "#005F73",
               border: "none",
@@ -116,6 +152,7 @@ const Slider: React.FC<SliderProps> = ({
               boxShadow: "0 2px 8px rgba(0, 95, 115, 0.3)",
               width: 24,
               height: 24,
+              pointerEvents: "auto", // Re-enable for thumb dragging
               "&:focus, &:hover, &.Mui-active, &.Mui-focusVisible": {
                 boxShadow: "0 0 0 8px rgba(0, 95, 115, 0.16)",
                 backgroundColor: "#005F73",
@@ -148,6 +185,12 @@ const Slider: React.FC<SliderProps> = ({
               fontSize: "0.875rem",
               fontWeight: 500,
               marginTop: 2,
+              pointerEvents: "auto", // Re-enable for label clicking
+              cursor: disabled ? "default" : "pointer",
+              "&:hover": {
+                color: disabled ? "#666" : "#005F73",
+                fontWeight: 600,
+              },
             },
             "&.Mui-disabled": {
               color: "#ccc",
