@@ -42,7 +42,7 @@ export default function AdminLogin() {
         display: "flex",
         alignItems: "center",
         justifyContent: "center",
-        background: "linear-gradient(135deg, #667eea 0%, #764ba2 100%)",
+        background: "#FFF",
       }}
     >
       <Container maxWidth="sm">
@@ -101,13 +101,13 @@ export default function AdminLogin() {
               size="large"
               disabled={loading}
               sx={{
-                background: "linear-gradient(135deg, #667eea 0%, #764ba2 100%)",
+                background: "#FF4F00",
                 color: "white",
                 py: 1.5,
-                "&:hover": {
-                  background:
-                    "linear-gradient(135deg, #5568d3 0%, #653a8b 100%)",
-                },
+                // "&:hover": {
+                //   background:
+                //     "linear-gradient(135deg, #5568d3 0%, #653a8b 100%)",
+                // },
               }}
             >
               {loading ? "Signing in..." : "Sign In"}
