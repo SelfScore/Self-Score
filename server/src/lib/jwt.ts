@@ -80,14 +80,26 @@ export const extractTokenFromCookies = (cookies: any): string | null => {
 };
 
 // Cookie options for setting auth token
+// export const getCookieOptions = () => {
+//     const isProduction = process.env.NODE_ENV === 'production';
+    
+//     return {
+//         httpOnly: true,        // Cannot be accessed via JavaScript
+//         secure: isProduction,  // Only sent over HTTPS in production
+//         sameSite: 'lax' as const, // CSRF protection
+//         maxAge: 7 * 24 * 60 * 60 * 1000, // 7 days in milliseconds
+//         path: '/'             // Cookie available for entire domain
+//     };
+// };
+
 export const getCookieOptions = () => {
     const isProduction = process.env.NODE_ENV === 'production';
-    
+
     return {
-        httpOnly: true,        // Cannot be accessed via JavaScript
-        secure: isProduction,  // Only sent over HTTPS in production
-        sameSite: 'lax' as const, // CSRF protection
-        maxAge: 7 * 24 * 60 * 60 * 1000, // 7 days in milliseconds
-        path: '/'             // Cookie available for entire domain
+        httpOnly: true,
+        secure: true, // yes, even in dev (localhost is treated as secure)
+        sameSite: isProduction ? 'lax' : 'none', 
+        maxAge: 7 * 24 * 60 * 60 * 1000,
+        path: '/'
     };
 };
