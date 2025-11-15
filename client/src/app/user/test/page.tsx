@@ -5,6 +5,7 @@ import { Box, Typography } from "@mui/material";
 import { Suspense } from "react";
 import Level1Test from "./Level1Test";
 import Level2Test from "./Level2Test";
+import Level4Test from "./Level4Test";
 import { useLevelAccess } from "../../../hooks/useLevelAccess";
 import SubscriptionRequired from "../../components/ui/SubscriptionRequired";
 import LevelLocked from "../../components/ui/LevelLocked";
@@ -50,15 +51,11 @@ function TestContent() {
         );
       case "4":
         return (
-          <Box sx={{ textAlign: "center", p: 4 }}>
-            <Typography variant="h5" sx={{ color: "#005F73", mb: 2 }}>
-              Level 4: Mastery Test
-            </Typography>
-            <Typography variant="body1" sx={{ color: "#666" }}>
-              Coming Soon - This test will evaluate your mastery of life
-              management skills.
-            </Typography>
-          </Box>
+          <Suspense
+            fallback={<Box sx={{ textAlign: "center", p: 4 }}>Loading...</Box>}
+          >
+            <Level4Test />
+          </Suspense>
         );
       default:
         return (

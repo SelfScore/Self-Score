@@ -59,7 +59,7 @@ export default function TermandConditions() {
                 fontFamily: "Source Sans Pro",
               }}
             >
-              Last updated: September 30, 2025
+              Last updated: November 13, 2025
             </Typography>
           </Box>
 
@@ -523,12 +523,11 @@ export default function TermandConditions() {
                 fontSize: { xs: "1rem", md: "1.1rem" },
               }}
             >
-              Email: legal@selfscore.com
+              Email: info@selfscore.net
               <br />
-              Phone: +1 (234) 567-8900
+              Phone: +1 (561) 430-0610
               <br />
-              Address: 123 Personal Growth Ave, Suite 456, Development City, DC
-              12345
+              Address: Charlottesville, Virginia, United States
             </Typography>
           </Box>
 

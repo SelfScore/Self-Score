@@ -564,14 +564,14 @@ export const getUserTestHistory = async (req: Request, res: Response): Promise<R
             });
         }
 
-        // Get all test submissions for this user
+        // Get all test submissions for Levels 1, 2, 3
         const testSubmissions = await TestSubmissionModel
             .find({ userId: userObjectId })
             .sort({ submittedAt: -1 }) // Most recent first
             .lean();
 
-        // Transform the data to match expected format
-        const testHistory = testSubmissions.map((submission: any) => ({
+        // Transform Level 1-3 data
+        const level123History = testSubmissions.map((submission: any) => ({
             _id: submission._id.toString(),
             level: submission.level,
             score: submission.score,
@@ -581,15 +581,179 @@ export const getUserTestHistory = async (req: Request, res: Response): Promise<R
             date: submission.submittedAt,
         }));
 
+        // Get Level 4 submissions (AI Interviews that are reviewed)
+        const AIInterviewModel = (await import("../models/aiInterview")).default;
+        const Level4ReviewModel = (await import("../models/level4Review")).default;
+        
+        const level4Interviews = await AIInterviewModel
+            .find({ 
+                userId: userObjectId,
+                level: 4,
+                status: { $in: ['REVIEWED', 'PENDING_REVIEW'] } // Include both reviewed and pending
+            })
+            .sort({ submittedAt: -1 })
+            .lean();
+
+        // Get reviews for Level 4 interviews
+        const level4InterviewIds = level4Interviews.map(interview => interview._id);
+        const level4Reviews = await Level4ReviewModel
+            .find({ 
+                interviewId: { $in: level4InterviewIds },
+                status: 'SUBMITTED'
+            })
+            .lean();
+
+        // Create a map of interviewId to review
+        const reviewMap = new Map();
+        level4Reviews.forEach(review => {
+            reviewMap.set(review.interviewId.toString(), review);
+        });
+
+        // Transform Level 4 data
+        const level4History = level4Interviews.map((interview: any) => {
+            const review = reviewMap.get(interview._id.toString());
+            
+            return {
+                _id: interview._id.toString(),
+                level: 4,
+                score: review ? review.totalScore : null, // null if pending review
+                totalQuestions: 8, // Level 4 always has 8 questions
+                timeSpent: null, // Level 4 doesn't track time the same way
+                submittedAt: interview.submittedAt || interview.completedAt,
+                date: interview.submittedAt || interview.completedAt,
+                status: interview.status, // PENDING_REVIEW or REVIEWED
+                attemptNumber: interview.attemptNumber,
+            };
+        });
+
+        // Combine and sort all history by date (most recent first)
+        const allHistory = [...level123History, ...level4History].sort((a, b) => {
+            const dateA = new Date(a.date || a.submittedAt).getTime();
+            const dateB = new Date(b.date || b.submittedAt).getTime();
+            return dateB - dateA;
+        });
+
         return res.status(200).json({
             success: true,
-            count: testHistory.length,
-            data: testHistory,
+            count: allHistory.length,
+            data: allHistory,
         });
     } catch (error) {
+        console.error("Error fetching user test history:", error);
         return res.status(500).json({
             success: false,
             message: "Error fetching user test history",
+            error: error instanceof Error ? error.message : error,
+        });
+    }
+};
+
+// Generate a shareable link for a test submission
+export const generateShareLink = async (req: Request, res: Response): Promise<Response> => {
+    try {
+        const { submissionId } = req.body;
+        const userId = (req as any).user?.userId;
+
+        console.log("Generate share link request:");
+        console.log("  - Submission ID:", submissionId);
+        console.log("  - User from token:", (req as any).user);
+        console.log("  - User ID:", userId);
+
+        if (!userId) {
+            return res.status(401).json({
+                success: false,
+                message: "Unauthorized - No user ID in token",
+            });
+        }
+
+        // Find the test submission
+        const submission = await TestSubmissionModel.findById(submissionId);
+
+        if (!submission) {
+            return res.status(404).json({
+                success: false,
+                message: "Test submission not found",
+            });
+        }
+
+        // Verify ownership
+        if (submission.userId.toString() !== userId) {
+            return res.status(403).json({
+                success: false,
+                message: "You don't have permission to share this report",
+            });
+        }
+
+        // Generate shareId if it doesn't exist
+        let shareId = submission.shareId;
+        if (!shareId) {
+            shareId = new mongoose.Types.ObjectId().toString();
+            submission.shareId = shareId;
+            await submission.save();
+        }
+
+        // Construct the shareable link
+        const baseUrl = process.env.CLIENT_URL || 'http://localhost:3000';
+        const shareLink = `${baseUrl}/shared-report/${shareId}`;
+
+        return res.status(200).json({
+            success: true,
+            data: {
+                shareId,
+                shareLink,
+            },
+        });
+    } catch (error) {
+        console.error("Error generating share link:", error);
+        return res.status(500).json({
+            success: false,
+            message: "Error generating share link",
+            error: error instanceof Error ? error.message : error,
+        });
+    }
+};
+
+// Get shared report data (public endpoint)
+export const getSharedReport = async (req: Request, res: Response): Promise<Response> => {
+    try {
+        const { shareId } = req.params;
+
+        // Find the test submission by shareId
+        const submission = await TestSubmissionModel.findOne({ shareId })
+            .populate('userId', 'username email countryCode phoneNumber')
+            .lean();
+
+        if (!submission) {
+            return res.status(404).json({
+                success: false,
+                message: "Shared report not found",
+            });
+        }
+
+        // Get user responses for this level and submission
+        const responses = await QuestionsResponseModel.find({
+            userId: submission.userId,
+            level: submission.level,
+        })
+            .populate('questionId')
+            .lean();
+
+        return res.status(200).json({
+            success: true,
+            data: {
+                level: submission.level,
+                score: submission.score,
+                totalQuestions: submission.totalQuestions,
+                submittedAt: submission.submittedAt,
+                user: submission.userId,
+                responses,
+            },
+        });
+    } catch (error) {
+        console.error("Error fetching shared report:", error);
+        return res.status(500).json({
+            success: false,
+            message: "Error fetching shared report",
             error: error instanceof Error ? error.message : error,
         });
     }

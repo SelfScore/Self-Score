@@ -2,11 +2,19 @@
 
 import { ReportContent } from '../types';
 
-export const generateRecommendationsPage = (content: ReportContent): string => {
+const CLIENT_URL = process.env.NEXT_PUBLIC_CLIENT_URL || 'https://www.selfscore.net';
+
+export const generateRecommendationsPage = (content: ReportContent, currentLevel: number): string => {
+  // Determine next level and button content
+  const nextLevel = currentLevel + 1;
+  const buttonText = currentLevel === 1 ? 'Unlock Level 2 Test' : 
+                     nextLevel <= 4 ? `Unlock Level ${nextLevel} Test` : 'Continue Your Journey';
+  const buttonUrl = nextLevel <= 4 ? `${CLIENT_URL}/testInfo?level=${nextLevel}` : `${CLIENT_URL}/consultant`;
   return `
     <div style="
       background: #FFFFFF;
       padding: 40px;
+      min-height: 100vh;
       height: 100%;
       display: flex;
       flex-direction: column;
@@ -143,7 +151,7 @@ export const generateRecommendationsPage = (content: ReportContent): string => {
         ">${content.proTip}</p>
       </div>
 
-      <!-- CTA Button -->
+      <!-- CTA Button (Clickable) -->
       <div style="
         display: flex;
         justify-content: left;
@@ -152,12 +160,13 @@ export const generateRecommendationsPage = (content: ReportContent): string => {
         position: relative;
         z-index: 1;
       ">
-        <div style="
+        <a href="${buttonUrl}" style="
           background: #FF4F00;
           color: #FFFFFF;
           border-radius: 12px;
           padding: 10px 32px;
           text-align: center;
+          text-decoration: none;
           cursor: pointer;
           border: none;
           display: inline-flex;
@@ -170,8 +179,8 @@ export const generateRecommendationsPage = (content: ReportContent): string => {
           <span style="
             font-size: 18px;
             font-weight: 400;
-          ">👑 Unlock Level 2 Test</span>
-        </div>
+          ">${buttonText}</span>
+        </a>
       </div>
 
       <!-- Page Number -->
@@ -180,15 +189,16 @@ export const generateRecommendationsPage = (content: ReportContent): string => {
         bottom: 30px;
         right: 40px;
         background: #F5F5F5;
-        padding: 8px 16px;
-        border-radius: 20px;
-        font-size: 12px;
-        color: #666;
-        z-index: 10;
-        display: flex;
-        align-items: center;
-        justify-content: center;
-      ">6 / 10</div>
+        padding: 6px 16px;
+        border-radius: 59px;
+        border: 1px solid #3A3A3A4D;
+        font-size: 10px;
+        color: #3A3A3AB2;
+        z-index: 1;
+        font-family: 'Source Sans Pro', -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif;
+        font-weight: 400;
+        text-align: center;
+      ">6 / 9</div>
     </div>
   `;
 };

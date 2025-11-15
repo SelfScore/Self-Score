@@ -10,13 +10,16 @@ export const generatePDFFromHTML = async (
   try {
     onProgress?.(10);
 
-    // Create temporary container
+    // Create temporary container (visible for getBoundingClientRect to work)
     const tempContainer = document.createElement('div');
-    tempContainer.style.position = 'absolute';
-    tempContainer.style.left = '-9999px';
+    tempContainer.style.position = 'fixed';
+    tempContainer.style.left = '0';
     tempContainer.style.top = '0';
     tempContainer.style.width = '210mm';
     tempContainer.style.background = 'white';
+    tempContainer.style.zIndex = '-1000';
+    tempContainer.style.opacity = '0';
+    tempContainer.style.pointerEvents = 'none';
     tempContainer.innerHTML = htmlContent;
 
     document.body.appendChild(tempContainer);
@@ -49,6 +52,36 @@ export const generatePDFFromHTML = async (
       const pageProgress = 40 + (i / reportPages.length) * 50;
       onProgress?.(pageProgress);
 
+      // Collect all links in this page before rendering
+      const links = pageElement.querySelectorAll('a[href]');
+      const linkData: Array<{ url: string; x: number; y: number; width: number; height: number }> = [];
+      
+      links.forEach((link) => {
+        const href = link.getAttribute('href');
+        if (href) {
+          const rect = link.getBoundingClientRect();
+          const pageRect = pageElement.getBoundingClientRect();
+          const relativeX = rect.left - pageRect.left;
+          const relativeY = rect.top - pageRect.top;
+          
+          linkData.push({
+            url: href,
+            x: relativeX,
+            y: relativeY,
+            width: rect.width,
+            height: rect.height,
+          });
+          
+          console.log(`Link found on page ${i + 1}:`, {
+            url: href,
+            x: relativeX,
+            y: relativeY,
+            width: rect.width,
+            height: rect.height,
+          });
+        }
+      });
+
       const canvas = await html2canvas(pageElement, {
         scale: 2,
         useCORS: true,
@@ -68,6 +101,28 @@ export const generatePDFFromHTML = async (
       const pdfWidth = pdf.internal.pageSize.getWidth();
       const pdfHeight = pdf.internal.pageSize.getHeight();
       pdf.addImage(imgData, 'JPEG', 0, 0, pdfWidth, pdfHeight);
+
+      // Add clickable links on top of the image
+      // Convert pixel coordinates to PDF mm coordinates
+      const pageWidthPx = 794; // Canvas width at scale 2
+      const pxToMm = pdfWidth / pageWidthPx;
+
+      linkData.forEach((linkInfo) => {
+        const x = linkInfo.x * pxToMm;
+        const y = linkInfo.y * pxToMm;
+        const width = linkInfo.width * pxToMm;
+        const height = linkInfo.height * pxToMm;
+
+        console.log(`Adding link to PDF:`, {
+          url: linkInfo.url,
+          x: x.toFixed(2),
+          y: y.toFixed(2),
+          width: width.toFixed(2),
+          height: height.toFixed(2),
+        });
+
+        pdf.link(x, y, width, height, { url: linkInfo.url });
+      });
     }
 
     onProgress?.(90);

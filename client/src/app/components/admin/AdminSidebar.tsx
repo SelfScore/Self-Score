@@ -13,6 +13,7 @@ import { usePathname, useRouter } from "next/navigation";
 import DashboardIcon from "@mui/icons-material/Dashboard";
 import PeopleIcon from "@mui/icons-material/People";
 import EmailIcon from "@mui/icons-material/Email";
+import AssignmentIcon from "@mui/icons-material/Assignment";
 import LogoutIcon from "@mui/icons-material/Logout";
 import { logoutAdmin } from "@/services/adminAuthService";
 
@@ -26,6 +27,11 @@ const menuItems = [
     title: "Users",
     icon: <PeopleIcon />,
     path: "/admin/users",
+  },
+  {
+    title: "Level 4 Submissions",
+    icon: <AssignmentIcon />,
+    path: "/admin/level4-submissions",
   },
   {
     title: "Inbox",

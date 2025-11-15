@@ -1,5 +1,6 @@
 import { Router } from "express";
 import * as questionsResponseController from "../controllers/questionsResponse.controller";
+import { authMiddleware } from "../middleware/auth";
 
 const router = Router();
 
@@ -17,5 +18,11 @@ router.get("/user/:userId", questionsResponseController.getUserResponses);
 
 // GET /api/questions-response/test-history/:userId - Get user's test history with scores and dates
 router.get("/test-history/:userId", questionsResponseController.getUserTestHistory);
+
+// POST /api/questions-response/generate-share-link - Generate a shareable link for a test submission (requires auth)
+router.post("/generate-share-link", authMiddleware, questionsResponseController.generateShareLink);
+
+// GET /api/questions-response/shared-report/:shareId - Get shared report data (public)
+router.get("/shared-report/:shareId", questionsResponseController.getSharedReport);
 
 export default router;

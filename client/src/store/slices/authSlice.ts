@@ -5,6 +5,7 @@ export interface UserData {
   email: string;
   username: string;
   phoneNumber?: string;
+  countryCode?: string;
 }
 
 export interface PurchasedLevelsData {

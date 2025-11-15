@@ -72,12 +72,28 @@ export const getScoreZone = (score: number): 'unaware' | 'aware' | 'conscious' =
 
 // Format date to readable format
 export const formatDate = (dateString: string): string => {
-  const date = new Date(dateString);
-  return date.toLocaleDateString('en-US', {
-    month: 'long',
-    day: 'numeric',
-    year: 'numeric'
-  });
+  // Handle null/undefined/empty strings
+  if (!dateString) {
+    return 'N/A';
+  }
+  
+  try {
+    const date = new Date(dateString);
+    
+    // Check if date is valid
+    if (isNaN(date.getTime())) {
+      // If invalid date, return the original string (it might already be formatted)
+      return dateString || 'N/A';
+    }
+    
+    return date.toLocaleDateString('en-US', {
+      month: 'long',
+      day: 'numeric',
+      year: 'numeric'
+    });
+  } catch (_error) {
+    return dateString || 'N/A';
+  }
 };
 
 // Calculate percentage for progress indicators

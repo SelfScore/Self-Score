@@ -39,7 +39,7 @@ export default function TestInfo({ initialLevel }: TestInfoProps) {
       questionsDetail: "Covering key areas of life satisfaction and well-being",
       isFree: true,
       features: [
-        "5 basic questions",
+        "6 basic questions",
         "General overview",
         "Basic recommendations",
         "Simple score display",
@@ -67,12 +67,12 @@ export default function TestInfo({ initialLevel }: TestInfoProps) {
       title: "Level 3",
       name: "Action",
       duration: "25-30 Minutes",
-      questions: 15,
+      questions: "50+",
       description: "Comprehensive assessment for actionable insights",
       questionsDetail: "Developing concrete strategies for personal growth",
       isFree: false,
       features: [
-        "15 in-depth questions",
+        "50+ in-depth questions",
         "Advanced analytics",
         "Goal-setting framework",
         "Progress tracking tools",

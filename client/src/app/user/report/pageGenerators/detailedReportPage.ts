@@ -90,15 +90,16 @@ export const generateDetailedReportPage = (content: ReportContent): string => {
         bottom: 30px;
         right: 40px;
         background: #F5F5F5;
-        padding: 8px 16px;
-        border-radius: 20px;
-        font-size: 12px;
-        color: #666;
+        padding: 6px 16px;
+        border-radius: 59px;
+        border: 1px solid #3A3A3A4D;
+        font-size: 10px;
+        color: #3A3A3AB2;
         z-index: 1;
-        display: flex;
-        align-items: center;
-        justify-content: center;
-      ">4 / 10</div>
+        font-family: 'Source Sans Pro', -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif;
+        font-weight: 400;
+        text-align: center;
+      ">4 / 9</div>
     </div>
   `;
 };

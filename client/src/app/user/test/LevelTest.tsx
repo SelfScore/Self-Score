@@ -146,6 +146,50 @@ export default function LevelTest({ level }: LevelTestProps) {
       ? ((currentQuestionIndex + 1) / questions.length) * 100
       : 0;
 
+  // Get level-specific instructions
+  const getLevelInstructions = () => {
+    switch (level) {
+      case 1:
+        return {
+          main: "The idea of the test is to measure your overall Personality Integration or life success score within your Body, Mind and Soul Complex via a simple questionnaire.",
+          hints: [
+            "Love, forgiveness, happiness, peace and freedom are synonyms and different facets of the same underlying life principle",
+            "Key to your happiness is in your own pocket, not someone else's pocket",
+            "Please rate yourself on a scale of 0 to 10 with 10 being the best and 0 being the worst for the following questions:",
+          ],
+        };
+      case 2:
+        return {
+          main: "This level focuses on identifying the subtle disturbances of the mind and ego. Here, the scale is reversed: 0 = Positive state, 10 = Negative state. It helps you recognise moments of restlessness, anger, or attachment that affect your peace.",
+          hints: [
+            "Be calm and reflective while answering, and notice your emotional responses",
+            "Treat this as an honest mirror - not judgment, but gentle self-understanding",
+            "Remember: Higher numbers indicate greater disturbance or negative patterns",
+          ],
+        };
+      case 3:
+        return {
+          main: "The idea of the test is to measure your overall Personality Integration or life success score within your Body, Mind and Soul Complex via a simple questionnaire.",
+          hints: [
+            "Love, forgiveness, happiness, peace and freedom are synonyms and different facets of the same underlying life principle",
+            "Key to your happiness is in your own pocket, not someone else's pocket",
+            "Please rate yourself on a scale of 0 to 10 with 10 being the best and 0 being the worst for the following questions:",
+          ],
+        };
+      default:
+        return {
+          main: "The idea of the test is to measure your overall Personality Integration or life success score within your Body, Mind and Soul Complex via a simple questionnaire.",
+          hints: [
+            "Love, forgiveness, happiness, peace and freedom are synonyms and different facets of the same underlying life principle",
+            "Key to your happiness is in your own pocket, not someone else's pocket",
+            "Please rate yourself on a scale of 0 to 10 with 10 being the best and 0 being the worst for the following questions:",
+          ],
+        };
+    }
+  };
+
+  const instructions = getLevelInstructions();
+
   const handleSubmit = async () => {
     try {
       setSubmitting(true);
@@ -426,13 +470,11 @@ export default function LevelTest({ level }: LevelTestProps) {
               color: "#2B2B2B",
               fontWeight: 400,
               fontSize: "18px",
-              lineHeight: "100%",
+              lineHeight: "140%",
               mt: 1,
             }}
           >
-            The idea of the test is to measure your overall Personality
-            Integration or life success score within your Body, Mind and Soul
-            Complex via a simple questionnaire.
+            {instructions.main}
           </Typography>
 
           <Typography
@@ -454,24 +496,15 @@ export default function LevelTest({ level }: LevelTestProps) {
               color: "#2B2B2B",
               fontWeight: 400,
               fontSize: "18px",
-              lineHeight: "100%",
+              lineHeight: "140%",
               mt: 0,
               mb: 2,
               pl: 3,
             }}
           >
-            <li>
-              Love, forgiveness, happiness, peace and freedom are synonyms and
-              different facets of the same underlying life principle
-            </li>
-            <li>
-              Key to your happiness is in your own pocket, not someone else's
-              pocket
-            </li>
-            <li>
-              Please rate yourself on a scale of 0 to 10 with 10 being the best
-              and 0 being the worst for the following questions:
-            </li>
+            {instructions.hints.map((hint, index) => (
+              <li key={index}>{hint}</li>
+            ))}
           </Typography>
         </Box>
       </Box>

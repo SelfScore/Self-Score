@@ -10,6 +10,7 @@ export interface Question {
   correctOptionIndex?: number;
   questionType?: string; // "multiple-choice" or "slider-scale"
   scoringType?: 'POSITIVE_MULTIPLIER' | 'NEGATIVE_MULTIPLIER'; // Scoring type for the question
+  order?: number; // Display order (used in Level 2: 1, 2, 3...9)
   userResponse?: {
     selectedOptionIndex: number;
     answeredAt: string;
@@ -93,5 +94,17 @@ export const questionsApi = {
   // Get user test history with scores and dates
   getUserTestHistory: async (userId: string): Promise<ResponseApiResponse> => {
     return await api.get(`/api/questions-response/test-history/${userId}`);
+  },
+
+  // Generate a shareable link for a test submission
+  generateShareLink: async (submissionId: string): Promise<ResponseApiResponse> => {
+    return await api.post('/api/questions-response/generate-share-link', {
+      submissionId
+    });
+  },
+
+  // Get shared report data (public endpoint)
+  getSharedReport: async (shareId: string): Promise<ResponseApiResponse> => {
+    return await api.get(`/api/questions-response/shared-report/${shareId}`);
   },
 };

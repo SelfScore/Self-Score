@@ -25,6 +25,7 @@ import ArrowForwardIcon from "@mui/icons-material/ArrowForward";
 import RefreshIcon from "@mui/icons-material/Refresh";
 import SpeedIcon from "@mui/icons-material/Speed";
 import DownloadReportButton from "@/app/components/ui/DownloadReportButton";
+import ShareModal from "@/app/components/ui/ShareModal";
 
 export default function LevelAnalysisPage() {
   const params = useParams();
@@ -33,6 +34,9 @@ export default function LevelAnalysisPage() {
   const [checkingAuth, setCheckingAuth] = useState(true);
   const [error, setError] = useState<string>("");
   const [analysisData, setAnalysisData] = useState<any>(null);
+  const [sharingReport, setSharingReport] = useState(false);
+  const [shareModalOpen, setShareModalOpen] = useState(false);
+  const [shareLink, setShareLink] = useState<string>("");
   const {
     progress: userProgress,
     isAuthenticated,
@@ -89,6 +93,7 @@ export default function LevelAnalysisPage() {
                 userId: user.userId,
                 email: user.email,
                 username: user.username,
+                countryCode: user.countryCode,
                 phoneNumber: user.phoneNumber,
               },
               purchasedLevels: user.purchasedLevels,
@@ -269,12 +274,27 @@ export default function LevelAnalysisPage() {
 
         const totalQuestions = validResponses.length;
 
+        // Get the test submission ID for sharing (most recent for this level)
+        const testHistory = await questionsApi.getUserTestHistory(user.userId);
+        const currentSubmission = testHistory.success
+          ? testHistory.data
+              .filter((item: any) => item.level === levelNumber)
+              .sort(
+                (a: any, b: any) =>
+                  new Date(b.date || b.submittedAt).getTime() -
+                  new Date(a.date || a.submittedAt).getTime()
+              )[0]
+          : null;
+
+        console.log("Current submission for sharing:", currentSubmission);
+
         setAnalysisData({
           level: levelNumber,
           score,
           totalQuestions,
           responses: levelResponses,
           completedAt: new Date().toISOString(),
+          submissionId: currentSubmission?._id || null,
         });
       } catch (err) {
         console.error("Error fetching analysis data:", err);
@@ -337,13 +357,39 @@ export default function LevelAnalysisPage() {
   //   console.log("Download report");
   // };
 
-  const handleShare = () => {
-    console.log("Share results");
+  const handleShare = async () => {
+    if (!analysisData?.submissionId) {
+      alert("Unable to generate share link. Submission ID not found.");
+      return;
+    }
+
+    try {
+      setSharingReport(true);
+
+      // Generate share link
+      const response = await questionsApi.generateShareLink(
+        analysisData.submissionId
+      );
+
+      if (response.success && response.data?.shareLink) {
+        // Open share modal with the generated link
+        setShareLink(response.data.shareLink);
+        setShareModalOpen(true);
+      } else {
+        alert("Failed to generate share link. Please try again.");
+      }
+    } catch (error) {
+      console.error("Error generating share link:", error);
+      alert("Failed to generate share link. Please try again.");
+    } finally {
+      setSharingReport(false);
+    }
   };
 
   const handleNextLevel = () => {
     if (analysisData) {
-      router.push(`/user/test?level=${analysisData.level + 1}`);
+      // Redirect to TestInfo page instead of directly to test
+      router.push(`/testInfo?level=${analysisData.level + 1}`);
     }
   };
 
@@ -404,7 +450,8 @@ export default function LevelAnalysisPage() {
 
   const maxCount = Math.max(...distributionData.map((d) => d.count));
   const userBarIndex = getUserBarIndex(analysisData.score);
-  const scorePercentage = ((analysisData.score - 350) / (900 - 350)) * 100;
+  // Score range is 0-900 for circular progress
+  const scorePercentage = (analysisData.score / 900) * 100;
 
   return (
     <Box sx={{ minHeight: "100vh", bgcolor: "background.default", py: 4 }}>
@@ -562,7 +609,10 @@ export default function LevelAnalysisPage() {
                 userData={{
                   username: user.username,
                   email: user.email,
-                  phoneNumber: user.phoneNumber || "",
+                  phoneNumber:
+                    user.countryCode && user.phoneNumber
+                      ? `+${user.countryCode}${user.phoneNumber}`
+                      : user.phoneNumber || "",
                   reportDate: new Date().toISOString(),
                   level: levelNumber,
                   score: analysisData.score,
@@ -573,13 +623,20 @@ export default function LevelAnalysisPage() {
               />
             )}
             <ButtonSelfScore
-              startIcon={<FileUploadIcon />}
-              text="Share"
+              startIcon={
+                sharingReport ? (
+                  <CircularProgress size={16} color="inherit" />
+                ) : (
+                  <FileUploadIcon />
+                )
+              }
+              text={sharingReport ? "Generating..." : "Share"}
               background="#5C5C5C"
               borderRadius="16px"
               padding="12px 12px"
               fontSize="1rem"
               onClick={handleShare}
+              disabled={sharingReport || !analysisData?.submissionId}
             />
             <ButtonSelfScore
               startIcon={<ArrowForwardIcon />}
@@ -844,6 +901,14 @@ export default function LevelAnalysisPage() {
           </Typography>
         </Box>
       </Container>
+
+      {/* Share Modal */}
+      <ShareModal
+        open={shareModalOpen}
+        onClose={() => setShareModalOpen(false)}
+        shareLink={shareLink}
+        level={analysisData?.level}
+      />
     </Box>
   );
 }

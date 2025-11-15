@@ -4,6 +4,9 @@ import { UserReportData } from '../types';
 import { formatDate } from '../utils/scoreUtils';
 
 export const generateUserDetailsPage = (userData: UserReportData): string => {
+  // Format the phone number with country code
+  const formattedPhoneNumber = userData.phoneNumber || 'Not provided';
+  
   const formattedDate = formatDate(userData.reportDate);
   const planBadge = userData.level === 1 ? 'FREE' : 'PREMIUM';
   
@@ -56,14 +59,13 @@ export const generateUserDetailsPage = (userData: UserReportData): string => {
         <div style="
           background: #005F73;
           color: white;
-          padding: 6px 24px;
+          padding: 6px 24px 10px 24px;
           border-radius: 8px;
           font-size: 12px;
           font-weight: 600;
           letter-spacing: 0.5px;
-          height: 28px;
-          display: flex;
-          align-items: center;
+          line-height: 1;
+          text-align: center;
         ">
           CURRENT ACTIVE PLAN - ${planBadge}
         </div>
@@ -127,7 +129,7 @@ export const generateUserDetailsPage = (userData: UserReportData): string => {
           <td style="
             padding: 16px 20px;
             color: #2B2B2B;
-          ">${userData.phoneNumber || 'Not provided'}</td>
+          ">${formattedPhoneNumber}</td>
         </tr>
         
         <tr style="border-bottom: 1px solid rgba(58, 58, 58, 0.3);">
@@ -164,15 +166,16 @@ export const generateUserDetailsPage = (userData: UserReportData): string => {
         bottom: 30px;
         right: 40px;
         background: #F5F5F5;
-        padding: 8px 16px;
-        border-radius: 20px;
-        font-size: 12px;
-        color: #666;
+        padding: 6px 16px;
+        border-radius: 59px;
+        border: 1px solid #3A3A3A4D;
+        font-size: 10px;
+        color: #3A3A3AB2;
         z-index: 1;
-        display: flex;
-        align-items: center;
-        justify-content: center;
-      ">2 / 10</div>
+        font-family: 'Source Sans Pro', -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif;
+        font-weight: 400;
+        text-align: center;
+      ">2 / 9</div>
     </div>
   `;
 };

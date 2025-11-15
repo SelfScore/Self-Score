@@ -7,6 +7,8 @@ import paymentRoutes from './payment';
 import adminRoutes from './admin';
 import adminAuthRoutes from './adminAuth';
 import contactRoutes from './contact';
+import aiInterviewRoutes from './aiInterview';
+import level4ReviewRoutes from './level4Review';
 
 const router = Router();
 
@@ -19,6 +21,8 @@ router.use('/payment', paymentRoutes);
 router.use('/contact', contactRoutes);
 router.use('/admin/auth', adminAuthRoutes);
 router.use('/admin', adminRoutes);
+router.use('/admin/level4', level4ReviewRoutes);
+router.use('/ai-interview', aiInterviewRoutes);
 
 
 // Health check route

@@ -8,8 +8,33 @@ export const generateScoreSummaryPage = (userData: UserReportData): string => {
   const percentage = (userData.score / userData.maxScore) * 100;
   const formattedDate = formatDate(userData.reportDate);
   
-  // Calculate position on slider (0-100%)
-  const sliderPosition = Math.min(100, Math.max(0, (userData.score / 900) * 100));
+  // Calculate position on slider (0-100%) based on the actual scale breakpoints
+  // Scale range: 350-900
+  // Seeker (350), Learner (500), Evolver (750), Awakened (900)
+  const calculateSliderPosition = (score: number): number => {
+    const minScore = 350;
+    const maxScore = 900;
+    
+    // Clamp score to valid range
+    const clampedScore = Math.max(minScore, Math.min(maxScore, score));
+    
+    const breakpoints = [
+      { min: 350, max: 500, startPercent: 0, endPercent: 33.33 },   // Seeker to Learner: 0-33.33%
+      { min: 500, max: 750, startPercent: 33.33, endPercent: 66.67 }, // Learner to Evolver: 33.33-66.67%
+      { min: 750, max: 900, startPercent: 66.67, endPercent: 100 }    // Evolver to Awakened: 66.67-100%
+    ];
+    
+    for (const bp of breakpoints) {
+      if (clampedScore >= bp.min && clampedScore <= bp.max) {
+        const rangeProgress = (clampedScore - bp.min) / (bp.max - bp.min);
+        return bp.startPercent + (rangeProgress * (bp.endPercent - bp.startPercent));
+      }
+    }
+    
+    return 0;
+  };
+  
+  const sliderPosition = calculateSliderPosition(userData.score);
   
   return `
     <div style="
@@ -98,7 +123,7 @@ export const generateScoreSummaryPage = (userData: UserReportData): string => {
               <circle cx="10" cy="10" r="9" stroke="#666" stroke-width="1.5"/>
               <path d="M10 5v5l3 3" stroke="#666" stroke-width="1.5" stroke-linecap="round"/>
             </svg>
-            <span style="color: #666; font-size: 14px;">Test Date: ${formattedDate.split(',')[0]}</span>
+            <span style="color: #666; font-size: 14px;">Test Date: ${formattedDate}</span>
           </div>
           
           <p style="
@@ -168,7 +193,7 @@ export const generateScoreSummaryPage = (userData: UserReportData): string => {
         font-size: 28px;
         font-weight: 700;
         color: #2B2B2B;
-        margin: 0 0 24px 0;
+        margin: 0 0 48px 0;
         position: relative;
         z-index: 1;
       ">Where do you Stand</h3>
@@ -195,7 +220,7 @@ export const generateScoreSummaryPage = (userData: UserReportData): string => {
           transform: translateX(-50%);
         ">
           <div style="
-            background: #E87A42;
+            background: #FF4F00;
             color: white;
             padding: 6px 16px;
             border-radius: 20px;
@@ -205,15 +230,15 @@ export const generateScoreSummaryPage = (userData: UserReportData): string => {
             font-family: 'Source Sans Pro', -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif;
           ">You</div>
           <div style="
-            width: 3px;
-            height: 48px;
-            background: #E87A42;
+            width: 0px;
+            height: 14px;
+            background: #FF4F00;
             margin: 0 auto;
           "></div>
           <div style="
             width: 12px;
             height: 12px;
-            background: #E87A42;
+            background: #FF4F00;
             border-radius: 50%;
             margin: -6px auto 0;
           "></div>
@@ -278,15 +303,16 @@ export const generateScoreSummaryPage = (userData: UserReportData): string => {
         bottom: 30px;
         right: 40px;
         background: #F5F5F5;
-        padding: 8px 16px;
-        border-radius: 20px;
-        font-size: 12px;
-        color: #666;
+        padding: 6px 16px;
+        border-radius: 59px;
+        border: 1px solid #3A3A3A4D;
+        font-size: 10px;
+        color: #3A3A3AB2;
         z-index: 1;
-        display: flex;
-        align-items: center;
-        justify-content: center;
-      ">3 / 10</div>
+        font-family: 'Source Sans Pro', -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif;
+        font-weight: 400;
+        text-align: center;
+      ">3 / 9</div>
     </div>
   `;
 };

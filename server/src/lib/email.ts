@@ -234,3 +234,76 @@ export const sendContactNotificationEmail = async (data: {
         html,
     });
 };
+
+// Send Level 4 review completion notification to user
+export const sendLevel4ReviewCompleteEmail = async (
+    email: string,
+    username: string,
+    totalScore: number
+): Promise<boolean> => {
+    const dashboardUrl = `${CLIENT_URL}/user/dashboard`;
+    
+    const html = `
+        <!DOCTYPE html>
+        <html>
+        <head>
+            <meta charset="utf-8">
+            <meta name="viewport" content="width=device-width, initial-scale=1.0">
+            <title>Your Level 4 Report is Ready</title>
+        </head>
+        <body style="font-family: Arial, sans-serif; line-height: 1.6; color: #333; max-width: 600px; margin: 0 auto; padding: 20px;">
+            <div style="background: linear-gradient(135deg, #005F73 0%, #0A9396 100%); padding: 30px; text-align: center; border-radius: 10px 10px 0 0;">
+                <h1 style="color: white; margin: 0; font-size: 28px;">${APP_NAME}</h1>
+            </div>
+            
+            <div style="background: #f9f9f9; padding: 30px; border-radius: 0 0 10px 10px;">
+                <h2 style="color: #005F73; margin-top: 0;">🎉 Your Level 4 Report is Ready!</h2>
+                
+                <p style="font-size: 16px; color: #555;">
+                    Hi ${username},
+                </p>
+                
+                <p style="font-size: 16px; color: #555;">
+                    Great news! Our team has completed the review of your Level 4 Mastery Test submission.
+                </p>
+                
+                <div style="background: white; padding: 25px; text-align: center; border-radius: 8px; margin: 30px 0; border: 2px solid #E87A42;">
+                    <p style="margin: 0; font-size: 14px; color: #666; text-transform: uppercase; letter-spacing: 1px;">Your Total Score</p>
+                    <h1 style="margin: 10px 0; font-size: 48px; color: #E87A42; font-weight: bold;">${totalScore}</h1>
+                    <p style="margin: 0; font-size: 12px; color: #999;">Score Range: 350 - 900</p>
+                </div>
+                
+                <p style="font-size: 16px; color: #555;">
+                    Your detailed report with individual question scores and expert remarks is now available on your dashboard.
+                </p>
+                
+                <div style="text-align: center; margin: 30px 0;">
+                    <a href="${dashboardUrl}" style="display: inline-block; background: #E87A42; color: white; padding: 14px 30px; text-decoration: none; border-radius: 8px; font-weight: bold; font-size: 16px;">View Your Report</a>
+                </div>
+                
+                <p style="font-size: 14px; color: #666;">
+                    You can also download your complete report as a PDF from your dashboard.
+                </p>
+                
+                <div style="background: white; padding: 20px; border-radius: 8px; margin: 30px 0; border-left: 4px solid #0A9396;">
+                    <p style="margin: 0; font-size: 14px; color: #555;">
+                        <strong>💡 Tip:</strong> Review the expert remarks carefully to understand your strengths and areas for improvement in life management and emotional intelligence.
+                    </p>
+                </div>
+                
+                <div style="margin-top: 30px; padding-top: 20px; border-top: 1px solid #ddd;">
+                    <p style="font-size: 12px; color: #999; margin: 0;">
+                        © ${new Date().getFullYear()} ${APP_NAME}. All rights reserved.
+                    </p>
+                </div>
+            </div>
+        </body>
+        </html>
+    `;
+
+    return await sendEmail({
+        to: email,
+        subject: `Your Level 4 Report is Ready - Score: ${totalScore}`,
+        html,
+    });
+};

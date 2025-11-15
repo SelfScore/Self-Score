@@ -175,6 +175,7 @@ export class AuthController {
                 userId: (user._id as string).toString(),
                 email: user.email,
                 username: user.username,
+                countryCode: user.countryCode,
                 phoneNumber: user.phoneNumber,
                 purchasedLevels: user.purchasedLevels,
                 progress: user.progress
@@ -267,6 +268,7 @@ export class AuthController {
                 userId: (user._id as string).toString(),
                 email: user.email,
                 username: user.username,
+                countryCode: user.countryCode,
                 phoneNumber: user.phoneNumber,
                 purchasedLevels: user.purchasedLevels,
                 progress: user.progress
@@ -395,6 +397,7 @@ export class AuthController {
                 userId: (user._id as string).toString(),
                 email: user.email,
                 username: user.username,
+                countryCode: user.countryCode,
                 phoneNumber: user.phoneNumber,
                 purchasedLevels: user.purchasedLevels,
                 progress: user.progress

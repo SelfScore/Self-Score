@@ -18,7 +18,7 @@ import {
 import {
   Menu as MenuIcon,
   Close as CloseIcon,
-  AccountCircle,
+  // AccountCircle,
   Dashboard,
   ExitToApp,
 } from "@mui/icons-material";
@@ -199,7 +199,7 @@ export default function Header() {
             </ListItem>
 
             <ListItem sx={{ mb: 1, px: 3 }}>
-              <Link
+              {/* <Link
                 href="/user/profile"
                 style={{ textDecoration: "none", width: "100%" }}
               >
@@ -222,7 +222,7 @@ export default function Header() {
                   <AccountCircle sx={{ mr: 1 }} />
                   Profile
                 </Button>
-              </Link>
+              </Link> */}
             </ListItem>
 
             <ListItem sx={{ mb: 1, px: 3 }}>
@@ -439,7 +439,7 @@ export default function Header() {
                         Dashboard
                       </MenuItem>
 
-                      <MenuItem
+                      {/* <MenuItem
                         onClick={() => {
                           handleProfileMenuClose();
                           window.location.href = "/user/profile";
@@ -447,7 +447,7 @@ export default function Header() {
                       >
                         <AccountCircle sx={{ mr: 1, fontSize: 20 }} />
                         Profile
-                      </MenuItem>
+                      </MenuItem> */}
 
                       <Divider />
 

@@ -388,7 +388,10 @@ export default function AdminUserDetail() {
                     userData={{
                       username: user.username,
                       email: user.email,
-                      phoneNumber: user.phoneNumber || "",
+                      phoneNumber:
+                        user.countryCode && user.phoneNumber
+                          ? `+${user.countryCode}${user.phoneNumber}`
+                          : user.phoneNumber || "",
                       reportDate: lastTestDate,
                       level: lastCompletedLevel,
                       score: lastTestScore,
@@ -630,7 +633,10 @@ export default function AdminUserDetail() {
                           userData={{
                             username: user.username,
                             email: user.email,
-                            phoneNumber: user.phoneNumber || "",
+                            phoneNumber:
+                              user.countryCode && user.phoneNumber
+                                ? `+${user.countryCode}${user.phoneNumber}`
+                                : user.phoneNumber || "",
                             reportDate: test.date,
                             level: test.level,
                             score: test.score,

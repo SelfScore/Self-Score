@@ -4,7 +4,56 @@
 
 import { ReportContent } from '../types';
 
-export const generateUpgradePage = (): string => {
+const CLIENT_URL = process.env.NEXT_PUBLIC_CLIENT_URL || 'https://www.selfscore.net';
+
+export const generateUpgradePage = (currentLevel: number): string => {
+  // Determine next level and content based on current level
+  const nextLevel = currentLevel + 1;
+  const isLevel1 = currentLevel === 1;
+  const targetLevel = isLevel1 ? 2 : (nextLevel <= 4 ? nextLevel : 4);
+  
+  const upgradeContent = {
+    title: isLevel1 ? 'Why Upgrade to Level 2' : `Why Upgrade to Level ${targetLevel}`,
+    subtitle: isLevel1 ? 'Level 1 gives you clarity. Level 2 gives you direction.' : 
+              `Take your emotional intelligence to the next level with advanced insights.`,
+    premiumTitle: isLevel1 ? 'Level 2 (Premium)' : `Level ${targetLevel} (Premium)`,
+    premiumFeatures: isLevel1 ? [
+      '9 comprehensive questions',
+      'Detailed category analysis',
+      'Personalized action plan',
+      'Professional PDF report'
+    ] : [
+      'Advanced assessment questions',
+      'Deep psychological insights',
+      'Expert-level analysis',
+      'Comprehensive feedback'
+    ],
+    currentTitle: `Level ${currentLevel} (Current)`,
+    currentFeatures: isLevel1 ? [
+      '6 basic questions',
+      'General overview',
+      'Basic recommendations',
+      'Simple score display'
+    ] : [
+      'Standard assessment',
+      'Basic insights',
+      'General recommendations',
+      'Standard reporting'
+    ],
+    expectations: isLevel1 ? [
+      { title: '15-20 Minutes to Complete', desc: 'Still quick enough to fit in your schedule' },
+      { title: '9 Comprehensive Questions', desc: 'Deeper exploration of life satisfaction, relationships, career, and personal growth' },
+      { title: 'Personalized Recommendations', desc: 'Actionable advice based on your specific results' },
+      { title: 'Detailed Score Breakdown', desc: 'Individual scores for 8+ life categories with visual charts' }
+    ] : [
+      { title: 'Advanced Assessment', desc: 'More sophisticated evaluation methods' },
+      { title: 'Expert Analysis', desc: 'Professional-grade psychological insights' },
+      { title: 'Detailed Feedback', desc: 'Comprehensive review of your responses' },
+      { title: 'Growth Roadmap', desc: 'Clear path for continued development' }
+    ],
+    buttonText: isLevel1 ? 'Unlock Level 2 Test' : `Unlock Level ${targetLevel} Test`,
+    buttonUrl: `${CLIENT_URL}/testInfo?level=${targetLevel}`
+  };
   return `
     <div style="
       background: #FFFFFF;
@@ -44,27 +93,25 @@ export const generateUpgradePage = (): string => {
         />
       </div>
 
-      <h2 style="font-size: 32px; font-weight: 700; color: #2B2B2B; margin: 0 0 8px 0; position: relative; z-index: 1;">Why Upgrade to Level 2</h2>
-      <p style="font-size: 14px; color: #666; margin: 0 0 32px 0; position: relative; z-index: 1;">Level 1 gives you clarity. Level 2 gives you direction.</p>
+      <h2 style="font-size: 32px; font-weight: 700; color: #2B2B2B; margin: 0 0 8px 0; position: relative; z-index: 1;">${upgradeContent.title}</h2>
+      <p style="font-size: 14px; color: #666; margin: 0 0 32px 0; position: relative; z-index: 1;">${upgradeContent.subtitle}</p>
 
       <div style="display: flex; gap: 24px; margin-bottom: 32px; position: relative; z-index: 1;">
         <div style="flex: 1; background: white; border: 2px solid #E87A42; border-radius: 12px; padding: 20px;">
-          <h3 style="font-size: 18px; font-weight: 700; color: #E87A42; margin: 0 0 16px 0;">Level 2 (Premium)</h3>
+          <h3 style="font-size: 18px; font-weight: 700; color: #E87A42; margin: 0 0 16px 0;">${upgradeContent.premiumTitle}</h3>
           <ul style="list-style: none; padding: 0; margin: 0;">
-            <li style="margin-bottom: 8px; font-size: 14px; color: #666;">• 9 comprehensive questions</li>
-            <li style="margin-bottom: 8px; font-size: 14px; color: #666;">• Detailed category analysis</li>
-            <li style="margin-bottom: 8px; font-size: 14px; color: #666;">• Personalized action plan</li>
-            <li style="margin-bottom: 8px; font-size: 14px; color: #666;">• Professional PDF report</li>
+            ${upgradeContent.premiumFeatures.map(feature => 
+              `<li style="margin-bottom: 8px; font-size: 14px; color: #666;">• ${feature}</li>`
+            ).join('')}
           </ul>
         </div>
 
         <div style="flex: 1; background: white; border: 2px solid #DDD; border-radius: 12px; padding: 20px;">
-          <h3 style="font-size: 18px; font-weight: 700; color: #666; margin: 0 0 16px 0;">Level 1 (Free)</h3>
+          <h3 style="font-size: 18px; font-weight: 700; color: #666; margin: 0 0 16px 0;">${upgradeContent.currentTitle}</h3>
           <ul style="list-style: none; padding: 0; margin: 0;">
-            <li style="margin-bottom: 8px; font-size: 14px; color: #999;">• 5 basic questions</li>
-            <li style="margin-bottom: 8px; font-size: 14px; color: #999;">• General overview</li>
-            <li style="margin-bottom: 8px; font-size: 14px; color: #999;">• Basic recommendations</li>
-            <li style="margin-bottom: 8px; font-size: 14px; color: #999;">• Simple score display</li>
+            ${upgradeContent.currentFeatures.map(feature => 
+              `<li style="margin-bottom: 8px; font-size: 14px; color: #999;">• ${feature}</li>`
+            ).join('')}
           </ul>
         </div>
       </div>
@@ -72,25 +119,22 @@ export const generateUpgradePage = (): string => {
       <h3 style="font-size: 24px; font-weight: 700; color: #2B2B2B; margin: 0 0 24px 0; position: relative; z-index: 1;">What to Expect</h3>
 
       <div style="position: relative; z-index: 1;">
-      ${['15-20 Minutes to Complete', '9 Comprehensive Questions', 'Personalized Recommendations', 'Detailed Score Breakdown'].map((item, index) => `
+      ${upgradeContent.expectations.map((item, index) => `
         <div style="display: flex; align-items: center; gap: 16px; margin-bottom: 20px;">
           <div style="width: 48px; height: 48px; background: #0C677A; border-radius: 50%; display: flex; align-items: center; justify-content: center; flex-shrink: 0;">
             <span style="color: white; font-size: 16px; font-weight: 700;">${index + 1}</span>
           </div>
           <div>
-            <h4 style="font-size: 16px; font-weight: 700; color: #2B2B2B; margin: 0 0 4px 0;">${item}</h4>
+            <h4 style="font-size: 16px; font-weight: 700; color: #2B2B2B; margin: 0 0 4px 0;">${item.title}</h4>
             <p style="font-size: 13px; color: #666; margin: 0;">
-              ${index === 0 ? 'Still quick enough to fit in your schedule' : 
-                index === 1 ? 'Deeper exploration of life satisfaction, relationships, career, and personal growth' :
-                index === 2 ? 'Actionable advice based on your specific results' :
-                'Individual scores for 8+ life categories with visual charts'}
+              ${item.desc}
             </p>
           </div>
         </div>
       `).join('')}
       </div>
 
-      <!-- CTA Button -->
+      <!-- CTA Button (Clickable) -->
       <div style="
         display: flex;
         justify-content: left;
@@ -99,12 +143,13 @@ export const generateUpgradePage = (): string => {
         position: relative;
         z-index: 1;
       ">
-        <div style="
+        <a href="${upgradeContent.buttonUrl}" style="
           background: #FF4F00;
           color: #FFFFFF;
           border-radius: 12px;
           padding: 10px 32px;
           text-align: center;
+          text-decoration: none;
           border: none;
           cursor: pointer;
           display: inline-flex;
@@ -113,16 +158,31 @@ export const generateUpgradePage = (): string => {
           min-height: 40px;
           font-family: 'Source Sans Pro', -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif;
         ">
-          <span style="font-size: 18px; font-weight: 400;">👑 Unlock Level 2 Test</span>
-        </div>
+          <span style="font-size: 18px; font-weight: 400;">${upgradeContent.buttonText}</span>
+        </a>
       </div>
 
-      <div style="position: absolute; bottom: 30px; right: 40px; background: #F5F5F5; padding: 8px 16px; border-radius: 20px; font-size: 12px; color: #666; z-index: 10; display: flex; align-items: center; justify-content: center;">7 / 10</div>
+      <div style="
+        position: absolute;
+        bottom: 30px;
+        right: 40px;
+        background: #F5F5F5;
+        padding: 6px 16px;
+        border-radius: 59px;
+        border: 1px solid #3A3A3A4D;
+        font-size: 10px;
+        color: #3A3A3AB2;
+        z-index: 1;
+        font-family: 'Source Sans Pro', -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif;
+        font-weight: 400;
+        text-align: center;
+      ">7 / 9</div>
     </div>
   `;
 };
 
-export const generateKeyOutcomesPage = (content: ReportContent): string => {
+export const generateKeyOutcomesPage = (content: ReportContent, _currentLevel: number): string => {
+  const consultantUrl = `${CLIENT_URL}/consultant`;
   return `
     <div style="
       background: #FFFFFF;
@@ -209,7 +269,7 @@ export const generateKeyOutcomesPage = (content: ReportContent): string => {
           <h4 style="font-size: 24px; font-weight: 700; margin: 0 0 8px 0; color: #FFFFFF;">Book a Consultation with a</h4>
           <h4 style="font-size: 24px; font-weight: 700; margin: 0 0 16px 0; color: #FFFFFF;">Certified Life Coach</h4>
           <p style="font-size: 14px; margin: 0 0 24px 0; line-height: 1.5; color: #FFFFFF;">Get one-on-one guidance from a certified life coach to help you understand your results and create a clear path forward.</p>
-          <div style="
+          <a href="${consultantUrl}" style="
             background: #FFFFFF;
             border-radius: 12px;
             padding: 12px 32px;
@@ -218,14 +278,29 @@ export const generateKeyOutcomesPage = (content: ReportContent): string => {
             font-size: 16px;
             border: none;
             cursor: pointer;
+            text-decoration: none;
             font-family: 'Source Sans Pro', -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif;
           ">
             <span style="color: #FF4F00; font-weight: 400; display: inline-block;">📞 Book a Consultation Call</span>
-          </div>
+          </a>
         </div>
       </div>
 
-      <div style="position: absolute; bottom: 30px; right: 40px; background: #F5F5F5; padding: 8px 16px; border-radius: 20px; font-size: 12px; color: #666; z-index: 1; display: flex; align-items: center; justify-content: center;">8 / 10</div>
+      <div style="
+        position: absolute;
+        bottom: 30px;
+        right: 40px;
+        background: #F5F5F5;
+        padding: 6px 16px;
+        border-radius: 59px;
+        border: 1px solid #3A3A3A4D;
+        font-size: 10px;
+        color: #3A3A3AB2;
+        z-index: 1;
+        font-family: 'Source Sans Pro', -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif;
+        font-weight: 400;
+        text-align: center;
+      ">8 / 9</div>
     </div>
   `;
 };
@@ -280,7 +355,7 @@ export const generateThankYouPage = (): string => {
 
      
 
-      <div style="position: absolute; bottom: 60px; left: 40px; font-size: 16px; color: #666;">www.selfscore.net</div>
+      <a href="${CLIENT_URL}" style="position: absolute; bottom: 60px; left: 40px; font-size: 16px; color: #666; text-decoration: none;">www.selfscore.net</a>
     </div>
   `;
 };

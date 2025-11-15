@@ -96,6 +96,7 @@ export const authService = {
             userId: result.data.userId,
             email: result.data.email,
             username: result.data.username,
+            countryCode: result.data.countryCode,
             phoneNumber: result.data.phoneNumber
           },
           purchasedLevels: result.data.purchasedLevels,
@@ -128,6 +129,7 @@ export const authService = {
             userId: result.data.userId,
             email: result.data.email,
             username: result.data.username,
+            countryCode: result.data.countryCode,
             phoneNumber: result.data.phoneNumber
           },
           purchasedLevels: result.data.purchasedLevels,
@@ -175,6 +177,7 @@ export const authService = {
             userId: result.data.userId,
             email: result.data.email,
             username: result.data.username,
+            countryCode: result.data.countryCode,
             phoneNumber: result.data.phoneNumber
           },
           purchasedLevels: result.data.purchasedLevels,

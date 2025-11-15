@@ -35,7 +35,12 @@ export const useLevelAccess = () => {
   };
 
   // NEW: Check if user can ATTEMPT the test (requires previous level completion)
-  const checkTestAttemptAccess = (level: number): TestAttemptAccess => {
+  const checkTestAttemptAccess = (_level: number): TestAttemptAccess => {
+    // 🚧 TEMPORARY: Access control disabled for testing
+    // TODO: Re-enable this logic after testing Level 4 AI Interview
+    return { canAttempt: true, reason: null };
+    
+    /* ORIGINAL LOGIC - COMMENTED OUT FOR TESTING
     // Level 1 can always be attempted
     if (level === 1) {
       return { canAttempt: true, reason: null };
@@ -59,6 +64,7 @@ export const useLevelAccess = () => {
     }
 
     return { canAttempt: true, reason: null };
+    */
   };
 
   // Check if a level can be purchased (doesn't require previous level completion)

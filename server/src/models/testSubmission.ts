@@ -7,6 +7,7 @@ export interface TestSubmission extends Document {
     totalQuestions: number;
     timeSpent?: number; // in seconds
     submittedAt: Date;
+    shareId?: string; // Unique ID for shareable public links
 }
 
 const TestSubmissionSchema: Schema<TestSubmission> = new Schema({
@@ -37,6 +38,12 @@ const TestSubmissionSchema: Schema<TestSubmission> = new Schema({
     submittedAt: {
         type: Date,
         default: Date.now
+    },
+    shareId: {
+        type: String,
+        required: false,
+        unique: true,
+        sparse: true  // Allows multiple null values but unique non-null values
     }
 }, {
     timestamps: true  // Adds createdAt and updatedAt fields
@@ -44,6 +51,7 @@ const TestSubmissionSchema: Schema<TestSubmission> = new Schema({
 
 // Index for faster queries
 TestSubmissionSchema.index({ userId: 1, level: 1, submittedAt: -1 });
+TestSubmissionSchema.index({ shareId: 1 }); // Index for quick lookup by shareId
 
 const TestSubmissionModel = mongoose.model<TestSubmission>("TestSubmission", TestSubmissionSchema);
 

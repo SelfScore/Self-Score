@@ -102,17 +102,17 @@ export const generateReportHTML = (userData: UserReportData): string => {
 
       <!-- Page 6: Recommendations -->
       <div class="report-page">
-        ${generateRecommendationsPage(content)}
+        ${generateRecommendationsPage(content, userData.level)}
       </div>
 
       <!-- Page 7: Upgrade Page -->
       <div class="report-page">
-        ${generateUpgradePage()}
+        ${generateUpgradePage(userData.level)}
       </div>
 
       <!-- Page 8: Key Outcomes -->
       <div class="report-page">
-        ${generateKeyOutcomesPage(content)}
+        ${generateKeyOutcomesPage(content, userData.level)}
       </div>
 
       <!-- Page 9: Thank You -->

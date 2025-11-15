@@ -12,6 +12,7 @@ export interface Question extends Document {
     correctOptionIndex: number;
     questionType?: string; // e.g., "multiple-choice", "true-false"
     scoringType?: ScoringType;
+    order?: number; // Display order for questions (used in Level 2)
 }
 
 const QuestionSchema: Schema<Question> = new Schema({
@@ -54,6 +55,11 @@ const QuestionSchema: Schema<Question> = new Schema({
         type: String, 
         enum: Object.values(ScoringType),
         default: ScoringType.POSITIVE_MULTIPLIER
+    },
+    order: {
+        type: Number,
+        required: false,
+        min: 0
     }
 }, {
     timestamps: true  // Adds createdAt and updatedAt fields

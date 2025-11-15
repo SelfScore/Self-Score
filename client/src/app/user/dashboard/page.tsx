@@ -8,10 +8,11 @@ import {
   Paper,
   Grid,
   Chip,
+  CircularProgress,
 } from "@mui/material";
 import { useAuth } from "../../../hooks/useAuth";
 import { useRouter } from "next/navigation";
-import { useEffect, useState } from "react";
+import { useEffect, useState, useRef } from "react";
 import {
   CheckCircle,
   TrendingUp,
@@ -29,17 +30,28 @@ import ButtonSelfScore from "@/app/components/ui/ButtonSelfScore";
 import OutLineButton from "@/app/components/ui/OutLineButton";
 import RefreshIcon from "@mui/icons-material/Refresh";
 import FileUploadIcon from "@mui/icons-material/FileUpload";
+import DownloadIcon from "@mui/icons-material/Download";
 import DownloadReportButton from "@/app/components/ui/DownloadReportButton";
 import ReceiptIcon from "@mui/icons-material/Receipt";
 import PaymentIcon from "@mui/icons-material/Payment";
+import { level4ReviewService } from "@/services/level4ReviewService";
+import { generatePDFFromHTML } from "@/app/user/report/utils/pdfGenerator";
+import {
+  generateLevel4ReportHTML,
+  generateLevel4ReportFilename,
+} from "@/app/user/report/level4";
+import { Level4ReportData } from "@/app/user/report/level4/types";
+import ShareModal from "@/app/components/ui/ShareModal";
 
 interface TestHistoryItem {
   _id: string;
   level: number;
-  score: number;
-  date: string;
+  score: number | null; // null for pending Level 4 reviews
+  date: string; // Formatted date for display
+  rawDate: string; // Raw ISO date for report generation
   timeSpent?: string;
   attemptNumber?: number;
+  status?: string; // For Level 4: PENDING_REVIEW or REVIEWED
 }
 
 export default function UserDashboard() {
@@ -51,6 +63,15 @@ export default function UserDashboard() {
     PaymentHistory[]
   >([]);
   const [loadingTransactions, setLoadingTransactions] = useState(true);
+  const [generatingPDF, setGeneratingPDF] = useState<string | null>(null); // Store interviewId being generated
+  const [sharingReport, setSharingReport] = useState<string | null>(null); // Store submissionId being shared
+  const [shareModalOpen, setShareModalOpen] = useState(false);
+  const [shareLink, setShareLink] = useState<string>("");
+  const [shareLevel, setShareLevel] = useState<number>(1);
+
+  // ✅ Add refs to track if data has been fetched
+  const testHistoryFetched = useRef(false);
+  const transactionHistoryFetched = useRef(false);
 
   useEffect(() => {
     if (!isAuthenticated) {
@@ -64,6 +85,14 @@ export default function UserDashboard() {
         setLoading(false);
         return;
       }
+
+      // ✅ Prevent duplicate fetches
+      if (testHistoryFetched.current) {
+        return;
+      }
+
+      testHistoryFetched.current = true;
+      console.log("📊 Fetching test history...");
 
       try {
         const response = await questionsApi.getUserTestHistory(user.userId);
@@ -101,27 +130,35 @@ export default function UserDashboard() {
           // Now transform the original data (sorted by most recent first)
           const history: TestHistoryItem[] = response.data.map(
             (item: any, index: number) => {
+              // Use date or submittedAt as fallback
+              const rawDateValue = item.date || item.submittedAt;
               return {
                 _id: item._id || `${user.userId}-level-${item.level}-${index}`,
                 level: item.level,
                 score: item.score,
-                date: new Date(item.date).toLocaleDateString(),
+                date: rawDateValue
+                  ? new Date(rawDateValue).toLocaleDateString()
+                  : "N/A",
+                rawDate: rawDateValue || new Date().toISOString(), // Keep raw ISO date for report generation
                 timeSpent: item.timeSpent
                   ? `${Math.floor(item.timeSpent / 60)}m ${
                       item.timeSpent % 60
                     }s`
                   : "N/A",
                 attemptNumber: attemptMap[item._id],
+                status: item.status, // ✅ Include status for Level 4 pending/reviewed check
               };
             }
           );
           setTestHistory(history);
+          console.log("📊 Test history loaded:", history);
         }
       } catch (error) {
         console.error("Error fetching test history:", error);
         // Fallback to building from progress data if API fails
         if (progress?.testScores) {
           const history: TestHistoryItem[] = [];
+          const now = new Date();
           Object.entries(progress.testScores).forEach(([key, score]) => {
             if (score !== undefined) {
               const level = parseInt(key.replace("level", ""));
@@ -129,7 +166,8 @@ export default function UserDashboard() {
                 _id: `${user.userId}-level-${level}`,
                 level: level,
                 score: score,
-                date: new Date().toLocaleDateString(),
+                date: now.toLocaleDateString(),
+                rawDate: now.toISOString(),
                 timeSpent: "N/A",
               });
             }
@@ -146,8 +184,11 @@ export default function UserDashboard() {
       fetchTestHistory();
     } else {
       setLoading(false);
+      testHistoryFetched.current = true;
     }
-  }, [isAuthenticated, user, progress]);
+    // ✅ Remove 'progress' from dependencies - it causes unnecessary re-fetches
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [isAuthenticated, user?.userId]);
 
   useEffect(() => {
     const fetchTransactionHistory = async () => {
@@ -155,6 +196,14 @@ export default function UserDashboard() {
         setLoadingTransactions(false);
         return;
       }
+
+      // ✅ Prevent duplicate fetches
+      if (transactionHistoryFetched.current) {
+        return;
+      }
+
+      transactionHistoryFetched.current = true;
+      console.log("💳 Fetching transaction history...");
 
       try {
         const response = await paymentService.getPaymentHistory();
@@ -176,8 +225,109 @@ export default function UserDashboard() {
       fetchTransactionHistory();
     } else {
       setLoadingTransactions(false);
+      transactionHistoryFetched.current = true;
     }
-  }, [isAuthenticated, user]);
+    // ✅ Use user.userId instead of user object to prevent re-fetches on user object changes
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [isAuthenticated, user?.userId]);
+
+  // Handler for sharing a test report
+  const handleShareReport = async (submissionId: string, level: number) => {
+    if (!submissionId) {
+      alert("Unable to generate share link. Please try again later.");
+      return;
+    }
+
+    try {
+      setSharingReport(submissionId);
+
+      // Generate share link
+      const response = await questionsApi.generateShareLink(submissionId);
+
+      if (response.success && response.data?.shareLink) {
+        // Open share modal with the generated link
+        setShareLink(response.data.shareLink);
+        setShareLevel(level);
+        setShareModalOpen(true);
+      } else {
+        alert("Failed to generate share link. Please try again.");
+      }
+    } catch (error) {
+      console.error("Error generating share link:", error);
+      alert("Failed to generate share link. Please try again.");
+    } finally {
+      setSharingReport(null);
+    }
+  };
+
+  // Handler for downloading Level 4 PDF report
+  const handleDownloadLevel4PDF = async (interviewId: string) => {
+    if (!user) return;
+
+    try {
+      setGeneratingPDF(interviewId);
+
+      // Fetch the Level 4 review data
+      const reviewResponse = await level4ReviewService.getUserReview(
+        interviewId
+      );
+
+      if (!reviewResponse.success || !reviewResponse.data) {
+        alert("Failed to fetch review data. Please try again.");
+        return;
+      }
+
+      const adminReview = reviewResponse.data;
+
+      // Prepare report data
+      // Format phone number with country code
+      const formattedPhone =
+        user.countryCode && user.phoneNumber
+          ? `+${user.countryCode}${user.phoneNumber}`
+          : user.phoneNumber || "N/A";
+
+      const reportData: Level4ReportData = {
+        username: user.username,
+        email: user.email,
+        phoneNumber: formattedPhone,
+        reportDate: new Date(
+          adminReview.submittedAt || adminReview.createdAt
+        ).toLocaleDateString("en-US", {
+          year: "numeric",
+          month: "long",
+          day: "numeric",
+        }),
+        attemptNumber: adminReview.attemptNumber,
+        totalScore: adminReview.totalScore,
+        interviewMode: adminReview.questionReviews.every(
+          (qr) => qr.answerMode === "TEXT"
+        )
+          ? "TEXT"
+          : adminReview.questionReviews.every((qr) => qr.answerMode === "VOICE")
+          ? "VOICE"
+          : "MIXED",
+        questionReviews: adminReview.questionReviews.map((qr) => ({
+          questionOrder: adminReview.questionReviews.indexOf(qr) + 1,
+          questionText: qr.questionText,
+          userAnswer: qr.userAnswer,
+          answerMode: qr.answerMode,
+          score: qr.score,
+          expertRemark: qr.remark,
+        })),
+      };
+
+      // Generate HTML and PDF
+      const htmlContent = generateLevel4ReportHTML(reportData);
+      const filename = generateLevel4ReportFilename(reportData);
+
+      await generatePDFFromHTML(htmlContent, filename);
+    } catch (error) {
+      console.error("Error generating Level 4 PDF:", error);
+      alert("Failed to generate PDF report. Please try again.");
+    } finally {
+      setGeneratingPDF(null);
+    }
+  };
 
   if (!isAuthenticated || !user) {
     return null; // Will redirect via useEffect
@@ -206,6 +356,7 @@ export default function UserDashboard() {
     ] ||
     0;
   const lastTestDate = lastTest?.date || new Date().toLocaleDateString();
+  const lastTestRawDate = lastTest?.rawDate || new Date().toISOString();
 
   // Calculate score percentage
   const scorePercentage = Math.round((lastTestScore / 900) * 100);
@@ -444,8 +595,11 @@ export default function UserDashboard() {
                     userData={{
                       username: user.username,
                       email: user.email,
-                      phoneNumber: user.phoneNumber || "",
-                      reportDate: lastTestDate,
+                      phoneNumber:
+                        user.countryCode && user.phoneNumber
+                          ? `+${user.countryCode}${user.phoneNumber}`
+                          : user.phoneNumber || "",
+                      reportDate: lastTestRawDate,
                       level: lastCompletedLevel,
                       score: lastTestScore,
                       maxScore: 900,
@@ -582,9 +736,11 @@ export default function UserDashboard() {
           ) : (
             <Box sx={{ display: "flex", flexDirection: "column", gap: 2 }}>
               {testHistory.map((test) => {
-                const testScorePercentage = Math.round(
-                  (test.score / 900) * 100
-                );
+                const isPendingReview =
+                  test.level === 4 && test.status === "PENDING_REVIEW";
+                const testScorePercentage = test.score
+                  ? Math.round((test.score / 900) * 100)
+                  : 0;
                 return (
                   <Box
                     key={test._id}
@@ -682,29 +838,60 @@ export default function UserDashboard() {
 
                     <Box sx={{ display: "flex", alignItems: "center", gap: 4 }}>
                       <Box sx={{ minWidth: 200 }}>
-                        <Typography
-                          // variant="h6"
-                          sx={{
-                            color: "#FF4F00",
-                            fontWeight: 400,
-                            mb: 0.5,
-                            fontSize: "20px",
-                            fontFamily: "Source Sans Pro",
-                          }}
-                        >
-                          Score: {test.score}/900 ({testScorePercentage}%)
-                        </Typography>
-                        <Typography
-                          variant="body2"
-                          sx={{
-                            color: "#3B3B3B99",
-                            fontWeight: 400,
-                            fontSize: "14px",
-                            fontFamily: "Source Sans Pro",
-                          }}
-                        >
-                          Time: {test.timeSpent}
-                        </Typography>
+                        {isPendingReview ? (
+                          <>
+                            <Typography
+                              sx={{
+                                color: "#FF9800",
+                                fontWeight: 600,
+                                mb: 0.5,
+                                fontSize: "18px",
+                                fontFamily: "Source Sans Pro",
+                                display: "flex",
+                                alignItems: "center",
+                                gap: 1,
+                              }}
+                            >
+                              ⏳ Under Review
+                            </Typography>
+                            <Typography
+                              variant="body2"
+                              sx={{
+                                color: "#666",
+                                fontWeight: 400,
+                                fontSize: "13px",
+                                fontFamily: "Source Sans Pro",
+                              }}
+                            >
+                              Expert review in progress
+                            </Typography>
+                          </>
+                        ) : (
+                          <>
+                            <Typography
+                              sx={{
+                                color: "#FF4F00",
+                                fontWeight: 400,
+                                mb: 0.5,
+                                fontSize: "20px",
+                                fontFamily: "Source Sans Pro",
+                              }}
+                            >
+                              Score: {test.score}/900 ({testScorePercentage}%)
+                            </Typography>
+                            <Typography
+                              variant="body2"
+                              sx={{
+                                color: "#3B3B3B99",
+                                fontWeight: 400,
+                                fontSize: "14px",
+                                fontFamily: "Source Sans Pro",
+                              }}
+                            >
+                              Time: {test.timeSpent || "N/A"}
+                            </Typography>
+                          </>
+                        )}
                       </Box>
 
                       {/* vertical line  */}
@@ -736,35 +923,135 @@ export default function UserDashboard() {
                         />
                       </Box>
 
+                      {/* ✅ Action Buttons or Pending Status */}
                       <Box sx={{ display: "flex", gap: 1 }}>
-                        <DownloadReportButton
-                          userData={{
-                            username: user.username,
-                            email: user.email,
-                            phoneNumber: user.phoneNumber || "",
-                            reportDate: test.date,
-                            level: test.level,
-                            score: test.score,
-                            maxScore: 900,
-                          }}
-                        />
-                        <OutLineButton
-                          startIcon={<FileUploadIcon />}
-                          style={{
-                            background: "transparent",
-                            color: "#FF4F00",
-                            border: "1px solid #FF4F00",
-                            borderRadius: "16px",
-                            padding: "3.5px 14px",
-                            fontWeight: 400,
-                            fontSize: "18px",
-                            cursor: "pointer",
-                            transition: "all 0.2s",
-                          }}
-                          // onClick={handleDashboard}
-                        >
-                          Share
-                        </OutLineButton>
+                        {isPendingReview ? (
+                          // ✅ Show "Report Not Ready" message for pending Level 4 reviews
+                          <Box
+                            sx={{
+                              display: "flex",
+                              alignItems: "center",
+                              gap: 1,
+                              padding: "12px 20px",
+                              borderRadius: "16px",
+                              backgroundColor: "#FFF4E6",
+                              border: "1px solid #FFB84D",
+                            }}
+                          >
+                            <Box
+                              sx={{
+                                fontSize: "20px",
+                              }}
+                            >
+                              🕒
+                            </Box>
+                            <Typography
+                              sx={{
+                                color: "#E65100",
+                                fontSize: "14px",
+                                fontWeight: 500,
+                              }}
+                            >
+                              Awaiting Admin Review
+                            </Typography>
+                          </Box>
+                        ) : (
+                          // ✅ Show Download and Share buttons when report is ready
+                          <>
+                            {test.score !== null &&
+                              (test.level === 4 ? (
+                                <Button
+                                  variant="outlined"
+                                  size="medium"
+                                  startIcon={
+                                    generatingPDF === test._id ? (
+                                      <CircularProgress
+                                        size={20}
+                                        sx={{ color: "white" }}
+                                      />
+                                    ) : (
+                                      <DownloadIcon />
+                                    )
+                                  }
+                                  onClick={() =>
+                                    handleDownloadLevel4PDF(test._id)
+                                  }
+                                  disabled={generatingPDF === test._id}
+                                  sx={{
+                                    background: "#005F73",
+                                    color: "white",
+                                    borderRadius: "16px",
+                                    padding: "12px 12px",
+                                    fontSize: "16px",
+                                    fontWeight: "400",
+                                    height: "40px",
+                                    textTransform: "none",
+                                    "&:hover": {
+                                      background: "#004A5C",
+                                    },
+                                    "&:disabled": {
+                                      background: "#CCCCCC",
+                                      color: "#666666",
+                                    },
+                                  }}
+                                >
+                                  {generatingPDF === test._id
+                                    ? "Generating..."
+                                    : "Download Report"}
+                                </Button>
+                              ) : (
+                                <DownloadReportButton
+                                  userData={{
+                                    username: user.username,
+                                    email: user.email,
+                                    phoneNumber:
+                                      user.countryCode && user.phoneNumber
+                                        ? `+${user.countryCode}${user.phoneNumber}`
+                                        : user.phoneNumber || "",
+                                    reportDate: test.rawDate,
+                                    level: test.level,
+                                    score: test.score,
+                                    maxScore: 900,
+                                  }}
+                                />
+                              ))}
+                            <OutLineButton
+                              startIcon={
+                                sharingReport === test._id ? (
+                                  <CircularProgress
+                                    size={16}
+                                    sx={{ color: "#FF4F00" }}
+                                  />
+                                ) : (
+                                  <FileUploadIcon />
+                                )
+                              }
+                              style={{
+                                background: "transparent",
+                                color: "#FF4F00",
+                                border: "1px solid #FF4F00",
+                                borderRadius: "16px",
+                                padding: "3.5px 14px",
+                                fontWeight: 400,
+                                fontSize: "18px",
+                                cursor:
+                                  sharingReport === test._id
+                                    ? "not-allowed"
+                                    : "pointer",
+                                transition: "all 0.2s",
+                                opacity: sharingReport === test._id ? 0.6 : 1,
+                              }}
+                              onClick={() =>
+                                handleShareReport(test._id, test.level)
+                              }
+                              disabled={sharingReport === test._id}
+                            >
+                              {sharingReport === test._id
+                                ? "Sharing..."
+                                : "Share"}
+                            </OutLineButton>
+                          </>
+                        )}
                       </Box>
                     </Box>
                   </Box>
@@ -995,6 +1282,14 @@ export default function UserDashboard() {
           </Box>
         )}
       </Box>
+
+      {/* Share Modal */}
+      <ShareModal
+        open={shareModalOpen}
+        onClose={() => setShareModalOpen(false)}
+        shareLink={shareLink}
+        level={shareLevel}
+      />
     </Container>
   );
 }

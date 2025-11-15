@@ -40,6 +40,7 @@ const TestCard: React.FC<TestCardProps> = ({
   };
 
   // Calculate percentage for circular progress
+  // Score range is 0-900
   const percentage = score ? (score / maxScore) * 100 : 0;
 
   return (
@@ -175,8 +176,8 @@ const TestCard: React.FC<TestCardProps> = ({
                 fill="none"
                 stroke="#10B981"
                 strokeWidth="10"
-                strokeDasharray={`${(percentage / 100) * 314} 314`}
-                strokeDashoffset="78.5"
+                strokeDasharray={`${(percentage / 100) * 314.16} 314.16`}
+                strokeDashoffset="0"
                 transform="rotate(-90 60 60)"
                 strokeLinecap="round"
               />
@@ -256,7 +257,6 @@ const TestCard: React.FC<TestCardProps> = ({
             fullWidth
             fontSize={"14px"}
             onClick={onStartTest}
-            
           />
         )}
 
@@ -266,7 +266,6 @@ const TestCard: React.FC<TestCardProps> = ({
             fullWidth
             fontSize={"14px"}
             onClick={onUnlock}
-            
           />
         )}
 

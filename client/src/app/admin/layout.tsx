@@ -3,7 +3,7 @@
 import { Box, CircularProgress } from "@mui/material";
 import AdminSidebar from "../components/admin/AdminSidebar";
 import { useRouter, usePathname } from "next/navigation";
-import { useEffect, useState } from "react";
+import { useEffect, useState, useRef } from "react";
 import { getCurrentAdmin } from "@/services/adminAuthService";
 
 export default function AdminLayout({
@@ -15,6 +15,7 @@ export default function AdminLayout({
   const pathname = usePathname();
   const [isAdminAuthenticated, setIsAdminAuthenticated] = useState(false);
   const [loading, setLoading] = useState(true);
+  const checkedAuthRef = useRef(false); // ✅ Track if auth was already checked
 
   // Skip auth check for login page (handle both with and without trailing slash)
   const isLoginPage =
@@ -26,11 +27,20 @@ export default function AdminLayout({
       return;
     }
 
+    // ✅ Only check auth once, not on every pathname change
+    if (checkedAuthRef.current) {
+      return;
+    }
+
     const checkAdminAuth = async () => {
       try {
+        console.log("🔄 Checking admin authentication...");
         await getCurrentAdmin();
         setIsAdminAuthenticated(true);
+        checkedAuthRef.current = true; // ✅ Mark as checked
+        console.log("✅ Admin authenticated");
       } catch (_error) {
+        console.log("⚠️ Admin not authenticated, redirecting to login");
         router.push("/admin/login");
       } finally {
         setLoading(false);
@@ -38,7 +48,8 @@ export default function AdminLayout({
     };
 
     checkAdminAuth();
-  }, [router, isLoginPage, pathname]);
+    // ✅ Only depend on router and isLoginPage (won't change during session)
+  }, [router, isLoginPage]);
 
   // Show login page without auth check
   if (isLoginPage) {

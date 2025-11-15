@@ -59,7 +59,7 @@ export default function RefundPolicy() {
                 fontFamily: "Source Sans Pro",
               }}
             >
-              Last updated: September 30, 2025
+              Last updated: November 13, 2025
             </Typography>
           </Box>
 
@@ -278,7 +278,7 @@ export default function RefundPolicy() {
             <List sx={{ pl: 2 }}>
               <ListItem sx={{ py: 0.5 }}>
                 <ListItemText
-                  primary="1. Contact our support team at refunds@selfscore.com"
+                  primary="1. Contact our support team at info@selfscore.net"
                   sx={{
                     "& .MuiListItemText-primary": {
                       fontFamily: "Source Sans Pro",
@@ -566,12 +566,11 @@ export default function RefundPolicy() {
                 fontSize: { xs: "1rem", md: "1.1rem" },
               }}
             >
-              Email: refunds@selfscore.com
+              Email: info@selfscore.net
               <br />
-              Phone: +1 (234) 567-8900
+              Phone: +1 (561) 430-0610
               <br />
-              Address: 123 Personal Growth Ave, Suite 456, Development City, DC
-              12345
+              Address: Charlottesville, Virginia, United States
               <br />
               Business Hours: Monday - Friday, 9:00 AM - 6:00 PM EST
             </Typography>
