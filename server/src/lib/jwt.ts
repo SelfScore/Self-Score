@@ -98,7 +98,7 @@ export const getCookieOptions = () => {
     return {
         httpOnly: true,
         secure: true, // yes, even in dev (localhost is treated as secure)
-        sameSite: isProduction ? 'lax' : 'none', 
+        sameSite: (isProduction ? 'lax' : 'none') as 'lax' | 'none', 
         maxAge: 7 * 24 * 60 * 60 * 1000,
         path: '/'
     };
