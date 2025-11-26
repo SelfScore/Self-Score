@@ -81,9 +81,15 @@ export const adminService = {
   },
 
   // Get users list with pagination and search
-  getUsers: async (page: number = 1, limit: number = 10, search: string = ''): Promise<UsersResponse> => {
+  getUsers: async (
+    page: number = 1, 
+    limit: number = 10, 
+    search: string = '', 
+    sortBy: 'latest' | 'oldest' = 'latest',
+    filter: 'all' | 'purchased' | 'unpurchased' = 'all'
+  ): Promise<UsersResponse> => {
     try {
-      const response = await api.get(`/api/admin/users?page=${page}&limit=${limit}&search=${search}`);
+      const response = await api.get(`/api/admin/users?page=${page}&limit=${limit}&search=${search}&sortBy=${sortBy}&filter=${filter}`);
       return response.data;
     } catch (error) {
       console.error('Failed to fetch users:', error);
@@ -119,6 +125,72 @@ export const adminService = {
       await api.delete(`/api/admin/users/${userId}`);
     } catch (error) {
       console.error('Failed to delete user:', error);
+      throw error;
+    }
+  },
+
+  // Get badge counts for sidebar
+  getCounts: async (): Promise<{ pendingReviews: number; unreadMessages: number; pendingConsultants: number }> => {
+    try {
+      const response = await api.get('/api/admin/counts');
+      return response.data;
+    } catch (error) {
+      console.error('Failed to fetch counts:', error);
+      throw error;
+    }
+  },
+
+  // Consultant Management
+
+  // Get consultants list with filters
+  getConsultants: async (
+    status: 'all' | 'pending' | 'approved' | 'rejected' = 'all',
+    search: string = '',
+    sortBy: string = 'createdAt',
+    order: 'asc' | 'desc' = 'desc'
+  ): Promise<any> => {
+    try {
+      const response = await api.get(
+        `/api/admin/consultants?status=${status}&search=${search}&sortBy=${sortBy}&order=${order}`
+      );
+      return response.data;
+    } catch (error) {
+      console.error('Failed to fetch consultants:', error);
+      throw error;
+    }
+  },
+
+  // Get consultant by ID
+  getConsultantById: async (consultantId: string): Promise<any> => {
+    try {
+      const response = await api.get(`/api/admin/consultants/${consultantId}`);
+      return response.data;
+    } catch (error) {
+      console.error('Failed to fetch consultant:', error);
+      throw error;
+    }
+  },
+
+  // Approve consultant
+  approveConsultant: async (consultantId: string): Promise<any> => {
+    try {
+      const response = await api.patch(`/api/admin/consultants/${consultantId}/approve`);
+      return response.data;
+    } catch (error) {
+      console.error('Failed to approve consultant:', error);
+      throw error;
+    }
+  },
+
+  // Reject consultant
+  rejectConsultant: async (consultantId: string, rejectionReason: string): Promise<any> => {
+    try {
+      const response = await api.patch(`/api/admin/consultants/${consultantId}/reject`, {
+        rejectionReason,
+      });
+      return response.data;
+    } catch (error) {
+      console.error('Failed to reject consultant:', error);
       throw error;
     }
   },

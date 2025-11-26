@@ -14,20 +14,18 @@ import {
   IconButton,
   Chip,
 } from "@mui/material";
-import { useState, useEffect } from "react";
+import { useState } from "react";
 import { useRouter } from "next/navigation";
-import { useAuth } from "../../../hooks/useAuth";
 import NextLink from "next/link";
 import Image from "next/image";
 import EmailIcon from "@mui/icons-material/Email";
 import LockIcon from "@mui/icons-material/Lock";
 import Visibility from "@mui/icons-material/Visibility";
 import VisibilityOff from "@mui/icons-material/VisibilityOff";
+import { consultantAuthService } from "@/services/consultantAuthService";
 
-export default function SignInPage() {
+export default function ConsultantLoginPage() {
   const router = useRouter();
-  const { login, isLoading, error, clearError, isAuthenticated } = useAuth();
-
   const [formData, setFormData] = useState({
     email: "",
     password: "",
@@ -35,13 +33,7 @@ export default function SignInPage() {
   const [localError, setLocalError] = useState("");
   const [rememberMe, setRememberMe] = useState(false);
   const [showPassword, setShowPassword] = useState(false);
-
-  // Redirect if already authenticated
-  useEffect(() => {
-    if (isAuthenticated) {
-      router.push("/user/dashboard");
-    }
-  }, [isAuthenticated, router]);
+  const [isLoading, setIsLoading] = useState(false);
 
   const handleInputChange = (field: string, value: string) => {
     setFormData((prev) => ({
@@ -49,7 +41,6 @@ export default function SignInPage() {
       [field]: value,
     }));
     setLocalError("");
-    clearError();
   };
 
   const validateForm = () => {
@@ -73,37 +64,25 @@ export default function SignInPage() {
 
     if (!validateForm()) return;
 
+    setIsLoading(true);
     try {
-      const response = await login({
+      const response = await consultantAuthService.login({
         email: formData.email.trim().toLowerCase(),
         password: formData.password,
       });
 
       if (response.success) {
-        // Redirect to dashboard or previous page
-        const redirectTo =
-          new URLSearchParams(window.location.search).get("redirect") ||
-          "/user/dashboard";
-        router.push(redirectTo);
+        router.push("/consultant/dashboard");
       } else {
         setLocalError(response.message || "Login failed");
       }
     } catch (err: any) {
-      if (
-        err.response?.data?.message ===
-        "Please verify your email before logging in"
-      ) {
-        setLocalError("Please verify your email first");
-        setTimeout(() => {
-          router.push(
-            `/auth/verify-email?email=${encodeURIComponent(formData.email)}`
-          );
-        }, 2000);
-      } else {
-        setLocalError(
-          err.response?.data?.message || "Login failed. Please try again."
-        );
-      }
+      console.error("Login error:", err);
+      setLocalError(
+        err.response?.data?.message || "Login failed. Please try again."
+      );
+    } finally {
+      setIsLoading(false);
     }
   };
 
@@ -191,15 +170,16 @@ export default function SignInPage() {
                 fontFamily: "Source Sans Pro",
               }}
             >
-              Sign in to continue your self-discovery journey
+              Sign in to access your consultant portal
             </Typography>
           </Box>
 
-          {(error || localError) && (
+          {localError && (
             <Alert severity="error" sx={{ mb: 3 }}>
-              {error || localError}
+              {localError}
             </Alert>
           )}
+
           {/* Login Type Chips */}
           <Box
             sx={{
@@ -212,25 +192,6 @@ export default function SignInPage() {
             <Chip
               label="User"
               onClick={() => router.push("/auth/signin")}
-              sx={{
-                backgroundColor: "#FF5722",
-                color: "#fff",
-                fontFamily: "Source Sans Pro",
-                fontSize: "16px",
-                fontWeight: 600,
-                px: 3,
-                py: 0.5,
-                height: "auto",
-                borderRadius: "24px",
-                cursor: "pointer",
-                "&:hover": {
-                  backgroundColor: "#E64A19",
-                },
-              }}
-            />
-            <Chip
-              label="Consultant"
-              onClick={() => router.push("/consultant/login")}
               sx={{
                 backgroundColor: "transparent",
                 color: "#666",
@@ -245,6 +206,25 @@ export default function SignInPage() {
                 cursor: "pointer",
                 "&:hover": {
                   backgroundColor: "#F5F5F5",
+                },
+              }}
+            />
+            <Chip
+              label="Consultant"
+              onClick={() => router.push("/consultant/login")}
+              sx={{
+                backgroundColor: "#FF5722",
+                color: "#fff",
+                fontFamily: "Source Sans Pro",
+                fontSize: "16px",
+                fontWeight: 600,
+                px: 3,
+                py: 0.5,
+                height: "auto",
+                borderRadius: "24px",
+                cursor: "pointer",
+                "&:hover": {
+                  backgroundColor: "#E64A19",
                 },
               }}
             />
@@ -401,7 +381,7 @@ export default function SignInPage() {
               />
               <Link
                 component={NextLink}
-                href="/auth/forgot-password"
+                href="/consultant/forgot-password"
                 sx={{
                   color: "#0066cc",
                   textDecoration: "none",
@@ -444,7 +424,7 @@ export default function SignInPage() {
                 Don't have an account?{" "}
                 <Link
                   component={NextLink}
-                  href="/auth/signup"
+                  href="/consultant/register"
                   sx={{
                     color: "#0066cc",
                     fontWeight: "600",
@@ -452,7 +432,7 @@ export default function SignInPage() {
                     "&:hover": { textDecoration: "underline" },
                   }}
                 >
-                  Sign Up
+                  Register as a Consultant
                 </Link>
               </Typography>
             </Box>

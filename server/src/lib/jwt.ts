@@ -35,7 +35,7 @@ export interface TokenPayload {
     };
 }
 
-// Generate JWT token
+// Generate JWT token for users
 export const generateToken = (userData: UserResponse): string => {
     const payload: TokenPayload = {
         userId: userData.userId,
@@ -47,6 +47,15 @@ export const generateToken = (userData: UserResponse): string => {
         progress: userData.progress
     };
 
+    return jwt.sign(payload, JWT_SECRET, {
+        expiresIn: JWT_EXPIRES_IN,
+        issuer: 'lifescore-app',
+        audience: 'lifescore-users'
+    } as jwt.SignOptions);
+};
+
+// Generate JWT token for consultants or admins (generic)
+export const generateGenericToken = (payload: any): string => {
     return jwt.sign(payload, JWT_SECRET, {
         expiresIn: JWT_EXPIRES_IN,
         issuer: 'lifescore-app',
@@ -97,8 +106,8 @@ export const getCookieOptions = () => {
 
     return {
         httpOnly: true,
-        secure: true, // yes, even in dev (localhost is treated as secure)
-        sameSite: (isProduction ? 'lax' : 'none') as 'lax' | 'none', 
+        secure: isProduction, // Only secure in production
+        sameSite: 'lax' as 'lax', // 'lax' works better for same-site requests
         maxAge: 7 * 24 * 60 * 60 * 1000,
         path: '/'
     };

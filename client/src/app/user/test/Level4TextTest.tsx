@@ -1,6 +1,6 @@
 "use client";
 
-import { useState, useEffect } from "react";
+import { useState, useEffect, useRef } from "react";
 import {
   Box,
   Typography,
@@ -8,19 +8,25 @@ import {
   LinearProgress,
   Alert,
   CircularProgress,
+  IconButton,
+  Dialog,
+  DialogContent,
+  DialogTitle,
 } from "@mui/material";
 import { useRouter, useSearchParams } from "next/navigation";
 import ButtonSelfScore from "@/app/components/ui/ButtonSelfScore";
 import OutLineButton from "@/app/components/ui/OutLineButton";
 import ArrowBackIosIcon from "@mui/icons-material/ArrowBackIos";
 import ArrowForwardIosIcon from "@mui/icons-material/ArrowForwardIos";
+import MicIcon from "@mui/icons-material/Mic";
+import StopCircleIcon from "@mui/icons-material/StopCircle";
 import {
   aiInterviewService,
   AIInterviewQuestion,
 } from "@/services/aiInterviewService";
 
 interface Level4TextTestProps {
-  onBack: () => void;
+  onBack?: () => void;
   onSwitchMode?: () => void;
 }
 
@@ -38,6 +44,12 @@ export default function Level4TextTest({
   const [submitting, setSubmitting] = useState(false);
   const [error, setError] = useState("");
   const [savingAnswer, setSavingAnswer] = useState(false);
+
+  // Speech recognition state
+  const [isRecording, setIsRecording] = useState(false);
+  const [showRecordingModal, setShowRecordingModal] = useState(false);
+  const [recordingError, setRecordingError] = useState("");
+  const recognitionRef = useRef<any>(null);
 
   const STORAGE_KEY = "level4_text_test_answers";
 
@@ -222,6 +234,93 @@ export default function Level4TextTest({
     } finally {
       setSubmitting(false);
     }
+  };
+
+  // Speech recognition handlers
+  const startRecording = () => {
+    setRecordingError("");
+    setShowRecordingModal(true);
+
+    // Check if browser supports Web Speech API
+    const SpeechRecognition =
+      (window as any).SpeechRecognition ||
+      (window as any).webkitSpeechRecognition;
+
+    if (!SpeechRecognition) {
+      setRecordingError(
+        "Speech recognition is not supported in your browser. Please use Chrome, Edge, or Safari."
+      );
+      return;
+    }
+
+    try {
+      const recognition = new SpeechRecognition();
+      recognition.continuous = true;
+      recognition.interimResults = true;
+      recognition.lang = "en-US";
+
+      let finalTranscript = "";
+
+      recognition.onresult = (event: any) => {
+        let _interimTranscript = "";
+
+        for (let i = event.resultIndex; i < event.results.length; i++) {
+          const transcript = event.results[i][0].transcript;
+          if (event.results[i].isFinal) {
+            finalTranscript += transcript + " ";
+          } else {
+            _interimTranscript += transcript;
+          }
+        }
+
+        // Update the answer with the transcribed text
+        if (finalTranscript) {
+          const currentAnswer =
+            answers[currentQuestion?.questionId || ""] || "";
+          const newAnswer = currentAnswer
+            ? `${currentAnswer} ${finalTranscript}`.trim()
+            : finalTranscript.trim();
+          handleAnswerChange(newAnswer);
+          finalTranscript = "";
+        }
+      };
+
+      recognition.onerror = (event: any) => {
+        console.error("Speech recognition error:", event.error);
+        if (event.error === "no-speech") {
+          setRecordingError(
+            "No speech detected. Please speak clearly and try again."
+          );
+        } else if (event.error === "not-allowed") {
+          setRecordingError(
+            "Microphone permission denied. Please allow microphone access."
+          );
+        } else {
+          setRecordingError("Speech recognition error. Please try again.");
+        }
+        setIsRecording(false);
+      };
+
+      recognition.onend = () => {
+        setIsRecording(false);
+      };
+
+      recognition.start();
+      setIsRecording(true);
+      recognitionRef.current = recognition;
+    } catch (err) {
+      console.error("Error starting speech recognition:", err);
+      setRecordingError("Failed to start recording. Please try again.");
+    }
+  };
+
+  const stopRecording = () => {
+    if (recognitionRef.current) {
+      recognitionRef.current.stop();
+      recognitionRef.current = null;
+    }
+    setIsRecording(false);
+    setShowRecordingModal(false);
   };
 
   if (loading) {
@@ -453,34 +552,52 @@ export default function Level4TextTest({
           {currentQuestion?.questionText}
         </Typography>
 
-        {/* Multiline Text Input */}
-        <TextField
-          multiline
-          rows={8}
-          fullWidth
-          value={currentAnswer}
-          onChange={(e) => handleAnswerChange(e.target.value)}
-          placeholder="Type your answer here... Be as detailed and thoughtful as possible."
-          sx={{
-            "& .MuiOutlinedInput-root": {
-              backgroundColor: "#FFFFFF",
-              borderRadius: "12px",
-              fontSize: "16px",
-              fontFamily: "Source Sans Pro",
-              "& fieldset": {
-                borderColor: "#E0E0E0",
-                borderWidth: "2px",
+        {/* Multiline Text Input with Voice-to-Text */}
+        <Box sx={{ position: "relative" }}>
+          <TextField
+            multiline
+            rows={8}
+            fullWidth
+            value={currentAnswer}
+            onChange={(e) => handleAnswerChange(e.target.value)}
+            placeholder="Type your answer here... Be as detailed and thoughtful as possible."
+            sx={{
+              "& .MuiOutlinedInput-root": {
+                backgroundColor: "#FFFFFF",
+                borderRadius: "12px",
+                fontSize: "16px",
+                fontFamily: "Source Sans Pro",
+                "& fieldset": {
+                  borderColor: "#E0E0E0",
+                  borderWidth: "2px",
+                },
+                "&:hover fieldset": {
+                  borderColor: "#005F73",
+                },
+                "&.Mui-focused fieldset": {
+                  borderColor: "#005F73",
+                  borderWidth: "2px",
+                },
               },
-              "&:hover fieldset": {
-                borderColor: "#005F73",
+            }}
+          />
+          {/* Microphone Button - Top Right */}
+          <IconButton
+            onClick={startRecording}
+            sx={{
+              position: "absolute",
+              top: 8,
+              right: 8,
+              color: "#005F73",
+              backgroundColor: "#E8F4F5",
+              "&:hover": {
+                backgroundColor: "#D0EBF0",
               },
-              "&.Mui-focused fieldset": {
-                borderColor: "#005F73",
-                borderWidth: "2px",
-              },
-            },
-          }}
-        />
+            }}
+          >
+            <MicIcon />
+          </IconButton>
+        </Box>
 
         <Box
           sx={{
@@ -583,6 +700,126 @@ export default function Level4TextTest({
           />
         )}
       </Box>
+
+      {/* Voice Recording Modal */}
+      <Dialog
+        open={showRecordingModal}
+        onClose={stopRecording}
+        maxWidth="sm"
+        fullWidth
+      >
+        <DialogTitle
+          sx={{
+            fontWeight: 600,
+            color: "#005F73",
+            textAlign: "center",
+            pb: 1,
+          }}
+        >
+          Recording Your Answer
+        </DialogTitle>
+        <DialogContent>
+          <Box
+            sx={{
+              display: "flex",
+              flexDirection: "column",
+              alignItems: "center",
+              py: 3,
+            }}
+          >
+            {recordingError ? (
+              <Alert severity="error" sx={{ mb: 2, width: "100%" }}>
+                {recordingError}
+              </Alert>
+            ) : (
+              <>
+                <Box
+                  sx={{
+                    width: 80,
+                    height: 80,
+                    borderRadius: "50%",
+                    backgroundColor: isRecording ? "#FFE8E0" : "#E8F4F5",
+                    display: "flex",
+                    alignItems: "center",
+                    justifyContent: "center",
+                    mb: 3,
+                    animation: isRecording ? "pulse 1.5s infinite" : "none",
+                    "@keyframes pulse": {
+                      "0%": {
+                        boxShadow: "0 0 0 0 rgba(255, 79, 0, 0.4)",
+                      },
+                      "70%": {
+                        boxShadow: "0 0 0 20px rgba(255, 79, 0, 0)",
+                      },
+                      "100%": {
+                        boxShadow: "0 0 0 0 rgba(255, 79, 0, 0)",
+                      },
+                    },
+                  }}
+                >
+                  <MicIcon
+                    sx={{
+                      fontSize: 40,
+                      color: isRecording ? "#FF4F00" : "#005F73",
+                    }}
+                  />
+                </Box>
+
+                <Typography
+                  variant="h6"
+                  sx={{
+                    color: "#2B2B2B",
+                    fontWeight: 500,
+                    mb: 1,
+                    textAlign: "center",
+                  }}
+                >
+                  Speak clearly and loud
+                </Typography>
+
+                <Typography
+                  variant="body2"
+                  sx={{
+                    color: "#666",
+                    mb: 3,
+                    textAlign: "center",
+                  }}
+                >
+                  Your speech will be converted to text and added to your answer
+                </Typography>
+
+                <ButtonSelfScore
+                  text="Stop Recording"
+                  startIcon={<StopCircleIcon />}
+                  onClick={stopRecording}
+                  background="#E65100"
+                  padding="12px 32px"
+                  borderRadius="8px"
+                  style={{
+                    width: "100%",
+                    maxWidth: "300px",
+                  }}
+                />
+              </>
+            )}
+
+            {recordingError && (
+              <ButtonSelfScore
+                text="Close"
+                onClick={stopRecording}
+                background="#666"
+                padding="12px 32px"
+                borderRadius="8px"
+                style={{
+                  width: "100%",
+                  maxWidth: "300px",
+                  marginTop: "16px",
+                }}
+              />
+            )}
+          </Box>
+        </DialogContent>
+      </Dialog>
     </Box>
   );
 }

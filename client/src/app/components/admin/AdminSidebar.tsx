@@ -8,14 +8,18 @@ import {
   ListItemIcon,
   ListItemText,
   Typography,
+  Badge,
 } from "@mui/material";
 import { usePathname, useRouter } from "next/navigation";
+import { useState, useEffect } from "react";
 import DashboardIcon from "@mui/icons-material/Dashboard";
 import PeopleIcon from "@mui/icons-material/People";
 import EmailIcon from "@mui/icons-material/Email";
 import AssignmentIcon from "@mui/icons-material/Assignment";
+import SupervisorAccountIcon from "@mui/icons-material/SupervisorAccount";
 import LogoutIcon from "@mui/icons-material/Logout";
 import { logoutAdmin } from "@/services/adminAuthService";
+import { adminService } from "@/services/adminService";
 
 const menuItems = [
   {
@@ -27,6 +31,11 @@ const menuItems = [
     title: "Users",
     icon: <PeopleIcon />,
     path: "/admin/users",
+  },
+  {
+    title: "Consultants",
+    icon: <SupervisorAccountIcon />,
+    path: "/admin/consultants",
   },
   {
     title: "Level 4 Submissions",
@@ -43,6 +52,33 @@ const menuItems = [
 export default function AdminSidebar() {
   const pathname = usePathname();
   const router = useRouter();
+  const [counts, setCounts] = useState({
+    pendingReviews: 0,
+    unreadMessages: 0,
+    pendingConsultants: 0,
+  });
+
+  useEffect(() => {
+    // Fetch counts initially
+    fetchCounts();
+
+    // Refresh counts when navigating to relevant pages
+    if (
+      pathname?.startsWith("/admin/level4-submissions") ||
+      pathname?.startsWith("/admin/messages")
+    ) {
+      fetchCounts();
+    }
+  }, [pathname]); // Fetch on initial mount and when pathname changes
+
+  const fetchCounts = async () => {
+    try {
+      const data = await adminService.getCounts();
+      setCounts(data);
+    } catch (error) {
+      console.error("Failed to fetch counts:", error);
+    }
+  };
 
   const handleLogout = async () => {
     try {
@@ -98,6 +134,16 @@ export default function AdminSidebar() {
           const isActive =
             pathname === item.path || pathname?.startsWith(item.path + "/");
 
+          // Determine badge count for this item
+          let badgeCount = 0;
+          if (item.path === "/admin/level4-submissions") {
+            badgeCount = counts.pendingReviews;
+          } else if (item.path === "/admin/messages") {
+            badgeCount = counts.unreadMessages;
+          } else if (item.path === "/admin/consultants") {
+            badgeCount = counts.pendingConsultants;
+          }
+
           return (
             <ListItem key={item.path} disablePadding sx={{ mb: 1 }}>
               <ListItemButton
@@ -128,6 +174,19 @@ export default function AdminSidebar() {
                     color: isActive ? "#FF4F00" : "#2B2B2B",
                   }}
                 />
+                {badgeCount > 0 && (
+                  <Badge
+                    badgeContent={badgeCount}
+                    sx={{
+                      "& .MuiBadge-badge": {
+                        backgroundColor: "#FF4F00",
+                        color: "#FFF",
+                        fontWeight: 600,
+                        fontSize: "12px",
+                      },
+                    }}
+                  />
+                )}
               </ListItemButton>
             </ListItem>
           );

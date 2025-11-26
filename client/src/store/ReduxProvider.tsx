@@ -13,10 +13,11 @@ function AuthInitializer({ children }: { children: React.ReactNode }) {
   const pathname = usePathname();
   const initializedRef = useRef(false); // ✅ Track if already initialized
   const isAdminRoute = pathname?.startsWith("/admin");
+  const isConsultantRoute = pathname?.startsWith("/consultant");
 
   useEffect(() => {
-    // Skip auth initialization for admin routes
-    if (isAdminRoute) {
+    // Skip auth initialization for admin and consultant routes
+    if (isAdminRoute || isConsultantRoute) {
       return;
     }
 
@@ -40,8 +41,8 @@ function AuthInitializer({ children }: { children: React.ReactNode }) {
     };
 
     initializeAuth();
-    // ✅ Only depend on dispatch and isAdminRoute (won't change during session)
-  }, [dispatch, isAdminRoute]);
+    // ✅ Only depend on dispatch, isAdminRoute, and isConsultantRoute (won't change during session)
+  }, [dispatch, isAdminRoute, isConsultantRoute]);
 
   return <>{children}</>;
 }

@@ -3,7 +3,10 @@ import UserModel from '../models/user';
 import PaymentModel from '../models/payment';
 import TestSubmissionModel from '../models/testSubmission';
 import ContactMessageModel from '../models/contactMessage';
+import AIInterviewModel from '../models/aiInterview';
+import ConsultantModel from '../models/consultant';
 import { ApiResponse } from '../types/api';
+import { sendConsultantApprovalEmail, sendConsultantRejectionEmail } from '../lib/email';
 
 export class AdminController {
     // Get analytics data for dashboard
@@ -127,11 +130,13 @@ export class AdminController {
             const page = parseInt(req.query.page as string) || 1;
             const limit = parseInt(req.query.limit as string) || 10;
             const search = req.query.search as string || '';
+            const sortBy = req.query.sortBy as string || 'latest'; // 'latest' or 'oldest'
+            const filter = req.query.filter as string || 'all'; // 'all', 'purchased', 'unpurchased'
 
             const skip = (page - 1) * limit;
 
             // Build search query
-            const searchQuery = search
+            let searchQuery: any = search
                 ? {
                     $or: [
                         { email: { $regex: search, $options: 'i' } },
@@ -140,13 +145,42 @@ export class AdminController {
                 }
                 : {};
 
+            // Add filter query
+            if (filter === 'purchased') {
+                searchQuery.$or = searchQuery.$or || [];
+                searchQuery.$and = [
+                    searchQuery.$or.length > 0 ? { $or: searchQuery.$or } : {},
+                    {
+                        $or: [
+                            { 'purchasedLevels.level2.purchased': true },
+                            { 'purchasedLevels.level3.purchased': true },
+                            { 'purchasedLevels.level4.purchased': true }
+                        ]
+                    }
+                ];
+                delete searchQuery.$or;
+            } else if (filter === 'unpurchased') {
+                searchQuery.$and = searchQuery.$and || [];
+                const baseQuery = searchQuery.$or ? { $or: searchQuery.$or } : {};
+                searchQuery.$and = [
+                    baseQuery,
+                    { 'purchasedLevels.level2.purchased': { $ne: true } },
+                    { 'purchasedLevels.level3.purchased': { $ne: true } },
+                    { 'purchasedLevels.level4.purchased': { $ne: true } }
+                ];
+                delete searchQuery.$or;
+            }
+
+            // Determine sort order
+            const sortOrder = sortBy === 'oldest' ? 1 : -1;
+
             // Get total count
             const totalUsers = await UserModel.countDocuments(searchQuery);
 
             // Get users with pagination
             const users = await UserModel.find(searchQuery)
                 .select('-password -verifyCode -verifyCodeExpiry -resetPasswordToken -resetPasswordExpiry')
-                .sort({ createdAt: -1 })
+                .sort({ createdAt: sortOrder })
                 .skip(skip)
                 .limit(limit)
                 .lean();
@@ -345,19 +379,37 @@ export class AdminController {
         try {
             const page = parseInt(req.query.page as string) || 1;
             const limit = parseInt(req.query.limit as string) || 10;
-            const status = req.query.status as string; // 'read', 'unread', or undefined for all
+            const status = req.query.status as string; // 'read', 'unread', 'all', or undefined for all
+            const sortBy = req.query.sortBy as string || 'latest'; // 'latest' or 'oldest'
+            const search = req.query.search as string || ''; // search by name or email
 
             const skip = (page - 1) * limit;
 
             // Build query
-            const query = status ? { status } : {};
+            let query: any = {};
+            
+            // Add status filter (if not 'all')
+            if (status && status !== 'all') {
+                query.status = status;
+            }
+
+            // Add search filter
+            if (search) {
+                query.$or = [
+                    { name: { $regex: search, $options: 'i' } },
+                    { email: { $regex: search, $options: 'i' } }
+                ];
+            }
+
+            // Determine sort order
+            const sortOrder = sortBy === 'oldest' ? 1 : -1;
 
             // Get total count
             const totalMessages = await ContactMessageModel.countDocuments(query);
 
             // Get messages with pagination
             const messages = await ContactMessageModel.find(query)
-                .sort({ createdAt: -1 })
+                .sort({ createdAt: sortOrder })
                 .skip(skip)
                 .limit(limit)
                 .lean();
@@ -482,6 +534,278 @@ export class AdminController {
             const response: ApiResponse = {
                 success: false,
                 message: "Failed to update message"
+            };
+            res.status(500).json(response);
+        }
+    }
+
+    // Get badge counts for sidebar
+    static async getCounts(req: Request, res: Response): Promise<void> {
+        try {
+            // Count pending Level 4 reviews
+            const pendingReviews = await AIInterviewModel.countDocuments({
+                level: 4,
+                status: 'PENDING_REVIEW'
+            });
+
+            // Count unread messages
+            const unreadMessages = await ContactMessageModel.countDocuments({
+                status: 'unread'
+            });
+
+            // Count pending consultant applications
+            const pendingConsultants = await ConsultantModel.countDocuments({
+                applicationStatus: 'pending'
+            });
+
+            const response: ApiResponse = {
+                success: true,
+                message: "Counts retrieved successfully",
+                data: {
+                    pendingReviews,
+                    unreadMessages,
+                    pendingConsultants
+                }
+            };
+
+            res.status(200).json(response);
+
+        } catch (error) {
+            console.error("Error fetching counts:", error);
+            const response: ApiResponse = {
+                success: false,
+                message: "Failed to fetch counts"
+            };
+            res.status(500).json(response);
+        }
+    }
+
+    /**
+     * Get all consultants with filters
+     */
+    static async getConsultants(req: Request, res: Response): Promise<void> {
+        try {
+            const { status, search, sortBy = 'createdAt', order = 'desc' } = req.query;
+
+            // Build query
+            const query: any = {};
+            
+            // Filter by status
+            if (status && status !== 'all') {
+                query.applicationStatus = status;
+            }
+
+            // Search by name or email
+            if (search) {
+                query.$or = [
+                    { firstName: { $regex: search, $options: 'i' } },
+                    { lastName: { $regex: search, $options: 'i' } },
+                    { email: { $regex: search, $options: 'i' } }
+                ];
+            }
+
+            // Build sort
+            const sortOrder = order === 'asc' ? 1 : -1;
+            const sortOptions: any = { [sortBy as string]: sortOrder };
+
+            // Execute query
+            const consultants = await ConsultantModel.find(query)
+                .select('-password -verifyCode')
+                .sort(sortOptions);
+
+            // Get counts for each status
+            const pendingCount = await ConsultantModel.countDocuments({ applicationStatus: 'pending' });
+            const approvedCount = await ConsultantModel.countDocuments({ applicationStatus: 'approved' });
+            const rejectedCount = await ConsultantModel.countDocuments({ applicationStatus: 'rejected' });
+
+            const response: ApiResponse = {
+                success: true,
+                message: "Consultants retrieved successfully",
+                data: {
+                    consultants,
+                    counts: {
+                        all: consultants.length,
+                        pending: pendingCount,
+                        approved: approvedCount,
+                        rejected: rejectedCount
+                    }
+                }
+            };
+
+            res.status(200).json(response);
+
+        } catch (error) {
+            console.error("Error fetching consultants:", error);
+            const response: ApiResponse = {
+                success: false,
+                message: "Failed to fetch consultants"
+            };
+            res.status(500).json(response);
+        }
+    }
+
+    /**
+     * Get consultant by ID
+     */
+    static async getConsultantById(req: Request, res: Response): Promise<void> {
+        try {
+            const { id } = req.params;
+
+            const consultant = await ConsultantModel.findById(id)
+                .select('-password -verifyCode')
+                .populate('reviewedBy', 'email username');
+
+            if (!consultant) {
+                const response: ApiResponse = {
+                    success: false,
+                    message: "Consultant not found"
+                };
+                res.status(404).json(response);
+                return;
+            }
+
+            const response: ApiResponse = {
+                success: true,
+                message: "Consultant retrieved successfully",
+                data: consultant
+            };
+
+            res.status(200).json(response);
+
+        } catch (error) {
+            console.error("Error fetching consultant:", error);
+            const response: ApiResponse = {
+                success: false,
+                message: "Failed to fetch consultant"
+            };
+            res.status(500).json(response);
+        }
+    }
+
+    /**
+     * Approve consultant application
+     */
+    static async approveConsultant(req: Request, res: Response): Promise<void> {
+        try {
+            const { id } = req.params;
+            const adminId = (req as any).admin?.adminId;
+
+            const consultant = await ConsultantModel.findById(id);
+
+            if (!consultant) {
+                const response: ApiResponse = {
+                    success: false,
+                    message: "Consultant not found"
+                };
+                res.status(404).json(response);
+                return;
+            }
+
+            // Update consultant status
+            consultant.applicationStatus = 'approved';
+            consultant.reviewedAt = new Date();
+            consultant.reviewedBy = adminId;
+            consultant.rejectionReason = undefined; // Clear any previous rejection reason
+
+            await consultant.save();
+
+            // Send approval email
+            const emailSent = await sendConsultantApprovalEmail(
+                consultant.email,
+                consultant.firstName
+            );
+
+            if (!emailSent) {
+                console.warn('⚠️  Failed to send approval email to consultant');
+            }
+
+            const response: ApiResponse = {
+                success: true,
+                message: "Consultant approved successfully",
+                data: {
+                    consultantId: consultant._id,
+                    applicationStatus: consultant.applicationStatus,
+                    emailSent
+                }
+            };
+
+            res.status(200).json(response);
+
+        } catch (error) {
+            console.error("Error approving consultant:", error);
+            const response: ApiResponse = {
+                success: false,
+                message: "Failed to approve consultant"
+            };
+            res.status(500).json(response);
+        }
+    }
+
+    /**
+     * Reject consultant application
+     */
+    static async rejectConsultant(req: Request, res: Response): Promise<void> {
+        try {
+            const { id } = req.params;
+            const { rejectionReason } = req.body;
+            const adminId = (req as any).admin?.adminId;
+
+            if (!rejectionReason || !rejectionReason.trim()) {
+                const response: ApiResponse = {
+                    success: false,
+                    message: "Rejection reason is required"
+                };
+                res.status(400).json(response);
+                return;
+            }
+
+            const consultant = await ConsultantModel.findById(id);
+
+            if (!consultant) {
+                const response: ApiResponse = {
+                    success: false,
+                    message: "Consultant not found"
+                };
+                res.status(404).json(response);
+                return;
+            }
+
+            // Update consultant status
+            consultant.applicationStatus = 'rejected';
+            consultant.reviewedAt = new Date();
+            consultant.reviewedBy = adminId;
+            consultant.rejectionReason = rejectionReason;
+
+            await consultant.save();
+
+            // Send rejection email with reason
+            const emailSent = await sendConsultantRejectionEmail(
+                consultant.email,
+                consultant.firstName,
+                rejectionReason
+            );
+
+            if (!emailSent) {
+                console.warn('⚠️  Failed to send rejection email to consultant');
+            }
+
+            const response: ApiResponse = {
+                success: true,
+                message: "Consultant application rejected",
+                data: {
+                    consultantId: consultant._id,
+                    applicationStatus: consultant.applicationStatus,
+                    emailSent
+                }
+            };
+
+            res.status(200).json(response);
+
+        } catch (error) {
+            console.error("Error rejecting consultant:", error);
+            const response: ApiResponse = {
+                success: false,
+                message: "Failed to reject consultant"
             };
             res.status(500).json(response);
         }

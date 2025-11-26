@@ -147,26 +147,7 @@ export default function LevelAnalysisPage() {
             0
           );
         } else if (levelNumber === 2) {
-          // Level 2: Level1Score - |Level2Score|
-          // Get Level 1 score from user progress (try Redux first, then server data)
-          let level1Score = userProgress?.testScores?.level1;
-
-          // If not in Redux, try to get from server user data
-          if (!level1Score && user.progress?.testScores?.level1) {
-            level1Score = user.progress.testScores.level1;
-          }
-
-          // Fallback to 350 if still not found
-          level1Score = level1Score || 350;
-
-          console.log(
-            `  - Level 1 Score (from Redux): ${userProgress?.testScores?.level1}`
-          );
-          console.log(
-            `  - Level 1 Score (from Server): ${user.progress?.testScores?.level1}`
-          );
-          console.log(`  - Level 1 Score (final): ${level1Score}`);
-
+          // Level 2: 900 - |Level2Score|
           // Calculate Level 2 raw score (all NEGATIVE_MULTIPLIER questions)
           const level2RawScore = validResponses.reduce(
             (acc: number, response: any, index: number) => {
@@ -203,11 +184,11 @@ export default function LevelAnalysisPage() {
           const level2AbsoluteScore = Math.abs(level2RawScore);
           console.log(`Level 2 Absolute Score: ${level2AbsoluteScore}`);
 
-          // Final formula: level1Score - |level2Score|
-          calculatedScore = level1Score - level2AbsoluteScore;
+          // Final formula: 900 - |level2Score|
+          calculatedScore = 900 - level2AbsoluteScore;
 
           console.log(`\nFinal Score Calculation:`);
-          console.log(`  - Formula: ${level1Score} - ${level2AbsoluteScore}`);
+          console.log(`  - Formula: 900 - ${level2AbsoluteScore}`);
           console.log(`  - Result: ${calculatedScore}`);
         } else {
           // Level 3+: Use scoringType from each question (original logic)

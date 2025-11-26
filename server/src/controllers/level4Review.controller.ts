@@ -10,7 +10,7 @@ import { sendLevel4ReviewCompleteEmail } from "../lib/email";
  */
 export const getAllLevel4Submissions = async (req: Request, res: Response): Promise<void> => {
     try {
-        const { search = '', page = '1', limit = '10' } = req.query;
+        const { search = '', page = '1', limit = '10', sortBy = 'latest', status = 'all' } = req.query;
         const pageNum = parseInt(page as string);
         const limitNum = parseInt(limit as string);
         const skip = (pageNum - 1) * limitNum;
@@ -22,6 +22,13 @@ export const getAllLevel4Submissions = async (req: Request, res: Response): Prom
                 $in: [InterviewStatus.PENDING_REVIEW, InterviewStatus.REVIEWED] 
             }
         };
+
+        // Filter by status if not 'all'
+        if (status === 'PENDING_REVIEW') {
+            matchStage.status = InterviewStatus.PENDING_REVIEW;
+        } else if (status === 'REVIEWED') {
+            matchStage.status = InterviewStatus.REVIEWED;
+        }
 
         // Aggregation pipeline to join with User data
         const pipeline: any[] = [
@@ -64,13 +71,24 @@ export const getAllLevel4Submissions = async (req: Request, res: Response): Prom
             });
         }
 
-        // Sort: Pending reviews first, then by submission date (newest first)
-        pipeline.push({
-            $sort: {
-                status: 1, // PENDING_REVIEW comes before REVIEWED alphabetically
-                submittedAt: -1
-            }
-        });
+        // Determine sort order based on sortBy parameter
+        const sortOrder = sortBy === 'oldest' ? 1 : -1;
+        
+        // Sort: If filtering by status, just sort by date; otherwise pending reviews first
+        if (status === 'all') {
+            pipeline.push({
+                $sort: {
+                    status: 1, // PENDING_REVIEW comes before REVIEWED alphabetically
+                    submittedAt: sortOrder
+                }
+            });
+        } else {
+            pipeline.push({
+                $sort: {
+                    submittedAt: sortOrder
+                }
+            });
+        }
 
         // Count total before pagination
         const countPipeline = [...pipeline, { $count: 'total' }];

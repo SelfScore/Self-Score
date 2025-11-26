@@ -9,6 +9,9 @@ import {
   Grid,
   Chip,
   CircularProgress,
+  Select,
+  MenuItem,
+  FormControl,
 } from "@mui/material";
 import { useAuth } from "../../../hooks/useAuth";
 import { useRouter } from "next/navigation";
@@ -68,6 +71,12 @@ export default function UserDashboard() {
   const [shareModalOpen, setShareModalOpen] = useState(false);
   const [shareLink, setShareLink] = useState<string>("");
   const [shareLevel, setShareLevel] = useState<number>(1);
+
+  // Filter and sort state
+  const [sortOrder, setSortOrder] = useState<"latest" | "oldest">("latest");
+  const [levelFilter, setLevelFilter] = useState<"all" | "1" | "2" | "3" | "4">(
+    "all"
+  );
 
   // ✅ Add refs to track if data has been fetched
   const testHistoryFetched = useRef(false);
@@ -360,6 +369,30 @@ export default function UserDashboard() {
 
   // Calculate score percentage
   const scorePercentage = Math.round((lastTestScore / 900) * 100);
+
+  // Filter and sort test history
+  const getFilteredAndSortedHistory = () => {
+    let filtered = [...testHistory];
+
+    // Apply level filter
+    if (levelFilter !== "all") {
+      filtered = filtered.filter(
+        (test) => test.level === parseInt(levelFilter)
+      );
+    }
+
+    // Apply sort order
+    filtered.sort((a, b) => {
+      const dateA = new Date(a.rawDate || a.date).getTime();
+      const dateB = new Date(b.rawDate || b.date).getTime();
+
+      return sortOrder === "latest" ? dateB - dateA : dateA - dateB;
+    });
+
+    return filtered;
+  };
+
+  const filteredTestHistory = getFilteredAndSortedHistory();
 
   return (
     <Container maxWidth="xl" sx={{ backgroundColor: "#ffffff", py: 14 }}>
@@ -698,18 +731,95 @@ export default function UserDashboard() {
             backgroundColor: "#FFF",
           }}
         >
-          <Typography
-            variant="h5"
+          {/* Header with filters */}
+          <Box
             sx={{
-              fontWeight: 700,
+              display: "flex",
+              flexDirection: { xs: "column", sm: "row" },
+              alignItems: { xs: "flex-start", sm: "center" },
+              justifyContent: "space-between",
               mb: 3,
-              fontSize: "28px",
-              color: "#000",
-              fontFamily: "Faustina",
+              gap: 2,
             }}
           >
-            Your Test History
-          </Typography>
+            <Typography
+              variant="h5"
+              sx={{
+                fontWeight: 700,
+                fontSize: "28px",
+                color: "#000",
+                fontFamily: "Faustina",
+              }}
+            >
+              Your Test History
+            </Typography>
+
+            {/* Filter dropdowns */}
+            <Box
+              sx={{
+                display: "flex",
+                gap: 2,
+                flexWrap: "wrap",
+              }}
+            >
+              {/* Sort by date dropdown */}
+              <FormControl size="small" sx={{ minWidth: 120 }}>
+                <Select
+                  value={sortOrder}
+                  onChange={(e) =>
+                    setSortOrder(e.target.value as "latest" | "oldest")
+                  }
+                  sx={{
+                    backgroundColor: "#fff",
+                    borderRadius: 2,
+                    "& .MuiOutlinedInput-notchedOutline": {
+                      borderColor: "#E0E0E0",
+                    },
+                    "&:hover .MuiOutlinedInput-notchedOutline": {
+                      borderColor: "#005F73",
+                    },
+                    "&.Mui-focused .MuiOutlinedInput-notchedOutline": {
+                      borderColor: "#005F73",
+                    },
+                  }}
+                >
+                  <MenuItem value="latest">Latest</MenuItem>
+                  <MenuItem value="oldest">Oldest</MenuItem>
+                </Select>
+              </FormControl>
+
+              {/* Filter by level dropdown */}
+              <FormControl size="small" sx={{ minWidth: 130 }}>
+                <Select
+                  value={levelFilter}
+                  onChange={(e) =>
+                    setLevelFilter(
+                      e.target.value as "all" | "1" | "2" | "3" | "4"
+                    )
+                  }
+                  sx={{
+                    backgroundColor: "#fff",
+                    borderRadius: 2,
+                    "& .MuiOutlinedInput-notchedOutline": {
+                      borderColor: "#E0E0E0",
+                    },
+                    "&:hover .MuiOutlinedInput-notchedOutline": {
+                      borderColor: "#005F73",
+                    },
+                    "&.Mui-focused .MuiOutlinedInput-notchedOutline": {
+                      borderColor: "#005F73",
+                    },
+                  }}
+                >
+                  <MenuItem value="all">All Levels</MenuItem>
+                  <MenuItem value="1">Level 1</MenuItem>
+                  <MenuItem value="2">Level 2</MenuItem>
+                  <MenuItem value="3">Level 3</MenuItem>
+                  <MenuItem value="4">Level 4</MenuItem>
+                </Select>
+              </FormControl>
+            </Box>
+          </Box>
 
           {loading ? (
             <Box sx={{ textAlign: "center", py: 4 }}>
@@ -733,9 +843,18 @@ export default function UserDashboard() {
                 Take Your First Test
               </Button>
             </Box>
+          ) : filteredTestHistory.length === 0 ? (
+            <Box sx={{ textAlign: "center", py: 4 }}>
+              <Typography variant="body1" sx={{ color: "#64748b", mb: 2 }}>
+                No tests found for the selected filter
+              </Typography>
+              <Typography variant="body2" sx={{ color: "#94a3b8" }}>
+                Try changing the level filter or take a new test
+              </Typography>
+            </Box>
           ) : (
             <Box sx={{ display: "flex", flexDirection: "column", gap: 2 }}>
-              {testHistory.map((test) => {
+              {filteredTestHistory.map((test) => {
                 const isPendingReview =
                   test.level === 4 && test.status === "PENDING_REVIEW";
                 const testScorePercentage = test.score

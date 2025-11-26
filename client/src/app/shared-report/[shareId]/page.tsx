@@ -17,8 +17,8 @@ import { generateReportHTML } from "../../user/report/reportGenerator";
 import { generatePDFFromHTML } from "../../user/report/utils/pdfGenerator";
 import { UserReportData } from "../../user/report/types";
 import PersonIcon from '@mui/icons-material/Person';
-import PhoneIcon from '@mui/icons-material/Phone';
-import EmailIcon from '@mui/icons-material/Email';
+// import PhoneIcon from '@mui/icons-material/Phone';
+// import EmailIcon from '@mui/icons-material/Email';
 import CalendarMonthIcon from '@mui/icons-material/CalendarMonth';
 
 export default function SharedReportPage() {
@@ -276,7 +276,7 @@ export default function SharedReportPage() {
               </Box>
 
               {/* Phone */}
-              <Box
+              {/* <Box
                 sx={{
                   display: "flex",
                   alignItems: "center",
@@ -326,11 +326,11 @@ export default function SharedReportPage() {
                     {reportData.user?.phoneNumber || "-"}
                   </Typography>
                 </Box>
-              </Box>
+              </Box> */}
 
               {/* Second Row: Email and Report Date */}
               {/* Email */}
-              <Box
+              {/* <Box
                 sx={{
                   display: "flex",
                   alignItems: "center",
@@ -378,7 +378,7 @@ export default function SharedReportPage() {
                     {reportData.user?.email || "-"}
                   </Typography>
                 </Box>
-              </Box>
+              </Box> */}
 
               {/* Report Date */}
               <Box

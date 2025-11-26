@@ -2,7 +2,9 @@ import { Request, Response } from "express";
 import AIInterviewModel, { InterviewMode, InterviewStatus } from "../models/aiInterview";
 import AIFeedbackModel from "../models/aiFeedback";
 import Level4QuestionModel from "../models/level4Question";
+import UserModel from "../models/user";
 import { GoogleGenerativeAI } from "@google/generative-ai";
+import { sendTestCompletionEmailToUser, sendTestCompletionEmailToAdmin } from "../lib/email";
 
 // Initialize Gemini AI
 const genAI = new GoogleGenerativeAI(process.env.GEMINI_API_KEY || "");
@@ -381,6 +383,39 @@ export const completeInterview = async (req: Request, res: Response): Promise<vo
         await interview.save();
 
         console.log(`User ${userId} submitted Level 4 interview ${interviewId} (Attempt #${interview.attemptNumber}). Status: PENDING_REVIEW`);
+
+        // Send email notifications to user and admin
+        try {
+            // Get user details
+            const user = await UserModel.findById(userId);
+            if (user) {
+                // Send to user (pending review - no score yet)
+                await sendTestCompletionEmailToUser({
+                    email: user.email,
+                    username: user.username,
+                    level: 4,
+                    score: 0, // Placeholder, not shown for pending
+                    totalQuestions: totalQuestions,
+                    isPending: true
+                });
+                
+                // Send to admin (notify about pending review)
+                await sendTestCompletionEmailToAdmin({
+                    username: user.username,
+                    email: user.email,
+                    level: 4,
+                    score: 0, // Placeholder, not shown for pending
+                    totalQuestions: totalQuestions,
+                    userId: userId,
+                    isPending: true
+                });
+                
+                console.log(`✅ Email notifications sent for Level 4 submission (User: ${user.email})`);
+            }
+        } catch (emailError) {
+            console.error("⚠️  Failed to send email notifications for Level 4:", emailError);
+            // Don't fail the response if email fails
+        }
 
         res.status(200).json({
             success: true,

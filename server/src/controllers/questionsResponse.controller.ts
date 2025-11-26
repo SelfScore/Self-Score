@@ -4,6 +4,7 @@ import QuestionsResponseModel from "../models/questionsResponse";
 import QuestionModel from "../models/questions";
 import UserModel from "../models/user";
 import TestSubmissionModel from "../models/testSubmission";
+import { sendTestCompletionEmailToUser, sendTestCompletionEmailToAdmin } from "../lib/email";
 
 // Save a user's question response
 export const createQuestionsResponse = async (req: Request, res: Response): Promise<Response> => {
@@ -214,6 +215,35 @@ export const createLevel1Response = async (req: Request, res: Response): Promise
                     await user.save();
                     
                     console.log(`User ${userId} completed Level 1 with score ${cappedScore}. Level 2 unlocked.`);
+                    
+                    // Send email notifications to user and admin
+                    try {
+                        // Send to user
+                        await sendTestCompletionEmailToUser({
+                            email: user.email,
+                            username: user.username,
+                            level: 1,
+                            score: cappedScore,
+                            totalQuestions: savedResponses.length,
+                            isPending: false
+                        });
+                        
+                        // Send to admin
+                        await sendTestCompletionEmailToAdmin({
+                            username: user.username,
+                            email: user.email,
+                            level: 1,
+                            score: cappedScore,
+                            totalQuestions: savedResponses.length,
+                            userId: userId,
+                            isPending: false
+                        });
+                        
+                        console.log(`✅ Email notifications sent for Level 1 completion (User: ${user.email})`);
+                    } catch (emailError) {
+                        console.error("⚠️  Failed to send email notifications for Level 1:", emailError);
+                        // Don't fail the response if email fails
+                    }
                 }
             } catch (error) {
                 console.error("Error updating user progress:", error);
@@ -401,10 +431,7 @@ export const submitLevelResponses = async (req: Request, res: Response): Promise
                         return sum + (response.selectedOptionIndex * 15);
                     }, 0);
                 } else if (level === 2) {
-                    // Level 2: Level1Score - |Level2Score|
-                    // Get Level 1 score from user's progress
-                    const level1Score = user.progress.testScores.level1 || 350;
-                    
+                    // Level 2: 900 - |Level2Score|
                     // Calculate Level 2 raw score (all NEGATIVE_MULTIPLIER questions)
                     const level2RawScore = savedResponses.reduce((sum, response) => {
                         const questionId = response.questionId.toString();
@@ -418,8 +445,8 @@ export const submitLevelResponses = async (req: Request, res: Response): Promise
                     // Take absolute value of Level 2 score
                     const level2AbsoluteScore = Math.abs(level2RawScore);
                     
-                    // Final formula: level1Score - |level2Score|
-                    calculatedScore = level1Score - level2AbsoluteScore;
+                    // Final formula: 900 - |level2Score|
+                    calculatedScore = 900 - level2AbsoluteScore;
                     
                     // Note: calculatedScore will be used below to calculate finalScore
                     // For Level 2, we don't add 350 again since it's already in the formula
@@ -478,6 +505,35 @@ export const submitLevelResponses = async (req: Request, res: Response): Promise
                 await user.save();
 
                 console.log(`User ${userId} completed Level ${level} with score ${cappedScore} (calculated: ${calculatedScore})`);
+
+                // Send email notifications to user and admin
+                try {
+                    // Send to user
+                    await sendTestCompletionEmailToUser({
+                        email: user.email,
+                        username: user.username,
+                        level: level,
+                        score: cappedScore,
+                        totalQuestions: savedResponses.length,
+                        isPending: false
+                    });
+                    
+                    // Send to admin
+                    await sendTestCompletionEmailToAdmin({
+                        username: user.username,
+                        email: user.email,
+                        level: level,
+                        score: cappedScore,
+                        totalQuestions: savedResponses.length,
+                        userId: userId,
+                        isPending: false
+                    });
+                    
+                    console.log(`✅ Email notifications sent for Level ${level} completion (User: ${user.email})`);
+                } catch (emailError) {
+                    console.error(`⚠️  Failed to send email notifications for Level ${level}:`, emailError);
+                    // Don't fail the response if email fails
+                }
 
                 return res.status(201).json({
                     success: true,

@@ -22,22 +22,63 @@ import {
   Dashboard,
   ExitToApp,
 } from "@mui/icons-material";
-import { useState } from "react";
+import { useState, useEffect } from "react";
 import Link from "next/link";
 import Image from "next/image";
-import { usePathname } from "next/navigation";
+import { usePathname, useRouter } from "next/navigation";
 import LogoWithText from "../../../../public/images/logos/LogoWithText.png";
 import { useAuth } from "../../../hooks/useAuth";
+import {
+  consultantAuthService,
+  ConsultantData,
+} from "../../../services/consultantAuthService";
 import FreeChip from "../ui/FreeChip";
 import ButtonSelfScore from "../ui/ButtonSelfScore";
 
 export default function Header() {
   const [mobileOpen, setMobileOpen] = useState(false);
   const [anchorEl, setAnchorEl] = useState<null | HTMLElement>(null);
+  const [consultant, setConsultant] = useState<ConsultantData | null>(null);
+  const [isConsultantAuth, setIsConsultantAuth] = useState(false);
   const theme = useTheme();
   const isMobile = useMediaQuery(theme.breakpoints.down("md"));
   const { isAuthenticated, user, logout } = useAuth();
   const pathname = usePathname();
+  const router = useRouter();
+
+  // Check for consultant authentication only on consultant pages
+  useEffect(() => {
+    const checkConsultantAuth = async () => {
+      // If user is authenticated, don't check consultant auth at all
+      if (isAuthenticated) {
+        setConsultant(null);
+        setIsConsultantAuth(false);
+        return;
+      }
+
+      // Only check consultant auth if we're on a consultant route
+      const isConsultantRoute = pathname.startsWith("/consultant");
+
+      if (isConsultantRoute) {
+        try {
+          const response = await consultantAuthService.getCurrentConsultant();
+          if (response.success && response.data) {
+            setConsultant(response.data);
+            setIsConsultantAuth(true);
+            return;
+          }
+        } catch (_error) {
+          // Silently fail - not a consultant
+        }
+      }
+
+      // Reset consultant state
+      setConsultant(null);
+      setIsConsultantAuth(false);
+    };
+
+    checkConsultantAuth();
+  }, [pathname, isAuthenticated]);
 
   const handleDrawerToggle = () => {
     setMobileOpen(!mobileOpen);
@@ -56,17 +97,30 @@ export default function Header() {
     handleProfileMenuClose();
   };
 
+  const handleConsultantLogout = async () => {
+    try {
+      await consultantAuthService.logout();
+      setConsultant(null);
+      setIsConsultantAuth(false);
+      handleProfileMenuClose();
+      router.push("/consultant/login");
+    } catch (error) {
+      console.error("Logout error:", error);
+    }
+  };
+
   const navigationLinks = [
-    { label: "Home", href: "/" },
+    // { label: "Home", href: "/" },
     { label: "Our Mission", href: "/ourMission" },
-    { label: "Contact Us", href: "/contact" },
-    { label: "Blogs", href: "/blogs" },
     {
       label: "Self Score Test",
       href: "/selfscoretest",
       variant: "contained",
       FreeChip: true,
     },
+    { label: "Contact Us", href: "/contact" },
+    { label: "Consultations", href: "/consultations" },
+    { label: "Blogs", href: "/blogs" },
   ];
 
   const drawer = (
@@ -141,7 +195,7 @@ export default function Header() {
         })}
 
         {/* Authentication section for mobile */}
-        {isAuthenticated ? (
+        {isAuthenticated || isConsultantAuth ? (
           <>
             <Divider sx={{ my: 2 }} />
             <ListItem sx={{ mb: 1, px: 3 }}>
@@ -158,14 +212,22 @@ export default function Header() {
                     fontWeight: "bold",
                   }}
                 >
-                  {user?.username?.charAt(0) || user?.email?.charAt(0) || "U"}
+                  {isConsultantAuth
+                    ? consultant?.firstName?.charAt(0) ||
+                      consultant?.email?.charAt(0) ||
+                      "C"
+                    : user?.username?.charAt(0) ||
+                      user?.email?.charAt(0) ||
+                      "U"}
                 </Avatar>
                 <Box>
                   <Typography variant="subtitle2" sx={{ fontWeight: "bold" }}>
-                    {user?.username}
+                    {isConsultantAuth
+                      ? `${consultant?.firstName} ${consultant?.lastName}`
+                      : user?.username}
                   </Typography>
                   <Typography variant="caption" sx={{ color: "#666" }}>
-                    {user?.email}
+                    {isConsultantAuth ? consultant?.email : user?.email}
                   </Typography>
                 </Box>
               </Box>
@@ -173,7 +235,9 @@ export default function Header() {
 
             <ListItem sx={{ mb: 1, px: 3 }}>
               <Link
-                href="/user/dashboard"
+                href={
+                  isConsultantAuth ? "/consultant/dashboard" : "/user/dashboard"
+                }
                 style={{ textDecoration: "none", width: "100%" }}
               >
                 <Button
@@ -230,7 +294,9 @@ export default function Header() {
                 fullWidth
                 variant="text"
                 size="large"
-                onClick={handleLogout}
+                onClick={
+                  isConsultantAuth ? handleConsultantLogout : handleLogout
+                }
                 sx={{
                   justifyContent: "flex-start",
                   py: 1.5,
@@ -315,6 +381,7 @@ export default function Header() {
                 width={isMobile ? 100 : 120}
                 style={{
                   objectFit: "contain",
+                  scale: isMobile ? 1 : 1.2,
                 }}
                 priority
               />
@@ -375,7 +442,7 @@ export default function Header() {
 
               {/* Authentication - Right */}
               <Box sx={{ display: "flex", alignItems: "center", gap: 1 }}>
-                {isAuthenticated ? (
+                {isAuthenticated || isConsultantAuth ? (
                   <Box sx={{ display: "flex", alignItems: "center", gap: 1 }}>
                     <IconButton
                       onClick={handleProfileMenuOpen}
@@ -395,9 +462,13 @@ export default function Header() {
                           fontWeight: "bold",
                         }}
                       >
-                        {user?.username?.charAt(0) ||
-                          user?.email?.charAt(0) ||
-                          "U"}
+                        {isConsultantAuth
+                          ? consultant?.firstName?.charAt(0) ||
+                            consultant?.email?.charAt(0) ||
+                            "C"
+                          : user?.username?.charAt(0) ||
+                            user?.email?.charAt(0) ||
+                            "U"}
                       </Avatar>
                     </IconButton>
 
@@ -422,17 +493,21 @@ export default function Header() {
                           variant="subtitle2"
                           sx={{ fontWeight: "bold" }}
                         >
-                          {user?.username}
+                          {isConsultantAuth
+                            ? `${consultant?.firstName} ${consultant?.lastName}`
+                            : user?.username}
                         </Typography>
                         <Typography variant="caption" sx={{ color: "#666" }}>
-                          {user?.email}
+                          {isConsultantAuth ? consultant?.email : user?.email}
                         </Typography>
                       </Box>
 
                       <MenuItem
                         onClick={() => {
                           handleProfileMenuClose();
-                          window.location.href = "/user/dashboard";
+                          window.location.href = isConsultantAuth
+                            ? "/consultant/dashboard"
+                            : "/user/dashboard";
                         }}
                       >
                         <Dashboard sx={{ mr: 1, fontSize: 20 }} />
@@ -451,7 +526,13 @@ export default function Header() {
 
                       <Divider />
 
-                      <MenuItem onClick={handleLogout}>
+                      <MenuItem
+                        onClick={
+                          isConsultantAuth
+                            ? handleConsultantLogout
+                            : handleLogout
+                        }
+                      >
                         <ExitToApp sx={{ mr: 1, fontSize: 20 }} />
                         Logout
                       </MenuItem>

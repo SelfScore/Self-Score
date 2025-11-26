@@ -17,6 +17,9 @@ import {
   Pagination,
   Menu,
   MenuItem,
+  FormControl,
+  Select,
+  SelectChangeEvent,
 } from "@mui/material";
 import { useState, useEffect } from "react";
 import {
@@ -40,6 +43,10 @@ export default function AdminUsers() {
     limit: 10,
   });
   const [search, setSearch] = useState("");
+  const [sortBy, setSortBy] = useState<"latest" | "oldest">("latest");
+  const [filter, setFilter] = useState<"all" | "purchased" | "unpurchased">(
+    "all"
+  );
   const [loading, setLoading] = useState(true);
   const [anchorEl, setAnchorEl] = useState<null | HTMLElement>(null);
   const [selectedUser, setSelectedUser] = useState<AdminUser | null>(null);
@@ -47,7 +54,7 @@ export default function AdminUsers() {
   useEffect(() => {
     fetchUsers();
     // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, [pagination.currentPage, search]);
+  }, [pagination.currentPage, search, sortBy, filter]);
 
   const fetchUsers = async () => {
     setLoading(true);
@@ -55,7 +62,9 @@ export default function AdminUsers() {
       const response: UsersResponse = await adminService.getUsers(
         pagination.currentPage,
         10,
-        search
+        search,
+        sortBy,
+        filter
       );
       setUsers(response.users);
       setPagination(response.pagination);
@@ -157,13 +166,13 @@ export default function AdminUsers() {
         </Typography>
       </Box>
 
-      {/* Search Bar */}
-      <Box sx={{ mb: 3 }}>
+      {/* Search and Filters */}
+      <Box sx={{ mb: 3, display: "flex", gap: 2, alignItems: "center" }}>
         <TextField
-          fullWidth
           placeholder="Search by email or username..."
           value={search}
           onChange={handleSearchChange}
+          sx={{ flex: 1 }}
           InputProps={{
             startAdornment: (
               <InputAdornment position="start">
@@ -179,6 +188,47 @@ export default function AdminUsers() {
             },
           }}
         />
+
+        <FormControl sx={{ minWidth: 150 }}>
+          <Select
+            value={sortBy}
+            onChange={(e: SelectChangeEvent) => {
+              setSortBy(e.target.value as "latest" | "oldest");
+              setPagination((prev) => ({ ...prev, currentPage: 1 }));
+            }}
+            sx={{
+              borderRadius: "12px",
+              backgroundColor: "#FFF",
+              "& .MuiOutlinedInput-notchedOutline": {
+                borderColor: "#E0E0E0",
+              },
+            }}
+          >
+            <MenuItem value="latest">Latest</MenuItem>
+            <MenuItem value="oldest">Oldest</MenuItem>
+          </Select>
+        </FormControl>
+
+        <FormControl sx={{ minWidth: 170 }}>
+          <Select
+            value={filter}
+            onChange={(e: SelectChangeEvent) => {
+              setFilter(e.target.value as "all" | "purchased" | "unpurchased");
+              setPagination((prev) => ({ ...prev, currentPage: 1 }));
+            }}
+            sx={{
+              borderRadius: "12px",
+              backgroundColor: "#FFF",
+              "& .MuiOutlinedInput-notchedOutline": {
+                borderColor: "#E0E0E0",
+              },
+            }}
+          >
+            <MenuItem value="all">All Users</MenuItem>
+            <MenuItem value="purchased">Purchased</MenuItem>
+            <MenuItem value="unpurchased">Unpurchased</MenuItem>
+          </Select>
+        </FormControl>
       </Box>
 
       {/* Users Table */}

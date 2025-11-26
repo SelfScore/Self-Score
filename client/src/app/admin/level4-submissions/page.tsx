@@ -19,6 +19,10 @@ import {
   Pagination,
   IconButton,
   Tooltip,
+  FormControl,
+  Select,
+  MenuItem,
+  SelectChangeEvent,
 } from "@mui/material";
 import SearchIcon from "@mui/icons-material/Search";
 import VisibilityIcon from "@mui/icons-material/Visibility";
@@ -36,6 +40,10 @@ export default function Level4SubmissionsPage() {
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState("");
   const [search, setSearch] = useState("");
+  const [sortBy, setSortBy] = useState<"latest" | "oldest">("latest");
+  const [statusFilter, setStatusFilter] = useState<
+    "all" | "PENDING_REVIEW" | "REVIEWED"
+  >("all");
   const [page, setPage] = useState(1);
   const [totalPages, setTotalPages] = useState(1);
   const [total, setTotal] = useState(0);
@@ -48,7 +56,9 @@ export default function Level4SubmissionsPage() {
       const response = await level4ReviewService.getAllSubmissions(
         page,
         limit,
-        search
+        search,
+        sortBy,
+        statusFilter
       );
 
       if (response.success) {
@@ -64,7 +74,7 @@ export default function Level4SubmissionsPage() {
     } finally {
       setLoading(false);
     }
-  }, [page, search]);
+  }, [page, search, sortBy, statusFilter]);
 
   useEffect(() => {
     fetchSubmissions();
@@ -140,42 +150,78 @@ export default function Level4SubmissionsPage() {
         </Typography>
       </Box>
 
-      {/* Search and Stats */}
-      <Box
-        sx={{
-          display: "flex",
-          justifyContent: "space-between",
-          alignItems: "center",
-          mb: 3,
-          gap: 2,
-          flexWrap: "wrap",
-        }}
-      >
+      {/* Search and Filters */}
+      <Box sx={{ mb: 3, display: "flex", gap: 2, alignItems: "center" }}>
         <TextField
           placeholder="Search by name or email..."
           value={search}
           onChange={handleSearchChange}
-          sx={{
-            minWidth: "300px",
-            backgroundColor: "#fff",
-            "& .MuiOutlinedInput-root": {
-              borderRadius: "8px",
-            },
-          }}
+          sx={{ flex: 1 }}
           InputProps={{
             startAdornment: (
               <InputAdornment position="start">
                 <SearchIcon sx={{ color: "#666" }} />
               </InputAdornment>
             ),
+            sx: {
+              borderRadius: "12px",
+              backgroundColor: "#FFF",
+              "& .MuiOutlinedInput-notchedOutline": {
+                borderColor: "#E0E0E0",
+              },
+            },
           }}
         />
 
-        <Box sx={{ display: "flex", gap: 2, alignItems: "center" }}>
-          <Typography variant="body2" sx={{ color: "#666" }}>
-            Total Submissions: <strong>{total}</strong>
-          </Typography>
-        </Box>
+        <FormControl sx={{ minWidth: 150 }}>
+          <Select
+            value={sortBy}
+            onChange={(e: SelectChangeEvent) => {
+              setSortBy(e.target.value as "latest" | "oldest");
+              setPage(1);
+            }}
+            sx={{
+              borderRadius: "12px",
+              backgroundColor: "#FFF",
+              "& .MuiOutlinedInput-notchedOutline": {
+                borderColor: "#E0E0E0",
+              },
+            }}
+          >
+            <MenuItem value="latest">Latest</MenuItem>
+            <MenuItem value="oldest">Oldest</MenuItem>
+          </Select>
+        </FormControl>
+
+        <FormControl sx={{ minWidth: 180 }}>
+          <Select
+            value={statusFilter}
+            onChange={(e: SelectChangeEvent) => {
+              setStatusFilter(
+                e.target.value as "all" | "PENDING_REVIEW" | "REVIEWED"
+              );
+              setPage(1);
+            }}
+            sx={{
+              borderRadius: "12px",
+              backgroundColor: "#FFF",
+              "& .MuiOutlinedInput-notchedOutline": {
+                borderColor: "#E0E0E0",
+              },
+            }}
+          >
+            <MenuItem value="all">All Submissions</MenuItem>
+            <MenuItem value="PENDING_REVIEW">Pending Review</MenuItem>
+            <MenuItem value="REVIEWED">Reviewed</MenuItem>
+          </Select>
+        </FormControl>
+      </Box>
+
+      {/* Stats */}
+      <Box sx={{ mb: 3 }}>
+        <Typography variant="body2" sx={{ color: "#666" }}>
+          Total Submissions: <strong>{total}</strong>
+        </Typography>
       </Box>
 
       {/* Error Alert */}

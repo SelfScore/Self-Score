@@ -52,15 +52,26 @@ export const contactService = {
   },
 
   // Admin: Get all contact messages
-  getMessages: async (page: number = 1, limit: number = 10, status?: 'read' | 'unread'): Promise<ContactMessagesResponse> => {
+  getMessages: async (
+    page: number = 1, 
+    limit: number = 10, 
+    status?: 'read' | 'unread' | 'all',
+    sortBy: 'latest' | 'oldest' = 'latest',
+    search: string = ''
+  ): Promise<ContactMessagesResponse> => {
     try {
       const params = new URLSearchParams({
         page: page.toString(),
         limit: limit.toString(),
+        sortBy: sortBy,
       });
       
-      if (status) {
+      if (status && status !== 'all') {
         params.append('status', status);
+      }
+
+      if (search) {
+        params.append('search', search);
       }
 
       const response = await api.get(`/api/admin/messages?${params.toString()}`);

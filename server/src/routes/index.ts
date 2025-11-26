@@ -9,6 +9,9 @@ import adminAuthRoutes from './adminAuth';
 import contactRoutes from './contact';
 import aiInterviewRoutes from './aiInterview';
 import level4ReviewRoutes from './level4Review';
+import consultantAuthRoutes from './consultantAuth';
+import consultantRoutes from './consultant';
+// import calcomRoutes from './calcom';
 
 const router = Router();
 
@@ -23,6 +26,9 @@ router.use('/admin/auth', adminAuthRoutes);
 router.use('/admin', adminRoutes);
 router.use('/admin/level4', level4ReviewRoutes);
 router.use('/ai-interview', aiInterviewRoutes);
+router.use('/consultant/auth', consultantAuthRoutes);
+router.use('/consultants', consultantRoutes);
+// router.use('/calcom', calcomRoutes);
 
 
 // Health check route

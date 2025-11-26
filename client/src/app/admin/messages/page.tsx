@@ -22,6 +22,12 @@ import {
   CircularProgress,
   Alert,
   Tooltip,
+  TextField,
+  InputAdornment,
+  FormControl,
+  Select,
+  MenuItem,
+  SelectChangeEvent,
 } from "@mui/material";
 import {
   Email as EmailIcon,
@@ -29,6 +35,7 @@ import {
   Delete as DeleteIcon,
   Visibility as VisibilityIcon,
 } from "@mui/icons-material";
+import SearchIcon from "@mui/icons-material/Search";
 import { contactService, ContactMessage } from "@/services/contactService";
 
 export default function MessagesPage() {
@@ -43,13 +50,24 @@ export default function MessagesPage() {
   );
   const [openDialog, setOpenDialog] = useState(false);
   const [actionLoading, setActionLoading] = useState(false);
+  const [sortBy, setSortBy] = useState<"latest" | "oldest">("latest");
+  const [statusFilter, setStatusFilter] = useState<"all" | "read" | "unread">(
+    "all"
+  );
+  const [search, setSearch] = useState("");
 
   // Fetch messages
   const fetchMessages = async () => {
     try {
       setLoading(true);
       setError("");
-      const response = await contactService.getMessages(page + 1, rowsPerPage);
+      const response = await contactService.getMessages(
+        page + 1,
+        rowsPerPage,
+        statusFilter,
+        sortBy,
+        search
+      );
 
       if (response.success) {
         setMessages(response.data.messages);
@@ -68,7 +86,7 @@ export default function MessagesPage() {
   useEffect(() => {
     fetchMessages();
     // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, [page, rowsPerPage]);
+  }, [page, rowsPerPage, sortBy, statusFilter, search]);
 
   const handleChangePage = (_event: unknown, newPage: number) => {
     setPage(newPage);
@@ -161,6 +179,74 @@ export default function MessagesPage() {
         <Typography variant="body2" sx={{ color: "#666" }}>
           Manage all contact form submissions from users
         </Typography>
+      </Box>
+
+      {/* Search and Filters */}
+      <Box sx={{ mb: 3, display: "flex", gap: 2, alignItems: "center" }}>
+        <TextField
+          placeholder="Search by name or email..."
+          value={search}
+          onChange={(e) => {
+            setSearch(e.target.value);
+            setPage(0);
+          }}
+          sx={{ flex: 1 }}
+          InputProps={{
+            startAdornment: (
+              <InputAdornment position="start">
+                <SearchIcon sx={{ color: "#6B7280" }} />
+              </InputAdornment>
+            ),
+            sx: {
+              borderRadius: "12px",
+              backgroundColor: "#FFF",
+              "& .MuiOutlinedInput-notchedOutline": {
+                borderColor: "#E0E0E0",
+              },
+            },
+          }}
+        />
+
+        <FormControl sx={{ minWidth: 150 }}>
+          <Select
+            value={sortBy}
+            onChange={(e: SelectChangeEvent) => {
+              setSortBy(e.target.value as "latest" | "oldest");
+              setPage(0);
+            }}
+            sx={{
+              borderRadius: "12px",
+              backgroundColor: "#FFF",
+              "& .MuiOutlinedInput-notchedOutline": {
+                borderColor: "#E0E0E0",
+              },
+            }}
+          >
+            <MenuItem value="latest">Latest</MenuItem>
+            <MenuItem value="oldest">Oldest</MenuItem>
+          </Select>
+        </FormControl>
+
+        <FormControl sx={{ minWidth: 150 }}>
+          <Select
+            value={statusFilter}
+            onChange={(e: SelectChangeEvent) => {
+              setStatusFilter(e.target.value as "all" | "read" | "unread");
+              setPage(0);
+            }}
+            sx={{
+              borderRadius: "12px",
+              backgroundColor: "#FFF",
+              "& .MuiOutlinedInput-notchedOutline": {
+                borderColor: "#E0E0E0",
+              },
+            }}
+          >
+            <MenuItem value="all">All Messages</MenuItem>
+            <MenuItem value="unread">Unread</MenuItem>
+            <MenuItem value="read">Read</MenuItem>
+          </Select>
+        </FormControl>
       </Box>
 
       {/* Error Alert */}

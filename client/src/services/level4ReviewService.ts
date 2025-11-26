@@ -124,11 +124,19 @@ class Level4ReviewService {
     /**
      * Admin: Get all Level 4 submissions with pagination and search
      */
-    async getAllSubmissions(page: number = 1, limit: number = 10, search: string = ''): Promise<GetSubmissionsResponse> {
+    async getAllSubmissions(
+        page: number = 1, 
+        limit: number = 10, 
+        search: string = '',
+        sortBy: 'latest' | 'oldest' = 'latest',
+        status: 'all' | 'PENDING_REVIEW' | 'REVIEWED' = 'all'
+    ): Promise<GetSubmissionsResponse> {
         const params = new URLSearchParams({
             page: page.toString(),
             limit: limit.toString(),
-            search
+            search,
+            sortBy,
+            status
         });
         const response = await api.get(`/api/admin/level4/submissions?${params.toString()}`) as any;
         return response;

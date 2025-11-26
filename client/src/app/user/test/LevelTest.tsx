@@ -16,7 +16,7 @@ import SignUpModal from "../SignUpModal";
 import Slider from "@/app/components/ui/Slider";
 import ButtonSelfScore from "@/app/components/ui/ButtonSelfScore";
 import OutLineButton from "@/app/components/ui/OutLineButton";
-import { useAppDispatch, useAppSelector } from "../../../store/hooks";
+import { useAppDispatch } from "../../../store/hooks";
 import { updateProgress } from "../../../store/slices/authSlice";
 import ArrowBackIosIcon from "@mui/icons-material/ArrowBackIos";
 import ArrowForwardIosIcon from "@mui/icons-material/ArrowForwardIos";
@@ -37,7 +37,6 @@ export default function LevelTest({ level }: LevelTestProps) {
   const router = useRouter();
   const searchParams = useSearchParams();
   const dispatch = useAppDispatch();
-  const { progress: userProgress } = useAppSelector((state) => state.auth);
 
   const STORAGE_KEY = `level${level}_test_answers`;
 
@@ -309,10 +308,7 @@ export default function LevelTest({ level }: LevelTestProps) {
       const finalScore = Math.max(totalRawScore, 350);
       return Math.min(finalScore, 900);
     } else if (level === 2) {
-      // Level 2: Level1Score - |Level2Score|
-      // Get Level 1 score from user progress
-      const level1Score = userProgress?.testScores?.level1 || 350;
-
+      // Level 2: 900 - |Level2Score|
       // Calculate Level 2 raw score (all NEGATIVE_MULTIPLIER questions)
       let level2RawScore = 0;
       Object.entries(answers).forEach(([questionId, selectedOptionIndex]) => {
@@ -327,8 +323,8 @@ export default function LevelTest({ level }: LevelTestProps) {
       // Take absolute value of Level 2 score
       const level2AbsoluteScore = Math.abs(level2RawScore);
 
-      // Final formula: level1Score - |level2Score|
-      const finalScore = level1Score - level2AbsoluteScore;
+      // Final formula: 900 - |level2Score|
+      const finalScore = 900 - level2AbsoluteScore;
 
       // Cap between 350-900
       return Math.max(350, Math.min(finalScore, 900));

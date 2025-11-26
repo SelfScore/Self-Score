@@ -3,6 +3,7 @@ import bcrypt from 'bcryptjs';
 import AdminModel from '../models/admin';
 import { ApiResponse } from '../types/api';
 import jwt from 'jsonwebtoken';
+import { getCookieOptions } from '../lib/jwt';
 
 const JWT_SECRET = process.env.JWT_SECRET || 'your-secret-key';
 const JWT_EXPIRE = process.env.JWT_EXPIRE || '7d';
@@ -59,14 +60,17 @@ export class AdminAuthController {
                 expiresIn: JWT_EXPIRE
             } as jwt.SignOptions);
 
+
+             const cookieOptions = getCookieOptions();
+                        res.cookie('adminAuthToken', token, cookieOptions);
             // Set HTTP-only cookie with different name for admin
-            res.cookie('adminAuthToken', token, {
-                httpOnly: true,
-                secure: process.env.NODE_ENV === 'production',
-                sameSite: 'strict',
-                maxAge: 7 * 24 * 60 * 60 * 1000, // 7 days
-                path: '/'
-            });
+                    // res.cookie('adminAuthToken', token, {
+                    //     httpOnly: true,
+                    //     secure: process.env.NODE_ENV === 'production',
+                    //     sameSite: 'strict',
+                    //     maxAge: 7 * 24 * 60 * 60 * 1000, // 7 days
+                    //     path: '/'
+                    // });
 
             const response: ApiResponse = {
                 success: true,
