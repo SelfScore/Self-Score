@@ -154,7 +154,7 @@ export default function Step1PersonalInfo({
 
     // Check if consultant already exists (returning from later steps)
     const existingConsultantId = sessionStorage.getItem("consultantId");
-    
+
     if (existingConsultantId) {
       // Consultant already registered, just proceed to next step
       onNext(formData, existingConsultantId);

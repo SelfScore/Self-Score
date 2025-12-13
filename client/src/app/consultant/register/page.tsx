@@ -92,7 +92,7 @@ function ConsultantRegisterContent() {
   // Update URL when step changes
   useEffect(() => {
     if (!mounted) return;
-    
+
     sessionStorage.setItem("consultantCurrentStep", currentStep.toString());
     router.replace(`/consultant/register?step=${currentStep}`, {
       scroll: false,
@@ -167,7 +167,7 @@ function ConsultantRegisterContent() {
               fontWeight: 700,
               color: "#1A1A1A",
               mb: 1,
-              mt:8
+              mt: 8,
             }}
           >
             Become a Wellness Coach

@@ -73,15 +73,20 @@ export default function ConsultantLoginPage() {
 
       if (response.success && response.data?.consultant) {
         const { consultant } = response.data;
-        
+
         // Check if registration is incomplete (registrationStep < 4)
         if (consultant.registrationStep && consultant.registrationStep < 4) {
           // Store consultant data for resume
           sessionStorage.setItem("consultantId", consultant.consultantId);
-          sessionStorage.setItem("consultantCurrentStep", consultant.registrationStep.toString());
-          
+          sessionStorage.setItem(
+            "consultantCurrentStep",
+            consultant.registrationStep.toString()
+          );
+
           // Redirect to the step where they left off
-          router.push(`/consultant/register?step=${consultant.registrationStep}`);
+          router.push(
+            `/consultant/register?step=${consultant.registrationStep}`
+          );
         } else {
           // Registration complete, go to dashboard
           router.push("/consultant/dashboard");
