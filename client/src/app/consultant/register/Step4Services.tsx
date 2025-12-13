@@ -68,7 +68,6 @@ export default function Step4Services({
         duration: st.duration,
         enabled: false,
       })) as Service[]),
-    generalAvailability: initialData?.generalAvailability || "",
     introductionVideoLink: initialData?.introductionVideoLink || "",
   });
 
@@ -141,7 +140,7 @@ export default function Step4Services({
         consultantId,
         hourlyRate: formData.hourlyRate,
         services: formData.services,
-        generalAvailability: formData.generalAvailability,
+        generalAvailability: "",
         introductionVideoLink: formData.introductionVideoLink,
       });
 
@@ -340,36 +339,6 @@ export default function Step4Services({
               {errors.services}
             </Typography>
           )}
-        </Grid>
-
-        {/* General Availability */}
-        <Grid size={{ xs: 12 }}>
-          <Typography
-            sx={{
-              fontFamily: "Source Sans Pro",
-              fontSize: "14px",
-              fontWeight: 600,
-              mb: 1,
-              color: "#1A1A1A",
-            }}
-          >
-            General Availability
-          </Typography>
-          <TextField
-            fullWidth
-            placeholder="e.g., Weekdays 9 AM - 5 PM EST, Some weekend availability"
-            value={formData.generalAvailability}
-            onChange={(e) =>
-              handleInputChange("generalAvailability", e.target.value)
-            }
-            sx={{
-              "& .MuiOutlinedInput-root": {
-                backgroundColor: "#F5F5F5",
-                borderRadius: "8px",
-              },
-            }}
-            helperText="You'll be able to set specific availability in your coach portal"
-          />
         </Grid>
 
         {/* Introduction Video Link */}

@@ -37,10 +37,11 @@ export interface ProgressData {
   };
 }
 
-interface AuthState {
+export interface AuthState {
   user: UserData | null;
   isAuthenticated: boolean;
   isLoading: boolean;
+  isInitialized: boolean; // Track if initial auth check is complete
   error: string | null;
   purchasedLevels: PurchasedLevelsData | null;
   progress: ProgressData | null;
@@ -50,6 +51,7 @@ const initialState: AuthState = {
   user: null,
   isAuthenticated: false,
   isLoading: false,
+  isInitialized: false, // Initially false until first auth check
   error: null,
   purchasedLevels: null,
   progress: null,
@@ -76,6 +78,7 @@ const authSlice = createSlice({
       state.progress = action.payload.progress || null;
       state.isAuthenticated = true;
       state.isLoading = false;
+      state.isInitialized = true; // Mark as initialized on successful login
       state.error = null;
     },
 
@@ -86,12 +89,19 @@ const authSlice = createSlice({
       state.progress = null;
       state.isAuthenticated = false;
       state.isLoading = false;
+      state.isInitialized = true; // Keep initialized as true, just not authenticated
       state.error = null;
     },
 
     // Clear error
     clearError: (state) => {
       state.error = null;
+    },
+
+    // Mark auth as initialized (even if no user)
+    setInitialized: (state) => {
+      state.isInitialized = true;
+      state.isLoading = false;
     },
 
     // Update user data
@@ -129,6 +139,7 @@ export const {
   loginSuccess,
   logout,
   clearError,
+  setInitialized,
   updateUser,
   updatePurchasedLevels,
   updateProgress,

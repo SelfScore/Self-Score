@@ -21,9 +21,11 @@ import {
   Phone,
   LocationOn,
   CalendarToday,
+  EventAvailable,
 } from "@mui/icons-material";
 import { useRouter } from "next/navigation";
 import { consultantAuthService } from "@/services/consultantAuthService";
+import ButtonSelfScore from "../../components/ui/ButtonSelfScore";
 // import { calcomService } from "@/services/calcomService";
 // import ButtonSelfScore from "../../components/ui/ButtonSelfScore";
 // import {
@@ -37,8 +39,8 @@ export default function ConsultantDashboard() {
   const [loading, setLoading] = useState(true);
   const [consultant, setConsultant] = useState<any>(null);
   const [error, setError] = useState<string>("");
-  // const [calcomStatus, setCalcomStatus] = useState<any>(null);
-  // const [calcomLoading, setCalcomLoading] = useState(false);
+  const [calendarStatus, setCalendarStatus] = useState<any>(null);
+  const [checkingCalendar, setCheckingCalendar] = useState(false);
 
   useEffect(() => {
     // Check if consultant data is available in sessionStorage (from registration)
@@ -59,6 +61,45 @@ export default function ConsultantDashboard() {
       fetchConsultantData();
     }
   }, []);
+
+  useEffect(() => {
+    // Check calendar connection status
+    if (consultant) {
+      checkCalendarConnection();
+    }
+  }, [consultant]);
+
+  const checkCalendarConnection = async () => {
+    try {
+      setCheckingCalendar(true);
+      const response = await fetch(
+        `${process.env.NEXT_PUBLIC_API_URL}/api/google-calendar/status`,
+        {
+          credentials: "include",
+        }
+      );
+
+      const data = await response.json();
+
+      if (data.success && data.data) {
+        setCalendarStatus(data.data);
+      }
+    } catch (error) {
+      console.error("Error checking calendar status:", error);
+    } finally {
+      setCheckingCalendar(false);
+    }
+  };
+
+  const handleConnectCalendar = () => {
+    // Store consultant ID for Step 5
+    if (consultant?._id) {
+      sessionStorage.setItem("consultantId", consultant._id);
+      sessionStorage.setItem("consultantCurrentStep", "5");
+    }
+    // Redirect to Step 5 of registration
+    router.push("/consultant/register?step=5");
+  };
 
   // useEffect(() => {
   //   // Fetch Cal.com status if consultant is approved
@@ -304,6 +345,62 @@ export default function ConsultantDashboard() {
               }}
             />
           </Box>
+
+          {/* Calendar Connection Status */}
+          {consultant.applicationStatus === "approved" && !checkingCalendar && (
+            <Box sx={{ mt: 3 }}>
+              {calendarStatus?.isConnected ? (
+                <Box
+                  sx={{
+                    display: "flex",
+                    alignItems: "center",
+                    justifyContent: "center",
+                    gap: 1,
+                    p: 2,
+                    backgroundColor: "white",
+                    borderRadius: "8px",
+                    border: "1px solid #4CAF50",
+                  }}
+                >
+                  <EventAvailable sx={{ color: "#4CAF50", fontSize: 20 }} />
+                  <Typography
+                    sx={{
+                      fontFamily: "Source Sans Pro",
+                      fontSize: "14px",
+                      fontWeight: 600,
+                      color: "#4CAF50",
+                    }}
+                  >
+                    Calendar Connected: {calendarStatus.email}
+                  </Typography>
+                </Box>
+              ) : (
+                <Box sx={{ mt: 2 }}>
+                  <Alert severity="warning" sx={{ mb: 2 }}>
+                    <Typography
+                      sx={{
+                        fontFamily: "Source Sans Pro",
+                        fontSize: "14px",
+                        mb: 1,
+                      }}
+                    >
+                      <strong>Connect your calendar</strong> to start accepting
+                      bookings from clients.
+                    </Typography>
+                  </Alert>
+                  <ButtonSelfScore
+                    text="Connect Google Calendar"
+                    onClick={handleConnectCalendar}
+                    style={{
+                      display: "inline-flex",
+                      alignItems: "center",
+                      gap: "8px",
+                    }}
+                  />
+                </Box>
+              )}
+            </Box>
+          )}
         </Paper>
 
         {/* Cal.com Integration Card - Only show if approved */}

@@ -1,6 +1,6 @@
 import api from "../lib/api";
 import { store } from "../store";
-import { loginSuccess, logout, setLoading, setError } from "../store/slices/authSlice";
+import { loginSuccess, logout, setLoading, setError, setInitialized } from "../store/slices/authSlice";
 
 export interface ApiResponse<T = any> {
   success: boolean;
@@ -186,10 +186,13 @@ export const authService = {
         return result.data;
       }
       
+      // No user but auth check is complete
+      store.dispatch(setInitialized());
       return null;
     } catch (error) {
       // Don't show error for auth failures (user just not logged in)
       console.log("Failed to get current user:", error);
+      store.dispatch(setInitialized());
       return null;
     } finally {
       store.dispatch(setLoading(false));

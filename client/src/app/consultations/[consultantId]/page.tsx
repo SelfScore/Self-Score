@@ -13,6 +13,13 @@ import {
   Button,
   CircularProgress,
   Divider,
+  TextField,
+  Select,
+  MenuItem,
+  FormControl,
+  InputLabel,
+  Alert,
+  SelectChangeEvent,
 } from "@mui/material";
 import StarIcon from "@mui/icons-material/Star";
 import EmailIcon from "@mui/icons-material/Email";
@@ -26,7 +33,11 @@ import {
   PublicConsultant,
 } from "@/services/consultantService";
 import { useAuth } from "@/hooks/useAuth";
+import TimezoneSelect from "react-timezone-select";
 import SignUpModal from "@/app/user/SignUpModal";
+import BookingCalendar from "@/app/components/booking/BookingCalendar";
+import TimeSlotPicker from "@/app/components/booking/TimeSlotPicker";
+import { bookingService, TimeSlot } from "@/services/bookingService";
 
 interface TabPanelProps {
   children?: React.ReactNode;
@@ -59,7 +70,20 @@ export default function ConsultantProfilePage() {
   const [error, setError] = useState("");
   const [tabValue, setTabValue] = useState(0);
   const [showLoginModal, setShowLoginModal] = useState(false);
+
+  // Booking state
   const [selectedDate, setSelectedDate] = useState<Date | null>(null);
+  const [selectedSessionType, setSelectedSessionType] = useState<string>("");
+  const [selectedSlot, setSelectedSlot] = useState<TimeSlot | null>(null);
+  const [availableSlots, setAvailableSlots] = useState<TimeSlot[]>([]);
+  const [slotsLoading, setSlotsLoading] = useState(false);
+  const [slotsError, setSlotsError] = useState("");
+  const [bookingNotes, setBookingNotes] = useState("");
+  const [bookingLoading, setBookingLoading] = useState(false);
+  const [bookingError, setBookingError] = useState("");
+  const [userTimezone, setUserTimezone] = useState<string>(
+    Intl.DateTimeFormat().resolvedOptions().timeZone || "America/New_York"
+  );
 
   const consultantId = params?.consultantId as string;
 
@@ -74,12 +98,30 @@ export default function ConsultantProfilePage() {
     }
   }, [consultantId, isAuthenticated]);
 
+  // Fetch available slots when date or session type changes
+  useEffect(() => {
+    if (selectedDate && selectedSessionType && consultant) {
+      fetchAvailableSlots();
+    } else {
+      setAvailableSlots([]);
+      setSelectedSlot(null);
+    }
+  }, [selectedDate, selectedSessionType]);
+
   const fetchConsultant = async () => {
     try {
       setLoading(true);
       const response = await consultantService.getConsultantById(consultantId);
       if (response.success && response.data) {
         setConsultant(response.data);
+
+        // Set default session type to first enabled service
+        const firstEnabledService = response.data.services.find(
+          (s) => s.enabled
+        );
+        if (firstEnabledService && !selectedSessionType) {
+          setSelectedSessionType(firstEnabledService.duration.toString());
+        }
       } else {
         setError("Consultant not found");
       }
@@ -88,6 +130,89 @@ export default function ConsultantProfilePage() {
       setError("Failed to load consultant details");
     } finally {
       setLoading(false);
+    }
+  };
+
+  const fetchAvailableSlots = async () => {
+    if (!selectedDate || !selectedSessionType || !consultant) return;
+
+    try {
+      setSlotsLoading(true);
+      setSlotsError("");
+
+      const duration = parseInt(selectedSessionType);
+      const dateStr = bookingService.formatDateForAPI(selectedDate);
+
+      const response = await bookingService.getAvailableSlots({
+        consultantId: consultantId,
+        date: dateStr,
+        duration: duration,
+        timezone: userTimezone,
+      });
+
+      if (response.success && response.data) {
+        setAvailableSlots(response.data.slots);
+      } else {
+        setSlotsError(response.message || "Failed to load available slots");
+      }
+    } catch (error: any) {
+      console.error("Error fetching slots:", error);
+      setSlotsError("Failed to load available slots. Please try again.");
+    } finally {
+      setSlotsLoading(false);
+    }
+  };
+
+  const handleBookSession = async () => {
+    if (!selectedSlot || !selectedSessionType || !consultant) return;
+
+    try {
+      setBookingLoading(true);
+      setBookingError("");
+
+      const duration = parseInt(selectedSessionType);
+      const sessionType = `${selectedSessionType}min` as
+        | "30min"
+        | "60min"
+        | "90min";
+
+      // Create booking
+      const createResponse = await bookingService.createBooking({
+        consultantId: consultantId,
+        sessionType: sessionType,
+        startTime: new Date(selectedSlot.start).toISOString(),
+        duration: duration,
+        userTimezone: userTimezone,
+        userNotes: bookingNotes,
+      });
+
+      if (!createResponse.success || !createResponse.data) {
+        throw new Error(createResponse.message || "Failed to create booking");
+      }
+
+      const bookingId = createResponse.data.booking._id;
+
+      // Confirm booking immediately (no payment for now)
+      const confirmResponse = await bookingService.confirmBooking({
+        bookingId: bookingId,
+        paymentId: "manual-confirmation",
+      });
+
+      if (confirmResponse.success) {
+        // Redirect to success page
+        router.push(`/user/bookings?success=true&bookingId=${bookingId}`);
+      } else {
+        throw new Error(confirmResponse.message || "Failed to confirm booking");
+      }
+    } catch (error: any) {
+      console.error("Booking error:", error);
+      setBookingError(
+        error.response?.data?.message ||
+          error.message ||
+          "Failed to book session. Please try again."
+      );
+    } finally {
+      setBookingLoading(false);
     }
   };
 
@@ -100,33 +225,19 @@ export default function ConsultantProfilePage() {
     router.push("/consultations");
   };
 
-  // const getBookingLink = (duration: number): string | null => {
-  //   if (!consultant?.calcom?.isConnected || !consultant?.calcom?.eventTypes) {
-  //     return null;
-  //   }
-
-  //   const eventTypes = consultant.calcom.eventTypes;
-  //   if (duration === 30 && eventTypes.duration30) {
-  //     return eventTypes.duration30.link;
-  //   } else if (duration === 60 && eventTypes.duration60) {
-  //     return eventTypes.duration60.link;
-  //   } else if (duration === 90 && eventTypes.duration90) {
-  //     return eventTypes.duration90.link;
-  //   }
-  //   return null;
-  // };
-
-  // Placeholder calendar dates for June 2023
-  const generateCalendarDates = () => {
-    const dates = [];
-    for (let i = 1; i <= 30; i++) {
-      dates.push(i);
-    }
-    return dates;
+  const handleSessionTypeChange = (event: SelectChangeEvent) => {
+    setSelectedSessionType(event.target.value);
+    setSelectedSlot(null);
   };
 
-  const calendarDates = generateCalendarDates();
-  const bookedDates = [20, 21, 22, 23, 27, 28, 29, 30]; // Placeholder
+  const handleDateSelect = (date: Date) => {
+    setSelectedDate(date);
+    setSelectedSlot(null);
+  };
+
+  const handleSlotSelect = (slot: TimeSlot) => {
+    setSelectedSlot(slot);
+  };
 
   if (loading) {
     return (
@@ -648,7 +759,7 @@ export default function ConsultantProfilePage() {
                 </TabPanel>
               </Paper>
 
-              {/* Booking Calendar */}
+              {/* Booking Section */}
               <Paper
                 elevation={0}
                 sx={{
@@ -659,198 +770,208 @@ export default function ConsultantProfilePage() {
               >
                 <Typography
                   sx={{
-                    fontFamily: "Faustina",
-                    fontSize: "20px",
-                    fontWeight: 700,
+                    fontFamily: "Source Sans Pro",
+                    fontSize: "14px",
+                    fontWeight: 600,
                     color: "#1A1A1A",
                     mb: 1,
                   }}
                 >
-                  Book a Session
+                  {consultant.firstName} {consultant.lastName}
                 </Typography>
-
-                {/* Select Service Dropdown */}
-                <Box sx={{ mb: 3 }}>
+                <Typography
+                  sx={{
+                    fontFamily: "Faustina",
+                    fontSize: "24px",
+                    fontWeight: 700,
+                    color: "#1A1A1A",
+                    mb: 0.5,
+                  }}
+                >
+                  {selectedSessionType
+                    ? `${selectedSessionType} Minute Meeting`
+                    : "Select a Meeting Type"}
+                </Typography>
+                <Box
+                  sx={{
+                    display: "flex",
+                    alignItems: "center",
+                    gap: 1,
+                    mb: 3,
+                  }}
+                >
+                  <Box
+                    sx={{
+                      width: 8,
+                      height: 8,
+                      borderRadius: "50%",
+                      backgroundColor: "#4CAF50",
+                    }}
+                  />
                   <Typography
                     sx={{
                       fontFamily: "Source Sans Pro",
                       fontSize: "14px",
-                      fontWeight: 600,
-                      color: "#1A1A1A",
-                      mb: 1,
+                      color: "#666",
                     }}
                   >
-                    Select Service
+                    {selectedSessionType ? `${selectedSessionType} min` : ""}
                   </Typography>
-                  <Box
-                    sx={{
-                      p: 2,
-                      border: "1px solid #E0E0E0",
-                      borderRadius: "8px",
-                      backgroundColor: "#F9F9F9",
-                    }}
-                  >
-                    <Typography
-                      sx={{
-                        fontFamily: "Source Sans Pro",
-                        fontSize: "16px",
-                        color: "#666",
-                      }}
-                    >
-                      30 - Minute Consultation Call
-                    </Typography>
-                  </Box>
+                  {selectedSessionType && (
+                    <>
+                      <Box
+                        sx={{
+                          width: 4,
+                          height: 4,
+                          borderRadius: "50%",
+                          backgroundColor: "#666",
+                        }}
+                      />
+                      <Typography
+                        sx={{
+                          fontFamily: "Source Sans Pro",
+                          fontSize: "14px",
+                          color: "#666",
+                        }}
+                      >
+                        Web conferencing details provided upon confirmation
+                      </Typography>
+                    </>
+                  )}
                 </Box>
 
-                {/* Calendar */}
-                <Box>
-                  <Box
+                {/* Session Type Selector */}
+                <FormControl fullWidth sx={{ mb: 3 }}>
+                  <InputLabel>Select Session Duration</InputLabel>
+                  <Select
+                    value={selectedSessionType}
+                    label="Select Session Duration"
+                    onChange={handleSessionTypeChange}
                     sx={{
-                      display: "flex",
-                      justifyContent: "space-between",
-                      alignItems: "center",
-                      mb: 2,
+                      fontFamily: "Source Sans Pro",
+                      "& .MuiOutlinedInput-notchedOutline": {
+                        borderColor: "#E0E0E0",
+                      },
                     }}
                   >
+                    {consultant.services
+                      .filter((s) => s.enabled)
+                      .map((service) => (
+                        <MenuItem
+                          key={service.duration}
+                          value={service.duration.toString()}
+                        >
+                          {service.duration} Minute Session - $
+                          {consultant.hourlyRate}
+                        </MenuItem>
+                      ))}
+                  </Select>
+                </FormControl>
+
+                {bookingError && (
+                  <Alert severity="error" sx={{ mb: 2 }}>
+                    {bookingError}
+                  </Alert>
+                )}
+
+                <Box
+                  sx={{
+                    display: "flex",
+                    gap: 3,
+                    flexDirection: { xs: "column", md: "row" },
+                  }}
+                >
+                  {/* Left: Calendar */}
+                  <Box sx={{ flex: 1 }}>
                     <Typography
                       sx={{
                         fontFamily: "Source Sans Pro",
                         fontSize: "18px",
                         fontWeight: 600,
                         color: "#1A1A1A",
+                        mb: 2,
                       }}
                     >
-                      June 2023
+                      Select a Date & Time
                     </Typography>
-                    <Box sx={{ display: "flex", gap: 2 }}>
-                      <Button
-                        size="small"
-                        sx={{ minWidth: "auto", color: "#666" }}
+
+                    <BookingCalendar
+                      selectedDate={selectedDate}
+                      onDateSelect={handleDateSelect}
+                      minDate={new Date()}
+                    />
+
+                    {/* Timezone Selector */}
+                    <Box sx={{ mt: 2 }}>
+                      <Typography
+                        sx={{
+                          fontFamily: "Source Sans Pro",
+                          fontSize: "13px",
+                          color: "#666",
+                          mb: 1,
+                        }}
                       >
-                        ‹
-                      </Button>
-                      <Button
-                        size="small"
-                        sx={{ minWidth: "auto", color: "#666" }}
-                      >
-                        ›
-                      </Button>
+                        🌍 Your Time Zone
+                      </Typography>
+                      <TimezoneSelect
+                        value={userTimezone}
+                        onChange={(tz: any) => setUserTimezone(tz.value)}
+                        styles={{
+                          control: (provided: any) => ({
+                            ...provided,
+                            borderColor: "#E0E0E0",
+                            borderRadius: "8px",
+                            padding: "2px",
+                            fontFamily: "Source Sans Pro",
+                            fontSize: "13px",
+                          }),
+                        }}
+                      />
                     </Box>
                   </Box>
 
-                  {/* Calendar Grid */}
-                  <Box>
-                    {/* Day headers */}
-                    <Box
-                      sx={{
-                        display: "grid",
-                        gridTemplateColumns: "repeat(7, 1fr)",
-                        gap: 1,
-                        mb: 1,
-                      }}
-                    >
-                      {["SUN", "MON", "TUE", "WED", "THU", "FRI", "SAT"].map(
-                        (day) => (
-                          <Typography
-                            key={day}
-                            sx={{
-                              fontFamily: "Source Sans Pro",
-                              fontSize: "12px",
-                              fontWeight: 600,
-                              color: "#666",
-                              textAlign: "center",
-                            }}
-                          >
-                            {day}
-                          </Typography>
-                        )
-                      )}
-                    </Box>
-
-                    {/* Date cells */}
-                    <Box
-                      sx={{
-                        display: "grid",
-                        gridTemplateColumns: "repeat(7, 1fr)",
-                        gap: 1,
-                      }}
-                    >
-                      {/* Empty cells for alignment */}
-                      {[1, 2, 3].map((i) => (
-                        <Box key={`empty-${i}`} sx={{ aspectRatio: "1" }} />
-                      ))}
-
-                      {calendarDates.map((date) => {
-                        const isBooked = bookedDates.includes(date);
-                        const isSelected = selectedDate?.getDate() === date;
-
-                        return (
-                          <Box
-                            key={date}
-                            onClick={() =>
-                              !isBooked &&
-                              setSelectedDate(new Date(2023, 5, date))
-                            }
-                            sx={{
-                              aspectRatio: "1",
-                              display: "flex",
-                              alignItems: "center",
-                              justifyContent: "center",
-                              borderRadius: "8px",
-                              backgroundColor: isBooked
-                                ? "#F5F5F5"
-                                : isSelected
-                                ? "#005F73"
-                                : "transparent",
-                              color: isBooked
-                                ? "#CCC"
-                                : isSelected
-                                ? "#FFF"
-                                : "#666",
-                              fontFamily: "Source Sans Pro",
-                              fontSize: "14px",
-                              fontWeight: isSelected ? 600 : 400,
-                              cursor: isBooked ? "not-allowed" : "pointer",
-                              border: isSelected
-                                ? "2px solid #005F73"
-                                : "1px solid #E0E0E0",
-                              "&:hover": {
-                                backgroundColor: isBooked
-                                  ? "#F5F5F5"
-                                  : isSelected
-                                  ? "#005F73"
-                                  : "#F9F9F9",
-                              },
-                            }}
-                          >
-                            {date}
-                          </Box>
-                        );
-                      })}
-                    </Box>
+                  {/* Right: Time Slots */}
+                  <Box sx={{ flex: 1 }}>
+                    <TimeSlotPicker
+                      slots={availableSlots}
+                      selectedSlot={selectedSlot}
+                      onSlotSelect={handleSlotSelect}
+                      loading={slotsLoading}
+                      error={slotsError}
+                      selectedDate={selectedDate}
+                    />
                   </Box>
-
-                  <Typography
-                    sx={{
-                      fontFamily: "Source Sans Pro",
-                      fontSize: "12px",
-                      color: "#666",
-                      mt: 2,
-                      textAlign: "center",
-                    }}
-                  >
-                    Free cancellation up to 24 hours before session
-                  </Typography>
                 </Box>
+
+                {/* Notes */}
+                {selectedSlot && (
+                  <Box sx={{ mt: 3 }}>
+                    <TextField
+                      fullWidth
+                      multiline
+                      rows={3}
+                      label="Add notes (optional)"
+                      placeholder="Share any specific topics or questions you'd like to discuss..."
+                      value={bookingNotes}
+                      onChange={(e) => setBookingNotes(e.target.value)}
+                      sx={{
+                        "& .MuiOutlinedInput-root": {
+                          fontFamily: "Source Sans Pro",
+                        },
+                      }}
+                    />
+                  </Box>
+                )}
 
                 {/* Book Button */}
                 <Button
                   fullWidth
-                  disabled={!selectedDate}
+                  disabled={!selectedSlot || bookingLoading}
+                  onClick={handleBookSession}
                   sx={{
                     mt: 3,
                     py: 1.5,
-                    backgroundColor: "#FF5722",
+                    backgroundColor: "#005F73",
                     color: "#FFF",
                     fontFamily: "Source Sans Pro",
                     fontSize: "16px",
@@ -858,7 +979,7 @@ export default function ConsultantProfilePage() {
                     borderRadius: "8px",
                     textTransform: "none",
                     "&:hover": {
-                      backgroundColor: "#E64A19",
+                      backgroundColor: "#004D5C",
                     },
                     "&:disabled": {
                       backgroundColor: "#CCC",
@@ -866,8 +987,26 @@ export default function ConsultantProfilePage() {
                     },
                   }}
                 >
-                  {selectedDate ? "Book Session" : "Select a Date"}
+                  {bookingLoading ? (
+                    <CircularProgress size={24} sx={{ color: "#FFF" }} />
+                  ) : selectedSlot ? (
+                    "Confirm Booking"
+                  ) : (
+                    "Select a Time Slot"
+                  )}
                 </Button>
+
+                <Typography
+                  sx={{
+                    fontFamily: "Source Sans Pro",
+                    fontSize: "12px",
+                    color: "#666",
+                    mt: 2,
+                    textAlign: "center",
+                  }}
+                >
+                  By proceeding, you agree to our Terms & Conditions
+                </Typography>
               </Paper>
             </Box>
           </Box>

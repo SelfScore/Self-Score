@@ -6,7 +6,7 @@ import type {  LoginData, SignUpData, VerifyEmailData } from '../services/authSe
 
 export const useAuth = () => {
   const dispatch = useAppDispatch();
-  const { user, isAuthenticated, isLoading, error, progress, purchasedLevels } = useAppSelector((state) => state.auth);
+  const { user, isAuthenticated, isLoading, isInitialized, error, progress, purchasedLevels } = useAppSelector((state) => state.auth);
 
   const login = async (data: LoginData) => {
     try {
@@ -57,6 +57,7 @@ export const useAuth = () => {
     user,
     isAuthenticated,
     isLoading,
+    isInitialized,
     error,
     progress,
     purchasedLevels,

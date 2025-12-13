@@ -623,308 +623,244 @@ export const sendConsultantRejectionEmail = async (
     });
 };
 
-// Send booking confirmation email (to both consultant and attendee)
-// export const sendBookingConfirmationEmail = async (data: {
-//     attendeeName: string;
-//     attendeeEmail: string;
-//     consultantName: string;
-//     consultantEmail: string;
-//     startTime: Date;
-//     endTime: Date;
-//     duration: number;
-//     meetingUrl?: string;
-//     title: string;
-// }): Promise<boolean> => {
-//     const {
-//         attendeeName,
-//         attendeeEmail,
-//         consultantName,
-//         consultantEmail,
-//         startTime,
-//         endTime,
-//         duration,
-//         meetingUrl,
-//         title
-//     } = data;
+// Send booking confirmation email (to user and consultant)
+export const sendBookingConfirmationEmail = async (data: {
+    userEmail: string;
+    userName: string;
+    consultantName: string;
+    sessionType: string;
+    startTime: Date;
+    duration: number;
+    meetingLink?: string;
+    timezone: string;
+}): Promise<boolean> => {
+    const {
+        userEmail,
+        userName,
+        consultantName,
+        sessionType,
+        startTime,
+        duration,
+        meetingLink,
+        timezone
+    } = data;
 
-//     const formatDateTime = (date: Date) => {
-//         return date.toLocaleString('en-US', {
-//             weekday: 'long',
-//             year: 'numeric',
-//             month: 'long',
-//             day: 'numeric',
-//             hour: 'numeric',
-//             minute: '2-digit',
-//             timeZoneName: 'short'
-//         });
-//     };
+    const endTime = new Date(startTime.getTime() + duration * 60000);
 
-//     // Email to attendee
-//     const attendeeHtml = `
-//         <!DOCTYPE html>
-//         <html>
-//         <head>
-//             <meta charset="utf-8">
-//             <meta name="viewport" content="width=device-width, initial-scale=1.0">
-//             <title>Booking Confirmed</title>
-//         </head>
-//         <body style="font-family: Arial, sans-serif; line-height: 1.6; color: #333; max-width: 600px; margin: 0 auto; padding: 20px;">
-//             <div style="background: linear-gradient(135deg, #005F73 0%, #0A9396 100%); padding: 30px; text-align: center; border-radius: 10px 10px 0 0;">
-//                 <h1 style="color: white; margin: 0; font-size: 28px;">${APP_NAME}</h1>
-//             </div>
+    const formatDateTime = (date: Date) => {
+        return date.toLocaleString('en-US', {
+            weekday: 'long',
+            year: 'numeric',
+            month: 'long',
+            day: 'numeric',
+            hour: 'numeric',
+            minute: '2-digit',
+            timeZone: timezone
+        });
+    };
+
+    // Email to user
+    const userHtml = `
+        <!DOCTYPE html>
+        <html>
+        <head>
+            <meta charset="utf-8">
+            <meta name="viewport" content="width=device-width, initial-scale=1.0">
+            <title>Booking Confirmed</title>
+        </head>
+        <body style="font-family: Arial, sans-serif; line-height: 1.6; color: #333; max-width: 600px; margin: 0 auto; padding: 20px;">
+            <div style="background: linear-gradient(135deg, #005F73 0%, #0A9396 100%); padding: 30px; text-align: center; border-radius: 10px 10px 0 0;">
+                <h1 style="color: white; margin: 0; font-size: 28px;">${APP_NAME}</h1>
+            </div>
             
-//             <div style="background: #f9f9f9; padding: 30px; border-radius: 0 0 10px 10px;">
-//                 <h2 style="color: #005F73; margin-top: 0;">✅ Booking Confirmed!</h2>
+            <div style="background: #f9f9f9; padding: 30px; border-radius: 0 0 10px 10px;">
+                <h2 style="color: #005F73; margin-top: 0;">✅ Booking Confirmed!</h2>
                 
-//                 <p style="font-size: 16px; color: #555;">
-//                     Hi ${attendeeName},
-//                 </p>
+                <p style="font-size: 16px; color: #555;">
+                    Hi ${userName},
+                </p>
                 
-//                 <p style="font-size: 16px; color: #555;">
-//                     Your consultation with <strong>${consultantName}</strong> has been confirmed.
-//                 </p>
+                <p style="font-size: 16px; color: #555;">
+                    Your consultation with <strong>${consultantName}</strong> has been confirmed.
+                </p>
                 
-//                 <div style="background: white; padding: 25px; border-radius: 8px; margin: 25px 0; border-left: 4px solid #E87A42;">
-//                     <h3 style="margin-top: 0; color: #005F73;">📅 Appointment Details</h3>
-//                     <p style="margin: 10px 0;"><strong>Session:</strong> ${title}</p>
-//                     <p style="margin: 10px 0;"><strong>Consultant:</strong> ${consultantName}</p>
-//                     <p style="margin: 10px 0;"><strong>Duration:</strong> ${duration} minutes</p>
-//                     <p style="margin: 10px 0;"><strong>Start Time:</strong> ${formatDateTime(startTime)}</p>
-//                     <p style="margin: 10px 0;"><strong>End Time:</strong> ${formatDateTime(endTime)}</p>
-//                     ${meetingUrl ? `<p style="margin: 10px 0;"><strong>Meeting Link:</strong> <a href="${meetingUrl}" style="color: #0A9396;">${meetingUrl}</a></p>` : ''}
-//                 </div>
+                <div style="background: white; padding: 25px; border-radius: 8px; margin: 25px 0; border-left: 4px solid #E87A42;">
+                    <h3 style="margin-top: 0; color: #005F73;">📅 Appointment Details</h3>
+                    <p style="margin: 10px 0;"><strong>Session:</strong> ${sessionType}</p>
+                    <p style="margin: 10px 0;"><strong>Consultant:</strong> ${consultantName}</p>
+                    <p style="margin: 10px 0;"><strong>Duration:</strong> ${duration} minutes</p>
+                    <p style="margin: 10px 0;"><strong>Start Time:</strong> ${formatDateTime(startTime)}</p>
+                    <p style="margin: 10px 0;"><strong>End Time:</strong> ${formatDateTime(endTime)}</p>
+                    <p style="margin: 10px 0;"><strong>Timezone:</strong> ${timezone}</p>
+                    ${meetingLink ? `<p style="margin: 10px 0;"><strong>Meeting Link:</strong> <a href="${meetingLink}" style="color: #0A9396;">${meetingLink}</a></p>` : ''}
+                </div>
                 
-//                 <div style="background: #E8F4F8; padding: 20px; border-radius: 8px; margin: 25px 0;">
-//                     <p style="margin: 0; font-size: 14px; color: #005F73;">
-//                         <strong>📝 Before your session:</strong><br>
-//                         • Please arrive 5 minutes early<br>
-//                         • Ensure you have a stable internet connection<br>
-//                         • Prepare any questions you'd like to discuss<br>
-//                         • Check your audio and video settings
-//                     </p>
-//                 </div>
+                <div style="background: #E8F4F8; padding: 20px; border-radius: 8px; margin: 25px 0;">
+                    <p style="margin: 0; font-size: 14px; color: #005F73;">
+                        <strong>📝 Before your session:</strong><br>
+                        • Please arrive 5 minutes early<br>
+                        • Ensure you have a stable internet connection<br>
+                        • Prepare any questions you'd like to discuss<br>
+                        • Check your audio and video settings
+                    </p>
+                </div>
                 
-//                 <p style="font-size: 14px; color: #666;">
-//                     If you need to reschedule or cancel, please do so at least 24 hours in advance.
-//                 </p>
+                <p style="font-size: 14px; color: #666;">
+                    If you need to cancel, please do so through your dashboard.
+                </p>
                 
-//                 <div style="margin-top: 30px; padding-top: 20px; border-top: 1px solid #ddd;">
-//                     <p style="font-size: 12px; color: #999; margin: 0;">
-//                         © ${new Date().getFullYear()} ${APP_NAME}. All rights reserved.
-//                     </p>
-//                 </div>
-//             </div>
-//         </body>
-//         </html>
-//     `;
+                <div style="margin-top: 30px; padding-top: 20px; border-top: 1px solid #ddd;">
+                    <p style="font-size: 12px; color: #999; margin: 0;">
+                        © ${new Date().getFullYear()} ${APP_NAME}. All rights reserved.
+                    </p>
+                </div>
+            </div>
+        </body>
+        </html>
+    `;
 
-//     // Email to consultant
-//     const consultantHtml = `
-//         <!DOCTYPE html>
-//         <html>
-//         <head>
-//             <meta charset="utf-8">
-//             <meta name="viewport" content="width=device-width, initial-scale=1.0">
-//             <title>New Booking Received</title>
-//         </head>
-//         <body style="font-family: Arial, sans-serif; line-height: 1.6; color: #333; max-width: 600px; margin: 0 auto; padding: 20px;">
-//             <div style="background: linear-gradient(135deg, #005F73 0%, #0A9396 100%); padding: 30px; text-align: center; border-radius: 10px 10px 0 0;">
-//                 <h1 style="color: white; margin: 0; font-size: 28px;">${APP_NAME}</h1>
-//             </div>
-            
-//             <div style="background: #f9f9f9; padding: 30px; border-radius: 0 0 10px 10px;">
-//                 <h2 style="color: #005F73; margin-top: 0;">🎉 New Booking Received!</h2>
-                
-//                 <p style="font-size: 16px; color: #555;">
-//                     Hi ${consultantName},
-//                 </p>
-                
-//                 <p style="font-size: 16px; color: #555;">
-//                     You have a new consultation booking.
-//                 </p>
-                
-//                 <div style="background: white; padding: 25px; border-radius: 8px; margin: 25px 0; border-left: 4px solid #E87A42;">
-//                     <h3 style="margin-top: 0; color: #005F73;">📅 Booking Details</h3>
-//                     <p style="margin: 10px 0;"><strong>Client:</strong> ${attendeeName}</p>
-//                     <p style="margin: 10px 0;"><strong>Email:</strong> ${attendeeEmail}</p>
-//                     <p style="margin: 10px 0;"><strong>Session:</strong> ${title}</p>
-//                     <p style="margin: 10px 0;"><strong>Duration:</strong> ${duration} minutes</p>
-//                     <p style="margin: 10px 0;"><strong>Start Time:</strong> ${formatDateTime(startTime)}</p>
-//                     <p style="margin: 10px 0;"><strong>End Time:</strong> ${formatDateTime(endTime)}</p>
-//                     ${meetingUrl ? `<p style="margin: 10px 0;"><strong>Meeting Link:</strong> <a href="${meetingUrl}" style="color: #0A9396;">${meetingUrl}</a></p>` : ''}
-//                 </div>
-                
-//                 <div style="background: #E8F4F8; padding: 20px; border-radius: 8px; margin: 25px 0;">
-//                     <p style="margin: 0; font-size: 14px; color: #005F73;">
-//                         <strong>📝 Reminder:</strong><br>
-//                         • Review the client's profile if available<br>
-//                         • Join the meeting 5 minutes early<br>
-//                         • Ensure your workspace is ready<br>
-//                         • Have any necessary materials prepared
-//                     </p>
-//                 </div>
-                
-//                 <div style="margin-top: 30px; padding-top: 20px; border-top: 1px solid #ddd;">
-//                     <p style="font-size: 12px; color: #999; margin: 0;">
-//                         © ${new Date().getFullYear()} ${APP_NAME}. All rights reserved.
-//                     </p>
-//                 </div>
-//             </div>
-//         </body>
-//         </html>
-//     `;
-
-//     // Send both emails
-//     const attendeeEmailSent = await sendEmail({
-//         to: attendeeEmail,
-//         subject: `Booking Confirmed: ${title}`,
-//         html: attendeeHtml,
-//     });
-
-//     const consultantEmailSent = await sendEmail({
-//         to: consultantEmail,
-//         subject: `New Booking: ${title} with ${attendeeName}`,
-//         html: consultantHtml,
-//     });
-
-//     return attendeeEmailSent && consultantEmailSent;
-// };
+    // Send email
+    return await sendEmail({
+        to: userEmail,
+        subject: `Booking Confirmed: ${sessionType} with ${consultantName}`,
+        html: userHtml,
+    });
+};
 
 // Send booking cancellation email
-// export const sendBookingCancellationEmail = async (data: {
-//     attendeeName: string;
-//     attendeeEmail: string;
-//     consultantName: string;
-//     consultantEmail: string;
-//     startTime: Date;
-//     title: string;
-//     cancellationReason?: string;
-// }): Promise<boolean> => {
-//     const {
-//         attendeeName,
-//         attendeeEmail,
-//         consultantName,
-//         consultantEmail,
-//         startTime,
-//         title,
-//         cancellationReason
-//     } = data;
+export const sendBookingCancellationEmail = async (data: {
+    userEmail: string;
+    userName: string;
+    consultantName: string;
+    consultantEmail: string;
+    sessionType: string;
+    startTime: Date;
+    cancellationReason?: string;
+}): Promise<boolean> => {
+    const {
+        userEmail,
+        userName,
+        consultantName,
+        consultantEmail,
+        sessionType,
+        startTime,
+        cancellationReason
+    } = data;
 
-//     const formatDateTime = (date: Date) => {
-//         return date.toLocaleString('en-US', {
-//             weekday: 'long',
-//             year: 'numeric',
-//             month: 'long',
-//             day: 'numeric',
-//             hour: 'numeric',
-//             minute: '2-digit',
-//             timeZoneName: 'short'
-//         });
-//     };
+    const formatDateTime = (date: Date) => {
+        return date.toLocaleString('en-US', {
+            weekday: 'long',
+            year: 'numeric',
+            month: 'long',
+            day: 'numeric',
+            hour: 'numeric',
+            minute: '2-digit',
+            timeZoneName: 'short'
+        });
+    };
 
-//     // Email to attendee
-//     const attendeeHtml = `
-//         <!DOCTYPE html>
-//         <html>
-//         <head>
-//             <meta charset="utf-8">
-//             <meta name="viewport" content="width=device-width, initial-scale=1.0">
-//             <title>Booking Cancelled</title>
-//         </head>
-//         <body style="font-family: Arial, sans-serif; line-height: 1.6; color: #333; max-width: 600px; margin: 0 auto; padding: 20px;">
-//             <div style="background: linear-gradient(135deg, #005F73 0%, #0A9396 100%); padding: 30px; text-align: center; border-radius: 10px 10px 0 0;">
-//                 <h1 style="color: white; margin: 0; font-size: 28px;">${APP_NAME}</h1>
-//             </div>
+    // Email to user
+    const userHtml = `
+        <!DOCTYPE html>
+        <html>
+        <head>
+            <meta charset="utf-8">
+            <meta name="viewport" content="width=device-width, initial-scale=1.0">
+            <title>Booking Cancelled</title>
+        </head>
+        <body style="font-family: Arial, sans-serif; line-height: 1.6; color: #333; max-width: 600px; margin: 0 auto; padding: 20px;">
+            <div style="background: linear-gradient(135deg, #005F73 0%, #0A9396 100%); padding: 30px; text-align: center; border-radius: 10px 10px 0 0;">
+                <h1 style="color: white; margin: 0; font-size: 28px;">${APP_NAME}</h1>
+            </div>
             
-//             <div style="background: #f9f9f9; padding: 30px; border-radius: 0 0 10px 10px;">
-//                 <h2 style="color: #F44336; margin-top: 0;">❌ Booking Cancelled</h2>
+            <div style="background: #f9f9f9; padding: 30px; border-radius: 0 0 10px 10px;">
+                <h2 style="color: #F44336; margin-top: 0;">❌ Booking Cancelled</h2>
                 
-//                 <p style="font-size: 16px; color: #555;">
-//                     Hi ${attendeeName},
-//                 </p>
+                <p style="font-size: 16px; color: #555;">
+                    Hi ${userName},
+                </p>
                 
-//                 <p style="font-size: 16px; color: #555;">
-//                     Your consultation booking has been cancelled.
-//                 </p>
+                <p style="font-size: 16px; color: #555;">
+                    Your consultation booking has been cancelled.
+                </p>
                 
-//                 <div style="background: white; padding: 25px; border-radius: 8px; margin: 25px 0; border-left: 4px solid #F44336;">
-//                     <h3 style="margin-top: 0; color: #F44336;">📅 Cancelled Booking</h3>
-//                     <p style="margin: 10px 0;"><strong>Session:</strong> ${title}</p>
-//                     <p style="margin: 10px 0;"><strong>Consultant:</strong> ${consultantName}</p>
-//                     <p style="margin: 10px 0;"><strong>Scheduled Time:</strong> ${formatDateTime(startTime)}</p>
-//                     ${cancellationReason ? `<p style="margin: 10px 0;"><strong>Reason:</strong> ${cancellationReason}</p>` : ''}
-//                 </div>
+                <div style="background: white; padding: 25px; border-radius: 8px; margin: 25px 0; border-left: 4px solid #F44336;">
+                    <h3 style="margin-top: 0; color: #F44336;">📅 Cancelled Booking</h3>
+                    <p style="margin: 10px 0;"><strong>Session:</strong> ${sessionType}</p>
+                    <p style="margin: 10px 0;"><strong>Consultant:</strong> ${consultantName}</p>
+                    <p style="margin: 10px 0;"><strong>Scheduled Time:</strong> ${formatDateTime(startTime)}</p>
+                    ${cancellationReason ? `<p style="margin: 10px 0;"><strong>Reason:</strong> ${cancellationReason}</p>` : ''}
+                </div>
                 
-//                 <p style="font-size: 14px; color: #666;">
-//                     You can book a new session at any time through our platform.
-//                 </p>
+                <p style="font-size: 14px; color: #666;">
+                    You can book a new session at any time through our platform.
+                </p>
                 
-//                 <div style="margin-top: 30px; padding-top: 20px; border-top: 1px solid #ddd;">
-//                     <p style="font-size: 12px; color: #999; margin: 0;">
-//                         © ${new Date().getFullYear()} ${APP_NAME}. All rights reserved.
-//                     </p>
-//                 </div>
-//             </div>
-//         </body>
-//         </html>
-//     `;
+                <div style="margin-top: 30px; padding-top: 20px; border-top: 1px solid #ddd;">
+                    <p style="font-size: 12px; color: #999; margin: 0;">
+                        © ${new Date().getFullYear()} ${APP_NAME}. All rights reserved.
+                    </p>
+                </div>
+            </div>
+        </body>
+        </html>
+    `;
 
-//     // Email to consultant
-//     const consultantHtml = `
-//         <!DOCTYPE html>
-//         <html>
-//         <head>
-//             <meta charset="utf-8">
-//             <meta name="viewport" content="width=device-width, initial-scale=1.0">
-//             <title>Booking Cancelled</title>
-//         </head>
-//         <body style="font-family: Arial, sans-serif; line-height: 1.6; color: #333; max-width: 600px; margin: 0 auto; padding: 20px;">
-//             <div style="background: linear-gradient(135deg, #005F73 0%, #0A9396 100%); padding: 30px; text-align: center; border-radius: 10px 10px 0 0;">
-//                 <h1 style="color: white; margin: 0; font-size: 28px;">${APP_NAME}</h1>
-//             </div>
+    // Email to consultant
+    const consultantHtml = `
+        <!DOCTYPE html>
+        <html>
+        <head>
+            <meta charset="utf-8">
+            <meta name="viewport" content="width=device-width, initial-scale=1.0">
+            <title>Booking Cancelled</title>
+        </head>
+        <body style="font-family: Arial, sans-serif; line-height: 1.6; color: #333; max-width: 600px; margin: 0 auto; padding: 20px;">
+            <div style="background: linear-gradient(135deg, #005F73 0%, #0A9396 100%); padding: 30px; text-align: center; border-radius: 10px 10px 0 0;">
+                <h1 style="color: white; margin: 0; font-size: 28px;">${APP_NAME}</h1>
+            </div>
             
-//             <div style="background: #f9f9f9; padding: 30px; border-radius: 0 0 10px 10px;">
-//                 <h2 style="color: #F44336; margin-top: 0;">❌ Booking Cancelled</h2>
+            <div style="background: #f9f9f9; padding: 30px; border-radius: 0 0 10px 10px;">
+                <h2 style="color: #F44336; margin-top: 0;">❌ Booking Cancelled</h2>
                 
-//                 <p style="font-size: 16px; color: #555;">
-//                     Hi ${consultantName},
-//                 </p>
+                <p style="font-size: 16px; color: #555;">
+                    Hi ${consultantName},
+                </p>
                 
-//                 <p style="font-size: 16px; color: #555;">
-//                     A consultation booking has been cancelled.
-//                 </p>
+                <p style="font-size: 16px; color: #555;">
+                    A consultation booking has been cancelled.
+                </p>
                 
-//                 <div style="background: white; padding: 25px; border-radius: 8px; margin: 25px 0; border-left: 4px solid #F44336;">
-//                     <h3 style="margin-top: 0; color: #F44336;">📅 Cancelled Booking</h3>
-//                     <p style="margin: 10px 0;"><strong>Client:</strong> ${attendeeName}</p>
-//                     <p style="margin: 10px 0;"><strong>Email:</strong> ${attendeeEmail}</p>
-//                     <p style="margin: 10px 0;"><strong>Session:</strong> ${title}</p>
-//                     <p style="margin: 10px 0;"><strong>Scheduled Time:</strong> ${formatDateTime(startTime)}</p>
-//                     ${cancellationReason ? `<p style="margin: 10px 0;"><strong>Reason:</strong> ${cancellationReason}</p>` : ''}
-//                 </div>
+                <div style="background: white; padding: 25px; border-radius: 8px; margin: 25px 0; border-left: 4px solid #F44336;">
+                    <h3 style="margin-top: 0; color: #F44336;">📅 Cancelled Booking</h3>
+                    <p style="margin: 10px 0;"><strong>Client:</strong> ${userName}</p>
+                    <p style="margin: 10px 0;"><strong>Session:</strong> ${sessionType}</p>
+                    <p style="margin: 10px 0;"><strong>Scheduled Time:</strong> ${formatDateTime(startTime)}</p>
+                    ${cancellationReason ? `<p style="margin: 10px 0;"><strong>Reason:</strong> ${cancellationReason}</p>` : ''}
+                </div>
                 
-//                 <div style="margin-top: 30px; padding-top: 20px; border-top: 1px solid #ddd;">
-//                     <p style="font-size: 12px; color: #999; margin: 0;">
-//                         © ${new Date().getFullYear()} ${APP_NAME}. All rights reserved.
-//                     </p>
-//                 </div>
-//             </div>
-//         </body>
-//         </html>
-//     `;
+                <div style="margin-top: 30px; padding-top: 20px; border-top: 1px solid #ddd;">
+                    <p style="font-size: 12px; color: #999; margin: 0;">
+                        © ${new Date().getFullYear()} ${APP_NAME}. All rights reserved.
+                    </p>
+                </div>
+            </div>
+        </body>
+        </html>
+    `;
 
-//     // Send both emails
-//     const attendeeEmailSent = await sendEmail({
-//         to: attendeeEmail,
-//         subject: `Booking Cancelled: ${title}`,
-//         html: attendeeHtml,
-//     });
+    // Send both emails
+    const userEmailSent = await sendEmail({
+        to: userEmail,
+        subject: `Booking Cancelled: ${sessionType}`,
+        html: userHtml,
+    });
 
-//     const consultantEmailSent = await sendEmail({
-//         to: consultantEmail,
-//         subject: `Booking Cancelled: ${title} with ${attendeeName}`,
-//         html: consultantHtml,
-//     });
+    const consultantEmailSent = await sendEmail({
+        to: consultantEmail,
+        subject: `Booking Cancelled: ${sessionType} with ${userName}`,
+        html: consultantHtml,
+    });
 
-//     return attendeeEmailSent && consultantEmailSent;
-// };
+    return userEmailSent && consultantEmailSent;
+};

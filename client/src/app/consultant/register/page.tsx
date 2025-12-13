@@ -1,6 +1,6 @@
 "use client";
 
-import { useState, useEffect } from "react";
+import { useState, useEffect, Suspense } from "react";
 import {
   Box,
   Container,
@@ -9,11 +9,12 @@ import {
   Typography,
   Chip,
 } from "@mui/material";
-import { useRouter } from "next/navigation";
+import { useRouter, useSearchParams } from "next/navigation";
 import Step1PersonalInfo from "./Step1PersonalInfo";
 import Step2Professional from "./Step2Professional";
 import Step3Certifications from "./Step3Certifications";
 import Step4Services from "./Step4Services";
+import Step5Calendar from "./Step5Calendar";
 import {
   Step1Data,
   Step2Data,
@@ -26,10 +27,12 @@ const STEPS = [
   { number: 2, label: "Professional", color: "#005F73" },
   { number: 3, label: "Certifications", color: "#005F73" },
   { number: 4, label: "Services", color: "#005F73" },
+  { number: 5, label: "Calendar", color: "#005F73" },
 ];
 
-export default function ConsultantRegisterPage() {
+function ConsultantRegisterContent() {
   const router = useRouter();
+  const searchParams = useSearchParams();
   const [currentStep, setCurrentStep] = useState(1);
   const [consultantId, setConsultantId] = useState<string>("");
 
@@ -44,13 +47,24 @@ export default function ConsultantRegisterPage() {
     "consultantId"
   > | null>(null);
 
-  // Load saved progress from sessionStorage
+  // Load saved progress from sessionStorage and URL params
   useEffect(() => {
-    const savedStep = sessionStorage.getItem("consultantCurrentStep");
+    // First, check URL query params
+    const stepParam = searchParams.get("step");
     const savedConsultantId = sessionStorage.getItem("consultantId");
 
-    if (savedStep) {
-      setCurrentStep(parseInt(savedStep));
+    if (stepParam) {
+      const stepNumber = parseInt(stepParam);
+      if (stepNumber >= 1 && stepNumber <= 5) {
+        setCurrentStep(stepNumber);
+        sessionStorage.setItem("consultantCurrentStep", stepParam);
+      }
+    } else {
+      // Fallback to sessionStorage if no URL param
+      const savedStep = sessionStorage.getItem("consultantCurrentStep");
+      if (savedStep) {
+        setCurrentStep(parseInt(savedStep));
+      }
     }
 
     if (savedConsultantId) {
@@ -65,12 +79,15 @@ export default function ConsultantRegisterPage() {
     if (saved1) setStep1Data(JSON.parse(saved1));
     if (saved2) setStep2Data(JSON.parse(saved2));
     if (saved3) setStep3Data(JSON.parse(saved3));
-  }, []);
+  }, [searchParams]);
 
-  // Save current step to sessionStorage
+  // Update URL when step changes
   useEffect(() => {
     sessionStorage.setItem("consultantCurrentStep", currentStep.toString());
-  }, [currentStep]);
+    router.replace(`/consultant/register?step=${currentStep}`, {
+      scroll: false,
+    });
+  }, [currentStep, router]);
 
   const handleStep1Complete = (data: Step1Data, newConsultantId: string) => {
     setStep1Data(data);
@@ -92,9 +109,12 @@ export default function ConsultantRegisterPage() {
     setCurrentStep(4);
   };
 
-  const handleRegistrationComplete = (
-    _data: Omit<Step4Data, "consultantId">
-  ) => {
+  const handleStep4Complete = (_data: Omit<Step4Data, "consultantId">) => {
+    // Move to Step 5 (Calendar)
+    setCurrentStep(5);
+  };
+
+  const handleCalendarComplete = () => {
     // Clear registration session storage
     sessionStorage.removeItem("consultantCurrentStep");
     sessionStorage.removeItem("consultantId");
@@ -104,7 +124,7 @@ export default function ConsultantRegisterPage() {
     sessionStorage.removeItem("consultantStep4");
 
     // Show success state briefly before redirecting
-    setCurrentStep(5); // Use step 5 to show success message
+    setCurrentStep(6); // Use step 6 to show success message
 
     // Redirect to consultant dashboard after a longer delay to ensure cookie is set
     setTimeout(() => {
@@ -116,7 +136,7 @@ export default function ConsultantRegisterPage() {
     setCurrentStep(step - 1);
   };
 
-  const progressPercentage = (currentStep / 4) * 100;
+  const progressPercentage = (currentStep / 5) * 100;
 
   return (
     <Box
@@ -180,7 +200,7 @@ export default function ConsultantRegisterPage() {
                 color: "#666",
               }}
             >
-              Step {currentStep} of 4
+              Step {currentStep <= 5 ? currentStep : 5} of 5
             </Typography>
             <Typography
               sx={{
@@ -289,12 +309,20 @@ export default function ConsultantRegisterPage() {
           {currentStep === 4 && consultantId && (
             <Step4Services
               consultantId={consultantId}
-              onComplete={handleRegistrationComplete}
+              onComplete={handleStep4Complete}
               onPrevious={() => handlePrevious(4)}
             />
           )}
 
-          {currentStep === 5 && (
+          {currentStep === 5 && consultantId && (
+            <Step5Calendar
+              consultantId={consultantId}
+              onComplete={handleCalendarComplete}
+              onPrevious={() => handlePrevious(5)}
+            />
+          )}
+
+          {currentStep === 6 && (
             <Box sx={{ textAlign: "center", py: 6 }}>
               <Box
                 sx={{
@@ -346,5 +374,27 @@ export default function ConsultantRegisterPage() {
         </Paper>
       </Container>
     </Box>
+  );
+}
+
+export default function ConsultantRegisterPage() {
+  return (
+    <Suspense
+      fallback={
+        <Box
+          sx={{
+            minHeight: "100vh",
+            display: "flex",
+            alignItems: "center",
+            justifyContent: "center",
+            backgroundColor: "#F9F9F9",
+          }}
+        >
+          <LinearProgress sx={{ width: "300px" }} />
+        </Box>
+      }
+    >
+      <ConsultantRegisterContent />
+    </Suspense>
   );
 }

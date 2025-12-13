@@ -11,6 +11,8 @@ import aiInterviewRoutes from './aiInterview';
 import level4ReviewRoutes from './level4Review';
 import consultantAuthRoutes from './consultantAuth';
 import consultantRoutes from './consultant';
+import googleCalendarRoutes from './googleCalendar';
+import bookingRoutes from './booking';
 // import calcomRoutes from './calcom';
 
 const router = Router();
@@ -28,6 +30,8 @@ router.use('/admin/level4', level4ReviewRoutes);
 router.use('/ai-interview', aiInterviewRoutes);
 router.use('/consultant/auth', consultantAuthRoutes);
 router.use('/consultants', consultantRoutes);
+router.use('/google-calendar', googleCalendarRoutes);
+router.use('/booking', bookingRoutes);
 // router.use('/calcom', calcomRoutes);
 
 
