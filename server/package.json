@@ -18,11 +18,14 @@
   "license": "ISC",
   "description": "Backend server for LifeScore application",
   "dependencies": {
+    "@aws-sdk/client-s3": "^3.948.0",
     "@google/generative-ai": "^0.24.1",
     "axios": "^1.13.2",
     "bcryptjs": "^3.0.2",
     "cookie-parser": "^1.4.7",
     "cors": "^2.8.5",
+    "date-fns": "^4.1.0",
+    "date-fns-tz": "^3.2.0",
     "dotenv": "^17.2.2",
     "express": "^5.1.0",
     "googleapis": "^168.0.0",
@@ -39,6 +42,7 @@
     "@types/express": "^5.0.3",
     "@types/jsonwebtoken": "^9.0.10",
     "@types/node": "^24.3.1",
+    "@types/uuid": "^10.0.0",
     "nodemon": "^3.1.10",
     "ts-node": "^10.9.2",
     "typescript": "^5.9.2"

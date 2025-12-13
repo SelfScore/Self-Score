@@ -98,7 +98,7 @@ export default function ConsultantProfilePage() {
     }
   }, [consultantId, isAuthenticated]);
 
-  // Fetch available slots when date or session type changes
+  // Fetch available slots when date, session type, or timezone changes
   useEffect(() => {
     if (selectedDate && selectedSessionType && consultant) {
       fetchAvailableSlots();
@@ -106,7 +106,7 @@ export default function ConsultantProfilePage() {
       setAvailableSlots([]);
       setSelectedSlot(null);
     }
-  }, [selectedDate, selectedSessionType]);
+  }, [selectedDate, selectedSessionType, userTimezone]);
 
   const fetchConsultant = async () => {
     try {
@@ -350,7 +350,7 @@ export default function ConsultantProfilePage() {
                       mb: 0.5,
                     }}
                   >
-                    Dr. {consultant.firstName} {consultant.lastName}
+                   {consultant.firstName} {consultant.lastName}
                   </Typography>
                   <Typography
                     sx={{

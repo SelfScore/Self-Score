@@ -2,6 +2,8 @@ import { googleCalendarService } from '../lib/googleCalendar';
 import ConsultantModel, { Consultant } from '../models/consultant';
 import BookingModel from '../models/booking';
 import { TimeSlot } from '../types/booking.types';
+import { toZonedTime, fromZonedTime, format as formatTz } from 'date-fns-tz';
+import { parseISO, startOfDay, endOfDay } from 'date-fns';
 
 export class AvailabilityService {
     /**
@@ -90,14 +92,13 @@ export class AvailabilityService {
         minBookingTime.setHours(minBookingTime.getHours() + consultant.bookingSettings.minAdvanceBookingHours);
 
         // Get existing bookings from our database
-        const startOfDay = new Date(date);
-        startOfDay.setHours(0, 0, 0, 0);
-        const endOfDay = new Date(date);
-        endOfDay.setHours(23, 59, 59, 999);
+        // Use startOfDay and endOfDay in UTC to capture all bookings for the date
+        const startOfDayUtc = startOfDay(date);
+        const endOfDayUtc = endOfDay(date);
 
         const existingBookings = await BookingModel.find({
             consultantId: consultantId,
-            startTime: { $gte: startOfDay, $lt: endOfDay },
+            startTime: { $gte: startOfDayUtc, $lt: endOfDayUtc },
             status: { $in: ['CREATED', 'PAID'] } // Only active bookings
         });
 
@@ -146,22 +147,34 @@ export class AvailabilityService {
             allSlots.push(...slots);
         }
 
-        return allSlots;
+        // Convert slot times from UTC to user's timezone for display
+        // The times are stored as UTC Date objects but will be formatted in user's timezone on frontend
+        const slotsInUserTimezone = allSlots.map(slot => ({
+            ...slot,
+            start: toZonedTime(slot.start, userTimezone),
+            end: toZonedTime(slot.end, userTimezone)
+        }));
+
+        return slotsInUserTimezone;
     }
 
     /**
      * Combine date with time string to create UTC Date
+     * Properly handles timezone conversion including DST
      */
     private combineDateTime(date: Date, timeString: string, timezone: string): Date {
         const [hours, minutes] = timeString.split(':').map(Number);
         
-        // Create date in consultant's timezone
-        const localDate = new Date(date);
-        localDate.setHours(hours, minutes, 0, 0);
-
-        // Convert to UTC (simplified - for production, use a library like date-fns-tz)
-        // This is a basic implementation, you should use proper timezone conversion
-        return localDate;
+        // Create ISO date string in YYYY-MM-DD format
+        const year = date.getFullYear();
+        const month = String(date.getMonth() + 1).padStart(2, '0');
+        const day = String(date.getDate()).padStart(2, '0');
+        const timeStr = `${String(hours).padStart(2, '0')}:${String(minutes).padStart(2, '0')}:00`;
+        const dateTimeStr = `${year}-${month}-${day}T${timeStr}`;
+        
+        // Convert from consultant's timezone to UTC
+        // This automatically handles DST transitions
+        return fromZonedTime(dateTimeStr, timezone);
     }
 
     /**

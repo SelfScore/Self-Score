@@ -33,6 +33,7 @@ const STEPS = [
 function ConsultantRegisterContent() {
   const router = useRouter();
   const searchParams = useSearchParams();
+  const [mounted, setMounted] = useState(false);
   const [currentStep, setCurrentStep] = useState(1);
   const [consultantId, setConsultantId] = useState<string>("");
 
@@ -47,8 +48,15 @@ function ConsultantRegisterContent() {
     "consultantId"
   > | null>(null);
 
-  // Load saved progress from sessionStorage and URL params
+  // Set mounted flag on client side
   useEffect(() => {
+    setMounted(true);
+  }, []);
+
+  // Load saved progress from sessionStorage and URL params (client-side only)
+  useEffect(() => {
+    if (!mounted) return;
+
     // First, check URL query params
     const stepParam = searchParams.get("step");
     const savedConsultantId = sessionStorage.getItem("consultantId");
@@ -79,15 +87,17 @@ function ConsultantRegisterContent() {
     if (saved1) setStep1Data(JSON.parse(saved1));
     if (saved2) setStep2Data(JSON.parse(saved2));
     if (saved3) setStep3Data(JSON.parse(saved3));
-  }, [searchParams]);
+  }, [mounted, searchParams]);
 
   // Update URL when step changes
   useEffect(() => {
+    if (!mounted) return;
+    
     sessionStorage.setItem("consultantCurrentStep", currentStep.toString());
     router.replace(`/consultant/register?step=${currentStep}`, {
       scroll: false,
     });
-  }, [currentStep, router]);
+  }, [currentStep, router, mounted]);
 
   const handleStep1Complete = (data: Step1Data, newConsultantId: string) => {
     setStep1Data(data);
@@ -157,6 +167,7 @@ function ConsultantRegisterContent() {
               fontWeight: 700,
               color: "#1A1A1A",
               mb: 1,
+              mt:8
             }}
           >
             Become a Wellness Coach

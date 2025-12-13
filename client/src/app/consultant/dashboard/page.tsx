@@ -281,6 +281,7 @@ export default function ConsultantDashboard() {
               fontWeight: 700,
               color: "#1A1A1A",
               mb: 1,
+              mt:8
             }}
           >
             Welcome, {consultant.firstName}!

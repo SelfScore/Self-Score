@@ -152,6 +152,16 @@ export default function Step1PersonalInfo({
   const handleNext = async () => {
     if (!validateForm()) return;
 
+    // Check if consultant already exists (returning from later steps)
+    const existingConsultantId = sessionStorage.getItem("consultantId");
+    
+    if (existingConsultantId) {
+      // Consultant already registered, just proceed to next step
+      onNext(formData, existingConsultantId);
+      return;
+    }
+
+    // New registration flow
     setLoading(true);
     try {
       const response = await consultantAuthService.registerStep1(formData);

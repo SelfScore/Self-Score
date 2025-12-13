@@ -74,7 +74,7 @@ export interface Consultant extends Document {
     introductionVideoLink?: string;
     
     // Application Status
-    applicationStatus: 'pending' | 'approved' | 'rejected';
+    applicationStatus: 'draft' | 'pending' | 'approved' | 'rejected';
     appliedAt: Date;
     reviewedAt?: Date;
     reviewedBy?: mongoose.Types.ObjectId; // Admin who reviewed
@@ -146,18 +146,8 @@ const CertificationSchema = new Schema({
     },
     certificateFile: { 
         type: String, 
-        required: false,
-        validate: {
-            validator: function(v: string) {
-                // Check if base64 string is under 1MB
-                if (v && v.startsWith('data:')) {
-                    const sizeInBytes = (v.length * 3) / 4;
-                    return sizeInBytes <= 1048576; // 1MB = 1048576 bytes
-                }
-                return true;
-            },
-            message: "Certificate file must be under 1MB"
-        }
+        required: false
+        // Now stores S3 URL instead of base64
     }
 }, { _id: false });
 
@@ -216,17 +206,9 @@ const ConsultantSchema: Schema<Consultant> = new Schema({
     },
     profilePhoto: { 
         type: String, 
-        required: false,
-        validate: {
-            validator: function(v: string) {
-                if (v && v.startsWith('data:')) {
-                    const sizeInBytes = (v.length * 3) / 4;
-                    return sizeInBytes <= 1048576; // 1MB
-                }
-                return true;
-            },
-            message: "Profile photo must be under 1MB"
-        }
+        required: false
+        // Now stores S3 URL instead of base64
+        // No size validation needed as S3 handles storage
     },
     
     // Email Verification
@@ -275,17 +257,8 @@ const ConsultantSchema: Schema<Consultant> = new Schema({
     },
     resume: { 
         type: String, 
-        required: false,
-        validate: {
-            validator: function(v: string) {
-                if (v && v.startsWith('data:')) {
-                    const sizeInBytes = (v.length * 3) / 4;
-                    return sizeInBytes <= 1048576; // 1MB
-                }
-                return true;
-            },
-            message: "Resume must be under 1MB"
-        }
+        required: false
+        // Now stores S3 URL instead of base64
     },
     
     // Services
@@ -313,8 +286,8 @@ const ConsultantSchema: Schema<Consultant> = new Schema({
     // Application Status
     applicationStatus: {
         type: String,
-        enum: ['pending', 'approved', 'rejected'],
-        default: 'pending'
+        enum: ['draft', 'pending', 'approved', 'rejected'],
+        default: 'draft'
     },
     appliedAt: {
         type: Date,

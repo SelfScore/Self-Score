@@ -1,4 +1,5 @@
 import { Resend } from 'resend';
+import { formatBookingTimeForEmail } from './timezoneHelpers';
 
 const resendApiKey = process.env.RESEND_API_KEY;
 
@@ -647,17 +648,8 @@ export const sendBookingConfirmationEmail = async (data: {
 
     const endTime = new Date(startTime.getTime() + duration * 60000);
 
-    const formatDateTime = (date: Date) => {
-        return date.toLocaleString('en-US', {
-            weekday: 'long',
-            year: 'numeric',
-            month: 'long',
-            day: 'numeric',
-            hour: 'numeric',
-            minute: '2-digit',
-            timeZone: timezone
-        });
-    };
+    // Use timezone helper to format dates
+    const { date, timeRange } = formatBookingTimeForEmail(startTime, endTime, timezone);
 
     // Email to user
     const userHtml = `
@@ -689,9 +681,8 @@ export const sendBookingConfirmationEmail = async (data: {
                     <p style="margin: 10px 0;"><strong>Session:</strong> ${sessionType}</p>
                     <p style="margin: 10px 0;"><strong>Consultant:</strong> ${consultantName}</p>
                     <p style="margin: 10px 0;"><strong>Duration:</strong> ${duration} minutes</p>
-                    <p style="margin: 10px 0;"><strong>Start Time:</strong> ${formatDateTime(startTime)}</p>
-                    <p style="margin: 10px 0;"><strong>End Time:</strong> ${formatDateTime(endTime)}</p>
-                    <p style="margin: 10px 0;"><strong>Timezone:</strong> ${timezone}</p>
+                    <p style="margin: 10px 0;"><strong>Date:</strong> ${date}</p>
+                    <p style="margin: 10px 0;"><strong>Time:</strong> ${timeRange}</p>
                     ${meetingLink ? `<p style="margin: 10px 0;"><strong>Meeting Link:</strong> <a href="${meetingLink}" style="color: #0A9396;">${meetingLink}</a></p>` : ''}
                 </div>
                 
@@ -735,6 +726,8 @@ export const sendBookingCancellationEmail = async (data: {
     consultantEmail: string;
     sessionType: string;
     startTime: Date;
+    duration: number;
+    timezone: string;
     cancellationReason?: string;
 }): Promise<boolean> => {
     const {
@@ -744,20 +737,15 @@ export const sendBookingCancellationEmail = async (data: {
         consultantEmail,
         sessionType,
         startTime,
+        duration,
+        timezone,
         cancellationReason
     } = data;
 
-    const formatDateTime = (date: Date) => {
-        return date.toLocaleString('en-US', {
-            weekday: 'long',
-            year: 'numeric',
-            month: 'long',
-            day: 'numeric',
-            hour: 'numeric',
-            minute: '2-digit',
-            timeZoneName: 'short'
-        });
-    };
+    // Use timezone helper to format dates
+    const endTime = new Date(startTime.getTime() + duration * 60000);
+    const { date, time } = formatBookingTimeForEmail(startTime, endTime, timezone);
+    const formattedDateTime = `${date} at ${time}`;
 
     // Email to user
     const userHtml = `
@@ -788,7 +776,7 @@ export const sendBookingCancellationEmail = async (data: {
                     <h3 style="margin-top: 0; color: #F44336;">📅 Cancelled Booking</h3>
                     <p style="margin: 10px 0;"><strong>Session:</strong> ${sessionType}</p>
                     <p style="margin: 10px 0;"><strong>Consultant:</strong> ${consultantName}</p>
-                    <p style="margin: 10px 0;"><strong>Scheduled Time:</strong> ${formatDateTime(startTime)}</p>
+                    <p style="margin: 10px 0;"><strong>Scheduled Time:</strong> ${formattedDateTime}</p>
                     ${cancellationReason ? `<p style="margin: 10px 0;"><strong>Reason:</strong> ${cancellationReason}</p>` : ''}
                 </div>
                 
@@ -835,7 +823,7 @@ export const sendBookingCancellationEmail = async (data: {
                     <h3 style="margin-top: 0; color: #F44336;">📅 Cancelled Booking</h3>
                     <p style="margin: 10px 0;"><strong>Client:</strong> ${userName}</p>
                     <p style="margin: 10px 0;"><strong>Session:</strong> ${sessionType}</p>
-                    <p style="margin: 10px 0;"><strong>Scheduled Time:</strong> ${formatDateTime(startTime)}</p>
+                    <p style="margin: 10px 0;"><strong>Scheduled Time:</strong> ${formattedDateTime}</p>
                     ${cancellationReason ? `<p style="margin: 10px 0;"><strong>Reason:</strong> ${cancellationReason}</p>` : ''}
                 </div>
                 

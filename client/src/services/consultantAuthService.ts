@@ -12,7 +12,7 @@ export interface ConsultantData {
   email: string;
   firstName: string;
   lastName: string;
-  applicationStatus: 'pending' | 'approved' | 'rejected';
+  applicationStatus: 'draft' | 'pending' | 'approved' | 'rejected';
   registrationStep: number;
   isVerified?: boolean;
 }

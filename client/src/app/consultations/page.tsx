@@ -602,7 +602,7 @@ export default function ConsultationsPage() {
                                 mb: 0.5,
                               }}
                             >
-                              Dr. {consultant.firstName} {consultant.lastName}
+                               {consultant.firstName} {consultant.lastName}
                             </Typography>
 
                             {/* Location */}

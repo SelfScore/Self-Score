@@ -419,6 +419,8 @@ export class BookingController {
                     consultantEmail: consultantData.email,
                     sessionType: booking.sessionType,
                     startTime: booking.startTime,
+                    duration: booking.duration,
+                    timezone: booking.userTimezone,
                     cancellationReason: cancellationReason
                 });
             } catch (emailError) {
@@ -642,6 +644,8 @@ export class BookingController {
                     consultantEmail: consultantData.email,
                     sessionType: booking.sessionType,
                     startTime: booking.startTime,
+                    duration: booking.duration,
+                    timezone: booking.userTimezone,
                     cancellationReason: cancellationReason
                 });
             } catch (emailError) {

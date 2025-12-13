@@ -590,6 +590,9 @@ export class AdminController {
             // Build query
             const query: any = {};
             
+            // Exclude draft applications by default (incomplete registrations)
+            query.applicationStatus = { $ne: 'draft' };
+            
             // Filter by status
             if (status && status !== 'all') {
                 query.applicationStatus = status;
@@ -613,7 +616,7 @@ export class AdminController {
                 .select('-password -verifyCode')
                 .sort(sortOptions);
 
-            // Get counts for each status
+            // Get counts for each status (excluding drafts)
             const pendingCount = await ConsultantModel.countDocuments({ applicationStatus: 'pending' });
             const approvedCount = await ConsultantModel.countDocuments({ applicationStatus: 'approved' });
             const rejectedCount = await ConsultantModel.countDocuments({ applicationStatus: 'rejected' });

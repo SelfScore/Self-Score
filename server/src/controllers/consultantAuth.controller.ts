@@ -5,6 +5,7 @@ import { checkDatabaseConnection } from '../lib/dbUtils';
 import { generateToken, generateGenericToken, getCookieOptions } from '../lib/jwt';
 import { sendVerificationEmail } from '../lib/email';
 import { ApiResponse } from '../types/api';
+import { uploadProfilePhoto, uploadResume, uploadCertificate, deleteFromS3 } from '../lib/s3';
 
 // Consultant-specific token payload
 interface ConsultantTokenPayload {
@@ -72,6 +73,22 @@ export class ConsultantAuthController {
             // Delete any existing unverified consultant with this email
             await ConsultantModel.deleteMany({ email, isVerified: false });
 
+            // Upload profile photo to S3 if provided
+            let profilePhotoUrl = '';
+            if (profilePhoto) {
+                try {
+                    profilePhotoUrl = await uploadProfilePhoto(profilePhoto, email); // Use email as temp ID
+                } catch (error) {
+                    console.error('Error uploading profile photo to S3:', error);
+                    const response: ApiResponse = {
+                        success: false,
+                        message: "Failed to upload profile photo. Please try again."
+                    };
+                    res.status(500).json(response);
+                    return;
+                }
+            }
+
             // Create new consultant
             const newConsultant = new ConsultantModel({
                 firstName,
@@ -81,12 +98,12 @@ export class ConsultantAuthController {
                 countryCode,
                 phoneNumber,
                 location,
-                profilePhoto,
+                profilePhoto: profilePhotoUrl,
                 verifyCode,
                 verifyCodeExpiry: expiryDate,
                 isVerified: false,
                 registrationStep: 1,
-                applicationStatus: 'pending'
+                applicationStatus: 'draft' // Changed to 'draft' until Step 4 is completed
             });
 
             await newConsultant.save();
@@ -378,9 +395,57 @@ export class ConsultantAuthController {
                 return;
             }
 
+            // Upload resume to S3
+            let resumeUrl = '';
+            try {
+                resumeUrl = await uploadResume(resume, consultantId);
+            } catch (error) {
+                console.error('Error uploading resume to S3:', error);
+                const response: ApiResponse = {
+                    success: false,
+                    message: "Failed to upload resume. Please try again."
+                };
+                res.status(500).json(response);
+                return;
+            }
+
+            // Upload certifications to S3
+            const uploadedCertifications = [];
+            if (certifications && certifications.length > 0) {
+                for (const cert of certifications) {
+                    let certificateFileUrl = '';
+                    
+                    // Upload certificate file if provided
+                    if (cert.certificateFile) {
+                        try {
+                            certificateFileUrl = await uploadCertificate(
+                                cert.certificateFile,
+                                consultantId,
+                                cert.name
+                            );
+                        } catch (error) {
+                            console.error('Error uploading certificate to S3:', error);
+                            const response: ApiResponse = {
+                                success: false,
+                                message: `Failed to upload certificate "${cert.name}". Please try again.`
+                            };
+                            res.status(500).json(response);
+                            return;
+                        }
+                    }
+
+                    uploadedCertifications.push({
+                        name: cert.name,
+                        issuingOrganization: cert.issuingOrganization,
+                        issueDate: cert.issueDate,
+                        certificateFile: certificateFileUrl
+                    });
+                }
+            }
+
             // Update fields
-            consultant.certifications = certifications || [];
-            consultant.resume = resume;
+            consultant.certifications = uploadedCertifications;
+            consultant.resume = resumeUrl;
             consultant.registrationStep = 3;
 
             await consultant.save();
