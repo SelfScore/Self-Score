@@ -1,4 +1,3 @@
-import React from "react";
 import ContactUs from "../components/landing/ContactUs";
 import FAQ from "../components/landing/FAQ";
 

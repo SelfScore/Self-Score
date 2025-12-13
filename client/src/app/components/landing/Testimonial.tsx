@@ -1,6 +1,5 @@
 "use client";
 
-import React from "react";
 import { Box, Typography, Container } from "@mui/material";
 import Slider from "react-slick";
 import "slick-carousel/slick/slick.css";
