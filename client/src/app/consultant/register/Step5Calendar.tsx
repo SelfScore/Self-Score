@@ -79,8 +79,7 @@ export default function Step5Calendar({
     maxAdvanceBookingMonths: 6,
     autoCreateMeetLink: true,
     meetingLocation: "",
-    timezone:
-      Intl.DateTimeFormat().resolvedOptions().timeZone || "America/New_York",
+    timezone: Intl.DateTimeFormat().resolvedOptions().timeZone,
   });
 
   const [errors, setErrors] = useState<{ [key: string]: string }>({});
@@ -674,6 +673,15 @@ export default function Step5Calendar({
                     bufferBetweenSessions: e.target.value as number,
                   }))
                 }
+                sx={{
+                  backgroundColor: "#FFF",
+                  borderRadius: "8px",
+                  height: "48px",
+                  "& fieldset": {
+                    borderColor: "#3A3A3A4D",
+                    borderWidth: "1px",
+                  },
+                }}
               >
                 {BUFFER_TIMES.map((buffer) => (
                   <MenuItem key={buffer.value} value={buffer.value}>
@@ -689,7 +697,7 @@ export default function Step5Calendar({
           </Paper>
 
           {/* Meeting Settings */}
-          <Paper
+          {/* <Paper
             elevation={0}
             sx={{
               p: 3,
@@ -739,65 +747,7 @@ export default function Step5Calendar({
                 </Box>
               }
             />
-          </Paper>
-
-          {/* Booking Window */}
-          <Paper
-            elevation={0}
-            sx={{
-              p: 3,
-              mb: 3,
-              border: "1px solid #E0E0E0",
-              borderRadius: "12px",
-            }}
-          >
-            <Typography
-              sx={{
-                fontFamily: "Source Sans Pro",
-                fontSize: "16px",
-                fontWeight: 600,
-                color: "#1A1A1A",
-                mb: 2,
-              }}
-            >
-              Booking Window
-            </Typography>
-
-            <Grid container spacing={2}>
-              <Grid size={{ xs: 12 }}>
-                <Box
-                  sx={{
-                    display: "flex",
-                    alignItems: "center",
-                    p: 2,
-                    backgroundColor: "#F9F9F9",
-                    borderRadius: "8px",
-                  }}
-                >
-                  <Typography sx={{ fontSize: "14px", color: "#666" }}>
-                    <strong>Minimum advance notice:</strong> 3 hours (clients
-                    must book at least 3 hours in advance)
-                  </Typography>
-                </Box>
-              </Grid>
-              <Grid size={{ xs: 12 }}>
-                <Box
-                  sx={{
-                    display: "flex",
-                    alignItems: "center",
-                    p: 2,
-                    backgroundColor: "#F9F9F9",
-                    borderRadius: "8px",
-                  }}
-                >
-                  <Typography sx={{ fontSize: "14px", color: "#666" }}>
-                    <strong>Maximum advance booking:</strong> 6 months (clients
-                    can book up to 6 months ahead)
-                  </Typography>
-                </Box>
-              </Grid>
-            </Grid>
-          </Paper>
+          </Paper> */}
         </>
       )}
 
@@ -810,7 +760,11 @@ export default function Step5Calendar({
           gap: 2,
         }}
       >
-        <OutLineButton onClick={onPrevious} disabled={loading}>
+        <OutLineButton
+          onClick={onPrevious}
+          disabled={loading}
+          sx={{ height: "40px" }}
+        >
           Back
         </OutLineButton>
 
@@ -825,6 +779,7 @@ export default function Step5Calendar({
                 "Complete Setup"
               )
             }
+            style={{ height: "40px" }}
           />
         </Box>
       </Box>

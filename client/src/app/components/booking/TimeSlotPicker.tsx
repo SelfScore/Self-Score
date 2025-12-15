@@ -2,6 +2,7 @@
 
 import { Box, Typography, CircularProgress, Alert } from "@mui/material";
 import { TimeSlot } from "@/services/bookingService";
+import { useEffect } from "react";
 
 interface TimeSlotPickerProps {
   slots: TimeSlot[];
@@ -10,6 +11,7 @@ interface TimeSlotPickerProps {
   loading?: boolean;
   error?: string;
   selectedDate: Date | null;
+  onDateSelect?: (date: Date) => void;
 }
 
 export default function TimeSlotPicker({
@@ -19,6 +21,7 @@ export default function TimeSlotPicker({
   loading = false,
   error,
   selectedDate,
+  onDateSelect,
 }: TimeSlotPickerProps) {
   const formatTime = (date: Date): string => {
     return new Intl.DateTimeFormat("en-US", {
@@ -43,6 +46,13 @@ export default function TimeSlotPicker({
     );
   };
 
+  // Auto-select today's date if no date is selected
+  useEffect(() => {
+    if (!selectedDate && onDateSelect) {
+      onDateSelect(new Date());
+    }
+  }, [selectedDate, onDateSelect]);
+
   if (!selectedDate) {
     return (
       <Box
@@ -56,15 +66,7 @@ export default function TimeSlotPicker({
           border: "1px solid #E0E0E0",
         }}
       >
-        <Typography
-          sx={{
-            fontFamily: "Source Sans Pro",
-            fontSize: "16px",
-            color: "#666",
-          }}
-        >
-          Please select a date to view available time slots
-        </Typography>
+        <CircularProgress sx={{ color: "#005F73" }} size={24} />
       </Box>
     );
   }

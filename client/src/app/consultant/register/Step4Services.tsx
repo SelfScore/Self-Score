@@ -233,8 +233,13 @@ export default function Step4Services({
             inputProps={{ min: 0, step: 5 }}
             sx={{
               "& .MuiOutlinedInput-root": {
-                backgroundColor: "#F5F5F5",
+                backgroundColor: "#FFF",
                 borderRadius: "8px",
+                height: "48px",
+                "& fieldset": {
+                  borderColor: "#3A3A3A4D",
+                  borderWidth: "1px",
+                },
               },
             }}
           />
@@ -368,8 +373,13 @@ export default function Step4Services({
             }
             sx={{
               "& .MuiOutlinedInput-root": {
-                backgroundColor: "#F5F5F5",
+                backgroundColor: "#FFF",
                 borderRadius: "8px",
+                height: "48px",
+                "& fieldset": {
+                  borderColor: "#3A3A3A4D",
+                  borderWidth: "1px",
+                },
               },
             }}
           />
@@ -378,14 +388,17 @@ export default function Step4Services({
 
       {/* Navigation Buttons */}
       <Box sx={{ mt: 4, display: "flex", justifyContent: "space-between" }}>
-        <OutLineButton onClick={onPrevious} sx={{ minWidth: "150px" }}>
+        <OutLineButton
+          onClick={onPrevious}
+          sx={{ minWidth: "150px", height: "40px" }}
+        >
           Previous
         </OutLineButton>
         <ButtonSelfScore
           text={loading ? "Submitting Application..." : "Submit Application"}
           onClick={handleSubmit}
           disabled={loading}
-          style={{ minWidth: "200px" }}
+          style={{ minWidth: "200px", height: "40px" }}
         />
       </Box>
     </Box>

@@ -3,7 +3,6 @@
 import { useState, useEffect } from "react";
 import {
   Box,
-  Container,
   Typography,
   TextField,
   InputAdornment,
@@ -20,7 +19,7 @@ import {
   Pagination,
   SelectChangeEvent,
   Slider,
-//   Avatar,
+  //   Avatar,
 } from "@mui/material";
 import SearchIcon from "@mui/icons-material/Search";
 import LocationOnIcon from "@mui/icons-material/LocationOn";
@@ -217,7 +216,7 @@ export default function ConsultationsPage() {
   return (
     <>
       <Box sx={{ minHeight: "100vh", backgroundColor: "#FFFFFF", pb: 6 }}>
-        <Container maxWidth="xl" sx={{ py: 8, mt: 8 }}>
+        <Box sx={{ maxWidth: "87%", py: 8, mt: 8, mx: "auto" }}>
           {/* Header */}
           <Box sx={{ textAlign: "center", mb: 4 }}>
             <Typography
@@ -250,6 +249,8 @@ export default function ConsultationsPage() {
               gap: 2,
               mb: 4,
               flexDirection: { xs: "column", md: "row" },
+              maxWidth: "800px",
+              mx: "auto",
             }}
           >
             <TextField
@@ -260,14 +261,16 @@ export default function ConsultationsPage() {
               InputProps={{
                 startAdornment: (
                   <InputAdornment position="start">
-                    <SearchIcon sx={{ color: "#999" }} />
+                    <SearchIcon sx={{ color: "#717182" }} />
                   </InputAdornment>
                 ),
               }}
               sx={{
                 "& .MuiOutlinedInput-root": {
-                  borderRadius: "8px",
-                  backgroundColor: "#F5F5F5",
+                  borderRadius: "12px",
+                  backgroundColor: "#FFFFFF",
+                  border: "0.1px solid #3A3A3A4D",
+                  height: "48px",
                 },
               }}
             />
@@ -279,8 +282,10 @@ export default function ConsultationsPage() {
                 }
                 displayEmpty
                 sx={{
-                  borderRadius: "8px",
-                  backgroundColor: "#F5F5F5",
+                  borderRadius: "12px",
+                  backgroundColor: "#F7F7F7",
+                  border: "0.1px solid #3A3A3A4D",
+                  height: "48px",
                 }}
               >
                 <MenuItem value="nameAsc">Sort: A to Z</MenuItem>
@@ -304,9 +309,9 @@ export default function ConsultationsPage() {
                 sx={{
                   position: "sticky",
                   top: 100,
-                  backgroundColor: "#FFF",
-                  borderRadius: "12px",
-                  border: "1px solid #E0E0E0",
+                  backgroundColor: "#FFFFFF",
+                  borderRadius: "14px",
+                  border: "0.8px solid #0000001A",
                   p: 3,
                 }}
               >
@@ -533,12 +538,8 @@ export default function ConsultationsPage() {
                             height: "100%",
                             cursor: "pointer",
                             transition: "transform 0.2s, box-shadow 0.2s",
-                            "&:hover": {
-                              transform: "translateY(-4px)",
-                              boxShadow: "0 8px 24px rgba(0,0,0,0.12)",
-                            },
-                            borderRadius: "12px",
-                            border: "1px solid #E0E0E0",
+                            borderRadius: "16px",
+                            border: "0.8px solid #3A3A3A4D",
                           }}
                           onClick={() => handleConsultantClick(consultant._id)}
                         >
@@ -546,7 +547,7 @@ export default function ConsultationsPage() {
                           <Box
                             sx={{
                               position: "relative",
-                              pt: "100%",
+                              height: "220px",
                               backgroundColor: "#F0F0F0",
                               backgroundImage: consultant.profilePhoto
                                 ? `url(${consultant.profilePhoto})`
@@ -602,7 +603,7 @@ export default function ConsultationsPage() {
                                 mb: 0.5,
                               }}
                             >
-                               {consultant.firstName} {consultant.lastName}
+                              {consultant.firstName} {consultant.lastName}
                             </Typography>
 
                             {/* Location */}
@@ -709,7 +710,7 @@ export default function ConsultationsPage() {
               )}
             </Box>
           </Box>
-        </Container>
+        </Box>
       </Box>
 
       {/* Login/Signup Modal */}

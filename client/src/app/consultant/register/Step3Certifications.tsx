@@ -280,8 +280,8 @@ export default function Step3Certifications({
             sx={{
               p: 4,
               textAlign: "center",
-              backgroundColor: "#F5F5F5",
-              border: "1px dashed #E0E0E0",
+              backgroundColor: "#FFF",
+              border: "1px solid #3A3A3A4D",
               borderRadius: "8px",
             }}
           >
@@ -316,7 +316,7 @@ export default function Step3Certifications({
                 key={index}
                 sx={{
                   p: 3,
-                  backgroundColor: "#F9F9F9",
+                  backgroundColor: "#FFF",
                   borderRadius: "8px",
                   border: "1px solid #E0E0E0",
                 }}
@@ -361,8 +361,13 @@ export default function Step3Certifications({
                       helperText={errors[`cert_name_${index}`]}
                       sx={{
                         "& .MuiOutlinedInput-root": {
-                          backgroundColor: "white",
+                          backgroundColor: "#FFF",
                           borderRadius: "8px",
+                          height: "48px",
+                          "& fieldset": {
+                            borderColor: "#3A3A3A4D",
+                            borderWidth: "1px",
+                          },
                         },
                       }}
                     />
@@ -385,8 +390,13 @@ export default function Step3Certifications({
                       helperText={errors[`cert_org_${index}`]}
                       sx={{
                         "& .MuiOutlinedInput-root": {
-                          backgroundColor: "white",
+                          backgroundColor: "#FFF",
                           borderRadius: "8px",
+                          height: "48px",
+                          "& fieldset": {
+                            borderColor: "#3A3A3A4D",
+                            borderWidth: "1px",
+                          },
                         },
                       }}
                     />
@@ -410,8 +420,13 @@ export default function Step3Certifications({
                       InputLabelProps={{ shrink: true }}
                       sx={{
                         "& .MuiOutlinedInput-root": {
-                          backgroundColor: "white",
+                          backgroundColor: "#FFF",
                           borderRadius: "8px",
+                          height: "48px",
+                          "& fieldset": {
+                            borderColor: "#3A3A3A4D",
+                            borderWidth: "1px",
+                          },
                         },
                       }}
                     />
@@ -438,16 +453,23 @@ export default function Step3Certifications({
                           )
                         }
                         sx={{
-                          height: "56px",
+                          // height: "40px",
                           borderColor: errors[`cert_${index}`]
                             ? "#d32f2f"
-                            : "#E0E0E0",
+                            : "#3A3A3A4D",
                           color: "#666",
                           textTransform: "none",
                           fontFamily: "Source Sans Pro",
-                          borderRadius: "8px",
+                          // borderRadius: "8px",
                           justifyContent: "flex-start",
-                          backgroundColor: "white",
+                          // backgroundColor: "#FFF",
+                          backgroundColor: "#FFF",
+                          borderRadius: "8px",
+                          height: "48px",
+                          "& fieldset": {
+                            borderColor: "#3A3A3A4D",
+                            borderWidth: "1px",
+                          },
                         }}
                       >
                         {cert.certificateFile
@@ -492,8 +514,8 @@ export default function Step3Certifications({
         <Paper
           sx={{
             p: 3,
-            backgroundColor: "#F5F5F5",
-            border: errors.resume ? "2px solid #d32f2f" : "2px dashed #E0E0E0",
+            backgroundColor: "#FFF",
+            border: errors.resume ? "2px solid #d32f2f" : "1px solid #3A3A3A4D",
             borderRadius: "8px",
             textAlign: "center",
             cursor: "pointer",
@@ -552,14 +574,17 @@ export default function Step3Certifications({
 
       {/* Navigation Buttons */}
       <Box sx={{ mt: 4, display: "flex", justifyContent: "space-between" }}>
-        <OutLineButton onClick={onPrevious} sx={{ minWidth: "150px" }}>
+        <OutLineButton
+          onClick={onPrevious}
+          sx={{ minWidth: "150px", height: "40px" }}
+        >
           Previous
         </OutLineButton>
         <ButtonSelfScore
           text={loading ? "Saving..." : "Next Step"}
           onClick={handleNext}
           disabled={loading}
-          style={{ minWidth: "150px" }}
+          style={{ minWidth: "150px", height: "40px" }}
         />
       </Box>
     </Box>

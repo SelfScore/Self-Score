@@ -192,17 +192,10 @@ export default function Step2Professional({
               color: "#1A1A1A",
             }}
           >
-            Coaching Specialties <span style={{ color: "#E87A42" }}>*</span>
-          </Typography>
-          <Typography
-            sx={{
-              fontFamily: "Source Sans Pro",
-              fontSize: "12px",
-              color: "#666",
-              mb: 1,
-            }}
-          >
-            (Select all that apply)
+            Coaching Specialties <span style={{ color: "#E87A42" }}>*</span>{" "}
+            <span style={{ fontWeight: 400, fontSize: "12px", color: "#666" }}>
+              (Select all that apply)
+            </span>
           </Typography>
           <FormControl fullWidth error={!!errors.coachingSpecialties}>
             <Select
@@ -218,7 +211,7 @@ export default function Step2Professional({
                       label={value}
                       size="small"
                       sx={{
-                        backgroundColor: "#E87A42",
+                        backgroundColor: "#005F73",
                         color: "white",
                         fontFamily: "Source Sans Pro",
                       }}
@@ -226,9 +219,22 @@ export default function Step2Professional({
                   ))}
                 </Box>
               )}
+              MenuProps={{
+                PaperProps: {
+                  style: {
+                    maxHeight: 220,
+                  },
+                },
+                disableScrollLock: true,
+              }}
               sx={{
-                backgroundColor: "#F5F5F5",
+                backgroundColor: "#FFF",
                 borderRadius: "8px",
+                height: "48px",
+                "& fieldset": {
+                  borderColor: "#3A3A3A4D",
+                  borderWidth: "1px",
+                },
               }}
             >
               {COACHING_SPECIALTIES.map((specialty) => (
@@ -276,8 +282,13 @@ export default function Step2Professional({
             inputProps={{ min: 0, max: 50 }}
             sx={{
               "& .MuiOutlinedInput-root": {
-                backgroundColor: "#F5F5F5",
+                backgroundColor: "#FFF",
                 borderRadius: "8px",
+                height: "48px",
+                "& fieldset": {
+                  borderColor: "#3A3A3A4D",
+                  borderWidth: "1px",
+                },
               },
             }}
           />
@@ -294,17 +305,10 @@ export default function Step2Professional({
               color: "#1A1A1A",
             }}
           >
-            Languages Spoken <span style={{ color: "#E87A42" }}>*</span>
-          </Typography>
-          <Typography
-            sx={{
-              fontFamily: "Source Sans Pro",
-              fontSize: "12px",
-              color: "#666",
-              mb: 1,
-            }}
-          >
-            (Select all that apply)
+            Languages Spoken <span style={{ color: "#E87A42" }}>*</span>{" "}
+            <span style={{ fontWeight: 400, fontSize: "12px", color: "#666" }}>
+              (Select all that apply)
+            </span>
           </Typography>
           <FormControl fullWidth error={!!errors.languagesSpoken}>
             <Select
@@ -328,9 +332,22 @@ export default function Step2Professional({
                   ))}
                 </Box>
               )}
+              MenuProps={{
+                PaperProps: {
+                  style: {
+                    maxHeight: 220,
+                  },
+                },
+                disableScrollLock: true,
+              }}
               sx={{
-                backgroundColor: "#F5F5F5",
+                backgroundColor: "#FFF",
                 borderRadius: "8px",
+                height: "48px",
+                "& fieldset": {
+                  borderColor: "#3A3A3A4D",
+                  borderWidth: "1px",
+                },
               }}
             >
               {LANGUAGES.map((language) => (
@@ -387,8 +404,12 @@ export default function Step2Professional({
             helperText={errors.professionalBio}
             sx={{
               "& .MuiOutlinedInput-root": {
-                backgroundColor: "#F5F5F5",
+                backgroundColor: "#FFF",
                 borderRadius: "8px",
+                "& fieldset": {
+                  borderColor: "#3A3A3A4D",
+                  borderWidth: "1px",
+                },
               },
             }}
           />
@@ -418,14 +439,17 @@ export default function Step2Professional({
 
       {/* Navigation Buttons */}
       <Box sx={{ mt: 4, display: "flex", justifyContent: "space-between" }}>
-        <OutLineButton onClick={onPrevious} sx={{ minWidth: "150px" }}>
+        <OutLineButton
+          onClick={onPrevious}
+          sx={{ minWidth: "150px", height: "40px" }}
+        >
           Previous
         </OutLineButton>
         <ButtonSelfScore
           text={loading ? "Saving..." : "Next Step"}
           onClick={handleNext}
           disabled={loading}
-          style={{ minWidth: "150px" }}
+          style={{ minWidth: "150px", height: "40px" }}
         />
       </Box>
     </Box>

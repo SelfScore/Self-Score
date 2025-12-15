@@ -964,7 +964,7 @@ export default function ConsultantDetailPage() {
                 startIcon={<CheckCircleIcon />}
                 onClick={() => setApproveDialogOpen(true)}
                 sx={{
-                  backgroundColor: "#4CAF50",
+                  backgroundColor: "#FF4F00",
                   color: "white",
                   textTransform: "none",
                   fontFamily: "Source Sans Pro",
@@ -972,7 +972,7 @@ export default function ConsultantDetailPage() {
                   fontWeight: 600,
                   py: 1.5,
                   "&:hover": {
-                    backgroundColor: "#45A049",
+                    backgroundColor: "#FF4F00",
                   },
                 }}
               >
@@ -1061,9 +1061,9 @@ export default function ConsultantDetailPage() {
             sx={{
               textTransform: "none",
               fontFamily: "Source Sans Pro",
-              backgroundColor: "#4CAF50",
+              backgroundColor: "#FF4F00",
               "&:hover": {
-                backgroundColor: "#45A049",
+                backgroundColor: "#FF4F00",
               },
             }}
           >

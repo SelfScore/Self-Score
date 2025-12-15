@@ -288,8 +288,13 @@ export default function Step1PersonalInfo({
             helperText={errors.firstName}
             sx={{
               "& .MuiOutlinedInput-root": {
-                backgroundColor: "#F5F5F5",
+                backgroundColor: "#FFF",
                 borderRadius: "8px",
+                height: "48px",
+                "& fieldset": {
+                  borderColor: "#3A3A3A4D",
+                  borderWidth: "1px",
+                },
               },
             }}
           />
@@ -317,8 +322,13 @@ export default function Step1PersonalInfo({
             helperText={errors.lastName}
             sx={{
               "& .MuiOutlinedInput-root": {
-                backgroundColor: "#F5F5F5",
+                backgroundColor: "#FFF",
                 borderRadius: "8px",
+                height: "48px",
+                "& fieldset": {
+                  borderColor: "#3A3A3A4D",
+                  borderWidth: "1px",
+                },
               },
             }}
           />
@@ -347,8 +357,13 @@ export default function Step1PersonalInfo({
             helperText={errors.email}
             sx={{
               "& .MuiOutlinedInput-root": {
-                backgroundColor: "#F5F5F5",
+                backgroundColor: "#FFF",
                 borderRadius: "8px",
+                height: "48px",
+                "& fieldset": {
+                  borderColor: "#3A3A3A4D",
+                  borderWidth: "1px",
+                },
               },
             }}
           />
@@ -373,17 +388,17 @@ export default function Step1PersonalInfo({
             onChange={handlePhoneChange}
             inputStyle={{
               width: "100%",
-              height: "56px",
+              height: "48px",
               fontSize: "16px",
-              backgroundColor: "#F5F5F5",
+              backgroundColor: "#FFF",
               border: errors.phoneNumber
                 ? "1px solid #d32f2f"
-                : "1px solid #E0E0E0",
+                : "1px solid #3A3A3A4D",
               borderRadius: "8px",
             }}
             buttonStyle={{
-              backgroundColor: "#F5F5F5",
-              border: "1px solid #E0E0E0",
+              backgroundColor: "#FFF",
+              border: "1px solid #3A3A3A4D",
               borderRadius: "8px 0 0 8px",
             }}
           />
@@ -431,8 +446,13 @@ export default function Step1PersonalInfo({
             }}
             sx={{
               "& .MuiOutlinedInput-root": {
-                backgroundColor: "#F5F5F5",
+                backgroundColor: "#FFF",
                 borderRadius: "8px",
+                height: "48px",
+                "& fieldset": {
+                  borderColor: "#3A3A3A4D",
+                  borderWidth: "1px",
+                },
               },
             }}
           />
@@ -460,8 +480,13 @@ export default function Step1PersonalInfo({
             helperText={errors.location}
             sx={{
               "& .MuiOutlinedInput-root": {
-                backgroundColor: "#F5F5F5",
+                backgroundColor: "#FFF",
                 borderRadius: "8px",
+                height: "48px",
+                "& fieldset": {
+                  borderColor: "#3A3A3A4D",
+                  borderWidth: "1px",
+                },
               },
             }}
           />
@@ -486,11 +511,11 @@ export default function Step1PersonalInfo({
               alignItems: "center",
               gap: 2,
               p: 3,
-              backgroundColor: "#F5F5F5",
-              borderRadius: "8px",
-              border: errors.profilePhoto
+              backgroundColor: "#FFF",
+              border: errors.phoneNumber
                 ? "1px solid #d32f2f"
-                : "1px dashed #E0E0E0",
+                : "1px solid #3A3A3A4D",
+              borderRadius: "8px",
             }}
           >
             <Avatar
@@ -498,7 +523,7 @@ export default function Step1PersonalInfo({
               sx={{
                 width: 80,
                 height: 80,
-                backgroundColor: "#E87A42",
+                backgroundColor: "#FF4F00",
                 fontSize: "32px",
               }}
             >
@@ -559,7 +584,7 @@ export default function Step1PersonalInfo({
           text={loading ? "Processing..." : "Next Step"}
           onClick={handleNext}
           disabled={loading}
-          style={{ minWidth: "150px" }}
+          style={{ minWidth: "150px", height: "40px" }}
         />
       </Box>
 
@@ -662,6 +687,7 @@ export default function Step1PersonalInfo({
             onClick={handleVerifyEmail}
             disabled={verificationLoading || verificationCode.length !== 6}
             fullWidth
+            style={{ height: "40px" }}
           />
         </DialogActions>
       </Dialog>

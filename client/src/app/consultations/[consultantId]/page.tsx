@@ -12,7 +12,6 @@ import {
   Tab,
   Button,
   CircularProgress,
-  Divider,
   TextField,
   Select,
   MenuItem,
@@ -22,10 +21,6 @@ import {
   SelectChangeEvent,
 } from "@mui/material";
 import StarIcon from "@mui/icons-material/Star";
-import EmailIcon from "@mui/icons-material/Email";
-import PhoneIcon from "@mui/icons-material/Phone";
-import LocationOnIcon from "@mui/icons-material/LocationOn";
-import CalendarTodayIcon from "@mui/icons-material/CalendarToday";
 import ArrowBackIcon from "@mui/icons-material/ArrowBack";
 import { useRouter, useParams } from "next/navigation";
 import {
@@ -38,6 +33,11 @@ import SignUpModal from "@/app/user/SignUpModal";
 import BookingCalendar from "@/app/components/booking/BookingCalendar";
 import TimeSlotPicker from "@/app/components/booking/TimeSlotPicker";
 import { bookingService, TimeSlot } from "@/services/bookingService";
+import OutLineButton from "@/app/components/ui/OutLineButton";
+import ArrowBackIosIcon from "@mui/icons-material/ArrowBackIos";
+import LocationOnOutlinedIcon from "@mui/icons-material/LocationOnOutlined";
+import AccessTimeOutlinedIcon from "@mui/icons-material/AccessTimeOutlined";
+import WorkspacePremiumIcon from "@mui/icons-material/WorkspacePremium";
 
 interface TabPanelProps {
   children?: React.ReactNode;
@@ -286,91 +286,200 @@ export default function ConsultantProfilePage() {
     );
   }
 
+  const handleBackToInfo = () => {
+    router.push("/consultations");
+  };
+
+  const getEmbedUrl = (url: string): string => {
+    if (!url) return "";
+
+    // YouTube formats
+    if (url.includes("youtube.com/watch")) {
+      const videoId = url.split("v=")[1]?.split("&")[0];
+      return videoId ? `https://www.youtube.com/embed/${videoId}` : url;
+    }
+    if (url.includes("youtu.be/")) {
+      const videoId = url.split("youtu.be/")[1]?.split("?")[0];
+      return videoId ? `https://www.youtube.com/embed/${videoId}` : url;
+    }
+
+    // Loom formats
+    if (url.includes("loom.com/share/")) {
+      const videoId = url.split("loom.com/share/")[1]?.split("?")[0];
+      return videoId ? `https://www.loom.com/embed/${videoId}` : url;
+    }
+
+    // Vimeo formats
+    if (url.includes("vimeo.com/")) {
+      const videoId = url.split("vimeo.com/")[1]?.split("?")[0];
+      return videoId ? `https://player.vimeo.com/video/${videoId}` : url;
+    }
+
+    // If already an embed URL or unknown format, return as is
+    return url;
+  };
+
   return (
     <>
       <Box sx={{ minHeight: "100vh", backgroundColor: "#FFFFFF", pb: 6 }}>
-        <Container maxWidth="lg" sx={{ py: 8, mt: 8 }}>
+        <Box sx={{ py: 8, mt: 6, maxWidth: "87%", mx: "auto" }}>
           {/* Back Button */}
-          <Button
-            startIcon={<ArrowBackIcon />}
-            onClick={handleBackClick}
-            sx={{
-              mb: 3,
-              color: "#666",
-              fontFamily: "Source Sans Pro",
-              textTransform: "none",
-              "&:hover": {
-                backgroundColor: "transparent",
-                color: "#005F73",
-              },
+          <OutLineButton
+            startIcon={<ArrowBackIosIcon />}
+            style={{
+              background: "transparent",
+              color: "#3A3A3A",
+              border: "1px solid #3A3A3A",
+              borderRadius: "8px",
+              padding: "3.5px 14px",
+              fontWeight: 400,
+              fontSize: "18px",
+              cursor: "pointer",
+              transition: "all 0.2s",
             }}
+            onClick={handleBackToInfo}
           >
             Back
-          </Button>
-
+          </OutLineButton>
           <Box
             sx={{
               display: "flex",
               flexDirection: { xs: "column", md: "row" },
               gap: 4,
+              mt: 4,
             }}
           >
             {/* Left Side - Profile Info */}
-            <Box sx={{ width: { xs: "100%", md: "400px" }, flexShrink: 0 }}>
+            <Box sx={{ width: { xs: "100%", md: "750px" }, flexShrink: 0 }}>
               <Paper
                 elevation={0}
                 sx={{
                   p: 3,
-                  borderRadius: "12px",
-                  border: "1px solid #E0E0E0",
+                  borderRadius: "14px",
+                  border: "1px solid #3A3A3A4D",
                   position: "sticky",
                   top: 100,
+                  flexDirection: "row",
+                  display: "flex",
+                  justifyContent: "space-between",
+                  // mb: 3,
                 }}
               >
                 {/* Profile Photo */}
-                <Box sx={{ display: "flex", justifyContent: "center", mb: 2 }}>
+                <Box sx={{ display: "flex", justifyContent: "left", mb: 2 }}>
                   <Avatar
                     src={consultant.profilePhoto}
                     sx={{
-                      width: 120,
-                      height: 120,
-                      border: "4px solid #005F73",
+                      width: 168,
+                      height: 168,
+                      borderRadius: "10px",
+                      // border: "4px solid #005F73",
                     }}
                   />
-                </Box>
 
-                {/* Name and Rating */}
-                <Box sx={{ textAlign: "center", mb: 2 }}>
-                  <Typography
-                    sx={{
-                      fontFamily: "Faustina",
-                      fontSize: "28px",
-                      fontWeight: 700,
-                      color: "#1A1A1A",
-                      mb: 0.5,
-                    }}
-                  >
-                   {consultant.firstName} {consultant.lastName}
-                  </Typography>
-                  <Typography
-                    sx={{
-                      fontFamily: "Source Sans Pro",
-                      fontSize: "16px",
-                      color: "#666",
-                      mb: 1,
-                    }}
-                  >
-                    Wellness Coach
-                  </Typography>
                   <Box
                     sx={{
                       display: "flex",
-                      alignItems: "center",
-                      justifyContent: "center",
+                      flexDirection: "column",
+                      gap: 1,
+                      mr: 4,
+                      ml: 4,
+                    }}
+                  >
+                    <Typography
+                      sx={{
+                        fontFamily: "Faustina",
+                        fontSize: "20px",
+                        lineHeight: "28px",
+                        fontWeight: 700,
+                        color: "#1A1A1A",
+                        mb: 0.5,
+                      }}
+                    >
+                      {consultant.firstName} {consultant.lastName}
+                    </Typography>
+                    <Typography
+                      sx={{
+                        fontFamily: "Source Sans Pro",
+                        fontSize: "16px",
+                        color: "#005F73",
+                        mb: 1,
+                      }}
+                    >
+                      {consultant.coachingSpecialties}
+                    </Typography>
+
+                    <Box
+                      sx={{ display: "flex", alignItems: "center", gap: 1.5 }}
+                    >
+                      <LocationOnOutlinedIcon
+                        sx={{ color: "#2B2B2B", fontSize: "20px" }}
+                      />
+                      <Typography
+                        sx={{
+                          fontFamily: "Source Sans Pro",
+                          fontSize: "16px",
+                          color: "#2B2B2B",
+                        }}
+                      >
+                        {consultant.location}
+                      </Typography>
+                    </Box>
+
+                    <Box
+                      sx={{ display: "flex", alignItems: "center", gap: 1.5 }}
+                    >
+                      <AccessTimeOutlinedIcon
+                        sx={{ color: "#2B2B2B", fontSize: "18px" }}
+                      />
+                      <Typography
+                        sx={{
+                          fontFamily: "Source Sans Pro",
+                          fontSize: "16px",
+                          color: "#2B2B2B",
+                        }}
+                      >
+                        {consultant.yearsOfExperience} years experience
+                      </Typography>
+                    </Box>
+                    <Box>
+                      <Box sx={{ display: "flex", flexWrap: "wrap", gap: 1 }}>
+                        {consultant.languagesSpoken.map((lang) => (
+                          <Chip
+                            key={lang}
+                            label={lang}
+                            size="small"
+                            sx={{
+                              backgroundColor: "#F0F9FA",
+                              color: "#005F73",
+                              fontSize: "12px",
+                            }}
+                          />
+                        ))}
+                      </Box>
+                    </Box>
+                  </Box>
+                </Box>
+                <Box
+                  sx={{
+                    // textAlign: "center",
+                    display: "flex",
+                    alignItems: "left",
+                    justifyContent: "left",
+                    flexDirection: "column",
+                    // mb: 2,
+                  }}
+                >
+                  <Box
+                    sx={{
+                      display: "flex",
+                      alignItems: "right",
+                      justifyContent: "left",
+
                       gap: 1,
                     }}
                   >
-                    <StarIcon sx={{ color: "#FF9800", fontSize: "20px" }} />
+                    <StarIcon sx={{ color: "#FF4F00", fontSize: "20px" }} />
                     <Typography
                       sx={{
                         fontFamily: "Source Sans Pro",
@@ -381,6 +490,8 @@ export default function ConsultantProfilePage() {
                     >
                       4.8
                     </Typography>
+                  </Box>
+                  <Box>
                     <Typography
                       sx={{
                         fontFamily: "Source Sans Pro",
@@ -392,111 +503,17 @@ export default function ConsultantProfilePage() {
                     </Typography>
                   </Box>
                 </Box>
-
-                <Divider sx={{ my: 2 }} />
-
-                {/* Contact Info */}
-                <Box sx={{ display: "flex", flexDirection: "column", gap: 2 }}>
-                  <Box sx={{ display: "flex", alignItems: "center", gap: 1.5 }}>
-                    <EmailIcon sx={{ color: "#005F73", fontSize: "20px" }} />
-                    <Typography
-                      sx={{
-                        fontFamily: "Source Sans Pro",
-                        fontSize: "14px",
-                        color: "#666",
-                        wordBreak: "break-all",
-                      }}
-                    >
-                      {consultant.email}
-                    </Typography>
-                  </Box>
-
-                  <Box sx={{ display: "flex", alignItems: "center", gap: 1.5 }}>
-                    <PhoneIcon sx={{ color: "#005F73", fontSize: "20px" }} />
-                    <Typography
-                      sx={{
-                        fontFamily: "Source Sans Pro",
-                        fontSize: "14px",
-                        color: "#666",
-                      }}
-                    >
-                      {consultant.countryCode} {consultant.phoneNumber}
-                    </Typography>
-                  </Box>
-
-                  <Box sx={{ display: "flex", alignItems: "center", gap: 1.5 }}>
-                    <LocationOnIcon
-                      sx={{ color: "#005F73", fontSize: "20px" }}
-                    />
-                    <Typography
-                      sx={{
-                        fontFamily: "Source Sans Pro",
-                        fontSize: "14px",
-                        color: "#666",
-                      }}
-                    >
-                      {consultant.location}
-                    </Typography>
-                  </Box>
-
-                  <Box sx={{ display: "flex", alignItems: "center", gap: 1.5 }}>
-                    <CalendarTodayIcon
-                      sx={{ color: "#005F73", fontSize: "20px" }}
-                    />
-                    <Typography
-                      sx={{
-                        fontFamily: "Source Sans Pro",
-                        fontSize: "14px",
-                        color: "#666",
-                      }}
-                    >
-                      {consultant.yearsOfExperience} years experience
-                    </Typography>
-                  </Box>
-                </Box>
-
-                <Divider sx={{ my: 2 }} />
-
-                {/* Languages */}
-                <Box>
-                  <Typography
-                    sx={{
-                      fontFamily: "Source Sans Pro",
-                      fontSize: "14px",
-                      fontWeight: 600,
-                      color: "#1A1A1A",
-                      mb: 1,
-                    }}
-                  >
-                    Languages
-                  </Typography>
-                  <Box sx={{ display: "flex", flexWrap: "wrap", gap: 1 }}>
-                    {consultant.languagesSpoken.map((lang) => (
-                      <Chip
-                        key={lang}
-                        label={lang}
-                        size="small"
-                        sx={{
-                          backgroundColor: "#F0F9FA",
-                          color: "#005F73",
-                          fontSize: "12px",
-                        }}
-                      />
-                    ))}
-                  </Box>
-                </Box>
               </Paper>
-            </Box>
 
-            {/* Right Side - Details */}
-            <Box sx={{ flex: 1 }}>
+              {/* about consultant  */}
               <Paper
                 elevation={0}
                 sx={{
                   p: 3,
-                  borderRadius: "12px",
-                  border: "1px solid #E0E0E0",
+                  borderRadius: "14px",
+                  border: "1px solid #3A3A3A4D",
                   mb: 3,
+                  mt: 4,
                 }}
               >
                 <Tabs
@@ -509,7 +526,7 @@ export default function ConsultantProfilePage() {
                       fontSize: "16px",
                       textTransform: "none",
                       fontWeight: 600,
-                      color: "#666",
+                      color: "#0A0A0A",
                     },
                     "& .Mui-selected": {
                       color: "#005F73 !important",
@@ -521,7 +538,7 @@ export default function ConsultantProfilePage() {
                 >
                   <Tab label="About" />
                   <Tab label="Services" />
-                  <Tab label="Reviews (01)" />
+                  <Tab label="Reviews" />
                 </Tabs>
 
                 {/* About Tab */}
@@ -531,7 +548,7 @@ export default function ConsultantProfilePage() {
                       fontFamily: "Faustina",
                       fontSize: "20px",
                       fontWeight: 700,
-                      color: "#1A1A1A",
+                      color: "#0A0A0A",
                       mb: 2,
                     }}
                   >
@@ -541,7 +558,7 @@ export default function ConsultantProfilePage() {
                     sx={{
                       fontFamily: "Source Sans Pro",
                       fontSize: "16px",
-                      color: "#666",
+                      color: "#4A5565",
                       lineHeight: 1.7,
                       mb: 3,
                     }}
@@ -554,7 +571,7 @@ export default function ConsultantProfilePage() {
                       fontFamily: "Faustina",
                       fontSize: "20px",
                       fontWeight: 700,
-                      color: "#1A1A1A",
+                      color: "#0A0A0A",
                       mb: 2,
                     }}
                   >
@@ -570,21 +587,33 @@ export default function ConsultantProfilePage() {
                   >
                     {consultant.certifications.map((cert, index) => (
                       <Box key={index}>
-                        <Typography
-                          sx={{
-                            fontFamily: "Source Sans Pro",
-                            fontSize: "16px",
-                            fontWeight: 600,
-                            color: "#1A1A1A",
-                          }}
+                        <Box
+                          sx={{ display: "flex", alignItems: "center", gap: 1 }}
                         >
-                          {cert.name}
-                        </Typography>
+                          <WorkspacePremiumIcon
+                            sx={{
+                              color: "#005F73",
+                              fontSize: "20px",
+                              mt: "4px",
+                            }}
+                          />
+                          <Typography
+                            sx={{
+                              fontFamily: "Source Sans Pro",
+                              fontSize: "16px",
+                              fontWeight: 600,
+                              color: "#0A0A0A",
+                            }}
+                          >
+                            {cert.name}
+                          </Typography>
+                        </Box>
                         <Typography
                           sx={{
                             fontFamily: "Source Sans Pro",
                             fontSize: "14px",
-                            color: "#666",
+                            color: "#4A5565",
+                            ml: 4,
                           }}
                         >
                           {cert.issuingOrganization}
@@ -604,7 +633,9 @@ export default function ConsultantProfilePage() {
                   >
                     Areas of Expertise
                   </Typography>
-                  <Box sx={{ display: "flex", flexWrap: "wrap", gap: 1 }}>
+                  <Box
+                    sx={{ display: "flex", flexWrap: "wrap", gap: 1, mb: 3 }}
+                  >
                     {consultant.coachingSpecialties.map((specialty) => (
                       <Chip
                         key={specialty}
@@ -618,6 +649,48 @@ export default function ConsultantProfilePage() {
                       />
                     ))}
                   </Box>
+
+                  {/* Introduction Video */}
+                  {consultant.introductionVideoLink && (
+                    <Box sx={{ mt: 4 }}>
+                      <Typography
+                        sx={{
+                          fontFamily: "Faustina",
+                          fontSize: "20px",
+                          fontWeight: 700,
+                          color: "#1A1A1A",
+                          mb: 2,
+                        }}
+                      >
+                        Introduction Video
+                      </Typography>
+                      <Box
+                        sx={{
+                          position: "relative",
+                          paddingBottom: "56.25%",
+                          height: 0,
+                          overflow: "hidden",
+                          borderRadius: "12px",
+                          backgroundColor: "#000",
+                        }}
+                      >
+                        <iframe
+                          src={getEmbedUrl(consultant.introductionVideoLink)}
+                          style={{
+                            position: "absolute",
+                            top: 0,
+                            left: 0,
+                            width: "100%",
+                            height: "100%",
+                            border: "none",
+                            borderRadius: "12px",
+                          }}
+                          allow="accelerometer; autoplay; clipboard-write; encrypted-media; gyroscope; picture-in-picture"
+                          allowFullScreen
+                        />
+                      </Box>
+                    </Box>
+                  )}
                 </TabPanel>
 
                 {/* Services Tab */}
@@ -758,7 +831,10 @@ export default function ConsultantProfilePage() {
                   </Typography>
                 </TabPanel>
               </Paper>
+            </Box>
 
+            {/* Right Side - Details */}
+            <Box sx={{ flex: 1 }}>
               {/* Booking Section */}
               <Paper
                 elevation={0}
@@ -799,46 +875,7 @@ export default function ConsultantProfilePage() {
                     gap: 1,
                     mb: 3,
                   }}
-                >
-                  <Box
-                    sx={{
-                      width: 8,
-                      height: 8,
-                      borderRadius: "50%",
-                      backgroundColor: "#4CAF50",
-                    }}
-                  />
-                  <Typography
-                    sx={{
-                      fontFamily: "Source Sans Pro",
-                      fontSize: "14px",
-                      color: "#666",
-                    }}
-                  >
-                    {selectedSessionType ? `${selectedSessionType} min` : ""}
-                  </Typography>
-                  {selectedSessionType && (
-                    <>
-                      <Box
-                        sx={{
-                          width: 4,
-                          height: 4,
-                          borderRadius: "50%",
-                          backgroundColor: "#666",
-                        }}
-                      />
-                      <Typography
-                        sx={{
-                          fontFamily: "Source Sans Pro",
-                          fontSize: "14px",
-                          color: "#666",
-                        }}
-                      >
-                        Web conferencing details provided upon confirmation
-                      </Typography>
-                    </>
-                  )}
-                </Box>
+                ></Box>
 
                 {/* Session Type Selector */}
                 <FormControl fullWidth sx={{ mb: 3 }}>
@@ -939,6 +976,7 @@ export default function ConsultantProfilePage() {
                       loading={slotsLoading}
                       error={slotsError}
                       selectedDate={selectedDate}
+                      onDateSelect={handleDateSelect}
                     />
                   </Box>
                 </Box>
@@ -1010,7 +1048,7 @@ export default function ConsultantProfilePage() {
               </Paper>
             </Box>
           </Box>
-        </Container>
+        </Box>
       </Box>
 
       <SignUpModal open={showLoginModal} onClose={handleLoginModalClose} />
