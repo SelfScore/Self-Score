@@ -13,6 +13,7 @@ import consultantAuthRoutes from './consultantAuth';
 import consultantRoutes from './consultant';
 import googleCalendarRoutes from './googleCalendar';
 import bookingRoutes from './booking';
+import voiceAgentRoutes from './voiceAgent';
 // import calcomRoutes from './calcom';
 
 const router = Router();
@@ -32,6 +33,7 @@ router.use('/consultant/auth', consultantAuthRoutes);
 router.use('/consultants', consultantRoutes);
 router.use('/google-calendar', googleCalendarRoutes);
 router.use('/booking', bookingRoutes);
+router.use('/voice-interview', voiceAgentRoutes);
 // router.use('/calcom', calcomRoutes);
 
 

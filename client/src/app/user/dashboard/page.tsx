@@ -21,6 +21,7 @@ import {
   TrendingUp,
   Assessment as AssessmentIcon,
   Layers,
+  Mic,
 } from "@mui/icons-material";
 import { questionsApi } from "../../../services/questionsService";
 import {
@@ -150,9 +151,8 @@ export default function UserDashboard() {
                   : "N/A",
                 rawDate: rawDateValue || new Date().toISOString(), // Keep raw ISO date for report generation
                 timeSpent: item.timeSpent
-                  ? `${Math.floor(item.timeSpent / 60)}m ${
-                      item.timeSpent % 60
-                    }s`
+                  ? `${Math.floor(item.timeSpent / 60)}m ${item.timeSpent % 60
+                  }s`
                   : "N/A",
                 attemptNumber: attemptMap[item._id],
                 status: item.status, // ✅ Include status for Level 4 pending/reviewed check
@@ -313,8 +313,8 @@ export default function UserDashboard() {
         )
           ? "TEXT"
           : adminReview.questionReviews.every((qr) => qr.answerMode === "VOICE")
-          ? "VOICE"
-          : "MIXED",
+            ? "VOICE"
+            : "MIXED",
         questionReviews: adminReview.questionReviews.map((qr) => ({
           questionOrder: adminReview.questionReviews.indexOf(qr) + 1,
           questionText: qr.questionText,
@@ -361,7 +361,7 @@ export default function UserDashboard() {
   const lastTestScore =
     lastTest?.score ||
     progress?.testScores?.[
-      `level${lastCompletedLevel}` as keyof typeof progress.testScores
+    `level${lastCompletedLevel}` as keyof typeof progress.testScores
     ] ||
     0;
   const lastTestDate = lastTest?.date || new Date().toLocaleDateString();
@@ -496,6 +496,54 @@ export default function UserDashboard() {
                 padding="12px 24px"
                 fontSize="1rem"
                 onClick={() => router.push(`/testInfo?level=${nextLevel}`)}
+              />
+            </Paper>
+          </Grid>
+
+          {/* Voice Interview Card */}
+          <Grid size={{ xs: 12, md: 3 }}>
+            <Paper
+              sx={{
+                p: 4,
+                height: "100%",
+                maxHeight: "204px",
+                background: "linear-gradient(135deg, #667eea 0%, #764ba2 100%)",
+                color: "white",
+                borderRadius: 4,
+                display: "flex",
+                flexDirection: "column",
+                alignItems: "center",
+                justifyContent: "center",
+                gap: 2,
+              }}
+            >
+              <Box
+                sx={{
+                  width: 48,
+                  height: 48,
+                  borderRadius: "50%",
+                  backgroundColor: "rgba(255,255,255,0.2)",
+                  display: "flex",
+                  alignItems: "center",
+                  justifyContent: "center",
+                }}
+              >
+                <Mic sx={{ fontSize: 28, color: "white" }} />
+              </Box>
+              <Typography
+                variant="h5"
+                sx={{ fontWeight: 400, fontSize: "20px" }}
+              >
+                Voice Interview
+              </Typography>
+              <ButtonSelfScore
+                text="Start Interview"
+                textStyle={{ color: "#667eea", fontSize: "20px" }}
+                background="#F7F7F7"
+                borderRadius="16px"
+                padding="12px 24px"
+                fontSize="1rem"
+                onClick={() => router.push("/user/voice-interview")}
               />
             </Paper>
           </Grid>
@@ -680,9 +728,8 @@ export default function UserDashboard() {
                       width: 140,
                       height: 140,
                       borderRadius: "50%",
-                      background: `conic-gradient(#508B28 ${
-                        scorePercentage * 3.6
-                      }deg, #e5e7eb 0deg)`,
+                      background: `conic-gradient(#508B28 ${scorePercentage * 3.6
+                        }deg, #e5e7eb 0deg)`,
                       display: "flex",
                       alignItems: "center",
                       justifyContent: "center",
