@@ -14,6 +14,10 @@ import NextLink from "next/link";
 import EmailIcon from "@mui/icons-material/Email";
 import ButtonSelfScore from "../../components/ui/ButtonSelfScore";
 import api from "../../../lib/api";
+import {
+  getUserFriendlyError,
+  getSuccessMessage,
+} from "../../../utils/errorMessages";
 
 export default function ForgotPasswordPage() {
   const [email, setEmail] = useState("");
@@ -32,12 +36,12 @@ export default function ForgotPasswordPage() {
     setSuccess(false);
 
     if (!email.trim()) {
-      setError("Email is required");
+      setError("Please enter your email address");
       return;
     }
 
     if (!validateEmail(email)) {
-      setError("Please enter a valid email address");
+      setError("Please enter a valid email address (e.g., name@example.com)");
       return;
     }
 
@@ -52,13 +56,15 @@ export default function ForgotPasswordPage() {
         setSuccess(true);
         setEmail("");
       } else {
-        setError(response.message || "Failed to send reset link");
+        setError(
+          getUserFriendlyError(
+            { response: { data: { message: response.message } } },
+            "forgot"
+          )
+        );
       }
     } catch (err: any) {
-      setError(
-        err.response?.data?.message ||
-          "Failed to send reset link. Please try again."
-      );
+      setError(getUserFriendlyError(err, "forgot"));
     } finally {
       setLoading(false);
     }
@@ -119,8 +125,7 @@ export default function ForgotPasswordPage() {
         {/* Success Message */}
         {success && (
           <Alert severity="success" sx={{ mb: 3 }}>
-            Password reset link has been sent to your email. Please check your
-            inbox.
+            {getSuccessMessage("forgot")}
           </Alert>
         )}
 

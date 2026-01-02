@@ -1,4 +1,4 @@
-import { createSlice, PayloadAction } from '@reduxjs/toolkit';
+import { createSlice, PayloadAction } from "@reduxjs/toolkit";
 
 export interface UserData {
   userId: string;
@@ -34,6 +34,7 @@ export interface ProgressData {
     level2?: number;
     level3?: number;
     level4?: number;
+    level5?: number;
   };
 }
 
@@ -58,7 +59,7 @@ const initialState: AuthState = {
 };
 
 const authSlice = createSlice({
-  name: 'auth',
+  name: "auth",
   initialState,
   reducers: {
     // Set loading state
@@ -72,7 +73,14 @@ const authSlice = createSlice({
     },
 
     // Login success
-    loginSuccess: (state, action: PayloadAction<{user: UserData, purchasedLevels?: PurchasedLevelsData, progress?: ProgressData}>) => {
+    loginSuccess: (
+      state,
+      action: PayloadAction<{
+        user: UserData;
+        purchasedLevels?: PurchasedLevelsData;
+        progress?: ProgressData;
+      }>
+    ) => {
       state.user = action.payload.user;
       state.purchasedLevels = action.payload.purchasedLevels || null;
       state.progress = action.payload.progress || null;
@@ -112,7 +120,10 @@ const authSlice = createSlice({
     },
 
     // Update purchased levels data
-    updatePurchasedLevels: (state, action: PayloadAction<PurchasedLevelsData>) => {
+    updatePurchasedLevels: (
+      state,
+      action: PayloadAction<PurchasedLevelsData>
+    ) => {
       state.purchasedLevels = action.payload;
     },
 
@@ -122,7 +133,14 @@ const authSlice = createSlice({
     },
 
     // Initialize auth state from localStorage (for hydration)
-    initializeAuth: (state, action: PayloadAction<{user: UserData, purchasedLevels?: PurchasedLevelsData, progress?: ProgressData} | null>) => {
+    initializeAuth: (
+      state,
+      action: PayloadAction<{
+        user: UserData;
+        purchasedLevels?: PurchasedLevelsData;
+        progress?: ProgressData;
+      } | null>
+    ) => {
       if (action.payload) {
         state.user = action.payload.user;
         state.purchasedLevels = action.payload.purchasedLevels || null;

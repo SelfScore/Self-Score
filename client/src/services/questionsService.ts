@@ -1,5 +1,5 @@
-import api from '../lib/api';
-import { API_ENDPOINTS } from '../lib/config';
+import api from "../lib/api";
+import { API_ENDPOINTS } from "../lib/config";
 
 // Types for questions and responses
 export interface Question {
@@ -9,7 +9,7 @@ export interface Question {
   level: number;
   correctOptionIndex?: number;
   questionType?: string; // "multiple-choice" or "slider-scale"
-  scoringType?: 'POSITIVE_MULTIPLIER' | 'NEGATIVE_MULTIPLIER'; // Scoring type for the question
+  scoringType?: "POSITIVE_MULTIPLIER" | "NEGATIVE_MULTIPLIER"; // Scoring type for the question
   order?: number; // Display order (used in Level 2: 1, 2, 3...9)
   userResponse?: {
     selectedOptionIndex: number;
@@ -49,40 +49,59 @@ export const questionsApi = {
   },
 
   // Get questions by level
-  getQuestionsByLevel: async (level: number, userId?: string): Promise<QuestionsApiResponse> => {
-    const url = userId 
+  getQuestionsByLevel: async (
+    level: number,
+    userId?: string
+  ): Promise<QuestionsApiResponse> => {
+    const url = userId
       ? `${API_ENDPOINTS.QUESTIONS.GET_BY_LEVEL(level)}?userId=${userId}`
       : API_ENDPOINTS.QUESTIONS.GET_BY_LEVEL(level);
     return await api.get(url);
   },
 
   // Get questions with user responses
-  getQuestionsWithResponses: async (userId: string, level?: number): Promise<QuestionsApiResponse> => {
-    const url = level 
+  getQuestionsWithResponses: async (
+    userId: string,
+    level?: number
+  ): Promise<QuestionsApiResponse> => {
+    const url = level
       ? `${API_ENDPOINTS.QUESTIONS.GET_WITH_RESPONSES(userId)}?level=${level}`
       : API_ENDPOINTS.QUESTIONS.GET_WITH_RESPONSES(userId);
     return await api.get(url);
   },
 
   // Submit question response
-  submitResponse: async (response: QuestionResponse): Promise<ResponseApiResponse> => {
+  submitResponse: async (
+    response: QuestionResponse
+  ): Promise<ResponseApiResponse> => {
     return await api.post(API_ENDPOINTS.RESPONSES.CREATE, response);
   },
 
   // Submit Level 1 question response (single or multiple)
-  submitLevel1Response: async (userId: string, responses: { questionId: string; selectedOptionIndex: number }[]): Promise<ResponseApiResponse> => {
+  submitLevel1Response: async (
+    userId: string,
+    responses: { questionId: string; selectedOptionIndex: number }[],
+    timeSpent?: number
+  ): Promise<ResponseApiResponse> => {
     return await api.post(API_ENDPOINTS.RESPONSES.CREATE_LEVEL1, {
       userId,
-      responses
+      responses,
+      timeSpent,
     });
   },
 
   // Submit responses for any level (2, 3, 4) - Generic submission
-  submitLevelResponse: async (userId: string, level: number, responses: { questionId: string; selectedOptionIndex: number }[]): Promise<ResponseApiResponse> => {
+  submitLevelResponse: async (
+    userId: string,
+    level: number,
+    responses: { questionId: string; selectedOptionIndex: number }[],
+    timeSpent?: number
+  ): Promise<ResponseApiResponse> => {
     return await api.post(API_ENDPOINTS.RESPONSES.SUBMIT_LEVEL, {
       userId,
       level,
-      responses
+      responses,
+      timeSpent,
     });
   },
 
@@ -97,9 +116,11 @@ export const questionsApi = {
   },
 
   // Generate a shareable link for a test submission
-  generateShareLink: async (submissionId: string): Promise<ResponseApiResponse> => {
-    return await api.post('/api/questions-response/generate-share-link', {
-      submissionId
+  generateShareLink: async (
+    submissionId: string
+  ): Promise<ResponseApiResponse> => {
+    return await api.post("/api/questions-response/generate-share-link", {
+      submissionId,
     });
   },
 

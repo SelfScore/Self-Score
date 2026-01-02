@@ -11,8 +11,10 @@ export default function WhyWeBuild() {
       sx={{
         width: "100%",
         backgroundColor: "#FFF",
-        py: { xs: 6, md: 10 },
+        py: { xs: 6, md: 2 },
         px: { xs: 2, sm: 4, md: 6 },
+          mb: 4,
+
       }}
     >
       <Box
@@ -20,7 +22,6 @@ export default function WhyWeBuild() {
           textAlign: "center",
           maxWidth: "900px",
           mx: "auto",
-          mt: { xs: 0, md: 4 },
         }}
       >
         <Typography

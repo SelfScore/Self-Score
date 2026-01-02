@@ -27,6 +27,7 @@ export default function AboutLevels() {
       id: 1,
       title: "Level 1",
       name: "Awareness",
+      price: "FREE",
       description:
         "This initial stage is all about gently tuning into your inner world. You'll begin to recognize your current patterns, discover what truly matters to you, and lay the groundwork for a more mindful existence. It's the moment you start listening to the whispers of your soul.",
     },
@@ -34,6 +35,7 @@ export default function AboutLevels() {
       id: 2,
       title: "Level 2",
       name: "Exploration",
+      price: "$5",
       description:
         "At this stage, you embark on a journey of self-discovery. You'll delve deeper into understanding your strengths, values, and aspirations. This level encourages you to explore new perspectives, challenge limiting beliefs, and start envisioning the life you want to create.",
     },
@@ -41,6 +43,7 @@ export default function AboutLevels() {
       id: 3,
       title: "Level 3",
       name: "Action",
+      price: " $15",
       description:
         "In this phase, you take decisive steps towards your goals. You'll learn to set actionable objectives, develop new skills, and implement changes in your life. This level is all about turning insights into tangible outcomes and making meaningful progress.",
     },
@@ -48,8 +51,17 @@ export default function AboutLevels() {
       id: 4,
       title: "Level 4",
       name: "Mastery",
+      price: "$25",
       description:
         "The final stage is about sustaining growth and embracing lifelong learning. You'll refine your abilities, cultivate resilience, and deepen your self-awareness. This level empowers you to live authentically, lead with purpose, and inspire others on their own journeys.",
+    },
+    {
+      id: 5,
+      title: "Level 5",
+      name: "Excellence",
+      price: "Bonus Included with level 4",
+      description:
+        "This advanced stage represents the pinnacle of personal development. You'll embody wisdom, demonstrate consistent growth, and serve as a guide for others. This level is about continuous refinement, lasting impact, and creating a legacy of positive transformation.",
     },
   ];
 
@@ -101,8 +113,9 @@ export default function AboutLevels() {
             fontSize: { xs: "1rem", sm: "1.1rem", md: "18px" },
           }}
         >
-          Our life scoring system comprises four progressive levels, each
-          corresponding to a distinct stage of personal development.
+          Our life scoring system comprises four progressive levels,
+          <br />
+          each corresponding to a distinct stage of personal development.
         </Typography>
       </Box>
 
@@ -197,7 +210,7 @@ export default function AboutLevels() {
                     height: "100%",
                     backgroundColor:
                       activeTab === index
-                        ? "#307E8D"
+                        ? "#FF4F00"
                         : isLevelUnlocked(index)
                         ? "#CACACA80"
                         : "#CACACA80",
@@ -223,6 +236,11 @@ export default function AboutLevels() {
                         : index === levels.length - 1
                         ? "0 25px 25px 0"
                         : "0",
+                    // Add blue border for Level 5
+                    ...(index === 4 && {
+                      border: "2px solid #FF4F00",
+                      boxSizing: "border-box",
+                    }),
                   }}
                 >
                   <Box
@@ -286,18 +304,38 @@ export default function AboutLevels() {
               // boxShadow: '0 2px 12px rgba(0,0,0,0.04)'
             }}
           >
-            <Typography
-              variant="h4"
-              gutterBottom
-              sx={{
-                color: "#005F73",
-                fontWeight: "bold",
-                fontFamily: "Faustina",
-                fontSize: { xs: "1.5rem", md: "2.125rem" },
-              }}
-            >
-              {levels[activeTab].title}: {levels[activeTab].name}
-            </Typography>
+            <Box sx={{ display: "flex", flexDirection: "row" }}>
+              <Typography
+                variant="h4"
+                gutterBottom
+                sx={{
+                  color: "#005F73",
+                  fontWeight: "bold",
+                  fontFamily: "Faustina",
+                  fontSize: { xs: "1.5rem", md: "2.125rem" },
+                }}
+              >
+                {levels[activeTab].title}: {levels[activeTab].name}
+              </Typography>
+              <Box
+                sx={{
+                  // border: "1px solid #000",
+                  borderRadius: "12px",
+                  // mb: 5,
+                  px: 2,
+                  ml: 1,
+                  my: "auto",
+                  backgroundColor: "#005F73",
+                  display: "flex",
+                  color: "#fff",
+                  alignItems: "center",
+                  justifyContent: "center",
+                  fontFamily: "Source Sans Pro",
+                }}
+              >
+                <Typography>{levels[activeTab].price}</Typography>
+              </Box>
+            </Box>
             <Typography
               variant="body1"
               sx={{

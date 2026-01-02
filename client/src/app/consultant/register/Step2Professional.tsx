@@ -114,12 +114,9 @@ export default function Step2Professional({
 
     if (!formData.professionalBio.trim()) {
       newErrors.professionalBio = "Professional bio is required";
-    } else if (formData.professionalBio.length < 200) {
+    } else if (formData.professionalBio.length > 250) {
       newErrors.professionalBio =
-        "Professional bio must be at least 200 characters";
-    } else if (formData.professionalBio.length > 2000) {
-      newErrors.professionalBio =
-        "Professional bio cannot exceed 2000 characters";
+        "Professional bio cannot exceed 250 characters";
     }
 
     if (formData.languagesSpoken.length === 0) {
@@ -377,8 +374,8 @@ export default function Step2Professional({
               color: "#1A1A1A",
             }}
           >
-            Professional Bio <span style={{ color: "#E87A42" }}>*</span> (Min
-            200 characters)
+            Professional Bio <span style={{ color: "#E87A42" }}>*</span> (Max
+            250 characters)
           </Typography>
           <Typography
             sx={{
@@ -394,14 +391,18 @@ export default function Step2Professional({
           <TextField
             fullWidth
             multiline
-            rows={6}
+            rows={4}
             placeholder="Tell us about your coaching philosophy, approach, and what makes you unique..."
             value={formData.professionalBio}
-            onChange={(e) =>
-              handleInputChange("professionalBio", e.target.value)
-            }
+            onChange={(e) => {
+              // Enforce max length
+              if (e.target.value.length <= 250) {
+                handleInputChange("professionalBio", e.target.value);
+              }
+            }}
             error={!!errors.professionalBio}
             helperText={errors.professionalBio}
+            inputProps={{ maxLength: 250 }}
             sx={{
               "& .MuiOutlinedInput-root": {
                 backgroundColor: "#FFF",
@@ -413,25 +414,21 @@ export default function Step2Professional({
               },
             }}
           />
-          <Box sx={{ mt: 1, display: "flex", justifyContent: "space-between" }}>
+          <Box sx={{ mt: 1, display: "flex", justifyContent: "flex-end" }}>
             <Typography
               sx={{
                 fontFamily: "Source Sans Pro",
                 fontSize: "12px",
                 color:
-                  formData.professionalBio.length < 200 ? "#d32f2f" : "#666",
+                  formData.professionalBio.length >= 250
+                    ? "#d32f2f"
+                    : formData.professionalBio.length >= 200
+                      ? "#ED6C02"
+                      : "#666",
+                fontWeight: formData.professionalBio.length >= 250 ? 600 : 400,
               }}
             >
-              {formData.professionalBio.length} / 200 characters
-            </Typography>
-            <Typography
-              sx={{
-                fontFamily: "Source Sans Pro",
-                fontSize: "12px",
-                color: "#666",
-              }}
-            >
-              {2000 - formData.professionalBio.length} characters remaining
+              {formData.professionalBio.length} / 250 characters
             </Typography>
           </Box>
         </Grid>

@@ -7,7 +7,7 @@ import {
   Container as MUIContainer,
 } from "@mui/material";
 import { styled } from "@mui/material/styles";
-import DescriptionIcon from '@mui/icons-material/Description';
+import DescriptionIcon from "@mui/icons-material/Description";
 
 // Styled components
 const Container = styled(Box)(({ theme }) => ({
@@ -56,8 +56,8 @@ const Circle = styled(Box)<{
     height: `${size * 0.83}px`,
   },
   [theme.breakpoints.down("sm")]: {
-    width: `${size * 0.50}px`, // 400/600 ratio
-    height: `${size * 0.50}px`,
+    width: `${size * 0.5}px`, // 400/600 ratio
+    height: `${size * 0.5}px`,
   },
   [theme.breakpoints.down("xs")]: {
     width: `${size * 0.53}px`, // 320/600 ratio
@@ -189,8 +189,10 @@ const Advantages: React.FC = () => {
               fontSize: { xs: "1rem", sm: "1.1rem", md: "18px" },
             }}
           >
-            Most people are caught in “eat, drink, and be merry.” But what about
-            mind purification, the ability to live fully in the present moment?
+            Most people are caught in “eat, drink, and be merry.”
+            <br />
+            But what about mind purification, the ability to live fully in the
+            present moment?
           </Typography>
         </Box>
       </MUIContainer>

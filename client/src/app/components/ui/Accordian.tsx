@@ -94,7 +94,7 @@ const CustomAccordion: React.FC<AccordionProps> = ({
               sx={{
                 color: "#2B2B2B",
                 fontFamily: "Source Sans Pro",
-                fontSize: { xs: "0.95rem", md: "1.1rem" },
+                fontSize: { xs: "0.95rem", md: "16px" },
                 lineHeight: 1.6,
               }}
             >

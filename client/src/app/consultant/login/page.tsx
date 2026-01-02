@@ -107,7 +107,7 @@ export default function ConsultantLoginPage() {
   return (
     <Box
       sx={{
-        minHeight: "100vh",
+        // minHeight: "100vh",
         display: "flex",
         alignItems: "center",
         justifyContent: "center",
@@ -123,6 +123,7 @@ export default function ConsultantLoginPage() {
           alignItems: { xs: "center", md: "flex-start" },
           gap: { xs: 3, md: 3 },
           marginTop: { xs: 8, md: 12 },
+          mb: { xs: 0, md: 4}
         }}
       >
         {/* Left Side - Image */}
@@ -131,7 +132,7 @@ export default function ConsultantLoginPage() {
             position: "relative",
             display: { xs: "none", md: "block" },
             width: { md: "48%", lg: "50%" },
-            minHeight: "798px",
+            // minHeight: "798px",
             flexShrink: 0,
           }}
         >
@@ -401,7 +402,7 @@ export default function ConsultantLoginPage() {
                 component={NextLink}
                 href="/consultant/forgot-password"
                 sx={{
-                  color: "#0066cc",
+                  color: "#005F73",
                   textDecoration: "none",
                   fontSize: "0.9rem",
                   "&:hover": { textDecoration: "underline" },
@@ -444,7 +445,7 @@ export default function ConsultantLoginPage() {
                   component={NextLink}
                   href="/consultant/register"
                   sx={{
-                    color: "#0066cc",
+                    color: "#005F73",
                     fontWeight: "600",
                     textDecoration: "none",
                     "&:hover": { textDecoration: "underline" },

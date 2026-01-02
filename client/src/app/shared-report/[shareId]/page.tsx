@@ -162,7 +162,7 @@ export default function SharedReportPage() {
         >
           <Typography
             sx={{
-              fontSize: "48px",
+              fontSize: "40px",
               fontWeight: 700,
               fontFamily: "Faustina",
               mb: 2,
@@ -408,7 +408,7 @@ export default function SharedReportPage() {
                   <Typography
                     sx={{
                       fontSize: "12px",
-                      color: "#6B7280",
+                      color: "#000",
                       fontFamily: "Source Sans Pro",
                       fontWeight: 500,
                     //   mb: 0.25,

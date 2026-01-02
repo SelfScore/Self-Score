@@ -1,6 +1,6 @@
 "use client";
 
-import { useEffect } from "react";
+import { useEffect, useRef } from "react";
 import { Box, CircularProgress, Typography } from "@mui/material";
 import { useAuth } from "../../../hooks/useAuth";
 import { useRouter } from "next/navigation";
@@ -8,11 +8,17 @@ import { useRouter } from "next/navigation";
 export default function LogoutPage() {
   const { logout } = useAuth();
   const router = useRouter();
+  const hasLoggedOut = useRef(false);
 
   useEffect(() => {
+    // Prevent multiple executions
+    if (hasLoggedOut.current) return;
+
     const performLogout = async () => {
+      hasLoggedOut.current = true;
+
       try {
-        logout();
+        await logout();
         // Add a small delay to show the logout message
         setTimeout(() => {
           router.push("/");
@@ -24,7 +30,8 @@ export default function LogoutPage() {
     };
 
     performLogout();
-  }, [logout, router]);
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, []); // Empty dependency array - only run once on mount
 
   return (
     <Box

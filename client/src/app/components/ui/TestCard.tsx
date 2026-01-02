@@ -241,6 +241,7 @@ const TestCard: React.FC<TestCardProps> = ({
           fontSize: "14px",
           color: "#111827",
           textAlign: "center",
+          mt: status === "completed" ? -1.5 : 0,
         }}
       >
         {levelName}

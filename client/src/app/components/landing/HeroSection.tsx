@@ -1,4 +1,4 @@
-'use client';
+"use client";
 import { Box, Typography } from "@mui/material";
 import HomePageBG from "../../../../public/images/LandingPage/HomePage.png";
 import HomeSmile from "../../../../public/images/LandingPage/HomePageSmile.png";
@@ -22,6 +22,7 @@ export default function HeroSection() {
           border: "1px solid #3A3A3A66 ",
           borderBottomLeftRadius: { xs: "40px", md: "80px" },
           borderBottomRightRadius: { xs: "40px", md: "80px" },
+          borderTop: "none",
           marginBottom: { xs: 4, md: 8 },
         }}
       >
@@ -91,6 +92,7 @@ export default function HeroSection() {
             }}
           >
             You already know your credit score. But do you know your self-score,
+            <br />
             your life score, your happiness score?
           </Typography>
 

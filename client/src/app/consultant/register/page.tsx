@@ -47,6 +47,10 @@ function ConsultantRegisterContent() {
     Step3Data,
     "consultantId"
   > | null>(null);
+  const [step4Data, setStep4Data] = useState<Omit<
+    Step4Data,
+    "consultantId"
+  > | null>(null);
 
   // Set mounted flag on client side
   useEffect(() => {
@@ -83,10 +87,12 @@ function ConsultantRegisterContent() {
     const saved1 = sessionStorage.getItem("consultantStep1");
     const saved2 = sessionStorage.getItem("consultantStep2");
     const saved3 = sessionStorage.getItem("consultantStep3");
+    const saved4 = sessionStorage.getItem("consultantStep4");
 
     if (saved1) setStep1Data(JSON.parse(saved1));
     if (saved2) setStep2Data(JSON.parse(saved2));
     if (saved3) setStep3Data(JSON.parse(saved3));
+    if (saved4) setStep4Data(JSON.parse(saved4));
   }, [mounted, searchParams]);
 
   // Update URL when step changes
@@ -119,7 +125,9 @@ function ConsultantRegisterContent() {
     setCurrentStep(4);
   };
 
-  const handleStep4Complete = (_data: Omit<Step4Data, "consultantId">) => {
+  const handleStep4Complete = (data: Omit<Step4Data, "consultantId">) => {
+    // Save Step 4 data to sessionStorage
+    sessionStorage.setItem("consultantStep4", JSON.stringify(data));
     // Move to Step 5 (Calendar)
     setCurrentStep(5);
   };
@@ -146,7 +154,7 @@ function ConsultantRegisterContent() {
     setCurrentStep(step - 1);
   };
 
-  const progressPercentage = (currentStep / 5) * 100;
+  const progressPercentage = ((currentStep - 1) / 5) * 100;
 
   return (
     <Box
@@ -322,6 +330,7 @@ function ConsultantRegisterContent() {
               consultantId={consultantId}
               onComplete={handleStep4Complete}
               onPrevious={() => handlePrevious(4)}
+              initialData={step4Data || undefined}
             />
           )}
 

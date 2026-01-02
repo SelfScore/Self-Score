@@ -33,6 +33,7 @@ export default function LevelTest({ level }: LevelTestProps) {
   const [submitting, setSubmitting] = useState(false);
   const [currentQuestionIndex, setCurrentQuestionIndex] = useState(0);
   const [showSignUpModal, setShowSignUpModal] = useState(false);
+  const [startTime, _setStartTime] = useState<number>(Date.now()); // Track test start time
 
   const router = useRouter();
   const searchParams = useSearchParams();
@@ -88,11 +89,12 @@ export default function LevelTest({ level }: LevelTestProps) {
   useEffect(() => {
     if (questions.length > 0) {
       const questionNumber = currentQuestionIndex + 1;
-      const currentParams = new URLSearchParams(searchParams.toString());
+      const currentParams = new URLSearchParams(window.location.search);
+      currentParams.set("level", level.toString());
       currentParams.set("question", questionNumber.toString());
       router.replace(`?${currentParams.toString()}`, { scroll: false });
     }
-  }, [currentQuestionIndex, questions.length, router, searchParams]);
+  }, [currentQuestionIndex, questions.length, router, level]);
 
   // Fetch questions for the specified level on component mount
   useEffect(() => {
@@ -240,18 +242,24 @@ export default function LevelTest({ level }: LevelTestProps) {
         calculatedScore,
       });
 
+      // Calculate time spent in seconds
+      const timeSpentSeconds = Math.floor((Date.now() - startTime) / 1000);
+      console.log(`Time spent on test: ${timeSpentSeconds} seconds`);
+
       // Use appropriate submission endpoint based on level
       let response;
       if (level === 1) {
         response = await questionsApi.submitLevel1Response(
           user.userId,
-          responses
+          responses,
+          timeSpentSeconds
         );
       } else {
         response = await questionsApi.submitLevelResponse(
           user.userId,
           level,
-          responses
+          responses,
+          timeSpentSeconds
         );
       }
 
@@ -611,6 +619,7 @@ export default function LevelTest({ level }: LevelTestProps) {
             padding: "1.5px 14px",
             fontSize: "20px",
             fontWeight: 400,
+            fontFamily: "source sans pro",
             minWidth: "140px",
             "&:disabled": {
               borderColor: "#ccc",
@@ -659,7 +668,9 @@ export default function LevelTest({ level }: LevelTestProps) {
         ) : (
           <ButtonSelfScore
             text="Next"
-            endIcon={<ArrowForwardIosIcon />}
+            endIcon={
+              <ArrowForwardIosIcon sx={{ color: "#FFF", fontSize: "20px" }} />
+            }
             onClick={handleNext}
             disabled={!currentQuestion || !(currentQuestion._id in answers)}
             background={

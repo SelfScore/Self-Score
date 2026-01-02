@@ -1,7 +1,7 @@
 "use client";
 import { Box, Typography } from "@mui/material";
 import ButtonSelfScore from "../ui/ButtonSelfScore";
-import YogoPersonIMG from "../../../../public/images/ourMission/YogaPerson.webp";
+import YogoPersonIMG from "../../../../public/images/ourMission/background image.png";
 import Image from "next/image";
 import OutLineButton from "../ui/OutLineButton";
 // import { useRouter } from "next/navigation";

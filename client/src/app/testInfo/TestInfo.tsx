@@ -14,6 +14,8 @@ import ArrowBackIosIcon from "@mui/icons-material/ArrowBackIos";
 import { useLevelAccess } from "../../hooks/useLevelAccess";
 import BuyLevelButton from "../components/ui/BuyLevelButton";
 import { formatPrice } from "../../lib/stripe";
+import FlareIcon from "@mui/icons-material/Flare";
+import LibraryBooksIcon from "@mui/icons-material/LibraryBooks";
 
 interface TestInfoProps {
   initialLevel: number;
@@ -83,7 +85,7 @@ export default function TestInfo({ initialLevel }: TestInfoProps) {
       title: "Level 4",
       name: "Mastery",
       duration: "35-40 Minutes",
-      questions: 20,
+      questions: 25,
       description: "Complete mastery assessment",
       questionsDetail: "Evaluating sustained growth and leadership potential",
       isFree: false,
@@ -92,6 +94,23 @@ export default function TestInfo({ initialLevel }: TestInfoProps) {
         "Complete life mastery analysis",
         "Leadership assessment",
         "Lifetime access to insights",
+      ],
+    },
+    {
+      id: 5,
+      title: "Level 5",
+      name: "Excellence",
+      duration: "45-60 Minutes",
+      questions: "Expert Review",
+      description: "Pinnacle of personal development",
+      questionsDetail:
+        "Expert review and personalized guidance for lasting transformation",
+      isFree: false,
+      features: [
+        "Expert consultant review",
+        "Personalized transformation plan",
+        "Legacy building framework",
+        "Ongoing support access",
       ],
     },
   ];
@@ -122,17 +141,29 @@ export default function TestInfo({ initialLevel }: TestInfoProps) {
       }}
     >
       {/* Back Button */}
-      <Box sx={{ mb: 3, ml: { xs: 0, lg: 4 }, mt: { xs: 8, md: 10 } }}>
+      <Box
+        sx={{
+          mb: { xs: 3, md: -5 },
+          ml: { xs: 0, lg: 8 },
+          mt: { xs: 8, md: 10 },
+        }}
+      >
         <OutLineButton
-          startIcon={<ArrowBackIosIcon />}
+          startIcon={
+            <ArrowBackIosIcon
+              sx={{
+                fontSize: { xs: "20px" },
+              }}
+            />
+          }
           style={{
             background: "transparent",
             color: "#3A3A3A",
             border: "1px solid #3A3A3A",
             borderRadius: "8px",
-            padding: "3.5px 14px",
+            padding: "6.75px 14px",
             fontWeight: 400,
-            fontSize: "18px",
+            fontSize: "14px",
             cursor: "pointer",
             transition: "all 0.2s",
           }}
@@ -298,7 +329,9 @@ export default function TestInfo({ initialLevel }: TestInfoProps) {
                   mb: 1,
                 }}
               >
-                Unlock this assessment for lifetime access for one-time fee of
+                {activeLevel === 4
+                  ? "Unlock complete bundle including Level 5 (Excellence) for one-time fee of"
+                  : "Unlock this assessment for lifetime access for one-time fee of"}
               </Typography>
               <Typography
                 variant="h2"
@@ -312,6 +345,19 @@ export default function TestInfo({ initialLevel }: TestInfoProps) {
               >
                 {bundleInfo ? formatPrice(bundleInfo.price) : "$0"}
               </Typography>
+              {activeLevel === 4 && (
+                <Typography
+                  sx={{
+                    fontFamily: "Source Sans Pro",
+                    fontSize: { xs: "12px", md: "14px" },
+                    color: "#FF5722",
+                    mt: 1,
+                    fontWeight: 600,
+                  }}
+                >
+                  🎁 Bonus: Level 5 (Excellence) included FREE!
+                </Typography>
+              )}
             </Box>
 
             {/* Why Upgrade Section */}
@@ -529,7 +575,7 @@ export default function TestInfo({ initialLevel }: TestInfoProps) {
                   flexShrink: 0,
                 }}
               >
-                <EmojiEventsIcon sx={{ fontSize: "20px", color: "#fff" }} />
+                <FlareIcon sx={{ fontSize: "20px", color: "#fff" }} />
               </Box>
               <Box>
                 <Typography
@@ -568,7 +614,7 @@ export default function TestInfo({ initialLevel }: TestInfoProps) {
                   flexShrink: 0,
                 }}
               >
-                <EmojiEventsIcon sx={{ fontSize: "20px", color: "#fff" }} />
+                <LibraryBooksIcon sx={{ fontSize: "20px", color: "#fff" }} />
               </Box>
               <Box>
                 <Typography
@@ -595,7 +641,10 @@ export default function TestInfo({ initialLevel }: TestInfoProps) {
 
             {/* Unlock Button */}
             <Box sx={{ display: "flex", justifyContent: "center", mt: 4 }}>
-              <BuyLevelButton level={activeLevel + 1} fullWidth />
+              <BuyLevelButton
+                level={activeLevel === 4 ? 4 : activeLevel + 1}
+                fullWidth
+              />
             </Box>
 
             {/* Security Note */}
@@ -795,7 +844,7 @@ export default function TestInfo({ initialLevel }: TestInfoProps) {
             >
               <ButtonSelfScore
                 text="Start Assessment"
-                endIcon={<ArrowForwardIcon />}
+                endIcon={<ArrowForwardIcon sx={{ color: "#FFF" }} />}
                 onClick={handleStartAssessment}
                 maxWidth="565px"
                 height="40px"

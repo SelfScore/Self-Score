@@ -77,7 +77,7 @@ const Footer: React.FC = () => {
           </Box>
           <Box sx={{ ml: 2, mb: 1 }}>
             <Link
-              href="mailto:info@example.com"
+              href="mailto:info@selfscore.net"
               color="inherit"
               sx={{
                 fontFamily: "Source Sans Pro",
@@ -124,7 +124,7 @@ const Footer: React.FC = () => {
           </Box>
           <Box sx={{ ml: 2, mb: 1 }}>
             <Link
-              href="tel:+1234567890"
+              href="tel:+15614300610"
               color="inherit"
               sx={{
                 fontFamily: "Source Sans Pro",
@@ -226,13 +226,25 @@ const Footer: React.FC = () => {
           rel="noopener noreferrer"
           sx={{ color: "#F7F7F7" }}
         >
-          <InstagramIcon
+          <Box
             sx={{
-              color: "#F7F7F7",
-              height: { xs: "32px", md: "40px" },
-              width: { xs: "32px", md: "40px" },
+              height: { xs: "36px", md: "40px" },
+              width: { xs: "36px", md: "40px" },
+              mb: 1,
+              border: "1px solid #EFEFEF",
+              borderRadius: "8px",
+              flexShrink: 0,
             }}
-          />
+          >
+            <InstagramIcon
+              sx={{
+                height: "100%",
+                width: "100%",
+                padding: "8px",
+                color: "#EFEFEF",
+              }}
+            />
+          </Box>
         </Link>
         <Link
           href="https://www.linkedin.com/YourProfile"
@@ -240,14 +252,26 @@ const Footer: React.FC = () => {
           rel="noopener noreferrer"
           sx={{ color: "#F7F7F7" }}
         >
-          <LinkedInIcon
+          <Box
             sx={{
-              color: "#F7F7F7",
-              height: { xs: "32px", md: "40px" },
-              width: { xs: "32px", md: "40px" },
+              height: { xs: "36px", md: "40px" },
+              width: { xs: "36px", md: "40px" },
+              mb: 1,
+              border: "1px solid #EFEFEF",
+              borderRadius: "8px",
+              flexShrink: 0,
             }}
-          />
-        </Link>
+          >
+            <LinkedInIcon
+              sx={{
+                height: "100%",
+                width: "100%",
+                padding: "8px",
+                color: "#EFEFEF",
+              }}
+            />
+          </Box>
+          </Link>
       </Box>
 
       {/* self score text  */}

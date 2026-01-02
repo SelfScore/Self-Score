@@ -12,6 +12,7 @@ import {
   Grid,
   Avatar,
   Divider,
+  // Button,
 } from "@mui/material";
 import {
   HourglassEmpty,
@@ -22,17 +23,16 @@ import {
   LocationOn,
   CalendarToday,
   EventAvailable,
+  Edit,
+  AccessTime,
+  VideoCall,
+  Person,
 } from "@mui/icons-material";
 import { useRouter } from "next/navigation";
 import { consultantAuthService } from "@/services/consultantAuthService";
 import ButtonSelfScore from "../../components/ui/ButtonSelfScore";
-// import { calcomService } from "@/services/calcomService";
-// import ButtonSelfScore from "../../components/ui/ButtonSelfScore";
-// import {
-//   EventAvailable,
-//   Link as LinkIcon,
-//   CheckCircleOutline,
-// } from "@mui/icons-material";
+import { bookingService, Booking } from "@/services/bookingService";
+// import OutLineButton from "../../components/ui/OutLineButton";
 
 export default function ConsultantDashboard() {
   const router = useRouter();
@@ -41,6 +41,12 @@ export default function ConsultantDashboard() {
   const [error, setError] = useState<string>("");
   const [calendarStatus, setCalendarStatus] = useState<any>(null);
   const [checkingCalendar, setCheckingCalendar] = useState(false);
+
+  // Bookings state
+  const [bookings, setBookings] = useState<Booking[]>([]);
+  const [bookingsLoading, setBookingsLoading] = useState(false);
+  const [bookingsError, setBookingsError] = useState("");
+  const [selectedTab, setSelectedTab] = useState(0); // 0: Upcoming, 1: Past
 
   useEffect(() => {
     // Check if consultant data is available in sessionStorage (from registration)
@@ -66,6 +72,7 @@ export default function ConsultantDashboard() {
     // Check calendar connection status
     if (consultant) {
       checkCalendarConnection();
+      fetchBookings(); // Fetch bookings when consultant data is loaded
     }
   }, [consultant]);
 
@@ -90,6 +97,86 @@ export default function ConsultantDashboard() {
       setCheckingCalendar(false);
     }
   };
+
+  const fetchBookings = async () => {
+    try {
+      setBookingsLoading(true);
+      const response = await bookingService.getConsultantBookings();
+
+      if (response.success && response.data) {
+        const bookingsData = (response.data as any).bookings || response.data;
+        const bookingsArray = Array.isArray(bookingsData) ? bookingsData : [];
+        setBookings(bookingsArray);
+      }
+    } catch (err: any) {
+      console.error("Error fetching bookings:", err);
+      setBookingsError("Failed to load bookings");
+    } finally {
+      setBookingsLoading(false);
+    }
+  };
+
+  const getBookingStatus = (booking: Booking) => {
+    if (booking.status === "CANCELLED") {
+      return { label: "Cancelled", color: "#F44336", bgColor: "#FFEBEE" };
+    }
+
+    const now = new Date();
+    const startTime = new Date(booking.startTime);
+
+    if (booking.status === "CREATED") {
+      const expiryTime = new Date(
+        new Date(booking.createdAt).getTime() + 10 * 60 * 1000
+      );
+      if (now > expiryTime) {
+        return { label: "Expired", color: "#FF9800", bgColor: "#FFF3E0" };
+      }
+      return { label: "Pending Payment", color: "#FF9800", bgColor: "#FFF3E0" };
+    }
+
+    if (now > startTime) {
+      return { label: "Completed", color: "#4CAF50", bgColor: "#E8F5E9" };
+    }
+
+    return { label: "Confirmed", color: "#4CAF50", bgColor: "#E8F5E9" };
+  };
+
+  const filterBookings = (type: "upcoming" | "past") => {
+    const now = new Date();
+
+    return bookings.filter((booking) => {
+      const startTime = new Date(booking.startTime);
+
+      if (booking.status === "CANCELLED") return false;
+
+      if (type === "upcoming") {
+        return startTime > now && booking.status === "PAID";
+      }
+
+      if (type === "past") {
+        if (booking.status === "PAID" && startTime <= now) {
+          return true;
+        }
+        if (booking.status === "CREATED") {
+          const expiryTime = new Date(
+            new Date(booking.createdAt).getTime() + 10 * 60 * 1000
+          );
+          return now > expiryTime;
+        }
+      }
+
+      return false;
+    });
+  };
+
+  const upcomingBookings = filterBookings("upcoming");
+  const pastBookings = filterBookings("past");
+  const totalBookings = bookings.filter((b) => b.status === "PAID").length;
+  const completedBookings = bookings.filter((b) => {
+    const now = new Date();
+    const startTime = new Date(b.startTime);
+    return b.status === "PAID" && startTime <= now;
+  }).length;
 
   const handleConnectCalendar = () => {
     // Store consultant ID for Step 5
@@ -272,29 +359,50 @@ export default function ConsultantDashboard() {
     >
       <Container maxWidth="lg">
         {/* Header */}
-        <Box sx={{ mb: 4 }}>
-          <Typography
-            variant="h3"
-            sx={{
-              fontFamily: "Faustina",
-              fontSize: { xs: "28px", md: "36px" },
-              fontWeight: 700,
-              color: "#1A1A1A",
-              mb: 1,
-              mt:8
-            }}
-          >
-            Welcome, {consultant.firstName}!
-          </Typography>
-          <Typography
-            sx={{
-              fontFamily: "Source Sans Pro",
-              fontSize: { xs: "14px", md: "16px" },
-              color: "#666",
-            }}
-          >
-            Consultant Dashboard
-          </Typography>
+        <Box
+          sx={{
+            mb: 4,
+            display: "flex",
+            justifyContent: "space-between",
+            alignItems: "flex-start",
+          }}
+        >
+          <Box>
+            <Typography
+              variant="h3"
+              sx={{
+                fontFamily: "Faustina",
+                fontSize: { xs: "28px", md: "36px" },
+                fontWeight: 700,
+                color: "#1A1A1A",
+                mb: 1,
+                mt: 8,
+              }}
+            >
+              Welcome, {consultant.firstName}!
+            </Typography>
+            <Typography
+              sx={{
+                fontFamily: "Source Sans Pro",
+                fontSize: { xs: "14px", md: "16px" },
+                color: "#666",
+              }}
+            >
+              Consultant Dashboard
+            </Typography>
+          </Box>
+
+          <Box sx={{ mt: 8 }}>
+            <ButtonSelfScore
+              text="Edit Profile"
+              onClick={() => router.push("/consultant/profile")}
+              startIcon={<Edit />}
+              style={{
+                borderRadius: "12px",
+                fontFamily: "Source Sans Pro",
+              }}
+            />
+          </Box>
         </Box>
 
         {/* Application Status Card */}
@@ -790,7 +898,7 @@ export default function ConsultantDashboard() {
                 </Box>
               </Box>
 
-              <Box>
+              {/* <Box>
                 <Typography
                   sx={{
                     fontFamily: "Source Sans Pro",
@@ -812,10 +920,602 @@ export default function ConsultantDashboard() {
                 >
                   ${consultant.hourlyRate} USD
                 </Typography>
-              </Box>
+              </Box> */}
             </Paper>
           </Grid>
         </Grid>
+
+        {/* Bookings Section - Only show if approved and calendar connected */}
+        {consultant.applicationStatus === "approved" &&
+          calendarStatus?.isConnected && (
+            <Box sx={{ mt: 4 }}>
+              <Typography
+                variant="h5"
+                sx={{
+                  fontFamily: "Faustina",
+                  fontSize: "24px",
+                  fontWeight: 700,
+                  color: "#1A1A1A",
+                  mb: 3,
+                }}
+              >
+                My Consultations
+              </Typography>
+
+              {/* Booking Stats */}
+              <Grid container spacing={3} sx={{ mb: 3 }}>
+                <Grid size={{ xs: 12, sm: 4 }}>
+                  <Paper
+                    sx={{
+                      p: 3,
+                      backgroundColor:
+                        "linear-gradient(135deg, #005F73 0%, #0A7A8F 100%)",
+                      background:
+                        "linear-gradient(135deg, #005F73 0%, #0A7A8F 100%)",
+                      borderRadius: "12px",
+                      color: "#fff",
+                    }}
+                  >
+                    <Typography
+                      variant="caption"
+                      sx={{ opacity: 0.9, fontFamily: "Source Sans Pro" }}
+                    >
+                      Total Bookings
+                    </Typography>
+                    <Typography
+                      variant="h3"
+                      sx={{ fontWeight: 700, fontFamily: "Faustina" }}
+                    >
+                      {totalBookings}
+                    </Typography>
+                  </Paper>
+                </Grid>
+                <Grid size={{ xs: 12, sm: 4 }}>
+                  <Paper
+                    sx={{
+                      p: 3,
+                      backgroundColor: "#4CAF50",
+                      borderRadius: "12px",
+                      color: "#fff",
+                    }}
+                  >
+                    <Typography
+                      variant="caption"
+                      sx={{ opacity: 0.9, fontFamily: "Source Sans Pro" }}
+                    >
+                      Upcoming
+                    </Typography>
+                    <Typography
+                      variant="h3"
+                      sx={{ fontWeight: 700, fontFamily: "Faustina" }}
+                    >
+                      {upcomingBookings.length}
+                    </Typography>
+                  </Paper>
+                </Grid>
+                <Grid size={{ xs: 12, sm: 4 }}>
+                  <Paper
+                    sx={{
+                      p: 3,
+                      backgroundColor: "#FF9800",
+                      borderRadius: "12px",
+                      color: "#fff",
+                    }}
+                  >
+                    <Typography
+                      variant="caption"
+                      sx={{ opacity: 0.9, fontFamily: "Source Sans Pro" }}
+                    >
+                      Completed
+                    </Typography>
+                    <Typography
+                      variant="h3"
+                      sx={{ fontWeight: 700, fontFamily: "Faustina" }}
+                    >
+                      {completedBookings}
+                    </Typography>
+                  </Paper>
+                </Grid>
+              </Grid>
+
+              {/* Bookings List */}
+              <Paper
+                elevation={0}
+                sx={{
+                  backgroundColor: "white",
+                  borderRadius: "12px",
+                  border: "1px solid #E0E0E0",
+                  overflow: "hidden",
+                }}
+              >
+                <Box sx={{ borderBottom: 1, borderColor: "divider", px: 3 }}>
+                  <Box sx={{ display: "flex", gap: 2 }}>
+                    <Box
+                      onClick={() => setSelectedTab(0)}
+                      sx={{
+                        py: 2,
+                        px: 2,
+                        cursor: "pointer",
+                        borderBottom:
+                          selectedTab === 0
+                            ? "3px solid #FF4F00"
+                            : "3px solid transparent",
+                        color: selectedTab === 0 ? "#FF4F00" : "#666",
+                        fontWeight: selectedTab === 0 ? 600 : 400,
+                        fontFamily: "Source Sans Pro",
+                      }}
+                    >
+                      Upcoming ({upcomingBookings.length})
+                    </Box>
+                    <Box
+                      onClick={() => setSelectedTab(1)}
+                      sx={{
+                        py: 2,
+                        px: 2,
+                        cursor: "pointer",
+                        borderBottom:
+                          selectedTab === 1
+                            ? "3px solid #FF4F00"
+                            : "3px solid transparent",
+                        color: selectedTab === 1 ? "#FF4F00" : "#666",
+                        fontWeight: selectedTab === 1 ? 600 : 400,
+                        fontFamily: "Source Sans Pro",
+                      }}
+                    >
+                      Past ({pastBookings.length})
+                    </Box>
+                  </Box>
+                </Box>
+
+                <Box sx={{ p: 3 }}>
+                  {bookingsLoading ? (
+                    <Box
+                      sx={{ display: "flex", justifyContent: "center", py: 4 }}
+                    >
+                      <CircularProgress />
+                    </Box>
+                  ) : bookingsError ? (
+                    <Alert severity="error">{bookingsError}</Alert>
+                  ) : (
+                    <>
+                      {/* Upcoming Bookings */}
+                      {selectedTab === 0 && (
+                        <>
+                          {upcomingBookings.length === 0 ? (
+                            <Box sx={{ textAlign: "center", py: 4 }}>
+                              <CalendarToday
+                                sx={{ fontSize: 48, color: "#CCC", mb: 2 }}
+                              />
+                              <Typography
+                                variant="body1"
+                                sx={{
+                                  color: "#666",
+                                  fontFamily: "Source Sans Pro",
+                                }}
+                              >
+                                No upcoming consultations
+                              </Typography>
+                            </Box>
+                          ) : (
+                            <Box
+                              sx={{
+                                display: "flex",
+                                flexDirection: "column",
+                                gap: 2,
+                              }}
+                            >
+                              {upcomingBookings.map((booking) => {
+                                const status = getBookingStatus(booking);
+                                return (
+                                  <Paper
+                                    key={booking._id}
+                                    sx={{
+                                      p: 3,
+                                      backgroundColor: "#F8FAFB",
+                                      borderRadius: "12px",
+                                      border: "1px solid #E0E0E0",
+                                    }}
+                                  >
+                                    <Box
+                                      sx={{
+                                        display: "flex",
+                                        justifyContent: "space-between",
+                                        alignItems: "flex-start",
+                                        mb: 2,
+                                      }}
+                                    >
+                                      <Box
+                                        sx={{
+                                          display: "flex",
+                                          alignItems: "center",
+                                          gap: 2,
+                                        }}
+                                      >
+                                        <Avatar
+                                          sx={{
+                                            backgroundColor: "#FF4F00",
+                                            width: 48,
+                                            height: 48,
+                                          }}
+                                        >
+                                          {booking.userId.username
+                                            .charAt(0)
+                                            .toUpperCase()}
+                                        </Avatar>
+                                        <Box>
+                                          <Typography
+                                            variant="subtitle1"
+                                            sx={{
+                                              fontWeight: 600,
+                                              fontFamily: "Source Sans Pro",
+                                            }}
+                                          >
+                                            {booking.userId.username}
+                                          </Typography>
+                                          <Typography
+                                            variant="body2"
+                                            sx={{
+                                              color: "#666",
+                                              fontFamily: "Source Sans Pro",
+                                            }}
+                                          >
+                                            {booking.userId.email}
+                                          </Typography>
+                                        </Box>
+                                      </Box>
+                                      <Chip
+                                        label={status.label}
+                                        sx={{
+                                          backgroundColor: status.bgColor,
+                                          color: status.color,
+                                          fontWeight: 600,
+                                          fontFamily: "Source Sans Pro",
+                                        }}
+                                      />
+                                    </Box>
+
+                                    <Divider sx={{ my: 2 }} />
+
+                                    <Grid container spacing={2}>
+                                      <Grid size={{ xs: 12, sm: 6 }}>
+                                        <Box
+                                          sx={{
+                                            display: "flex",
+                                            alignItems: "center",
+                                            gap: 1,
+                                            mb: 1,
+                                          }}
+                                        >
+                                          <CalendarToday
+                                            sx={{
+                                              fontSize: 18,
+                                              color: "#005F73",
+                                            }}
+                                          />
+                                          <Typography
+                                            variant="body2"
+                                            sx={{
+                                              fontFamily: "Source Sans Pro",
+                                            }}
+                                          >
+                                            {new Date(
+                                              booking.startTime
+                                            ).toLocaleDateString("en-US", {
+                                              weekday: "short",
+                                              month: "short",
+                                              day: "numeric",
+                                              year: "numeric",
+                                            })}
+                                          </Typography>
+                                        </Box>
+                                        <Box
+                                          sx={{
+                                            display: "flex",
+                                            alignItems: "center",
+                                            gap: 1,
+                                          }}
+                                        >
+                                          <AccessTime
+                                            sx={{
+                                              fontSize: 18,
+                                              color: "#005F73",
+                                            }}
+                                          />
+                                          <Typography
+                                            variant="body2"
+                                            sx={{
+                                              fontFamily: "Source Sans Pro",
+                                            }}
+                                          >
+                                            {new Date(
+                                              booking.startTime
+                                            ).toLocaleTimeString("en-US", {
+                                              hour: "2-digit",
+                                              minute: "2-digit",
+                                            })}{" "}
+                                            - {booking.duration} min
+                                          </Typography>
+                                        </Box>
+                                      </Grid>
+
+                                      <Grid size={{ xs: 12, sm: 6 }}>
+                                        <Box
+                                          sx={{
+                                            display: "flex",
+                                            alignItems: "center",
+                                            gap: 1,
+                                            mb: 1,
+                                          }}
+                                        >
+                                          <Person
+                                            sx={{
+                                              fontSize: 18,
+                                              color: "#005F73",
+                                            }}
+                                          />
+                                          <Typography
+                                            variant="body2"
+                                            sx={{
+                                              fontFamily: "Source Sans Pro",
+                                            }}
+                                          >
+                                            {booking.sessionType}
+                                          </Typography>
+                                        </Box>
+                                        {booking.meetingLink && (
+                                          <Box
+                                            sx={{
+                                              display: "flex",
+                                              alignItems: "center",
+                                              gap: 1,
+                                            }}
+                                          >
+                                            <VideoCall
+                                              sx={{
+                                                fontSize: 18,
+                                                color: "#4CAF50",
+                                              }}
+                                            />
+                                            <a
+                                              href={booking.meetingLink}
+                                              target="_blank"
+                                              rel="noopener noreferrer"
+                                              style={{
+                                                color: "#4CAF50",
+                                                textDecoration: "none",
+                                                fontFamily: "Source Sans Pro",
+                                              }}
+                                            >
+                                              Join Meeting
+                                            </a>
+                                          </Box>
+                                        )}
+                                      </Grid>
+                                    </Grid>
+
+                                    {booking.userNotes && (
+                                      <Box
+                                        sx={{
+                                          mt: 2,
+                                          p: 2,
+                                          backgroundColor: "#FFF",
+                                          borderRadius: "8px",
+                                        }}
+                                      >
+                                        <Typography
+                                          variant="caption"
+                                          sx={{
+                                            fontWeight: 600,
+                                            color: "#666",
+                                          }}
+                                        >
+                                          Client Notes:
+                                        </Typography>
+                                        <Typography
+                                          variant="body2"
+                                          sx={{
+                                            mt: 0.5,
+                                            fontFamily: "Source Sans Pro",
+                                          }}
+                                        >
+                                          {booking.userNotes}
+                                        </Typography>
+                                      </Box>
+                                    )}
+                                  </Paper>
+                                );
+                              })}
+                            </Box>
+                          )}
+                        </>
+                      )}
+
+                      {/* Past Bookings */}
+                      {selectedTab === 1 && (
+                        <>
+                          {pastBookings.length === 0 ? (
+                            <Box sx={{ textAlign: "center", py: 4 }}>
+                              <CalendarToday
+                                sx={{ fontSize: 48, color: "#CCC", mb: 2 }}
+                              />
+                              <Typography
+                                variant="body1"
+                                sx={{
+                                  color: "#666",
+                                  fontFamily: "Source Sans Pro",
+                                }}
+                              >
+                                No past consultations
+                              </Typography>
+                            </Box>
+                          ) : (
+                            <Box
+                              sx={{
+                                display: "flex",
+                                flexDirection: "column",
+                                gap: 2,
+                              }}
+                            >
+                              {pastBookings.map((booking) => {
+                                const status = getBookingStatus(booking);
+                                return (
+                                  <Paper
+                                    key={booking._id}
+                                    sx={{
+                                      p: 3,
+                                      backgroundColor: "#F8FAFB",
+                                      borderRadius: "12px",
+                                      border: "1px solid #E0E0E0",
+                                      opacity: 0.8,
+                                    }}
+                                  >
+                                    <Box
+                                      sx={{
+                                        display: "flex",
+                                        justifyContent: "space-between",
+                                        alignItems: "flex-start",
+                                        mb: 2,
+                                      }}
+                                    >
+                                      <Box
+                                        sx={{
+                                          display: "flex",
+                                          alignItems: "center",
+                                          gap: 2,
+                                        }}
+                                      >
+                                        <Avatar
+                                          sx={{
+                                            backgroundColor: "#999",
+                                            width: 48,
+                                            height: 48,
+                                          }}
+                                        >
+                                          {booking.userId.username
+                                            .charAt(0)
+                                            .toUpperCase()}
+                                        </Avatar>
+                                        <Box>
+                                          <Typography
+                                            variant="subtitle1"
+                                            sx={{
+                                              fontWeight: 600,
+                                              fontFamily: "Source Sans Pro",
+                                            }}
+                                          >
+                                            {booking.userId.username}
+                                          </Typography>
+                                          <Typography
+                                            variant="body2"
+                                            sx={{
+                                              color: "#666",
+                                              fontFamily: "Source Sans Pro",
+                                            }}
+                                          >
+                                            {booking.userId.email}
+                                          </Typography>
+                                        </Box>
+                                      </Box>
+                                      <Chip
+                                        label={status.label}
+                                        sx={{
+                                          backgroundColor: status.bgColor,
+                                          color: status.color,
+                                          fontWeight: 600,
+                                          fontFamily: "Source Sans Pro",
+                                        }}
+                                      />
+                                    </Box>
+
+                                    <Divider sx={{ my: 2 }} />
+
+                                    <Grid container spacing={2}>
+                                      <Grid size={{ xs: 12, sm: 6 }}>
+                                        <Box
+                                          sx={{
+                                            display: "flex",
+                                            alignItems: "center",
+                                            gap: 1,
+                                            mb: 1,
+                                          }}
+                                        >
+                                          <CalendarToday
+                                            sx={{ fontSize: 18, color: "#666" }}
+                                          />
+                                          <Typography
+                                            variant="body2"
+                                            sx={{
+                                              color: "#666",
+                                              fontFamily: "Source Sans Pro",
+                                            }}
+                                          >
+                                            {new Date(
+                                              booking.startTime
+                                            ).toLocaleDateString("en-US", {
+                                              month: "short",
+                                              day: "numeric",
+                                              year: "numeric",
+                                            })}
+                                          </Typography>
+                                        </Box>
+                                        <Box
+                                          sx={{
+                                            display: "flex",
+                                            alignItems: "center",
+                                            gap: 1,
+                                          }}
+                                        >
+                                          <AccessTime
+                                            sx={{ fontSize: 18, color: "#666" }}
+                                          />
+                                          <Typography
+                                            variant="body2"
+                                            sx={{
+                                              color: "#666",
+                                              fontFamily: "Source Sans Pro",
+                                            }}
+                                          >
+                                            {booking.duration} min session
+                                          </Typography>
+                                        </Box>
+                                      </Grid>
+
+                                      <Grid size={{ xs: 12, sm: 6 }}>
+                                        <Box
+                                          sx={{
+                                            display: "flex",
+                                            alignItems: "center",
+                                            gap: 1,
+                                          }}
+                                        >
+                                          <Person
+                                            sx={{ fontSize: 18, color: "#666" }}
+                                          />
+                                          <Typography
+                                            variant="body2"
+                                            sx={{
+                                              color: "#666",
+                                              fontFamily: "Source Sans Pro",
+                                            }}
+                                          >
+                                            {booking.sessionType}
+                                          </Typography>
+                                        </Box>
+                                      </Grid>
+                                    </Grid>
+                                  </Paper>
+                                );
+                              })}
+                            </Box>
+                          )}
+                        </>
+                      )}
+                    </>
+                  )}
+                </Box>
+              </Paper>
+            </Box>
+          )}
       </Container>
     </Box>
   );

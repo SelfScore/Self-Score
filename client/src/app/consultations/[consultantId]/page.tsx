@@ -64,7 +64,7 @@ function TabPanel(props: TabPanelProps) {
 export default function ConsultantProfilePage() {
   const router = useRouter();
   const params = useParams();
-  const { isAuthenticated } = useAuth();
+  const { isAuthenticated, isInitialized } = useAuth();
   const [consultant, setConsultant] = useState<PublicConsultant | null>(null);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState("");
@@ -88,15 +88,22 @@ export default function ConsultantProfilePage() {
   const consultantId = params?.consultantId as string;
 
   useEffect(() => {
+    // Wait for auth initialization to complete
+    if (!isInitialized) {
+      return;
+    }
+
+    // Show login modal only if initialized and not authenticated
     if (!isAuthenticated) {
       setShowLoginModal(true);
       return;
     }
 
+    // User is authenticated, fetch consultant
     if (consultantId) {
       fetchConsultant();
     }
-  }, [consultantId, isAuthenticated]);
+  }, [consultantId, isAuthenticated, isInitialized]);
 
   // Fetch available slots when date, session type, or timezone changes
   useEffect(() => {
@@ -218,7 +225,18 @@ export default function ConsultantProfilePage() {
 
   const handleLoginModalClose = () => {
     setShowLoginModal(false);
-    router.push("/consultations");
+    // Only navigate away if user is still not authenticated
+    if (!isAuthenticated) {
+      router.push("/consultations");
+    }
+  };
+
+  const handleLoginSuccess = () => {
+    // Close modal and fetch consultant data
+    setShowLoginModal(false);
+    if (consultantId) {
+      fetchConsultant();
+    }
   };
 
   const handleBackClick = () => {
@@ -239,7 +257,8 @@ export default function ConsultantProfilePage() {
     setSelectedSlot(slot);
   };
 
-  if (loading) {
+  // Show loading while auth is initializing or data is loading
+  if (!isInitialized || loading) {
     return (
       <Box
         sx={{
@@ -500,6 +519,32 @@ export default function ConsultantProfilePage() {
                       }}
                     >
                       (01 reviews)
+                    </Typography>
+                  </Box>
+                  <Box sx={{ mt: 2 }}>
+                    <Typography
+                      sx={{
+                        fontFamily: "Source Sans Pro",
+                        fontSize: "14px",
+                        color: "#666",
+                      }}
+                    >
+                      Starting from
+                    </Typography>
+                    <Typography
+                      sx={{
+                        fontFamily: "Faustina",
+                        fontSize: "24px",
+                        fontWeight: 700,
+                        color: "#005F73",
+                      }}
+                    >
+                      $
+                      {Math.min(
+                        ...consultant.services
+                          .filter((s) => s.enabled && s.price)
+                          .map((s) => s.price || 0)
+                      )}
                     </Typography>
                   </Box>
                 </Box>
@@ -899,7 +944,7 @@ export default function ConsultantProfilePage() {
                           value={service.duration.toString()}
                         >
                           {service.duration} Minute Session - $
-                          {consultant.hourlyRate}
+                          {service.price || 0}
                         </MenuItem>
                       ))}
                   </Select>
@@ -1051,7 +1096,11 @@ export default function ConsultantProfilePage() {
         </Box>
       </Box>
 
-      <SignUpModal open={showLoginModal} onClose={handleLoginModalClose} />
+      <SignUpModal
+        open={showLoginModal}
+        onClose={handleLoginModalClose}
+        onSuccess={handleLoginSuccess}
+      />
     </>
   );
 }

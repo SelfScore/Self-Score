@@ -155,7 +155,8 @@ export default function Testimonial() {
       sx={{
         width: "100%",
         backgroundColor: "#fff", // White Color
-        py: { xs: 6, md: 10 },
+        py: { xs: 6, md: 0 },
+        mb: { xs: 0, md: 10 },
         px: { xs: 2, sm: 4, md: 6 },
         "& .slick-dots": {
           bottom: "-50px",
@@ -202,6 +203,7 @@ export default function Testimonial() {
             mb: { xs: 6, md: 8 },
             maxWidth: "800px",
             mx: "auto",
+            mt: { xs: 0, md: 8}
           }}
         >
           <Typography
@@ -234,7 +236,7 @@ export default function Testimonial() {
         </Box>
 
         {/* React Slick Carousel */}
-        <Box sx={{ mx: "auto", mb: 6, maxWidth: { xs: "95%", md: "80%" } }}>
+        <Box sx={{ mx: "auto", mb: 6, maxWidth: { xs: "95%", md: "75%" } }}>
           <Slider
             {...settings}
             // sx={{
@@ -267,7 +269,8 @@ export default function Testimonial() {
                     transition: "transform 0.3s ease, box-shadow 0.3s ease",
                     "&:hover": {
                       // transform: "translateY(-5px)",
-                      boxShadow: "0 12px 40px rgba(0, 95, 115, 0.15)",
+                      // boxShadow: "0 12px 40px rgba(0, 95, 115, 0.15)",
+                      border:"1px solid #3A3A3A4D"
                     },
                     mx: "auto", // Center the card
                   }}
@@ -323,7 +326,7 @@ export default function Testimonial() {
                         color: "#fff",
                         fontWeight: "bold",
                         fontSize: { xs: "1rem", sm: "1.1rem" },
-                        mr: 2,
+                        mr: 1,
                         flexShrink: 0,
                       }}
                     >

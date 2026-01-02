@@ -66,7 +66,7 @@ export default function DownloadReportButton({
         background: "#005F73",
         color: "white",
         borderRadius: "16px",
-        padding: "12px 12px",
+        padding: "12px 24px",
         fontSize: "16px",
         fontWeight: "400",
         height: "40px",

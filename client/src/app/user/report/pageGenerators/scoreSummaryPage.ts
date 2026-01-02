@@ -51,17 +51,7 @@ export const generateScoreSummaryPage = (userData: UserReportData): string => {
       background-repeat: no-repeat;
     ">
       <!-- Backdrop Blur Layer -->
-      <div style="
-        position: absolute;
-        top: 0;
-        left: 0;
-        width: 100%;
-        height: 100%;
-        background: rgba(255, 255, 255, 0.7);
-        backdrop-filter: blur(19px);
-        -webkit-backdrop-filter: blur(19px);
-        z-index: 0;
-      "></div>
+      
 
       <!-- Logo -->
       <div style="margin-bottom: 40px; position: relative; z-index: 1;">

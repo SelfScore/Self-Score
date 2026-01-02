@@ -16,6 +16,10 @@ import { useAuth } from "../../../hooks/useAuth";
 import NextLink from "next/link";
 import Image from "next/image";
 import EmailIcon from "@mui/icons-material/Email";
+import {
+  getUserFriendlyError,
+  getSuccessMessage,
+} from "../../../utils/errorMessages";
 
 function VerifyEmailContent() {
   const router = useRouter();
@@ -41,12 +45,12 @@ function VerifyEmailContent() {
 
     const code = verifyCode.join("");
     if (!code || code.length !== 6) {
-      setLocalError("Please enter the complete 6-digit verification code");
+      setLocalError("Please enter all 6 digits of the verification code");
       return;
     }
 
     if (!email.trim()) {
-      setLocalError("Email is required");
+      setLocalError("Email address is required for verification");
       return;
     }
 
@@ -58,17 +62,20 @@ function VerifyEmailContent() {
       });
 
       if (response.success) {
-        setSuccess("Email verified successfully! Redirecting to sign in...");
+        setSuccess(getSuccessMessage("verify"));
         setTimeout(() => {
-          router.push("/auth/signin");
+          router.push("/user/dashboard");
         }, 2000);
       } else {
-        setLocalError(response.message || "Invalid verification code");
+        setLocalError(
+          getUserFriendlyError(
+            { response: { data: { message: response.message } } },
+            "verify"
+          )
+        );
       }
     } catch (err: any) {
-      setLocalError(
-        err.response?.data?.message || "Verification failed. Please try again."
-      );
+      setLocalError(getUserFriendlyError(err, "verify"));
     }
   };
 
@@ -118,7 +125,9 @@ function VerifyEmailContent() {
 
   const handleResendCode = async () => {
     if (!email.trim()) {
-      setLocalError("Email is required to resend verification code");
+      setLocalError(
+        "Please enter your email address to resend the verification code"
+      );
       return;
     }
 
@@ -130,15 +139,17 @@ function VerifyEmailContent() {
       const response = await resendVerification(email.trim().toLowerCase());
 
       if (response.success) {
-        setSuccess("Verification code sent! Please check your email.");
+        setSuccess(getSuccessMessage("resend"));
       } else {
-        setLocalError(response.message || "Failed to resend verification code");
+        setLocalError(
+          getUserFriendlyError(
+            { response: { data: { message: response.message } } },
+            "verify"
+          )
+        );
       }
     } catch (err: any) {
-      setLocalError(
-        err.response?.data?.message ||
-          "Failed to resend verification code. Please try again."
-      );
+      setLocalError(getUserFriendlyError(err, "verify"));
     } finally {
       setResendLoading(false);
     }

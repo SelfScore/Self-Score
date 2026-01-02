@@ -382,7 +382,7 @@ export default function Level4TextTest({
             mb: 2,
           }}
         >
-          <OutLineButton
+          {/* <OutLineButton
             startIcon={<ArrowBackIosIcon />}
             onClick={onBack}
             style={{
@@ -396,8 +396,18 @@ export default function Level4TextTest({
             }}
           >
             Back
-          </OutLineButton>
-
+          </OutLineButton> */}
+          <Typography
+            sx={{
+              fontWeight: "700",
+              fontSize: "32px",
+              color: "#005F73",
+              textAlign: "center",
+              // mb: 3,
+            }}
+          >
+            Level 4: Mastery Test - Text Mode
+          </Typography>
           {onSwitchMode && (
             <OutLineButton
               onClick={onSwitchMode}
@@ -415,18 +425,6 @@ export default function Level4TextTest({
             </OutLineButton>
           )}
         </Box>
-
-        <Typography
-          sx={{
-            fontWeight: "700",
-            fontSize: "32px",
-            color: "#005F73",
-            textAlign: "center",
-            mb: 3,
-          }}
-        >
-          Level 4: Mastery Test - Text Mode
-        </Typography>
 
         <Box
           sx={{

@@ -47,7 +47,7 @@ export default function ShareModal({
   const handleWhatsAppShare = () => {
     const message = `Check out my Self Score Level ${
       level || ""
-    } Report! 🎯\n\n${shareLink}`;
+    } Report! \n\n${shareLink}`;
     const whatsappUrl = `https://wa.me/?text=${encodeURIComponent(message)}`;
     window.open(whatsappUrl, "_blank");
   };

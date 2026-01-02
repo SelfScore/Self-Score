@@ -10,7 +10,7 @@ export const generateCoverPage = (username: string, level: number): string => {
       flex-direction: column;
       font-family: 'Faustina', 'Source Sans Pro', -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif;
       position: relative;
-      background-image: url('/images/Report/BGImg.jpg');
+      background-image: url('/images/Report/BGImgCover.jpg');
       background-size: cover;
       background-position: center;
       background-repeat: no-repeat;

@@ -69,17 +69,7 @@ export const generateUpgradePage = (currentLevel: number): string => {
       background-repeat: no-repeat;
     ">
       <!-- Backdrop Blur Layer -->
-      <div style="
-        position: absolute;
-        top: 0;
-        left: 0;
-        width: 100%;
-        height: 100%;
-        background: rgba(255, 255, 255, 0.7);
-        backdrop-filter: blur(19px);
-        -webkit-backdrop-filter: blur(19px);
-        z-index: 0;
-      "></div>
+      
 
       <div style="margin-bottom: 40px; position: relative; z-index: 1;">
         <img 
@@ -182,7 +172,7 @@ export const generateUpgradePage = (currentLevel: number): string => {
 };
 
 export const generateKeyOutcomesPage = (content: ReportContent, _currentLevel: number): string => {
-  const consultantUrl = `${CLIENT_URL}/consultant`;
+  const consultantUrl = `${CLIENT_URL}/consultations/`;
   return `
     <div style="
       background: #FFFFFF;
@@ -198,17 +188,7 @@ export const generateKeyOutcomesPage = (content: ReportContent, _currentLevel: n
       background-repeat: no-repeat;
     ">
       <!-- Backdrop Blur Layer -->
-      <div style="
-        position: absolute;
-        top: 0;
-        left: 0;
-        width: 100%;
-        height: 100%;
-        background: rgba(255, 255, 255, 0.7);
-        backdrop-filter: blur(19px);
-        -webkit-backdrop-filter: blur(19px);
-        z-index: 0;
-      "></div>
+      
 
       <div style="margin-bottom: 40px; position: relative; z-index: 1;">
         <img 
@@ -281,7 +261,7 @@ export const generateKeyOutcomesPage = (content: ReportContent, _currentLevel: n
             text-decoration: none;
             font-family: 'Source Sans Pro', -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif;
           ">
-            <span style="color: #FF4F00; font-weight: 400; display: inline-block;">📞 Book a Consultation Call</span>
+            <span style="color: #FF4F00; font-weight: 400; display: inline-block;"> Book a Consultation Call</span>
           </a>
         </div>
       </div>
@@ -315,7 +295,7 @@ export const generateThankYouPage = (): string => {
       flex-direction: column;
       font-family: 'Faustina', 'Source Sans Pro', -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif;
       position: relative;
-      background-image: url('/images/Report/BGImg.jpg');
+      background-image: url('/images/Report/BGImgCover.jpg');
       background-size: cover;
       background-position: center;
       background-repeat: no-repeat;

@@ -123,7 +123,13 @@ export default function ConsultationsPage() {
     // Language filter
     if (languageFilter.length > 0) {
       filtered = filtered.filter((c) =>
-        languageFilter.some((lang) => c.languagesSpoken.includes(lang))
+        languageFilter.some((lang) =>
+          c.languagesSpoken.some(
+            (spoken) =>
+              spoken.toLowerCase().includes(lang.toLowerCase()) ||
+              lang.toLowerCase().includes(spoken.toLowerCase())
+          )
+        )
       );
     }
 
@@ -132,10 +138,12 @@ export default function ConsultationsPage() {
       (c) => c.hourlyRate >= priceRange[0] && c.hourlyRate <= priceRange[1]
     );
 
-    // Rating filter (placeholder - using 4.8 as default rating)
+    // Rating filter (using 4.8 as default rating for all consultants)
     if (minRating > 0) {
-      // For now, just show all consultants as placeholder
-      // Later you can implement actual rating system
+      // Placeholder: All consultants have 4.8 rating
+      // Filter out consultants with rating below selected minimum
+      const defaultRating = 4.8;
+      filtered = filtered.filter(() => defaultRating >= minRating);
     }
 
     // Sort
@@ -216,16 +224,16 @@ export default function ConsultationsPage() {
   return (
     <>
       <Box sx={{ minHeight: "100vh", backgroundColor: "#FFFFFF", pb: 6 }}>
-        <Box sx={{ maxWidth: "87%", py: 8, mt: 8, mx: "auto" }}>
+        <Box sx={{ maxWidth: "87%", py: 8, mt: 6, mx: "auto" }}>
           {/* Header */}
           <Box sx={{ textAlign: "center", mb: 4 }}>
             <Typography
               sx={{
-                fontFamily: "Faustina",
-                fontSize: { xs: "32px", md: "40px" },
-                fontWeight: 700,
-                color: "#1A1A1A",
-                mb: 1,
+                fontWeight: "700",
+                fontFamily: "faustina",
+                color: "#000",
+                mb: 3,
+                fontSize: { xs: "2rem", sm: "2.5rem", md: "40px" },
               }}
             >
               Consultations
@@ -266,11 +274,25 @@ export default function ConsultationsPage() {
                 ),
               }}
               sx={{
+                width: "100%",
+                maxWidth: "500px",
                 "& .MuiOutlinedInput-root": {
-                  borderRadius: "12px",
-                  backgroundColor: "#FFFFFF",
-                  border: "0.1px solid #3A3A3A4D",
+                  bgcolor: "#FFFFFF",
+                  borderRadius: "8px",
                   height: "48px",
+                  "& fieldset": {
+                    borderColor: "#E5E7EB",
+                  },
+                  "&:hover fieldset": {
+                    borderColor: "#D1D5DB",
+                  },
+                  "&.Mui-focused fieldset": {
+                    borderColor: "#FF5722",
+                  },
+                },
+                "& input": {
+                  fontFamily: "Source Sans Pro",
+                  fontSize: "16px",
                 },
               }}
             />
@@ -474,7 +496,9 @@ export default function ConsultationsPage() {
                         control={
                           <Checkbox
                             checked={minRating === rating}
-                            onChange={() => setMinRating(rating)}
+                            onChange={() =>
+                              setMinRating(minRating === rating ? 0 : rating)
+                            }
                             sx={{ "&.Mui-checked": { color: "#005F73" } }}
                           />
                         }
@@ -486,10 +510,22 @@ export default function ConsultationsPage() {
                               gap: 0.5,
                             }}
                           >
-                            {rating}
-                            <StarIcon
-                              sx={{ fontSize: "16px", color: "#FF9800" }}
-                            />
+                            {[...Array(rating)].map((_, i) => (
+                              <StarIcon
+                                key={i}
+                                sx={{ fontSize: "16px", color: "#FF4F00" }}
+                              />
+                            ))}
+                            <Typography
+                              sx={{
+                                ml: 0.5,
+                                fontFamily: "Source Sans Pro",
+                                fontSize: "14px",
+                                color: "#666",
+                              }}
+                            >
+                              & up
+                            </Typography>
                           </Box>
                         }
                       />
@@ -559,7 +595,10 @@ export default function ConsultationsPage() {
                             <Chip
                               icon={
                                 <StarIcon
-                                  sx={{ fontSize: "16px", color: "#FFF" }}
+                                  sx={{
+                                    fontSize: "16px",
+                                    color: "#FFFFFF !important", // Force white color
+                                  }}
                                 />
                               }
                               label="4.8"
@@ -567,7 +606,7 @@ export default function ConsultationsPage() {
                                 position: "absolute",
                                 top: 12,
                                 right: 12,
-                                backgroundColor: "#FF9800",
+                                backgroundColor: "#FF4F00",
                                 color: "#FFF",
                                 fontWeight: 600,
                                 fontSize: "14px",
@@ -651,9 +690,14 @@ export default function ConsultationsPage() {
                                 mb: 2,
                               }}
                             >
-                              Starting at{" "}
+                              Starting from{" "}
                               <span style={{ color: "#005F73" }}>
-                                ${consultant.hourlyRate}/hr
+                                $
+                                {Math.min(
+                                  ...consultant.services
+                                    .filter((s) => s.enabled && s.price)
+                                    .map((s) => s.price || 0)
+                                )}
                               </span>
                             </Typography>
 

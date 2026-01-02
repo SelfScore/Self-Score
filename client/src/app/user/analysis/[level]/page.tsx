@@ -462,6 +462,7 @@ export default function LevelAnalysisPage() {
               fontWeight: 700,
               fontFamily: "faustina",
               color: "#005F73",
+              mt: -7,
             }}
           >
             Level {analysisData.level} Completed
@@ -475,7 +476,7 @@ export default function LevelAnalysisPage() {
               lineHeight: "26px",
               maxWidth: "700px",
               mx: "auto",
-              my: { xs: 2, md: 3 },
+              my: { xs: 2, md: 1 },
             }}
           >
             This test evaluates your self-awareness and understanding of your
@@ -560,6 +561,7 @@ export default function LevelAnalysisPage() {
                     fontFamily: "source sans pro",
                     fontWeight: 700,
                     color: "#1F2937",
+                    mt: -2,
                   }}
                 >
                   {analysisData.score}
@@ -569,6 +571,7 @@ export default function LevelAnalysisPage() {
                     fontWeight: 700,
                     fontSize: "24px",
                     color: "#6B7280",
+                    mt: -3,
                   }}
                 >
                   out of 900
@@ -583,10 +586,10 @@ export default function LevelAnalysisPage() {
             spacing={2}
             justifyContent="center"
             flexWrap="wrap"
-            sx={{ mb: 3, gap: 2 }}
+            sx={{ mb: 3, gap: "20px" }}
           >
             {user && (
-              <DownloadReportButton
+              <DownloadReportButton 
                 userData={{
                   username: user.username,
                   email: user.email,
@@ -601,14 +604,15 @@ export default function LevelAnalysisPage() {
                 }}
                 variant="contained"
                 size="large"
+                
               />
             )}
             <ButtonSelfScore
               startIcon={
                 sharingReport ? (
-                  <CircularProgress size={16} color="inherit" />
+                  <CircularProgress size={16} color="inherit" sx={{ color: "#FFF" }} />
                 ) : (
-                  <FileUploadIcon />
+                  <FileUploadIcon  sx={{color:"#FFF",}}/>
                 )
               }
               text={sharingReport ? "Generating..." : "Share"}
@@ -620,12 +624,12 @@ export default function LevelAnalysisPage() {
               disabled={sharingReport || !analysisData?.submissionId}
             />
             <ButtonSelfScore
-              startIcon={<ArrowForwardIcon />}
+              startIcon={<ArrowForwardIcon  sx={{color:"#FFF"}}/>}
               text="Next Level"
               background="#FF4F00"
               borderRadius="16px"
               padding="12px 12px"
-              fontSize="1rem"
+              fontSize="16px"
               onClick={handleNextLevel}
             />
           </Stack>
@@ -664,8 +668,8 @@ export default function LevelAnalysisPage() {
           </Typography>
 
           {/* Score Scale */}
-          <Box sx={{ mb: 6 }}>
-            <Box sx={{ position: "relative", mb: 2 }}>
+          <Box sx={{ mb: 6 , width:"75%", mx:"auto"}}>
+            <Box sx={{ position: "relative", mb: 2  }}>  
               <Box
                 sx={{
                   height: 8,
@@ -695,7 +699,7 @@ export default function LevelAnalysisPage() {
                     textAlign: "center",
                   }}
                 >
-                  You
+                  {`${analysisData.score}`}
                 </Box>
                 <Box
                   sx={{
@@ -827,15 +831,15 @@ export default function LevelAnalysisPage() {
             spacing={2}
             justifyContent="center"
             flexWrap="wrap"
-            sx={{ gap: 2 }}
+            sx={{ gap: "20px" }}
           >
             <ButtonSelfScore
-              startIcon={<RefreshIcon />}
+              startIcon={<RefreshIcon sx={{color:"#FFF"}} />}
               text="Retake"
               background="#FF4F00"
               borderRadius="16px"
               padding="12px 12px"
-              fontSize="1rem"
+              fontSize="16px"
               onClick={handleRetake}
             />
             <OutLineButton
@@ -847,7 +851,7 @@ export default function LevelAnalysisPage() {
                 borderRadius: "16px",
                 padding: "3.5px 14px",
                 fontWeight: 400,
-                fontSize: "18px",
+                fontSize: "16px",
                 cursor: "pointer",
                 transition: "all 0.2s",
               }}

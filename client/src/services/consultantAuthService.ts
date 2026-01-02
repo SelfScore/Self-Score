@@ -9,12 +9,59 @@ export interface ApiResponse<T = any> {
 
 export interface ConsultantData {
   consultantId: string;
+  _id?: string;
   email: string;
   firstName: string;
   lastName: string;
-  applicationStatus: 'draft' | 'pending' | 'approved' | 'rejected';
+  countryCode: string;
+  phoneNumber: string;
+  location: string;
+  profilePhoto?: string;
+  coachingSpecialties: string[];
+  yearsOfExperience: number;
+  professionalBio: string;
+  languagesSpoken: string[];
+  certifications?: {
+    name: string;
+    issuingOrganization: string;
+    issueDate: string;
+    certificateFile?: string;
+  }[];
+  resume?: string;
+  hourlyRate: number;
+  services: {
+    sessionType: "30min" | "60min" | "90min";
+    duration: number;
+    enabled: boolean;
+    isFree?: boolean;
+    price?: number;
+  }[];
+  introductionVideoLink?: string;
+  applicationStatus: "draft" | "pending" | "approved" | "rejected";
   registrationStep: number;
   isVerified?: boolean;
+  appliedAt?: Date;
+  rejectionReason?: string;
+  googleCalendar?: {
+    isConnected: boolean;
+    email?: string;
+  };
+  bookingSettings?: {
+    availability: Array<{
+      dayOfWeek: number;
+      timeRanges: Array<{
+        startTime: string;
+        endTime: string;
+      }>;
+      isAvailable: boolean;
+    }>;
+    bufferBetweenSessions: number;
+    minAdvanceBookingHours: number;
+    maxAdvanceBookingMonths: number;
+    autoCreateMeetLink: boolean;
+    meetingLocation?: string;
+    timezone: string;
+  };
 }
 
 export interface Step1Data {
@@ -50,9 +97,11 @@ export interface Step3Data {
 }
 
 export interface Service {
-  sessionType: '30min' | '60min' | '90min';
+  sessionType: "30min" | "60min" | "90min";
   duration: number;
   enabled: boolean;
+  isFree?: boolean;
+  price?: number;
 }
 
 export interface Step4Data {
@@ -75,20 +124,36 @@ export interface LoginData {
 
 export const consultantAuthService = {
   // Step 1: Register with personal info
-  registerStep1: async (data: Step1Data): Promise<ApiResponse<{ consultantId: string; email: string }>> => {
+  registerStep1: async (
+    data: Step1Data
+  ): Promise<ApiResponse<{ consultantId: string; email: string }>> => {
     try {
-      const response = await api.post("/api/consultant/auth/register/step1", data);
-      return response as unknown as ApiResponse<{ consultantId: string; email: string }>;
+      const response = await api.post(
+        "/api/consultant/auth/register/step1",
+        data
+      );
+      return response as unknown as ApiResponse<{
+        consultantId: string;
+        email: string;
+      }>;
     } catch (error) {
       throw error;
     }
   },
 
   // Verify email OTP
-  verifyEmail: async (data: VerifyEmailData): Promise<ApiResponse<{ consultantId: string; isVerified: boolean }>> => {
+  verifyEmail: async (
+    data: VerifyEmailData
+  ): Promise<ApiResponse<{ consultantId: string; isVerified: boolean }>> => {
     try {
-      const response = await api.post("/api/consultant/auth/verify-email", data);
-      return response as unknown as ApiResponse<{ consultantId: string; isVerified: boolean }>;
+      const response = await api.post(
+        "/api/consultant/auth/verify-email",
+        data
+      );
+      return response as unknown as ApiResponse<{
+        consultantId: string;
+        isVerified: boolean;
+      }>;
     } catch (error) {
       throw error;
     }
@@ -97,7 +162,10 @@ export const consultantAuthService = {
   // Resend verification code
   resendVerification: async (email: string): Promise<ApiResponse> => {
     try {
-      const response = await api.post("/api/consultant/auth/resend-verification", { email });
+      const response = await api.post(
+        "/api/consultant/auth/resend-verification",
+        { email }
+      );
       return response as unknown as ApiResponse;
     } catch (error) {
       throw error;
@@ -107,7 +175,10 @@ export const consultantAuthService = {
   // Step 2: Update professional info
   updateProfessionalInfo: async (data: Step2Data): Promise<ApiResponse> => {
     try {
-      const response = await api.post("/api/consultant/auth/register/step2", data);
+      const response = await api.post(
+        "/api/consultant/auth/register/step2",
+        data
+      );
       return response as unknown as ApiResponse;
     } catch (error) {
       throw error;
@@ -117,7 +188,10 @@ export const consultantAuthService = {
   // Step 3: Update certifications and resume
   updateCertifications: async (data: Step3Data): Promise<ApiResponse> => {
     try {
-      const response = await api.post("/api/consultant/auth/register/step3", data);
+      const response = await api.post(
+        "/api/consultant/auth/register/step3",
+        data
+      );
       return response as unknown as ApiResponse;
     } catch (error) {
       throw error;
@@ -125,9 +199,14 @@ export const consultantAuthService = {
   },
 
   // Step 4: Complete registration
-  completeRegistration: async (data: Step4Data): Promise<ApiResponse<{ consultant: ConsultantData }>> => {
+  completeRegistration: async (
+    data: Step4Data
+  ): Promise<ApiResponse<{ consultant: ConsultantData }>> => {
     try {
-      const response = await api.post("/api/consultant/auth/register/step4", data);
+      const response = await api.post(
+        "/api/consultant/auth/register/step4",
+        data
+      );
       return response as unknown as ApiResponse<{ consultant: ConsultantData }>;
     } catch (error) {
       throw error;
@@ -135,7 +214,9 @@ export const consultantAuthService = {
   },
 
   // Login
-  login: async (data: LoginData): Promise<ApiResponse<{ consultant: ConsultantData }>> => {
+  login: async (
+    data: LoginData
+  ): Promise<ApiResponse<{ consultant: ConsultantData }>> => {
     try {
       const response = await api.post("/api/consultant/auth/login", data);
       return response as unknown as ApiResponse<{ consultant: ConsultantData }>;
@@ -170,7 +251,7 @@ export const consultantAuthService = {
       const reader = new FileReader();
       reader.readAsDataURL(file);
       reader.onload = () => resolve(reader.result as string);
-      reader.onerror = error => reject(error);
+      reader.onerror = (error) => reject(error);
     });
   },
 
@@ -179,5 +260,50 @@ export const consultantAuthService = {
     const sizeInBytes = (base64String.length * 3) / 4;
     const sizeInMB = sizeInBytes / (1024 * 1024);
     return sizeInMB <= maxSizeMB;
-  }
+  },
+
+  // Update personal information
+  updatePersonalInfo: async (data: any): Promise<ApiResponse> => {
+    try {
+      const response = await api.put(
+        "/api/consultant/auth/update-personal",
+        data
+      );
+      return response as unknown as ApiResponse;
+    } catch (error) {
+      throw error;
+    }
+  },
+
+  // Verify email update
+  verifyEmailUpdate: async (data: {
+    email: string;
+    verifyCode: string;
+  }): Promise<ApiResponse> => {
+    try {
+      const response = await api.post(
+        "/api/consultant/auth/verify-email-update",
+        data
+      );
+      return response as unknown as ApiResponse;
+    } catch (error) {
+      throw error;
+    }
+  },
+
+  // Update availability settings
+  updateAvailability: async (data: {
+    consultantId: string;
+    bookingSettings: any;
+  }): Promise<ApiResponse> => {
+    try {
+      const response = await api.put(
+        "/api/consultant/auth/update-availability",
+        data
+      );
+      return response as unknown as ApiResponse;
+    } catch (error) {
+      throw error;
+    }
+  },
 };

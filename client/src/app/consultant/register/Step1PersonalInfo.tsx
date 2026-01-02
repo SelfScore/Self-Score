@@ -13,9 +13,18 @@ import {
   DialogTitle,
   DialogContent,
   DialogActions,
+  Autocomplete,
+  Chip,
+  Button,
 } from "@mui/material";
-import { useState, useRef } from "react";
-import { Visibility, VisibilityOff, PhotoCamera } from "@mui/icons-material";
+import { useState, useRef, useCallback, useEffect } from "react";
+import {
+  Visibility,
+  VisibilityOff,
+  PhotoCamera,
+  CheckCircle,
+  CloudUpload,
+} from "@mui/icons-material";
 import PhoneInput from "react-phone-input-2";
 import "react-phone-input-2/lib/style.css";
 import ButtonSelfScore from "../../components/ui/ButtonSelfScore";
@@ -23,6 +32,80 @@ import {
   consultantAuthService,
   Step1Data,
 } from "../../../services/consultantAuthService";
+
+// Location options list - major cities and locations
+const LOCATION_OPTIONS = [
+  // United States
+  "New York, NY, USA",
+  "Los Angeles, CA, USA",
+  "Chicago, IL, USA",
+  "Houston, TX, USA",
+  "Phoenix, AZ, USA",
+  "Philadelphia, PA, USA",
+  "San Antonio, TX, USA",
+  "San Diego, CA, USA",
+  "Dallas, TX, USA",
+  "San Jose, CA, USA",
+  "Austin, TX, USA",
+  "Jacksonville, FL, USA",
+  "Fort Worth, TX, USA",
+  "Columbus, OH, USA",
+  "Charlotte, NC, USA",
+  "San Francisco, CA, USA",
+  "Indianapolis, IN, USA",
+  "Seattle, WA, USA",
+  "Denver, CO, USA",
+  "Boston, MA, USA",
+  "Nashville, TN, USA",
+  "Detroit, MI, USA",
+  "Portland, OR, USA",
+  "Las Vegas, NV, USA",
+  "Miami, FL, USA",
+  "Atlanta, GA, USA",
+  "Minneapolis, MN, USA",
+  "Tampa, FL, USA",
+  "Orlando, FL, USA",
+  "St. Louis, MO, USA",
+  "Pittsburgh, PA, USA",
+  "Cincinnati, OH, USA",
+  "Cleveland, OH, USA",
+  "Kansas City, MO, USA",
+  "Salt Lake City, UT, USA",
+  // Canada
+  "Toronto, ON, Canada",
+  "Vancouver, BC, Canada",
+  "Montreal, QC, Canada",
+  "Calgary, AB, Canada",
+  "Ottawa, ON, Canada",
+  // United Kingdom
+  "London, UK",
+  "Manchester, UK",
+  "Birmingham, UK",
+  "Edinburgh, UK",
+  "Glasgow, UK",
+  // Australia
+  "Sydney, NSW, Australia",
+  "Melbourne, VIC, Australia",
+  "Brisbane, QLD, Australia",
+  "Perth, WA, Australia",
+  // India
+  "Mumbai, Maharashtra, India",
+  "Delhi, India",
+  "Bangalore, Karnataka, India",
+  "Hyderabad, Telangana, India",
+  "Chennai, Tamil Nadu, India",
+  "Kolkata, West Bengal, India",
+  "Pune, Maharashtra, India",
+  // Other major cities
+  "Singapore",
+  "Dubai, UAE",
+  "Hong Kong",
+  "Tokyo, Japan",
+  "Berlin, Germany",
+  "Paris, France",
+  "Amsterdam, Netherlands",
+  "Remote / Online",
+];
 
 interface Step1PersonalInfoProps {
   onNext: (data: Step1Data, consultantId: string) => void;
@@ -52,13 +135,55 @@ export default function Step1PersonalInfo({
   );
   const fileInputRef = useRef<HTMLInputElement>(null);
 
-  // Email verification modal state
+  // Email verification state
+  const [isEmailVerified, setIsEmailVerified] = useState(false);
   const [verificationModal, setVerificationModal] = useState(false);
   const [verificationCode, setVerificationCode] = useState("");
   const [verificationError, setVerificationError] = useState("");
   const [verificationLoading, setVerificationLoading] = useState(false);
   const [resendLoading, setResendLoading] = useState(false);
   const [consultantId, setConsultantId] = useState("");
+
+  // Photo upload modal state
+  const [photoModalOpen, setPhotoModalOpen] = useState(false);
+  const [isDragOver, setIsDragOver] = useState(false);
+
+  // Load saved data from sessionStorage on mount (for page refresh)
+  useEffect(() => {
+    const saved = sessionStorage.getItem("consultantStep1");
+    if (saved && !initialData?.email) {
+      // Only load from sessionStorage if not already provided via initialData
+      try {
+        const parsed = JSON.parse(saved);
+        setFormData(parsed);
+        if (parsed.profilePhoto) {
+          setProfilePhotoPreview(parsed.profilePhoto);
+        }
+      } catch (e) {
+        console.error("Error loading saved step 1 data", e);
+      }
+    }
+  }, []);
+
+  // Auto-save form data to sessionStorage whenever it changes
+  useEffect(() => {
+    // Only save if user has started filling the form
+    if (formData.firstName || formData.lastName || formData.email) {
+      sessionStorage.setItem("consultantStep1", JSON.stringify(formData));
+    }
+  }, [formData]);
+
+  // Also save profile photo preview separately
+  useEffect(() => {
+    if (profilePhotoPreview && formData.profilePhoto) {
+      const currentData = sessionStorage.getItem("consultantStep1");
+      if (currentData) {
+        const parsed = JSON.parse(currentData);
+        parsed.profilePhoto = profilePhotoPreview;
+        sessionStorage.setItem("consultantStep1", JSON.stringify(parsed));
+      }
+    }
+  }, [profilePhotoPreview, formData.profilePhoto]);
 
   const handleInputChange = (field: keyof Step1Data, value: string) => {
     setFormData((prev) => ({ ...prev, [field]: value }));
@@ -76,12 +201,8 @@ export default function Step1PersonalInfo({
     }));
   };
 
-  const handlePhotoUpload = async (
-    event: React.ChangeEvent<HTMLInputElement>
-  ) => {
-    const file = event.target.files?.[0];
-    if (!file) return;
-
+  // Handle file processing (used by both click and drag-drop)
+  const processFile = async (file: File) => {
     // Validate file type
     if (!file.type.startsWith("image/")) {
       setErrors((prev) => ({
@@ -113,6 +234,38 @@ export default function Step1PersonalInfo({
       }));
     }
   };
+
+  const handlePhotoUpload = async (
+    event: React.ChangeEvent<HTMLInputElement>
+  ) => {
+    const file = event.target.files?.[0];
+    if (!file) return;
+    await processFile(file);
+  };
+
+  // Drag and drop handlers
+  const handleDragOver = useCallback((e: React.DragEvent<HTMLDivElement>) => {
+    e.preventDefault();
+    e.stopPropagation();
+    setIsDragOver(true);
+  }, []);
+
+  const handleDragLeave = useCallback((e: React.DragEvent<HTMLDivElement>) => {
+    e.preventDefault();
+    e.stopPropagation();
+    setIsDragOver(false);
+  }, []);
+
+  const handleDrop = useCallback(async (e: React.DragEvent<HTMLDivElement>) => {
+    e.preventDefault();
+    e.stopPropagation();
+    setIsDragOver(false);
+
+    const files = e.dataTransfer.files;
+    if (files && files.length > 0) {
+      await processFile(files[0]);
+    }
+  }, []);
 
   const validateForm = (): boolean => {
     const newErrors: { [key: string]: string } = {};
@@ -204,7 +357,13 @@ export default function Step1PersonalInfo({
       });
 
       if (response.success) {
-        // Email verified, proceed to next step
+        // Mark email as verified
+        setIsEmailVerified(true);
+        // Store consultantId in sessionStorage for persistence
+        sessionStorage.setItem("consultantId", consultantId);
+        // Store form data for persistence
+        sessionStorage.setItem("consultantStep1", JSON.stringify(formData));
+        // Close modal and proceed to next step
         setVerificationModal(false);
         onNext(formData, consultantId);
       } else {
@@ -243,6 +402,10 @@ export default function Step1PersonalInfo({
       setResendLoading(false);
     }
   };
+
+  // Check if returning user with verified email
+  const existingConsultantId = sessionStorage.getItem("consultantId");
+  const emailAlreadyVerified = !!existingConsultantId || isEmailVerified;
 
   return (
     <Box>
@@ -334,19 +497,37 @@ export default function Step1PersonalInfo({
           />
         </Grid>
 
-        {/* Email */}
+        {/* Email with Verified Badge */}
         <Grid size={{ xs: 12, sm: 6 }}>
-          <Typography
-            sx={{
-              fontFamily: "Source Sans Pro",
-              fontSize: "14px",
-              fontWeight: 600,
-              mb: 1,
-              color: "#1A1A1A",
-            }}
-          >
-            Email Address <span style={{ color: "#E87A42" }}>*</span>
-          </Typography>
+          <Box sx={{ display: "flex", alignItems: "center", gap: 1, mb: 1 }}>
+            <Typography
+              sx={{
+                fontFamily: "Source Sans Pro",
+                fontSize: "14px",
+                fontWeight: 600,
+                color: "#1A1A1A",
+              }}
+            >
+              Email Address <span style={{ color: "#E87A42" }}>*</span>
+            </Typography>
+            {emailAlreadyVerified && (
+              <Chip
+                icon={<CheckCircle sx={{ fontSize: 16 }} />}
+                label="Verified"
+                size="small"
+                sx={{
+                  backgroundColor: "#E8F5E9",
+                  color: "#2E7D32",
+                  fontWeight: 600,
+                  fontSize: "11px",
+                  height: "22px",
+                  "& .MuiChip-icon": {
+                    color: "#2E7D32",
+                  },
+                }}
+              />
+            )}
+          </Box>
           <TextField
             fullWidth
             type="email"
@@ -355,9 +536,10 @@ export default function Step1PersonalInfo({
             onChange={(e) => handleInputChange("email", e.target.value)}
             error={!!errors.email}
             helperText={errors.email}
+            disabled={emailAlreadyVerified}
             sx={{
               "& .MuiOutlinedInput-root": {
-                backgroundColor: "#FFF",
+                backgroundColor: emailAlreadyVerified ? "#F5F5F5" : "#FFF",
                 borderRadius: "8px",
                 height: "48px",
                 "& fieldset": {
@@ -432,6 +614,7 @@ export default function Step1PersonalInfo({
             onChange={(e) => handleInputChange("password", e.target.value)}
             error={!!errors.password}
             helperText={errors.password}
+            disabled={emailAlreadyVerified}
             InputProps={{
               endAdornment: (
                 <InputAdornment position="end">
@@ -446,7 +629,7 @@ export default function Step1PersonalInfo({
             }}
             sx={{
               "& .MuiOutlinedInput-root": {
-                backgroundColor: "#FFF",
+                backgroundColor: emailAlreadyVerified ? "#F5F5F5" : "#FFF",
                 borderRadius: "8px",
                 height: "48px",
                 "& fieldset": {
@@ -458,7 +641,7 @@ export default function Step1PersonalInfo({
           />
         </Grid>
 
-        {/* Location */}
+        {/* Location - Autocomplete Dropdown */}
         <Grid size={{ xs: 12, sm: 6 }}>
           <Typography
             sx={{
@@ -469,30 +652,41 @@ export default function Step1PersonalInfo({
               color: "#1A1A1A",
             }}
           >
-            Location (City, State) <span style={{ color: "#E87A42" }}>*</span>
+            Location <span style={{ color: "#E87A42" }}>*</span>
           </Typography>
-          <TextField
-            fullWidth
-            placeholder="e.g., New York, NY"
+          <Autocomplete
+            freeSolo
+            options={LOCATION_OPTIONS}
             value={formData.location}
-            onChange={(e) => handleInputChange("location", e.target.value)}
-            error={!!errors.location}
-            helperText={errors.location}
-            sx={{
-              "& .MuiOutlinedInput-root": {
-                backgroundColor: "#FFF",
-                borderRadius: "8px",
-                height: "48px",
-                "& fieldset": {
-                  borderColor: "#3A3A3A4D",
-                  borderWidth: "1px",
-                },
-              },
+            onChange={(_, newValue) => {
+              handleInputChange("location", newValue || "");
             }}
+            onInputChange={(_, newInputValue) => {
+              handleInputChange("location", newInputValue);
+            }}
+            renderInput={(params) => (
+              <TextField
+                {...params}
+                placeholder="Select or type your location"
+                error={!!errors.location}
+                helperText={errors.location}
+                sx={{
+                  "& .MuiOutlinedInput-root": {
+                    backgroundColor: "#FFF",
+                    borderRadius: "8px",
+                    height: "48px",
+                    "& fieldset": {
+                      borderColor: "#3A3A3A4D",
+                      borderWidth: "1px",
+                    },
+                  },
+                }}
+              />
+            )}
           />
         </Grid>
 
-        {/* Profile Photo */}
+        {/* Profile Photo - Click to Open Modal */}
         <Grid size={{ xs: 12 }}>
           <Typography
             sx={{
@@ -506,16 +700,23 @@ export default function Step1PersonalInfo({
             Profile Photo
           </Typography>
           <Box
+            onClick={() => setPhotoModalOpen(true)}
             sx={{
               display: "flex",
               alignItems: "center",
               gap: 2,
               p: 3,
               backgroundColor: "#FFF",
-              border: errors.phoneNumber
+              border: errors.profilePhoto
                 ? "1px solid #d32f2f"
                 : "1px solid #3A3A3A4D",
               borderRadius: "8px",
+              cursor: "pointer",
+              transition: "all 0.2s ease",
+              "&:hover": {
+                borderColor: "#005F73",
+                backgroundColor: "#F5F9FA",
+              },
             }}
           >
             <Avatar
@@ -535,10 +736,13 @@ export default function Step1PersonalInfo({
                   fontFamily: "Source Sans Pro",
                   fontSize: "14px",
                   color: "#666",
-                  mb: 1,
+                  fontWeight: 400,
+                  mb: 0.5,
                 }}
               >
-                Click to upload or drag and drop
+                {profilePhotoPreview
+                  ? "Change profile photo"
+                  : "Upload profile photo"}
               </Typography>
               <Typography
                 sx={{
@@ -547,18 +751,10 @@ export default function Step1PersonalInfo({
                   color: "#999",
                 }}
               >
-                PNG, JPG up to 1MB
+                Click to browse or drag and drop • PNG, JPG up to 1MB
               </Typography>
             </Box>
-            <input
-              ref={fileInputRef}
-              type="file"
-              accept="image/*"
-              onChange={handlePhotoUpload}
-              style={{ display: "none" }}
-            />
             <IconButton
-              onClick={() => fileInputRef.current?.click()}
               sx={{
                 backgroundColor: "#005F73",
                 color: "white",
@@ -588,6 +784,167 @@ export default function Step1PersonalInfo({
         />
       </Box>
 
+      {/* Photo Upload Modal */}
+      <Dialog
+        open={photoModalOpen}
+        onClose={() => setPhotoModalOpen(false)}
+        maxWidth="sm"
+        fullWidth
+        PaperProps={{
+          sx: {
+            borderRadius: "12px",
+            p: 2,
+          },
+        }}
+      >
+        <DialogTitle
+          sx={{
+            fontFamily: "Faustina",
+            fontSize: "24px",
+            fontWeight: 600,
+            color: "#1A1A1A",
+            pb: 1,
+          }}
+        >
+          Upload Profile Photo
+        </DialogTitle>
+        <DialogContent>
+          <Box
+            onDragOver={handleDragOver}
+            onDragLeave={handleDragLeave}
+            onDrop={handleDrop}
+            sx={{
+              display: "flex",
+              flexDirection: "column",
+              alignItems: "center",
+              justifyContent: "center",
+              gap: 2,
+              p: 4,
+              minHeight: "300px",
+              backgroundColor: isDragOver ? "#E3F2FD" : "#F9FAFB",
+              border: isDragOver ? "2px dashed #005F73" : "2px dashed #E0E0E0",
+              borderRadius: "12px",
+              cursor: "pointer",
+              transition: "all 0.2s ease",
+            }}
+            onClick={() => fileInputRef.current?.click()}
+          >
+            {profilePhotoPreview ? (
+              <>
+                <Avatar
+                  src={profilePhotoPreview}
+                  sx={{
+                    width: 120,
+                    height: 120,
+                    mb: 2,
+                  }}
+                />
+                <Typography
+                  sx={{
+                    fontFamily: "Source Sans Pro",
+                    fontSize: "16px",
+                    color: "#005F73",
+                    fontWeight: 600,
+                    textAlign: "center",
+                  }}
+                >
+                  Click to change photo or drag and drop a new one
+                </Typography>
+              </>
+            ) : (
+              <>
+                <CloudUpload
+                  sx={{
+                    fontSize: 64,
+                    color: isDragOver ? "#005F73" : "#999",
+                    mb: 2,
+                  }}
+                />
+                <Typography
+                  sx={{
+                    fontFamily: "Source Sans Pro",
+                    fontSize: "18px",
+                    color: isDragOver ? "#005F73" : "#666",
+                    fontWeight: 600,
+                    textAlign: "center",
+                  }}
+                >
+                  {isDragOver
+                    ? "Drop your image here"
+                    : "Drag and drop your photo here"}
+                </Typography>
+                <Typography
+                  sx={{
+                    fontFamily: "Source Sans Pro",
+                    fontSize: "14px",
+                    color: "#FF4F00",
+                    textAlign: "center",
+                  }}
+                >
+                  or click to browse from your computer
+                </Typography>
+              </>
+            )}
+            <Typography
+              sx={{
+                fontFamily: "Source Sans Pro",
+                fontSize: "12px",
+                color: "#999",
+                mt: 1,
+              }}
+            >
+              Supported formats: PNG, JPG • Max size: 1MB
+            </Typography>
+            <input
+              ref={fileInputRef}
+              type="file"
+              accept="image/*"
+              onChange={handlePhotoUpload}
+              style={{ display: "none" }}
+            />
+          </Box>
+          {errors.profilePhoto && (
+            <Alert severity="error" sx={{ mt: 2 }}>
+              {errors.profilePhoto}
+            </Alert>
+          )}
+        </DialogContent>
+        <DialogActions sx={{ px: 3, pb: 2, gap: 1 }}>
+          <Button
+            onClick={() => setPhotoModalOpen(false)}
+            sx={{
+              color: "#666",
+              textTransform: "none",
+              fontFamily: "Source Sans Pro",
+            }}
+          >
+            Cancel
+          </Button>
+          <Button
+            onClick={() => {
+              if (profilePhotoPreview) {
+                setPhotoModalOpen(false);
+              }
+            }}
+            variant="contained"
+            disabled={!profilePhotoPreview}
+            sx={{
+              backgroundColor: "#005F73",
+              color: "white",
+              textTransform: "none",
+              fontFamily: "Source Sans Pro",
+              "&:hover": { backgroundColor: "#004A5A" },
+              "&:disabled": {
+                backgroundColor: "#CCCCCC",
+                color: "#666666",
+              },
+            }}
+          >
+            Done
+          </Button>
+        </DialogActions>
+      </Dialog>
+
       {/* Email Verification Modal */}
       <Dialog
         open={verificationModal}
@@ -596,7 +953,7 @@ export default function Step1PersonalInfo({
         fullWidth
         PaperProps={{
           sx: {
-            borderRadius: "12px",
+            borderRadius: "8px",
             p: 2,
           },
         }}

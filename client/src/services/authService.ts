@@ -1,6 +1,12 @@
 import api from "../lib/api";
 import { store } from "../store";
-import { loginSuccess, logout, setLoading, setError, setInitialized } from "../store/slices/authSlice";
+import {
+  loginSuccess,
+  logout,
+  setLoading,
+  setError,
+  setInitialized,
+} from "../store/slices/authSlice";
 
 export interface ApiResponse<T = any> {
   success: boolean;
@@ -56,6 +62,7 @@ export interface SignUpData {
 export interface LoginData {
   email: string;
   password: string;
+  rememberMe?: boolean;
 }
 
 export interface VerifyEmailData {
@@ -68,12 +75,12 @@ export const authService = {
   signUp: async (data: SignUpData): Promise<ApiResponse<UserData>> => {
     store.dispatch(setLoading(true));
     store.dispatch(setError(null));
-    
+
     try {
       const response = await api.post("/api/auth/sign-up", data);
       return response as unknown as ApiResponse<UserData>;
     } catch (error) {
-      store.dispatch(setError("Failed to create account"));
+      // Don't set generic error - let the specific backend error pass through
       throw error;
     } finally {
       store.dispatch(setLoading(false));
@@ -88,25 +95,27 @@ export const authService = {
     try {
       const response = await api.post("/api/auth/login", data);
       const result = response as unknown as ApiResponse<UserData>;
-      
+
       if (result.success && result.data) {
         // Save to Redux store only (cookies handle persistence now)
-        store.dispatch(loginSuccess({
-          user: {
-            userId: result.data.userId,
-            email: result.data.email,
-            username: result.data.username,
-            countryCode: result.data.countryCode,
-            phoneNumber: result.data.phoneNumber
-          },
-          purchasedLevels: result.data.purchasedLevels,
-          progress: result.data.progress
-        }));
+        store.dispatch(
+          loginSuccess({
+            user: {
+              userId: result.data.userId,
+              email: result.data.email,
+              username: result.data.username,
+              countryCode: result.data.countryCode,
+              phoneNumber: result.data.phoneNumber,
+            },
+            purchasedLevels: result.data.purchasedLevels,
+            progress: result.data.progress,
+          })
+        );
       }
-      
+
       return result;
     } catch (error) {
-      store.dispatch(setError("Login failed"));
+      // Don't set generic error - let the specific backend error pass through
       throw error;
     } finally {
       store.dispatch(setLoading(false));
@@ -114,32 +123,36 @@ export const authService = {
   },
 
   // Verify email
-  verifyEmail: async (data: VerifyEmailData): Promise<ApiResponse<UserData>> => {
+  verifyEmail: async (
+    data: VerifyEmailData
+  ): Promise<ApiResponse<UserData>> => {
     store.dispatch(setLoading(true));
     store.dispatch(setError(null));
 
     try {
       const response = await api.post("/api/auth/verify-email", data);
       const result = response as unknown as ApiResponse<UserData>;
-      
+
       if (result.success && result.data) {
         // Save to Redux store only (cookies handle persistence now)
-        store.dispatch(loginSuccess({
-          user: {
-            userId: result.data.userId,
-            email: result.data.email,
-            username: result.data.username,
-            countryCode: result.data.countryCode,
-            phoneNumber: result.data.phoneNumber
-          },
-          purchasedLevels: result.data.purchasedLevels,
-          progress: result.data.progress
-        }));
+        store.dispatch(
+          loginSuccess({
+            user: {
+              userId: result.data.userId,
+              email: result.data.email,
+              username: result.data.username,
+              countryCode: result.data.countryCode,
+              phoneNumber: result.data.phoneNumber,
+            },
+            purchasedLevels: result.data.purchasedLevels,
+            progress: result.data.progress,
+          })
+        );
       }
-      
+
       return result;
     } catch (error) {
-      store.dispatch(setError("Verification failed"));
+      // Don't set generic error - let the specific backend error pass through
       throw error;
     } finally {
       store.dispatch(setLoading(false));
@@ -152,10 +165,12 @@ export const authService = {
     store.dispatch(setError(null));
 
     try {
-      const response = await api.post("/api/auth/resend-verification", { email });
+      const response = await api.post("/api/auth/resend-verification", {
+        email,
+      });
       return response as unknown as ApiResponse;
     } catch (error) {
-      store.dispatch(setError("Failed to resend verification"));
+      // Don't set generic error - let the specific backend error pass through
       throw error;
     } finally {
       store.dispatch(setLoading(false));
@@ -170,22 +185,24 @@ export const authService = {
     try {
       const response = await api.get("/api/auth/me");
       const result = response as unknown as ApiResponse<UserData>;
-      
+
       if (result.success && result.data) {
-        store.dispatch(loginSuccess({
-          user: {
-            userId: result.data.userId,
-            email: result.data.email,
-            username: result.data.username,
-            countryCode: result.data.countryCode,
-            phoneNumber: result.data.phoneNumber
-          },
-          purchasedLevels: result.data.purchasedLevels,
-          progress: result.data.progress
-        }));
+        store.dispatch(
+          loginSuccess({
+            user: {
+              userId: result.data.userId,
+              email: result.data.email,
+              username: result.data.username,
+              countryCode: result.data.countryCode,
+              phoneNumber: result.data.phoneNumber,
+            },
+            purchasedLevels: result.data.purchasedLevels,
+            progress: result.data.progress,
+          })
+        );
         return result.data;
       }
-      
+
       // No user but auth check is complete
       store.dispatch(setInitialized());
       return null;
@@ -208,7 +225,7 @@ export const authService = {
   // Logout user
   logout: async (): Promise<void> => {
     store.dispatch(setLoading(true));
-    
+
     try {
       // Call backend logout endpoint to clear cookies
       await api.post("/api/auth/logout");
@@ -216,7 +233,7 @@ export const authService = {
       console.error("Logout error:", error);
       // Continue with logout even if backend fails
     }
-    
+
     // Clear Redux store
     store.dispatch(logout());
     store.dispatch(setLoading(false));
@@ -226,5 +243,90 @@ export const authService = {
   isAuthenticated: (): boolean => {
     const state = store.getState();
     return state.auth.isAuthenticated;
+  },
+
+  // Update user profile (username, phone)
+  updateProfile: async (data: {
+    username?: string;
+    email?: string;
+    countryCode?: string;
+    phoneNumber?: string;
+  }): Promise<ApiResponse<UserData>> => {
+    store.dispatch(setLoading(true));
+
+    try {
+      const response: ApiResponse<UserData> = await api.patch(
+        "/api/auth/profile",
+        data
+      );
+
+      if (response.success && response.data) {
+        // If email change is pending, don't update Redux yet
+        if (!(response.data as any).emailVerificationPending) {
+          store.dispatch(
+            loginSuccess({
+              user: {
+                userId: response.data.userId,
+                email: response.data.email,
+                username: response.data.username,
+                countryCode: response.data.countryCode,
+                phoneNumber: response.data.phoneNumber,
+              },
+              purchasedLevels: response.data.purchasedLevels,
+              progress: response.data.progress,
+            })
+          );
+        }
+      }
+
+      return response;
+    } catch (error: any) {
+      const errorMessage =
+        error.response?.data?.message || "Failed to update profile";
+      store.dispatch(setError(errorMessage));
+      throw error;
+    } finally {
+      store.dispatch(setLoading(false));
+    }
+  },
+
+  // Verify email update
+  verifyEmailUpdate: async (data: {
+    newEmail: string;
+    verifyCode: string;
+  }): Promise<ApiResponse<UserData>> => {
+    store.dispatch(setLoading(true));
+
+    try {
+      const response: ApiResponse<UserData> = await api.post(
+        "/api/auth/verify-email-update",
+        data
+      );
+
+      if (response.success && response.data) {
+        store.dispatch(
+          loginSuccess({
+            user: {
+              userId: response.data.userId,
+              email: response.data.email,
+              username: response.data.username,
+              countryCode: response.data.countryCode,
+              phoneNumber: response.data.phoneNumber,
+            },
+            purchasedLevels: response.data.purchasedLevels,
+            progress: response.data.progress,
+          })
+        );
+      }
+
+      return response;
+    } catch (error: any) {
+      const errorMessage =
+        error.response?.data?.message || "Failed to verify email";
+      store.dispatch(setError(errorMessage));
+      throw error;
+    } finally {
+      store.dispatch(setLoading(false));
+    }
   },
 };

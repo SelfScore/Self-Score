@@ -9,9 +9,24 @@ import {
   Button,
   IconButton,
   Paper,
+  Table,
+  TableBody,
+  TableCell,
+  TableContainer,
+  TableHead,
+  TableRow,
 } from "@mui/material";
-import { useState, useRef } from "react";
-import { Add, Delete, CloudUpload, InsertDriveFile } from "@mui/icons-material";
+import { useState, useRef, useEffect } from "react";
+import {
+  Add,
+  Delete,
+  CloudUpload,
+  InsertDriveFile,
+  Check,
+  Close,
+  Description,
+} from "@mui/icons-material";
+import dayjs from "dayjs";
 import ButtonSelfScore from "../../components/ui/ButtonSelfScore";
 import OutLineButton from "../../components/ui/OutLineButton";
 import {
@@ -27,55 +42,87 @@ interface Step3CertificationsProps {
   initialData?: Partial<Omit<Step3Data, "consultantId">>;
 }
 
+interface CertificationDraft {
+  name: string;
+  issuingOrganization: string;
+  issueDate: string;
+  certificateFile: string;
+  fileName?: string;
+}
+
 export default function Step3Certifications({
   consultantId,
   onNext,
   onPrevious,
   initialData,
 }: Step3CertificationsProps) {
+  // Added certifications (shown in table)
   const [certifications, setCertifications] = useState<Certification[]>(
     initialData?.certifications || []
   );
+
+  // Draft certification being added
+  const [showAddForm, setShowAddForm] = useState(false);
+  const [draftCert, setDraftCert] = useState<CertificationDraft>({
+    name: "",
+    issuingOrganization: "",
+    issueDate: "",
+    certificateFile: "",
+    fileName: "",
+  });
+  const [draftErrors, setDraftErrors] = useState<{ [key: string]: string }>({});
+
+  // Resume state
   const [resume, setResume] = useState<string>(initialData?.resume || "");
   const [resumeFileName, setResumeFileName] = useState<string>("");
+  const [resumeFileSize, setResumeFileSize] = useState<string>("");
+
+  // General state
   const [errors, setErrors] = useState<{ [key: string]: string }>({});
   const [loading, setLoading] = useState(false);
+
   const resumeInputRef = useRef<HTMLInputElement>(null);
+  const certFileInputRef = useRef<HTMLInputElement>(null);
 
-  const handleAddCertification = () => {
-    setCertifications([
-      ...certifications,
-      {
-        name: "",
-        issuingOrganization: "",
-        issueDate: "",
-        certificateFile: "",
-      },
-    ]);
-  };
+  // Load from sessionStorage on mount
+  useEffect(() => {
+    const saved = sessionStorage.getItem("consultantStep3");
+    if (saved) {
+      try {
+        const parsed = JSON.parse(saved);
+        if (parsed.certifications) setCertifications(parsed.certifications);
+        if (parsed.resume) setResume(parsed.resume);
+        if (parsed.resumeFileName) setResumeFileName(parsed.resumeFileName);
+        if (parsed.resumeFileSize) setResumeFileSize(parsed.resumeFileSize);
+      } catch (e) {
+        console.error("Error loading saved step 3 data", e);
+      }
+    }
+  }, []);
 
-  const handleRemoveCertification = (index: number) => {
-    setCertifications(certifications.filter((_, i) => i !== index));
-  };
+  // Save to sessionStorage whenever certifications or resume changes
+  useEffect(() => {
+    sessionStorage.setItem(
+      "consultantStep3",
+      JSON.stringify({
+        certifications,
+        resume,
+        resumeFileName,
+        resumeFileSize,
+      })
+    );
+  }, [certifications, resume, resumeFileName, resumeFileSize]);
 
-  const handleCertificationChange = (
-    index: number,
-    field: keyof Certification,
-    value: string
-  ) => {
-    const updated = [...certifications];
-    updated[index] = { ...updated[index], [field]: value };
-    setCertifications(updated);
-  };
+  // Get today's date for max date validation
+  const today = dayjs().format("YYYY-MM-DD");
 
-  const handleCertificateFileUpload = async (
-    index: number,
+  // Handle draft certification file upload
+  const handleDraftFileUpload = async (
     event: React.ChangeEvent<HTMLInputElement>
   ) => {
     const file = event.target.files?.[0];
     if (!file) return;
 
-    // Validate file type
     const allowedTypes = [
       "application/pdf",
       "image/jpeg",
@@ -83,9 +130,9 @@ export default function Step3Certifications({
       "image/jpg",
     ];
     if (!allowedTypes.includes(file.type)) {
-      setErrors((prev) => ({
+      setDraftErrors((prev) => ({
         ...prev,
-        [`cert_${index}`]: "Only PDF and image files are allowed",
+        certificateFile: "Only PDF and image files are allowed",
       }));
       return;
     }
@@ -93,32 +140,102 @@ export default function Step3Certifications({
     try {
       const base64 = await consultantAuthService.fileToBase64(file);
 
-      // Validate file size (1MB limit)
       if (!consultantAuthService.validateFileSize(base64, 1)) {
-        setErrors((prev) => ({
+        setDraftErrors((prev) => ({
           ...prev,
-          [`cert_${index}`]: "File must be under 1MB",
+          certificateFile: "File must be under 1MB",
         }));
         return;
       }
 
-      handleCertificationChange(index, "certificateFile", base64);
-      setErrors((prev) => ({ ...prev, [`cert_${index}`]: "" }));
-    } catch (_error) {
-      setErrors((prev) => ({
+      setDraftCert((prev) => ({
         ...prev,
-        [`cert_${index}`]: "Failed to upload file",
+        certificateFile: base64,
+        fileName: file.name,
+      }));
+      setDraftErrors((prev) => ({ ...prev, certificateFile: "" }));
+    } catch (_error) {
+      setDraftErrors((prev) => ({
+        ...prev,
+        certificateFile: "Failed to upload file",
       }));
     }
   };
 
+  // Validate draft certification
+  const validateDraft = (): boolean => {
+    const newErrors: { [key: string]: string } = {};
+
+    if (!draftCert.name.trim()) {
+      newErrors.name = "Certification name is required";
+    }
+    if (!draftCert.issuingOrganization.trim()) {
+      newErrors.issuingOrganization = "Issuing organization is required";
+    }
+    if (!draftCert.issueDate) {
+      newErrors.issueDate = "Issue date is required";
+    } else if (dayjs(draftCert.issueDate).isAfter(dayjs())) {
+      newErrors.issueDate = "Issue date cannot be in the future";
+    }
+    if (!draftCert.certificateFile) {
+      newErrors.certificateFile = "Certificate file is required";
+    }
+
+    setDraftErrors(newErrors);
+    return Object.keys(newErrors).length === 0;
+  };
+
+  // Add certification to list
+  const handleAddCertification = () => {
+    if (!validateDraft()) return;
+
+    setCertifications([
+      ...certifications,
+      {
+        name: draftCert.name,
+        issuingOrganization: draftCert.issuingOrganization,
+        issueDate: draftCert.issueDate,
+        certificateFile: draftCert.certificateFile,
+      },
+    ]);
+
+    // Reset draft
+    setDraftCert({
+      name: "",
+      issuingOrganization: "",
+      issueDate: "",
+      certificateFile: "",
+      fileName: "",
+    });
+    setDraftErrors({});
+    setShowAddForm(false);
+  };
+
+  // Remove certification from list
+  const handleRemoveCertification = (index: number) => {
+    setCertifications(certifications.filter((_, i) => i !== index));
+  };
+
+  // Cancel adding certification
+  const handleCancelAdd = () => {
+    setDraftCert({
+      name: "",
+      issuingOrganization: "",
+      issueDate: "",
+      certificateFile: "",
+      fileName: "",
+    });
+    setDraftErrors({});
+    setShowAddForm(false);
+  };
+
+  // Handle resume upload
   const handleResumeUpload = async (
     event: React.ChangeEvent<HTMLInputElement>
   ) => {
     const file = event.target.files?.[0];
     if (!file) return;
 
-    // Validate file type
     const allowedTypes = [
       "application/pdf",
       "application/msword",
@@ -135,7 +252,6 @@ export default function Step3Certifications({
     try {
       const base64 = await consultantAuthService.fileToBase64(file);
 
-      // Validate file size (1MB limit)
       if (!consultantAuthService.validateFileSize(base64, 1)) {
         setErrors((prev) => ({
           ...prev,
@@ -146,6 +262,13 @@ export default function Step3Certifications({
 
       setResume(base64);
       setResumeFileName(file.name);
+      // Calculate file size
+      const sizeInKB = Math.round(file.size / 1024);
+      setResumeFileSize(
+        sizeInKB >= 1024
+          ? `${(sizeInKB / 1024).toFixed(1)} MB`
+          : `${sizeInKB} KB`
+      );
       setErrors((prev) => ({ ...prev, resume: "" }));
     } catch (_error) {
       setErrors((prev) => ({
@@ -155,29 +278,19 @@ export default function Step3Certifications({
     }
   };
 
+  // Remove resume
+  const handleRemoveResume = () => {
+    setResume("");
+    setResumeFileName("");
+    setResumeFileSize("");
+  };
+
   const validateForm = (): boolean => {
     const newErrors: { [key: string]: string } = {};
 
-    // Resume is required
     if (!resume) {
       newErrors.resume = "Resume is required";
     }
-
-    // Validate certifications if any are added
-    certifications.forEach((cert, index) => {
-      if (cert.name || cert.issuingOrganization || cert.issueDate) {
-        // If any field is filled, all fields should be filled
-        if (!cert.name) {
-          newErrors[`cert_name_${index}`] = "Certification name is required";
-        }
-        if (!cert.issuingOrganization) {
-          newErrors[`cert_org_${index}`] = "Issuing organization is required";
-        }
-        if (!cert.issueDate) {
-          newErrors[`cert_date_${index}`] = "Issue date is required";
-        }
-      }
-    });
 
     setErrors(newErrors);
     return Object.keys(newErrors).length === 0;
@@ -186,26 +299,16 @@ export default function Step3Certifications({
   const handleNext = async () => {
     if (!validateForm()) return;
 
-    // Filter out empty certifications
-    const validCertifications = certifications.filter(
-      (cert) => cert.name && cert.issuingOrganization && cert.issueDate
-    );
-
     setLoading(true);
     try {
       const response = await consultantAuthService.updateCertifications({
         consultantId,
-        certifications: validCertifications,
+        certifications,
         resume,
       });
 
       if (response.success) {
-        // Save to sessionStorage
-        sessionStorage.setItem(
-          "consultantStep3",
-          JSON.stringify({ certifications: validCertifications, resume })
-        );
-        onNext({ certifications: validCertifications, resume });
+        onNext({ certifications, resume });
       } else {
         setErrors({
           general: response.message || "Failed to save certifications",
@@ -261,21 +364,277 @@ export default function Step3Certifications({
           >
             Certifications
           </Typography>
-          <Button
-            startIcon={<Add />}
-            onClick={handleAddCertification}
-            sx={{
-              color: "#005F73",
-              fontFamily: "Source Sans Pro",
-              textTransform: "none",
-              fontWeight: 600,
-            }}
-          >
-            Add Certification
-          </Button>
+          {!showAddForm && (
+            <Button
+              startIcon={<Add />}
+              onClick={() => setShowAddForm(true)}
+              sx={{
+                color: "#005F73",
+                fontFamily: "Source Sans Pro",
+                textTransform: "none",
+                fontWeight: 600,
+              }}
+            >
+              Add Certification
+            </Button>
+          )}
         </Box>
 
-        {certifications.length === 0 ? (
+        {/* Added Certifications Table */}
+        {certifications.length > 0 && (
+          <TableContainer
+            component={Paper}
+            sx={{
+              mb: 3,
+              border: "1px solid #E0E0E0",
+              borderRadius: "8px",
+            }}
+          >
+            <Table size="small">
+              <TableHead>
+                <TableRow sx={{ backgroundColor: "#F5F5F5" }}>
+                  <TableCell sx={{ fontWeight: 600 }}>Name</TableCell>
+                  <TableCell sx={{ fontWeight: 600 }}>Organization</TableCell>
+                  <TableCell sx={{ fontWeight: 600 }}>Date</TableCell>
+                  <TableCell sx={{ fontWeight: 600 }}>File</TableCell>
+                  <TableCell sx={{ fontWeight: 600, width: 60 }}>
+                    Actions
+                  </TableCell>
+                </TableRow>
+              </TableHead>
+              <TableBody>
+                {certifications.map((cert, index) => (
+                  <TableRow key={index}>
+                    <TableCell>{cert.name}</TableCell>
+                    <TableCell>{cert.issuingOrganization}</TableCell>
+                    <TableCell>
+                      {dayjs(cert.issueDate).format("MMM DD, YYYY")}
+                    </TableCell>
+                    <TableCell>
+                      <Box sx={{ display: "flex", alignItems: "center", gap: 1 }}>
+                        <InsertDriveFile
+                          sx={{ fontSize: 16, color: "#005F73" }}
+                        />
+                        <Typography sx={{ fontSize: "12px" }}>
+                          Uploaded
+                        </Typography>
+                      </Box>
+                    </TableCell>
+                    <TableCell>
+                      <IconButton
+                        size="small"
+                        onClick={() => handleRemoveCertification(index)}
+                        sx={{ color: "#d32f2f" }}
+                      >
+                        <Delete fontSize="small" />
+                      </IconButton>
+                    </TableCell>
+                  </TableRow>
+                ))}
+              </TableBody>
+            </Table>
+          </TableContainer>
+        )}
+
+        {/* Add Certification Form */}
+        {showAddForm ? (
+          <Paper
+            sx={{
+              p: 3,
+              backgroundColor: "#FFF",
+              borderRadius: "8px",
+              border: "1px solid #005F73",
+            }}
+          >
+            <Box
+              sx={{
+                display: "flex",
+                justifyContent: "space-between",
+                mb: 2,
+              }}
+            >
+              <Typography
+                sx={{
+                  fontFamily: "Source Sans Pro",
+                  fontSize: "16px",
+                  fontWeight: 600,
+                  color: "#1A1A1A",
+                }}
+              >
+                Add New Certification
+              </Typography>
+              <IconButton size="small" onClick={handleCancelAdd}>
+                <Close />
+              </IconButton>
+            </Box>
+
+            <Grid container spacing={2}>
+              <Grid size={{ xs: 12, sm: 6 }}>
+                <TextField
+                  fullWidth
+                  label="Certification Name *"
+                  placeholder="e.g., Certified Life Coach"
+                  value={draftCert.name}
+                  onChange={(e) =>
+                    setDraftCert((prev) => ({ ...prev, name: e.target.value }))
+                  }
+                  error={!!draftErrors.name}
+                  helperText={draftErrors.name}
+                  sx={{
+                    "& .MuiOutlinedInput-root": {
+                      backgroundColor: "#FFF",
+                      borderRadius: "8px",
+                      height: "48px",
+                      "& fieldset": {
+                        borderColor: "#3A3A3A4D",
+                        borderWidth: "1px",
+                      },
+                    },
+                  }}
+                />
+              </Grid>
+
+              <Grid size={{ xs: 12, sm: 6 }}>
+                <TextField
+                  fullWidth
+                  label="Issuing Organization *"
+                  placeholder="e.g., ICF, NBHWC"
+                  value={draftCert.issuingOrganization}
+                  onChange={(e) =>
+                    setDraftCert((prev) => ({
+                      ...prev,
+                      issuingOrganization: e.target.value,
+                    }))
+                  }
+                  error={!!draftErrors.issuingOrganization}
+                  helperText={draftErrors.issuingOrganization}
+                  sx={{
+                    "& .MuiOutlinedInput-root": {
+                      backgroundColor: "#FFF",
+                      borderRadius: "8px",
+                      height: "48px",
+                      "& fieldset": {
+                        borderColor: "#3A3A3A4D",
+                        borderWidth: "1px",
+                      },
+                    },
+                  }}
+                />
+              </Grid>
+
+              <Grid size={{ xs: 12, sm: 6 }}>
+                <TextField
+                  fullWidth
+                  label="Issue Date *"
+                  type="date"
+                  value={draftCert.issueDate}
+                  onChange={(e) =>
+                    setDraftCert((prev) => ({
+                      ...prev,
+                      issueDate: e.target.value,
+                    }))
+                  }
+                  error={!!draftErrors.issueDate}
+                  helperText={draftErrors.issueDate}
+                  InputLabelProps={{ shrink: true }}
+                  inputProps={{ max: today }}
+                  sx={{
+                    "& .MuiOutlinedInput-root": {
+                      backgroundColor: "#FFF",
+                      borderRadius: "8px",
+                      height: "48px",
+                      "& fieldset": {
+                        borderColor: "#3A3A3A4D",
+                        borderWidth: "1px",
+                      },
+                    },
+                  }}
+                />
+              </Grid>
+
+              <Grid size={{ xs: 12, sm: 6 }}>
+                <input
+                  ref={certFileInputRef}
+                  type="file"
+                  accept=".pdf,.jpg,.jpeg,.png"
+                  onChange={handleDraftFileUpload}
+                  style={{ display: "none" }}
+                />
+                <Button
+                  onClick={() => certFileInputRef.current?.click()}
+                  variant="outlined"
+                  fullWidth
+                  startIcon={
+                    draftCert.certificateFile ? (
+                      <InsertDriveFile />
+                    ) : (
+                      <CloudUpload />
+                    )
+                  }
+                  sx={{
+                    borderColor: draftErrors.certificateFile
+                      ? "#d32f2f"
+                      : draftCert.certificateFile
+                        ? "#4CAF50"
+                        : "#3A3A3A4D",
+                    color: draftCert.certificateFile ? "#4CAF50" : "#666",
+                    textTransform: "none",
+                    fontFamily: "Source Sans Pro",
+                    justifyContent: "flex-start",
+                    backgroundColor: "#FFF",
+                    borderRadius: "8px",
+                    height: "48px",
+                  }}
+                >
+                  {draftCert.certificateFile
+                    ? draftCert.fileName || "Certificate Selected"
+                    : "Upload Certificate *"}
+                </Button>
+                {draftErrors.certificateFile && (
+                  <Typography
+                    sx={{
+                      color: "#d32f2f",
+                      fontSize: "12px",
+                      mt: 0.5,
+                      ml: 1.5,
+                    }}
+                  >
+                    {draftErrors.certificateFile}
+                  </Typography>
+                )}
+              </Grid>
+            </Grid>
+
+            {/* Done Button */}
+            <Box sx={{ mt: 3, display: "flex", justifyContent: "flex-end", gap: 2 }}>
+              <Button
+                variant="outlined"
+                onClick={handleCancelAdd}
+                sx={{
+                  borderColor: "#666",
+                  color: "#666",
+                  textTransform: "none",
+                  borderRadius: "8px",
+                }}
+              >
+                Cancel
+              </Button>
+              <Button
+                variant="contained"
+                onClick={handleAddCertification}
+                startIcon={<Check />}
+                sx={{
+                  backgroundColor: "#005F73",
+                  textTransform: "none",
+                  borderRadius: "8px",
+                  "&:hover": { backgroundColor: "#004A5A" },
+                }}
+              >
+                Done
+              </Button>
+            </Box>
+          </Paper>
+        ) : certifications.length === 0 ? (
           <Paper
             sx={{
               p: 4,
@@ -293,208 +652,24 @@ export default function Step3Certifications({
                 mb: 2,
               }}
             >
-              No certifications added yet
+              No certifications added yet (optional)
             </Typography>
             <Button
               variant="outlined"
               startIcon={<Add />}
-              onClick={handleAddCertification}
+              onClick={() => setShowAddForm(true)}
               sx={{
                 borderColor: "#005F73",
                 color: "#005F73",
                 textTransform: "none",
                 fontFamily: "Source Sans Pro",
+                borderRadius: "8px",
               }}
             >
               Add Your First Certification
             </Button>
           </Paper>
-        ) : (
-          <Box sx={{ display: "flex", flexDirection: "column", gap: 2 }}>
-            {certifications.map((cert, index) => (
-              <Paper
-                key={index}
-                sx={{
-                  p: 3,
-                  backgroundColor: "#FFF",
-                  borderRadius: "8px",
-                  border: "1px solid #E0E0E0",
-                }}
-              >
-                <Box
-                  sx={{
-                    display: "flex",
-                    justifyContent: "space-between",
-                    mb: 2,
-                  }}
-                >
-                  <Typography
-                    sx={{
-                      fontFamily: "Source Sans Pro",
-                      fontSize: "16px",
-                      fontWeight: 600,
-                      color: "#1A1A1A",
-                    }}
-                  >
-                    Certification #{index + 1}
-                  </Typography>
-                  <IconButton
-                    onClick={() => handleRemoveCertification(index)}
-                    size="small"
-                    sx={{ color: "#d32f2f" }}
-                  >
-                    <Delete />
-                  </IconButton>
-                </Box>
-
-                <Grid container spacing={2}>
-                  <Grid size={{ xs: 12, sm: 6 }}>
-                    <TextField
-                      fullWidth
-                      label="Certification Name"
-                      placeholder="e.g., Certified Life Coach"
-                      value={cert.name}
-                      onChange={(e) =>
-                        handleCertificationChange(index, "name", e.target.value)
-                      }
-                      error={!!errors[`cert_name_${index}`]}
-                      helperText={errors[`cert_name_${index}`]}
-                      sx={{
-                        "& .MuiOutlinedInput-root": {
-                          backgroundColor: "#FFF",
-                          borderRadius: "8px",
-                          height: "48px",
-                          "& fieldset": {
-                            borderColor: "#3A3A3A4D",
-                            borderWidth: "1px",
-                          },
-                        },
-                      }}
-                    />
-                  </Grid>
-
-                  <Grid size={{ xs: 12, sm: 6 }}>
-                    <TextField
-                      fullWidth
-                      label="Issuing Organization"
-                      placeholder="e.g., ICF, NBHWC"
-                      value={cert.issuingOrganization}
-                      onChange={(e) =>
-                        handleCertificationChange(
-                          index,
-                          "issuingOrganization",
-                          e.target.value
-                        )
-                      }
-                      error={!!errors[`cert_org_${index}`]}
-                      helperText={errors[`cert_org_${index}`]}
-                      sx={{
-                        "& .MuiOutlinedInput-root": {
-                          backgroundColor: "#FFF",
-                          borderRadius: "8px",
-                          height: "48px",
-                          "& fieldset": {
-                            borderColor: "#3A3A3A4D",
-                            borderWidth: "1px",
-                          },
-                        },
-                      }}
-                    />
-                  </Grid>
-
-                  <Grid size={{ xs: 12, sm: 6 }}>
-                    <TextField
-                      fullWidth
-                      label="Issue Date"
-                      type="date"
-                      value={cert.issueDate}
-                      onChange={(e) =>
-                        handleCertificationChange(
-                          index,
-                          "issueDate",
-                          e.target.value
-                        )
-                      }
-                      error={!!errors[`cert_date_${index}`]}
-                      helperText={errors[`cert_date_${index}`]}
-                      InputLabelProps={{ shrink: true }}
-                      sx={{
-                        "& .MuiOutlinedInput-root": {
-                          backgroundColor: "#FFF",
-                          borderRadius: "8px",
-                          height: "48px",
-                          "& fieldset": {
-                            borderColor: "#3A3A3A4D",
-                            borderWidth: "1px",
-                          },
-                        },
-                      }}
-                    />
-                  </Grid>
-
-                  <Grid size={{ xs: 12, sm: 6 }}>
-                    <input
-                      type="file"
-                      accept=".pdf,.jpg,.jpeg,.png"
-                      onChange={(e) => handleCertificateFileUpload(index, e)}
-                      style={{ display: "none" }}
-                      id={`cert-file-${index}`}
-                    />
-                    <label htmlFor={`cert-file-${index}`}>
-                      <Button
-                        component="span"
-                        variant="outlined"
-                        fullWidth
-                        startIcon={
-                          cert.certificateFile ? (
-                            <InsertDriveFile />
-                          ) : (
-                            <CloudUpload />
-                          )
-                        }
-                        sx={{
-                          // height: "40px",
-                          borderColor: errors[`cert_${index}`]
-                            ? "#d32f2f"
-                            : "#3A3A3A4D",
-                          color: "#666",
-                          textTransform: "none",
-                          fontFamily: "Source Sans Pro",
-                          // borderRadius: "8px",
-                          justifyContent: "flex-start",
-                          // backgroundColor: "#FFF",
-                          backgroundColor: "#FFF",
-                          borderRadius: "8px",
-                          height: "48px",
-                          "& fieldset": {
-                            borderColor: "#3A3A3A4D",
-                            borderWidth: "1px",
-                          },
-                        }}
-                      >
-                        {cert.certificateFile
-                          ? "Certificate Uploaded"
-                          : "Upload Certificate (Optional)"}
-                      </Button>
-                    </label>
-                    {errors[`cert_${index}`] && (
-                      <Typography
-                        sx={{
-                          color: "#d32f2f",
-                          fontSize: "12px",
-                          mt: 0.5,
-                          ml: 1.5,
-                        }}
-                      >
-                        {errors[`cert_${index}`]}
-                      </Typography>
-                    )}
-                  </Grid>
-                </Grid>
-              </Paper>
-            ))}
-          </Box>
-        )}
+        ) : null}
       </Box>
 
       {/* Resume Section */}
@@ -511,58 +686,131 @@ export default function Step3Certifications({
           Resume / CV <span style={{ color: "#E87A42" }}>*</span>
         </Typography>
 
-        <Paper
-          sx={{
-            p: 3,
-            backgroundColor: "#FFF",
-            border: errors.resume ? "2px solid #d32f2f" : "1px solid #3A3A3A4D",
-            borderRadius: "8px",
-            textAlign: "center",
-            cursor: "pointer",
-          }}
-          onClick={() => resumeInputRef.current?.click()}
-        >
-          <CloudUpload sx={{ fontSize: 48, color: "#005F73", mb: 1 }} />
-          <Typography
+        {resume ? (
+          // File uploaded state
+          <Paper
             sx={{
-              fontFamily: "Source Sans Pro",
-              fontSize: "16px",
-              fontWeight: 600,
-              color: "#1A1A1A",
-              mb: 1,
+              p: 3,
+              backgroundColor: "#FFF",
+              border: "1px solid #4CAF50",
+              borderRadius: "8px",
             }}
           >
-            {resume ? "Resume Uploaded" : "Upload your resume"}
-          </Typography>
-          {resumeFileName && (
+            <Box
+              sx={{
+                display: "flex",
+                alignItems: "center",
+                justifyContent: "space-between",
+              }}
+            >
+              <Box sx={{ display: "flex", alignItems: "center", gap: 2 }}>
+                <Description sx={{ fontSize: 40, color: "#005F73" }} />
+                <Box>
+                  <Typography
+                    sx={{
+                      fontFamily: "Source Sans Pro",
+                      fontSize: "16px",
+                      fontWeight: 600,
+                      color: "#1A1A1A",
+                    }}
+                  >
+                    {resumeFileName || "Resume Uploaded"}
+                  </Typography>
+                  {resumeFileSize && (
+                    <Typography
+                      sx={{
+                        fontFamily: "Source Sans Pro",
+                        fontSize: "14px",
+                        color: "#666",
+                      }}
+                    >
+                      {resumeFileSize}
+                    </Typography>
+                  )}
+                </Box>
+              </Box>
+              <Box sx={{ display: "flex", gap: 1 }}>
+                <Button
+                  variant="outlined"
+                  size="small"
+                  onClick={() => resumeInputRef.current?.click()}
+                  sx={{
+                    borderColor: "#005F73",
+                    color: "#005F73",
+                    textTransform: "none",
+                    borderRadius: "8px",
+                  }}
+                >
+                  Change File
+                </Button>
+                <Button
+                  variant="outlined"
+                  size="small"
+                  onClick={handleRemoveResume}
+                  sx={{
+                    borderColor: "#d32f2f",
+                    color: "#d32f2f",
+                    textTransform: "none",
+                    borderRadius: "8px",
+                  }}
+                >
+                  Remove
+                </Button>
+              </Box>
+            </Box>
+          </Paper>
+        ) : (
+          // Upload state
+          <Paper
+            sx={{
+              p: 3,
+              backgroundColor: "#FFF",
+              border: errors.resume
+                ? "2px solid #d32f2f"
+                : "1px solid #3A3A3A4D",
+              borderRadius: "8px",
+              textAlign: "center",
+              cursor: "pointer",
+              transition: "all 0.2s ease",
+              "&:hover": {
+                borderColor: "#005F73",
+                backgroundColor: "#F5F9FA",
+              },
+            }}
+            onClick={() => resumeInputRef.current?.click()}
+          >
+            <CloudUpload sx={{ fontSize: 48, color: "#005F73", mb: 1 }} />
+            <Typography
+              sx={{
+                fontFamily: "Source Sans Pro",
+                fontSize: "16px",
+                fontWeight: 600,
+                color: "#1A1A1A",
+                mb: 1,
+              }}
+            >
+              Click to upload your resume
+            </Typography>
             <Typography
               sx={{
                 fontFamily: "Source Sans Pro",
                 fontSize: "14px",
                 color: "#666",
-                mb: 1,
               }}
             >
-              {resumeFileName}
+              PDF, DOC, DOCX up to 1MB
             </Typography>
-          )}
-          <Typography
-            sx={{
-              fontFamily: "Source Sans Pro",
-              fontSize: "14px",
-              color: "#666",
-            }}
-          >
-            PDF, DOC, DOCX up to 1MB
-          </Typography>
-          <input
-            ref={resumeInputRef}
-            type="file"
-            accept=".pdf,.doc,.docx"
-            onChange={handleResumeUpload}
-            style={{ display: "none" }}
-          />
-        </Paper>
+          </Paper>
+        )}
+
+        <input
+          ref={resumeInputRef}
+          type="file"
+          accept=".pdf,.doc,.docx"
+          onChange={handleResumeUpload}
+          style={{ display: "none" }}
+        />
+
         {errors.resume && (
           <Typography
             sx={{ color: "#d32f2f", fontSize: "12px", mt: 0.5, ml: 1.5 }}

@@ -23,6 +23,7 @@ import EmailIcon from "@mui/icons-material/Email";
 import LockIcon from "@mui/icons-material/Lock";
 import Visibility from "@mui/icons-material/Visibility";
 import VisibilityOff from "@mui/icons-material/VisibilityOff";
+import { getUserFriendlyError } from "../../../utils/errorMessages";
 
 export default function SignInPage() {
   const router = useRouter();
@@ -54,15 +55,17 @@ export default function SignInPage() {
 
   const validateForm = () => {
     if (!formData.email.trim()) {
-      setLocalError("Email is required");
+      setLocalError("Please enter your email address");
       return false;
     }
     if (!/^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(formData.email)) {
-      setLocalError("Please enter a valid email address");
+      setLocalError(
+        "Please enter a valid email address (e.g., name@example.com)"
+      );
       return false;
     }
     if (!formData.password.trim()) {
-      setLocalError("Password is required");
+      setLocalError("Please enter your password");
       return false;
     }
     return true;
@@ -77,6 +80,7 @@ export default function SignInPage() {
       const response = await login({
         email: formData.email.trim().toLowerCase(),
         password: formData.password,
+        rememberMe: rememberMe,
       });
 
       if (response.success) {
@@ -85,24 +89,21 @@ export default function SignInPage() {
           new URLSearchParams(window.location.search).get("redirect") ||
           "/user/dashboard";
         router.push(redirectTo);
-      } else {
-        setLocalError(response.message || "Login failed");
       }
     } catch (err: any) {
+      const errorMessage = getUserFriendlyError(err, "signin");
+      setLocalError(errorMessage);
+
+      // Handle email verification redirect
       if (
-        err.response?.data?.message ===
-        "Please verify your email before logging in"
+        err.response?.data?.message?.includes("verify your email") ||
+        err.response?.data?.message?.includes("not verified")
       ) {
-        setLocalError("Please verify your email first");
         setTimeout(() => {
           router.push(
             `/auth/verify-email?email=${encodeURIComponent(formData.email)}`
           );
-        }, 2000);
-      } else {
-        setLocalError(
-          err.response?.data?.message || "Login failed. Please try again."
-        );
+        }, 2500);
       }
     }
   };
@@ -110,12 +111,12 @@ export default function SignInPage() {
   return (
     <Box
       sx={{
-        minHeight: "100vh",
+        // minHeight: "100vh",
         display: "flex",
         alignItems: "center",
         justifyContent: "center",
         bgcolor: "#FFFFFF",
-        py: { xs: 2, sm: 3, md: 4 },
+        py: { xs: 2, sm: 3, md: 8 },
       }}
     >
       <Box
@@ -125,7 +126,7 @@ export default function SignInPage() {
           width: "100%",
           alignItems: { xs: "center", md: "flex-start" },
           gap: { xs: 3, md: 3 },
-          marginTop: { xs: 8, md: 12 },
+          marginTop: { xs: 8, md: 8 },
         }}
       >
         {/* Left Side - Image */}
@@ -134,7 +135,7 @@ export default function SignInPage() {
             position: "relative",
             display: { xs: "none", md: "block" },
             width: { md: "48%", lg: "50%" },
-            minHeight: "798px",
+            // minHeight: "798px",
             flexShrink: 0,
           }}
         >
@@ -403,7 +404,7 @@ export default function SignInPage() {
                 component={NextLink}
                 href="/auth/forgot-password"
                 sx={{
-                  color: "#0066cc",
+                  color: "#005F73",
                   textDecoration: "none",
                   fontSize: "0.9rem",
                   "&:hover": { textDecoration: "underline" },
@@ -446,7 +447,7 @@ export default function SignInPage() {
                   component={NextLink}
                   href="/auth/signup"
                   sx={{
-                    color: "#0066cc",
+                    color: "#005F73",
                     fontWeight: "600",
                     textDecoration: "none",
                     "&:hover": { textDecoration: "underline" },

@@ -24,6 +24,10 @@ import NextLink from "next/link";
 import ButtonSelfScore from "../components/ui/ButtonSelfScore";
 import PhoneInput from "react-phone-input-2";
 import "react-phone-input-2/lib/style.css";
+import {
+  getUserFriendlyError,
+  getSuccessMessage,
+} from "../../utils/errorMessages";
 
 interface SignUpModalProps {
   open: boolean;
@@ -114,23 +118,23 @@ export default function SignUpModal({
 
       // Validation
       if (!formData.username.trim()) {
-        setError("Username is required");
+        setError("Please enter your full name");
         return;
       }
       if (formData.username.trim().length < 2) {
-        setError("Username must be at least 2 characters long");
+        setError("Name must be at least 2 characters long");
         return;
       }
       if (formData.username.trim().length > 20) {
-        setError("Username must be at most 20 characters long");
+        setError("Name must not exceed 20 characters");
         return;
       }
       if (!validateEmail(formData.email)) {
-        setError("Please enter a valid email address");
+        setError("Please enter a valid email address (e.g., name@example.com)");
         return;
       }
       if (!formData.phoneNumber.trim()) {
-        setError("Phone number is required");
+        setError("Please enter your phone number");
         return;
       }
       if (!validatePassword(formData.password)) {
@@ -138,11 +142,15 @@ export default function SignUpModal({
         return;
       }
       if (formData.password !== formData.confirmPassword) {
-        setError("Passwords do not match");
+        setError(
+          "Passwords do not match. Please enter the same password in both fields"
+        );
         return;
       }
       if (!agreedToTerms) {
-        setError("Please agree to the Terms of Service and Privacy Policy");
+        setError(
+          "Please agree to the Terms of Service and Privacy Policy to continue"
+        );
         return;
       }
 
@@ -162,18 +170,18 @@ export default function SignUpModal({
 
       if (response.success) {
         setTempUserData(response.data || null);
-        setSuccess(
-          "Account created! Please check your email for verification code."
-        );
+        setSuccess(getSuccessMessage("signup"));
         setCurrentStep("verify");
       } else {
-        setError(response.message || "Failed to create account");
+        setError(
+          getUserFriendlyError(
+            { response: { data: { message: response.message } } },
+            "signup"
+          )
+        );
       }
     } catch (err: any) {
-      setError(
-        err.response?.data?.message ||
-          "Failed to create account. Please try again."
-      );
+      setError(getUserFriendlyError(err, "signup"));
     } finally {
       setLoading(false);
     }
@@ -186,7 +194,7 @@ export default function SignUpModal({
 
       const code = verifyCode.join("");
       if (!code || code.length !== 6) {
-        setError("Please enter the complete 6-digit verification code");
+        setError("Please enter all 6 digits of the verification code");
         return;
       }
 
@@ -196,17 +204,19 @@ export default function SignUpModal({
       });
 
       if (response.success) {
-        setSuccess("Email verified successfully! You can now log in.");
+        setSuccess(getSuccessMessage("verify"));
         // Auto login after verification
         await handleLogin(true);
       } else {
-        setError(response.message || "Invalid verification code");
+        setError(
+          getUserFriendlyError(
+            { response: { data: { message: response.message } } },
+            "verify"
+          )
+        );
       }
     } catch (err: any) {
-      setError(
-        err.response?.data?.message ||
-          "Failed to verify email. Please try again."
-      );
+      setError(getUserFriendlyError(err, "verify"));
     } finally {
       setLoading(false);
     }
@@ -218,11 +228,11 @@ export default function SignUpModal({
       if (!autoLogin) setError("");
 
       if (!validateEmail(formData.email)) {
-        setError("Please enter a valid email address");
+        setError("Please enter a valid email address (e.g., name@example.com)");
         return;
       }
       if (!formData.password.trim()) {
-        setError("Password is required");
+        setError("Please enter your password");
         return;
       }
 
@@ -232,7 +242,7 @@ export default function SignUpModal({
       });
 
       if (response.success && response.data) {
-        setSuccess("Login successful!");
+        setSuccess(getSuccessMessage("signin"));
 
         // Store user data in localStorage
         // authService.saveUser(response.data);
@@ -248,19 +258,23 @@ export default function SignUpModal({
           resetForm();
         }, 1000);
       } else {
-        setError(response.message || "Login failed");
+        setError(
+          getUserFriendlyError(
+            { response: { data: { message: response.message } } },
+            "signin"
+          )
+        );
       }
     } catch (err: any) {
+      const errorMessage = getUserFriendlyError(err, "signin");
+      setError(errorMessage);
+
+      // Handle email verification redirect
       if (
-        err.response?.data?.message ===
-        "Please verify your email before logging in"
+        err.response?.data?.message?.includes("verify your email") ||
+        err.response?.data?.message?.includes("not verified")
       ) {
-        setError("Please verify your email first");
         setCurrentStep("verify");
-      } else {
-        setError(
-          err.response?.data?.message || "Login failed. Please try again."
-        );
       }
     } finally {
       setLoading(false);
@@ -278,15 +292,17 @@ export default function SignUpModal({
       );
 
       if (response.success) {
-        setSuccess("Verification code sent! Please check your email.");
+        setSuccess(getSuccessMessage("resend"));
       } else {
-        setError(response.message || "Failed to resend verification code");
+        setError(
+          getUserFriendlyError(
+            { response: { data: { message: response.message } } },
+            "verify"
+          )
+        );
       }
     } catch (err: any) {
-      setError(
-        err.response?.data?.message ||
-          "Failed to resend verification code. Please try again."
-      );
+      setError(getUserFriendlyError(err, "verify"));
     } finally {
       setResendLoading(false);
     }

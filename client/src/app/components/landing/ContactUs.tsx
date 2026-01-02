@@ -1,13 +1,13 @@
 "use client";
 
 import React, { useState } from "react";
+import { usePathname } from "next/navigation";
 import {
   Box,
   Typography,
   Container,
   TextField,
   Link,
-  Snackbar,
   Alert,
   // Paper,
   // InputAdornment,
@@ -30,6 +30,9 @@ interface FormData {
 }
 
 const ContactUs: React.FC = () => {
+  const pathname = usePathname();
+  const isContactPage = pathname === "/contact" || pathname === "/contact/";
+
   const [formData, setFormData] = useState<FormData>({
     name: "",
     email: "",
@@ -39,15 +42,10 @@ const ContactUs: React.FC = () => {
 
   const [errors, setErrors] = useState<Partial<FormData>>({});
   const [submitting, setSubmitting] = useState(false);
-  const [snackbar, setSnackbar] = useState<{
-    open: boolean;
+  const [alert, setAlert] = useState<{
     message: string;
     severity: "success" | "error";
-  }>({
-    open: false,
-    message: "",
-    severity: "success",
-  });
+  } | null>(null);
 
   const handleChange = (
     e: React.ChangeEvent<HTMLInputElement | HTMLTextAreaElement>
@@ -93,10 +91,6 @@ const ContactUs: React.FC = () => {
     return Object.keys(newErrors).length === 0;
   };
 
-  const handleSnackbarClose = () => {
-    setSnackbar({ ...snackbar, open: false });
-  };
-
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
     console.log("Form submitted!", formData);
@@ -118,8 +112,7 @@ const ContactUs: React.FC = () => {
       console.log("Response received:", response);
 
       if (response.success) {
-        setSnackbar({
-          open: true,
+        setAlert({
           message:
             response.message ||
             "Message sent successfully! We'll get back to you soon.",
@@ -133,8 +126,7 @@ const ContactUs: React.FC = () => {
       }
     } catch (error: any) {
       console.error("Error sending message:", error);
-      setSnackbar({
-        open: true,
+      setAlert({
         message:
           error.response?.data?.message ||
           "Failed to send message. Please try again.",
@@ -170,9 +162,14 @@ const ContactUs: React.FC = () => {
             sx={{
               fontWeight: "700",
               fontFamily: "faustina",
-              color: "#000", // Accent Color
+              color: "#000",
               mb: 3,
-              fontSize: { xs: "2rem", sm: "2.5rem", md: "28px" },
+              fontSize: {
+                xs: "2rem",
+                sm: "2.5rem",
+                md: isContactPage ? "40px" : "28px",
+              },
+              mt: isContactPage ? 5 : 0,
             }}
           >
             Contact Us
@@ -353,6 +350,25 @@ const ContactUs: React.FC = () => {
                 </Typography>
               </Box>
 
+              {/* Alert Message */}
+              {alert && (
+                <Box sx={{ mb: 3 }}>
+                  <Alert
+                    severity={alert.severity}
+                    onClose={() => setAlert(null)}
+                    sx={{
+                      borderRadius: "8px",
+                      "& .MuiAlert-message": {
+                        fontFamily: "Source Sans Pro",
+                        fontSize: "14px",
+                      },
+                    }}
+                  >
+                    {alert.message}
+                  </Alert>
+                </Box>
+              )}
+
               {/* Submit Button */}
               <ButtonSelfScore
                 fullWidth
@@ -389,23 +405,6 @@ const ContactUs: React.FC = () => {
           </Box>
         </Box>
       </Container>
-
-      {/* Snackbar for notifications */}
-      <Snackbar
-        open={snackbar.open}
-        autoHideDuration={6000}
-        onClose={handleSnackbarClose}
-        anchorOrigin={{ vertical: "bottom", horizontal: "center" }}
-      >
-        <Alert
-          onClose={handleSnackbarClose}
-          severity={snackbar.severity}
-          variant="filled"
-          sx={{ width: "100%" }}
-        >
-          {snackbar.message}
-        </Alert>
-      </Snackbar>
     </Box>
   );
 };

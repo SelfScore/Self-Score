@@ -529,35 +529,75 @@ export default function ConsultantDetailPage() {
                     sx={{
                       display: "flex",
                       alignItems: "center",
-                      gap: 1,
+                      justifyContent: "space-between",
+                      gap: 2,
                       p: 2,
                       backgroundColor: "#F9FAFB",
                       borderRadius: "8px",
                     }}
                   >
-                    <VerifiedIcon sx={{ color: "#4CAF50", fontSize: 20 }} />
-                    <Box>
-                      <Typography
-                        sx={{
-                          fontFamily: "Source Sans Pro",
-                          fontSize: "14px",
-                          fontWeight: 600,
-                          color: "#1A1A1A",
+                    <Box
+                      sx={{
+                        display: "flex",
+                        alignItems: "center",
+                        gap: 1,
+                        flex: 1,
+                      }}
+                    >
+                      <VerifiedIcon sx={{ color: "#4CAF50", fontSize: 20 }} />
+                      <Box>
+                        <Typography
+                          sx={{
+                            fontFamily: "Source Sans Pro",
+                            fontSize: "14px",
+                            fontWeight: 600,
+                            color: "#1A1A1A",
+                          }}
+                        >
+                          {cert.name}
+                        </Typography>
+                        <Typography
+                          sx={{
+                            fontFamily: "Source Sans Pro",
+                            fontSize: "12px",
+                            color: "#666",
+                          }}
+                        >
+                          {cert.issuingOrganization} • Issued{" "}
+                          {new Date(cert.issueDate).toLocaleDateString()}
+                        </Typography>
+                      </Box>
+                    </Box>
+                    {cert.certificateFile && (
+                      <Button
+                        variant="outlined"
+                        size="small"
+                        startIcon={<DownloadIcon />}
+                        onClick={() => {
+                          const link = document.createElement("a");
+                          link.href = cert.certificateFile;
+                          link.download = `${cert.name.replace(
+                            /[^a-z0-9]/gi,
+                            "_"
+                          )}_Certificate.pdf`;
+                          link.target = "_blank";
+                          link.click();
                         }}
-                      >
-                        {cert.name}
-                      </Typography>
-                      <Typography
                         sx={{
+                          textTransform: "none",
+                          borderColor: "#005F73",
+                          color: "#005F73",
                           fontFamily: "Source Sans Pro",
                           fontSize: "12px",
-                          color: "#666",
+                          "&:hover": {
+                            borderColor: "#004A5A",
+                            backgroundColor: "#F0F9FA",
+                          },
                         }}
                       >
-                        {cert.issuingOrganization} • Issued{" "}
-                        {new Date(cert.issueDate).toLocaleDateString()}
-                      </Typography>
-                    </Box>
+                        Download
+                      </Button>
+                    )}
                   </Box>
                 ))}
               </Box>

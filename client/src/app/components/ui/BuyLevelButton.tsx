@@ -97,7 +97,7 @@ export default function BuyLevelButton({
           loading ? (
             <CircularProgress size={20} sx={{ color: "#fff" }} />
           ) : (
-            <LockOpenIcon />
+            <LockOpenIcon sx={{color:"#FFF"}}/>
           )
         }
         onClick={handlePurchase}

@@ -20,12 +20,13 @@ export default async function BlogsPage() {
         <Box sx={{ textAlign: "center", mb: { xs: 4, md: 6 } }}>
           <Typography
             sx={{
-              fontFamily: "Faustina",
-              fontSize: { xs: "32px", md: "48px" },
-              fontWeight: 700,
-              color: "#000000",
-              mb: 1,
-            }}
+            fontWeight: "700",
+            fontFamily: "faustina",
+            color: "#000",
+            mb: 3,
+            mt: { xs: 0, md: 4 },
+            fontSize: { xs: "2rem", sm: "2.5rem", md: "40px" },
+          }}
           >
             Blogs
           </Typography>

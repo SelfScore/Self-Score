@@ -60,7 +60,7 @@ export default function Level2Test() {
 
   const currentSection = getCurrentSection();
 
-  // Load answers from session storage and question index from URL
+  // Load answers from session storage and question index from URL (only on mount)
   useEffect(() => {
     const savedAnswers = sessionStorage.getItem(STORAGE_KEY);
     if (savedAnswers) {
@@ -80,7 +80,8 @@ export default function Level2Test() {
         setCurrentQuestionIndex(questionIndex);
       }
     }
-  }, [searchParams, STORAGE_KEY]);
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, []);
 
   // Validate and adjust question index when questions are loaded
   useEffect(() => {
@@ -112,7 +113,8 @@ export default function Level2Test() {
       currentParams.set("question", questionNumber.toString());
       router.replace(`?${currentParams.toString()}`, { scroll: false });
     }
-  }, [currentQuestionIndex, questions.length, router, searchParams]);
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [currentQuestionIndex, questions.length]);
 
   // Fetch questions for Level 2
   useEffect(() => {

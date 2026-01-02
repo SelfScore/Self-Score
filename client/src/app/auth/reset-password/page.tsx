@@ -17,6 +17,10 @@ import VisibilityOff from "@mui/icons-material/VisibilityOff";
 import ButtonSelfScore from "../../components/ui/ButtonSelfScore";
 import api from "../../../lib/api";
 import { Suspense } from "react";
+import {
+  getUserFriendlyError,
+  getSuccessMessage,
+} from "../../../utils/errorMessages";
 
 function ResetPasswordContent() {
   const router = useRouter();
@@ -35,7 +39,9 @@ function ResetPasswordContent() {
 
   useEffect(() => {
     if (!token) {
-      setError("Invalid reset link. Please request a new password reset.");
+      setError(
+        "Invalid or missing reset link. Please request a new password reset from the forgot password page."
+      );
     }
   }, [token]);
 
@@ -49,22 +55,24 @@ function ResetPasswordContent() {
     setSuccess(false);
 
     if (!token) {
-      setError("Invalid reset token");
+      setError("Invalid password reset link. Please request a new one.");
       return;
     }
 
     if (!formData.password.trim()) {
-      setError("Password is required");
+      setError("Please enter a new password");
       return;
     }
 
     if (!validatePassword(formData.password)) {
-      setError("Password must be at least 6 characters long");
+      setError("Password must be at least 6 characters long for security");
       return;
     }
 
     if (formData.password !== formData.confirmPassword) {
-      setError("Passwords do not match");
+      setError(
+        "Passwords do not match. Please enter the same password in both fields"
+      );
       return;
     }
 
@@ -86,13 +94,15 @@ function ResetPasswordContent() {
           router.push("/auth/signin");
         }, 3000);
       } else {
-        setError(response.message || "Failed to reset password");
+        setError(
+          getUserFriendlyError(
+            { response: { data: { message: response.message } } },
+            "reset"
+          )
+        );
       }
     } catch (err: any) {
-      setError(
-        err.response?.data?.message ||
-          "Failed to reset password. Please try again."
-      );
+      setError(getUserFriendlyError(err, "reset"));
     } finally {
       setLoading(false);
     }
@@ -153,7 +163,7 @@ function ResetPasswordContent() {
         {/* Success Message */}
         {success && (
           <Alert severity="success" sx={{ mb: 3 }}>
-            Password reset successfully! Redirecting to login...
+            {getSuccessMessage("reset")}
           </Alert>
         )}
 

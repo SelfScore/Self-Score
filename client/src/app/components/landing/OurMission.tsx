@@ -55,7 +55,7 @@ export default function OurMission() {
               lineHeight: "100%",
               fontSize: { xs: "0.9rem", sm: "1.1rem", md: "18px" },
               textAlign: "left",
-              maxWidth: "800px",
+              maxWidth: "550px",
               mx: "auto",
             }}
           >

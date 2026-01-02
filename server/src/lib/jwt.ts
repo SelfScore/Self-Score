@@ -70,7 +70,7 @@ export const verifyToken = (token: string): TokenPayload => {
             issuer: 'lifescore-app',
             audience: 'lifescore-users'
         }) as TokenPayload;
-        
+
         return decoded;
     } catch (error) {
         if (error instanceof jwt.TokenExpiredError) {
@@ -91,7 +91,7 @@ export const extractTokenFromCookies = (cookies: any): string | null => {
 // Cookie options for setting auth token
 // export const getCookieOptions = () => {
 //     const isProduction = process.env.NODE_ENV === 'production';
-    
+
 //     return {
 //         httpOnly: true,        // Cannot be accessed via JavaScript
 //         secure: isProduction,  // Only sent over HTTPS in production
@@ -101,14 +101,28 @@ export const extractTokenFromCookies = (cookies: any): string | null => {
 //     };
 // };
 
-export const getCookieOptions = () => {
+export const getCookieOptions = (rememberMe: boolean = false) => {
     const isProduction = process.env.NODE_ENV === 'production';
 
-    return {
+    // Base cookie options
+    const options: {
+        httpOnly: boolean;
+        secure: boolean;
+        sameSite: 'lax';
+        path: string;
+        maxAge?: number;
+    } = {
         httpOnly: true,
         secure: isProduction, // Only secure in production
         sameSite: 'lax' as 'lax', // 'lax' works better for same-site requests
-        maxAge: 7 * 24 * 60 * 60 * 1000,
         path: '/'
     };
+
+    // If "Remember Me" is checked, set cookie to expire in 30 days
+    // If not checked, don't set maxAge (session cookie - expires when browser closes)
+    if (rememberMe) {
+        options.maxAge = 30 * 24 * 60 * 60 * 1000; // 30 days in milliseconds
+    }
+
+    return options;
 };

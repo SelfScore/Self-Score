@@ -22,7 +22,9 @@ function PaymentSuccessContent() {
   const [_success, setSuccess] = useState(false);
   const [error, setError] = useState("");
   const [level, setLevel] = useState<number | null>(null);
-  const [countdown, setCountdown] = useState(5);
+  const [sessionId, setSessionId] = useState<string>("");
+  const [downloadingInvoice, setDownloadingInvoice] = useState(false);
+  // const [countdown, setCountdown] = useState(5000000);
   const [paymentData, setPaymentData] = useState<{
     transactionId: string;
     amount: number;
@@ -47,6 +49,7 @@ function PaymentSuccessContent() {
         if (response.success) {
           setSuccess(true);
           setLevel(response.data?.level || null);
+          setSessionId(sessionId); // Store session ID for invoice download
 
           // Mock payment data (replace with actual data from response if available)
           setPaymentData({
@@ -68,18 +71,18 @@ function PaymentSuccessContent() {
           await authService.getCurrentUser();
 
           // Start countdown
-          const countdownInterval = setInterval(() => {
-            setCountdown((prev) => {
-              if (prev <= 1) {
-                clearInterval(countdownInterval);
-                router.push(`/user/test?level=${response.data?.level || 2}`);
-                return 0;
-              }
-              return prev - 1;
-            });
-          }, 1000);
+          // const countdownInterval = setInterval(() => {
+          //   setCountdown((prev) => {
+          //     if (prev <= 1) {
+          //       clearInterval(countdownInterval);
+          //       router.push(`/user/test?level=${response.data?.level || 2}`);
+          //       return 0;
+          //     }
+          //     return prev - 1;
+          //   });
+          // }, 1000);
 
-          return () => clearInterval(countdownInterval);
+          // return () => clearInterval(countdownInterval);
         } else {
           setError(response.message || "Payment verification failed");
         }
@@ -94,9 +97,26 @@ function PaymentSuccessContent() {
     verifyPayment();
   }, [searchParams, router]);
 
+  const handleDownloadInvoice = async () => {
+    if (!sessionId) {
+      alert("Session ID not found");
+      return;
+    }
+
+    try {
+      setDownloadingInvoice(true);
+      await paymentService.downloadInvoice(sessionId);
+    } catch (err: any) {
+      console.error("Failed to download invoice:", err);
+      alert("Failed to download invoice. Please try again.");
+    } finally {
+      setDownloadingInvoice(false);
+    }
+  };
+
   if (verifying) {
     return (
-      <Container maxWidth="sm" sx={{ mt: 8, mb: 8, textAlign: "center" }}>
+      <Container maxWidth="sm" sx={{ mt: 16, mb: 8, textAlign: "center" }}>
         <CircularProgress size={60} />
         <Typography variant="h6" sx={{ mt: 3 }}>
           Verifying your payment...
@@ -125,7 +145,7 @@ function PaymentSuccessContent() {
       <Container
         maxWidth="sm"
         sx={{
-          pt: 12,
+          pt: 17,
           pb: 8,
           textAlign: "center",
         }}
@@ -142,7 +162,7 @@ function PaymentSuccessContent() {
           }}
         >
           {/* Countdown Message */}
-          <Typography
+          {/* <Typography
             sx={{
               fontFamily: "Source Sans Pro",
               fontSize: { xs: "14px", md: "18px" },
@@ -151,7 +171,7 @@ function PaymentSuccessContent() {
             }}
           >
             You are being redirected to test in {countdown}...
-          </Typography>
+          </Typography> */}
 
           {/* Success Icon */}
           <Box
@@ -167,15 +187,17 @@ function PaymentSuccessContent() {
               mb: 3,
             }}
           >
-            <Box sx={{
-              width:"60px",
-              height:"60px",
-              borderRadius:"50%",
-              backgroundColor:"#22C55E",
-              display: "flex",
-              alignItems: "center",
-              justifyContent: "center",
-            }}>
+            <Box
+              sx={{
+                width: "60px",
+                height: "60px",
+                borderRadius: "50%",
+                backgroundColor: "#22C55E",
+                display: "flex",
+                alignItems: "center",
+                justifyContent: "center",
+              }}
+            >
               <CheckCircleIcon sx={{ fontSize: 32, color: "transprent" }} />
             </Box>
           </Box>
@@ -212,11 +234,11 @@ function PaymentSuccessContent() {
           <Box sx={{ mb: 4 }}>
             <ButtonSelfScore
               text={`Start Level ${level || 2} Test`}
-              endIcon={<ArrowForwardIcon />}
+              endIcon={<ArrowForwardIcon sx={{ color: "#FFF" }} />}
               onClick={() => router.push(`/user/test?level=${level || 2}`)}
               fullWidth
               height={40}
-              textStyle={{fontSize:"16px"}}
+              textStyle={{ fontSize: "16px" }}
               style={{
                 backgroundColor: "#FF5722",
                 marginBottom: "12px",
@@ -224,24 +246,25 @@ function PaymentSuccessContent() {
             />
             <OutLineButton
               startIcon={<DownloadIcon />}
-              onClick={() => {
-                // Handle invoice download
-                console.log("Download invoice");
-              }}
+              onClick={handleDownloadInvoice}
+              disabled={downloadingInvoice}
               fullWidth
-              
               sx={{
                 borderColor: "#307E8D",
                 color: "#307E8D",
-                height:"40px",
-                fontSize:"16px",
+                height: "40px",
+                fontSize: "16px",
                 "&:hover": {
                   borderColor: "#307E8D",
                   backgroundColor: "rgba(48, 126, 141, 0.04)",
                 },
+                "&:disabled": {
+                  opacity: 0.6,
+                  cursor: "not-allowed",
+                },
               }}
             >
-              Download Invoice
+              {downloadingInvoice ? "Downloading..." : "Download Invoice"}
             </OutLineButton>
           </Box>
 
@@ -280,7 +303,7 @@ function PaymentSuccessContent() {
                   color: "#000",
                 }}
               >
-                {paymentData?.transactionId || "TXN-2025-001234"}
+                {paymentData?.transactionId}
               </Typography>
             </Box>
 

@@ -10,14 +10,14 @@ import {
   Checkbox,
   FormControlLabel,
   InputAdornment,
+  Switch,
 } from "@mui/material";
-import { useState } from "react";
+import { useState, useMemo, useEffect } from "react";
 import ButtonSelfScore from "../../components/ui/ButtonSelfScore";
 import OutLineButton from "../../components/ui/OutLineButton";
 import {
   consultantAuthService,
   Step4Data,
-  Service,
 } from "../../../services/consultantAuthService";
 
 interface Step4ServicesProps {
@@ -27,31 +27,54 @@ interface Step4ServicesProps {
   initialData?: Partial<Omit<Step4Data, "consultantId">>;
 }
 
+// Extended service type with price and isFree fields
+interface ExtendedService {
+  sessionType: "30min" | "60min" | "90min";
+  duration: number;
+  enabled: boolean;
+  isFree: boolean;
+  price: number;
+}
+
 const SESSION_TYPES: {
   type: "30min" | "60min" | "90min";
   duration: number;
   label: string;
   description: string;
+  defaultPrice: number;
 }[] = [
   {
     type: "30min",
     duration: 30,
-    label: "Individual Sessions (30 min)",
-    description: "Quick check-in coaching sessions",
+    label: "Discovery Call (30 min)",
+    description: "Quick introductory session to understand client needs",
+    defaultPrice: 25,
   },
   {
     type: "60min",
     duration: 60,
-    label: "Individual Sessions (60 min)",
-    description: "Standard one-on-one coaching sessions",
+    label: "Coaching Session (60 min)",
+    description: "Standard one-on-one coaching session",
+    defaultPrice: 75,
   },
   {
     type: "90min",
     duration: 90,
-    label: "Individual Sessions (90 min)",
-    description: "In-depth coaching sessions",
+    label: "Intensive Session (90 min)",
+    description: "Deep-dive coaching for complex goals",
+    defaultPrice: 100,
   },
 ];
+
+// Helper to extract YouTube video ID
+const extractYouTubeVideoId = (url: string): string | null => {
+  if (!url) return null;
+
+  const regExp =
+    /^.*((youtu.be\/)|(v\/)|(\/u\/\w\/)|(embed\/)|(watch\?))\??v?=?([^#&?]*).*/;
+  const match = url.match(regExp);
+  return match && match[7].length === 11 ? match[7] : null;
+};
 
 export default function Step4Services({
   consultantId,
@@ -59,20 +82,41 @@ export default function Step4Services({
   onPrevious,
   initialData,
 }: Step4ServicesProps) {
-  const [formData, setFormData] = useState({
-    hourlyRate: initialData?.hourlyRate || 75,
+  const [formData, setFormData] = useState<{
+    services: ExtendedService[];
+    introductionVideoLink: string;
+  }>({
     services:
-      initialData?.services ||
-      (SESSION_TYPES.map((st) => ({
+      (initialData?.services as ExtendedService[]) ||
+      SESSION_TYPES.map((st) => ({
         sessionType: st.type,
         duration: st.duration,
         enabled: false,
-      })) as Service[]),
+        isFree: false,
+        price: st.defaultPrice,
+      })),
     introductionVideoLink: initialData?.introductionVideoLink || "",
   });
 
   const [errors, setErrors] = useState<{ [key: string]: string }>({});
   const [loading, setLoading] = useState(false);
+
+  // Auto-save form data to sessionStorage whenever it changes
+  useEffect(() => {
+    // Only save if at least one service is configured
+    const hasData =
+      formData.services.some((s) => s.enabled) ||
+      formData.introductionVideoLink;
+    if (hasData) {
+      sessionStorage.setItem("consultantStep4", JSON.stringify(formData));
+    }
+  }, [formData]);
+
+  // Extract YouTube video info
+  const youtubeVideoId = useMemo(
+    () => extractYouTubeVideoId(formData.introductionVideoLink),
+    [formData.introductionVideoLink]
+  );
 
   const handleServiceToggle = (sessionType: string) => {
     setFormData((prev) => ({
@@ -88,7 +132,28 @@ export default function Step4Services({
     }
   };
 
-  const handleInputChange = (field: string, value: string | number) => {
+  const handleFreeToggle = (sessionType: string) => {
+    setFormData((prev) => ({
+      ...prev,
+      services: prev.services.map((service) =>
+        service.sessionType === sessionType
+          ? { ...service, isFree: !service.isFree }
+          : service
+      ),
+    }));
+  };
+
+  const handlePriceChange = (sessionType: string, price: number) => {
+    setFormData((prev) => ({
+      ...prev,
+      services: prev.services.map((service) =>
+        service.sessionType === sessionType ? { ...service, price } : service
+      ),
+    }));
+    setErrors((prev) => ({ ...prev, [`price_${sessionType}`]: "" }));
+  };
+
+  const handleInputChange = (field: string, value: string) => {
     setFormData((prev) => ({ ...prev, [field]: value }));
     if (errors[field]) {
       setErrors((prev) => ({ ...prev, [field]: "" }));
@@ -98,17 +163,18 @@ export default function Step4Services({
   const validateForm = (): boolean => {
     const newErrors: { [key: string]: string } = {};
 
-    if (!formData.hourlyRate || formData.hourlyRate < 0) {
-      newErrors.hourlyRate = "Please enter a valid hourly rate";
-    } else if (formData.hourlyRate < 50) {
-      newErrors.hourlyRate =
-        "We recommend rates between $50-$150 per hour based on experience";
-    }
-
     const enabledServices = formData.services.filter((s) => s.enabled);
     if (enabledServices.length === 0) {
       newErrors.services = "Please select at least one session type";
     }
+
+    // Validate prices for paid services
+    formData.services.forEach((service) => {
+      if (service.enabled && !service.isFree && service.price <= 0) {
+        newErrors[`price_${service.sessionType}`] =
+          "Please enter a valid price";
+      }
+    });
 
     if (
       formData.introductionVideoLink &&
@@ -136,22 +202,29 @@ export default function Step4Services({
 
     setLoading(true);
     try {
+      // Map services to the format expected by backend
+      const servicesPayload = formData.services.map((s) => ({
+        sessionType: s.sessionType,
+        duration: s.duration,
+        enabled: s.enabled,
+        isFree: s.isFree,
+        price: s.isFree ? 0 : s.price,
+      }));
+
       const response = await consultantAuthService.completeRegistration({
         consultantId,
-        hourlyRate: formData.hourlyRate,
-        services: formData.services,
+        hourlyRate: 0, // Deprecated, using per-service pricing
+        services: servicesPayload as any,
         generalAvailability: "",
         introductionVideoLink: formData.introductionVideoLink,
       });
 
       if (response.success) {
-        // Clear sessionStorage
         sessionStorage.removeItem("consultantStep1");
         sessionStorage.removeItem("consultantStep2");
         sessionStorage.removeItem("consultantStep3");
         sessionStorage.removeItem("consultantStep4");
 
-        // Store consultant data in sessionStorage for dashboard
         if (response.data?.consultant) {
           sessionStorage.setItem(
             "consultantData",
@@ -159,9 +232,8 @@ export default function Step4Services({
           );
         }
 
-        // Longer delay to ensure cookie is set before redirect
         setTimeout(() => {
-          onComplete(formData);
+          onComplete(formData as any);
         }, 1000);
       } else {
         setErrors({
@@ -199,53 +271,7 @@ export default function Step4Services({
       )}
 
       <Grid container spacing={3}>
-        {/* Hourly Rate */}
-        <Grid size={{ xs: 12 }}>
-          <Typography
-            sx={{
-              fontFamily: "Source Sans Pro",
-              fontSize: "14px",
-              fontWeight: 600,
-              mb: 1,
-              color: "#1A1A1A",
-            }}
-          >
-            Hourly Rate (USD) <span style={{ color: "#E87A42" }}>*</span>
-          </Typography>
-          <TextField
-            fullWidth
-            type="number"
-            placeholder="75"
-            value={formData.hourlyRate}
-            onChange={(e) =>
-              handleInputChange("hourlyRate", parseFloat(e.target.value) || 0)
-            }
-            error={!!errors.hourlyRate}
-            helperText={
-              errors.hourlyRate ||
-              "We recommend rates between $50-$150 per hour based on experience"
-            }
-            InputProps={{
-              startAdornment: (
-                <InputAdornment position="start">$</InputAdornment>
-              ),
-            }}
-            inputProps={{ min: 0, step: 5 }}
-            sx={{
-              "& .MuiOutlinedInput-root": {
-                backgroundColor: "#FFF",
-                borderRadius: "8px",
-                height: "48px",
-                "& fieldset": {
-                  borderColor: "#3A3A3A4D",
-                  borderWidth: "1px",
-                },
-              },
-            }}
-          />
-        </Grid>
-
-        {/* Session Types */}
+        {/* Session Types with Individual Pricing */}
         <Grid size={{ xs: 12 }}>
           <Typography
             sx={{
@@ -266,7 +292,7 @@ export default function Step4Services({
               mb: 2,
             }}
           >
-            (Select all that apply)
+            Select the sessions you want to offer and set individual pricing
           </Typography>
 
           <Box sx={{ display: "flex", flexDirection: "column", gap: 2 }}>
@@ -275,6 +301,8 @@ export default function Step4Services({
                 (s) => s.sessionType === sessionType.type
               );
               const isEnabled = service?.enabled || false;
+              const isFree = service?.isFree || false;
+              const price = service?.price || sessionType.defaultPrice;
 
               return (
                 <Paper
@@ -286,52 +314,160 @@ export default function Step4Services({
                       ? "2px solid #005F73"
                       : "1px solid #E0E0E0",
                     borderRadius: "8px",
-                    cursor: "pointer",
                     transition: "all 0.3s ease",
-                    "&:hover": {
-                      borderColor: "#005F73",
-                      backgroundColor: "#E8F4F8",
-                    },
                   }}
-                  onClick={() => handleServiceToggle(sessionType.type)}
                 >
-                  <FormControlLabel
-                    control={
-                      <Checkbox
-                        checked={isEnabled}
-                        sx={{
-                          color: "#005F73",
-                          "&.Mui-checked": {
+                  <Box
+                    sx={{
+                      display: "flex",
+                      alignItems: "flex-start",
+                      justifyContent: "space-between",
+                    }}
+                  >
+                    {/* Left side - Checkbox and label */}
+                    <FormControlLabel
+                      control={
+                        <Checkbox
+                          checked={isEnabled}
+                          onChange={() => handleServiceToggle(sessionType.type)}
+                          sx={{
                             color: "#005F73",
-                          },
+                            "&.Mui-checked": {
+                              color: "#005F73",
+                            },
+                          }}
+                        />
+                      }
+                      label={
+                        <Box>
+                          <Typography
+                            sx={{
+                              fontFamily: "Source Sans Pro",
+                              fontSize: "16px",
+                              fontWeight: 600,
+                              color: "#1A1A1A",
+                            }}
+                          >
+                            {sessionType.label}
+                          </Typography>
+                          <Typography
+                            sx={{
+                              fontFamily: "Source Sans Pro",
+                              fontSize: "14px",
+                              color: "#666",
+                            }}
+                          >
+                            {sessionType.description}
+                          </Typography>
+                        </Box>
+                      }
+                      sx={{ m: 0, flex: 1 }}
+                    />
+
+                    {/* Right side - Pricing controls (only when enabled) */}
+                    {isEnabled && (
+                      <Box
+                        sx={{
+                          display: "flex",
+                          alignItems: "center",
+                          gap: 2,
+                          ml: 2,
                         }}
-                      />
-                    }
-                    label={
-                      <Box>
-                        <Typography
+                      >
+                        {/* Free/Paid Toggle */}
+                        <Box
                           sx={{
-                            fontFamily: "Source Sans Pro",
-                            fontSize: "16px",
-                            fontWeight: 600,
-                            color: "#1A1A1A",
+                            display: "flex",
+                            alignItems: "center",
+                            gap: 1,
                           }}
                         >
-                          {sessionType.label}
-                        </Typography>
-                        <Typography
-                          sx={{
-                            fontFamily: "Source Sans Pro",
-                            fontSize: "14px",
-                            color: "#666",
-                          }}
-                        >
-                          {sessionType.description}
-                        </Typography>
+                          <Typography
+                            sx={{
+                              fontSize: "14px",
+                              color: isFree ? "#4CAF50" : "#666",
+                              fontWeight: isFree ? 600 : 400,
+                            }}
+                          >
+                            Free
+                          </Typography>
+                          <Switch
+                            checked={!isFree}
+                            onChange={() => handleFreeToggle(sessionType.type)}
+                            size="small"
+                            sx={{
+                              "& .MuiSwitch-switchBase.Mui-checked": {
+                                color: "#005F73",
+                              },
+                              "& .MuiSwitch-switchBase.Mui-checked + .MuiSwitch-track":
+                                {
+                                  backgroundColor: "#005F73",
+                                },
+                            }}
+                          />
+                          <Typography
+                            sx={{
+                              fontSize: "14px",
+                              color: !isFree ? "#005F73" : "#666",
+                              fontWeight: !isFree ? 600 : 400,
+                            }}
+                          >
+                            Paid
+                          </Typography>
+                        </Box>
+
+                        {/* Price Input (only when paid) */}
+                        {!isFree && (
+                          <TextField
+                            type="number"
+                            value={price}
+                            onChange={(e) =>
+                              handlePriceChange(
+                                sessionType.type,
+                                parseFloat(e.target.value) || 0
+                              )
+                            }
+                            error={!!errors[`price_${sessionType.type}`]}
+                            InputProps={{
+                              startAdornment: (
+                                <InputAdornment position="start">
+                                  $
+                                </InputAdornment>
+                              ),
+                            }}
+                            inputProps={{ min: 0, step: 5 }}
+                            sx={{
+                              width: "120px",
+                              "& .MuiOutlinedInput-root": {
+                                backgroundColor: "#FFF",
+                                borderRadius: "8px",
+                                height: "40px",
+                                "& fieldset": {
+                                  borderColor: errors[
+                                    `price_${sessionType.type}`
+                                  ]
+                                    ? "#d32f2f"
+                                    : "#3A3A3A4D",
+                                },
+                              },
+                            }}
+                          />
+                        )}
                       </Box>
-                    }
-                    sx={{ width: "100%", m: 0 }}
-                  />
+                    )}
+                  </Box>
+                  {errors[`price_${sessionType.type}`] && (
+                    <Typography
+                      sx={{
+                        color: "#d32f2f",
+                        fontSize: "12px",
+                        mt: 1,
+                        textAlign: "right",
+                      }}
+                    >
+                      {errors[`price_${sessionType.type}`]}
+                    </Typography>
+                  )}
                 </Paper>
               );
             })}
@@ -361,7 +497,7 @@ export default function Step4Services({
           </Typography>
           <TextField
             fullWidth
-            placeholder="https://youtube.com/... or https://vimeo.com/..."
+            placeholder="https://youtube.com/watch?v=..."
             value={formData.introductionVideoLink}
             onChange={(e) =>
               handleInputChange("introductionVideoLink", e.target.value)
@@ -383,6 +519,87 @@ export default function Step4Services({
               },
             }}
           />
+
+          {/* YouTube Preview */}
+          {youtubeVideoId && (
+            <Paper
+              sx={{
+                mt: 2,
+                p: 2,
+                backgroundColor: "#FFF",
+                border: "1px solid #E0E0E0",
+                borderRadius: "8px",
+              }}
+            >
+              <Typography
+                sx={{
+                  fontFamily: "Source Sans Pro",
+                  fontSize: "14px",
+                  fontWeight: 600,
+                  mb: 2,
+                  color: "#1A1A1A",
+                }}
+              >
+                Video Preview
+              </Typography>
+              <Box
+                sx={{
+                  display: "flex",
+                  gap: 2,
+                  alignItems: "flex-start",
+                }}
+              >
+                <Box
+                  component="img"
+                  src={`https://img.youtube.com/vi/${youtubeVideoId}/mqdefault.jpg`}
+                  alt="Video thumbnail"
+                  sx={{
+                    width: 200,
+                    height: 112,
+                    borderRadius: "8px",
+                    objectFit: "cover",
+                  }}
+                />
+                <Box>
+                  <Typography
+                    sx={{
+                      fontFamily: "Source Sans Pro",
+                      fontSize: "14px",
+                      color: "#666",
+                    }}
+                  >
+                    YouTube Video
+                  </Typography>
+                  <Typography
+                    sx={{
+                      fontFamily: "Source Sans Pro",
+                      fontSize: "12px",
+                      color: "#999",
+                      mt: 0.5,
+                    }}
+                  >
+                    Video ID: {youtubeVideoId}
+                  </Typography>
+                  <Typography
+                    component="a"
+                    href={formData.introductionVideoLink}
+                    target="_blank"
+                    rel="noopener noreferrer"
+                    sx={{
+                      fontFamily: "Source Sans Pro",
+                      fontSize: "14px",
+                      color: "#005F73",
+                      textDecoration: "underline",
+                      mt: 1,
+                      display: "block",
+                    }}
+                  >
+                    Watch on YouTube
+                  </Typography>
+                </Box>
+              </Box>
+            </Paper>
+          )}
         </Grid>
       </Grid>
 
@@ -395,7 +612,7 @@ export default function Step4Services({
           Previous
         </OutLineButton>
         <ButtonSelfScore
-          text={loading ? "Submitting Application..." : "Submit Application"}
+          text={loading ? "Submitting Application..." : "Next Step"}
           onClick={handleSubmit}
           disabled={loading}
           style={{ minWidth: "200px", height: "40px" }}

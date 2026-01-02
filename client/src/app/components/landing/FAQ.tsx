@@ -6,7 +6,7 @@ import CustomAccordion from "../ui/Accordian";
 import Image from "next/image";
 
 const FAQ: React.FC = () => {
-  const [expanded, setExpanded] = useState<string | false>(false);
+  const [expanded, setExpanded] = useState<string | false>("panel1");
 
   const handleChange = (panel: string) => {
     setExpanded(expanded === panel ? false : panel);

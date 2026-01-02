@@ -22,15 +22,12 @@ export default function Info() {
       >
         <Box
           sx={{
-            mb: { xs: 4, md: 3 },
-            mt: { xs: 4, md: 18 },
+            fontWeight: "700",
             fontFamily: "faustina",
-            fontWeight: 700,
-            fontSize: { xs: "24px", md: "40px" },
-            lineHeight: "100%",
-            letterSpacing: "0%",
-            color: "#111827",
-            // mb: 1,
+            color: "#000",
+            mb: 3,
+            mt: { xs: 4, md: 15 },
+            fontSize: { xs: "2rem", sm: "2.5rem", md: "40px" },
           }}
         >
           Self Score Test
@@ -43,19 +40,20 @@ export default function Info() {
             fontSize: { xs: "16px", md: "18px" },
             lineHeight: "120%",
             letterSpacing: "0%",
-            maxWidth:" 500px",
+            maxWidth: " 500px",
             color: "#6B7280",
           }}
         >
-          Here's an overview of your journey so far. Keep going to unlock deeper
-          insights about your happiness.
+          Here's an overview of your journey so far.
+          <br />
+          Keep going to unlock deeper insights about your happiness.
         </Box>
       </Box>
 
       {/* progress bar  */}
-      
+
       <JourneyProgress />
-      <Testimonial/>
+      <Testimonial />
       <FAQ />
     </Box>
   );

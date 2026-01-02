@@ -20,6 +20,7 @@ import SupervisorAccountIcon from "@mui/icons-material/SupervisorAccount";
 import LogoutIcon from "@mui/icons-material/Logout";
 import { logoutAdmin } from "@/services/adminAuthService";
 import { adminService } from "@/services/adminService";
+import LogoutConfirmationModal from "@/app/components/ui/LogoutConfirmationModal";
 
 const menuItems = [
   {
@@ -43,6 +44,11 @@ const menuItems = [
     path: "/admin/level4-submissions",
   },
   {
+    title: "Level 5 Submissions",
+    icon: <AssignmentIcon />,
+    path: "/admin/level5-submissions",
+  },
+  {
     title: "Inbox",
     icon: <EmailIcon />,
     path: "/admin/messages",
@@ -57,6 +63,8 @@ export default function AdminSidebar() {
     unreadMessages: 0,
     pendingConsultants: 0,
   });
+  const [showLogoutModal, setShowLogoutModal] = useState(false);
+  const [logoutLoading, setLogoutLoading] = useState(false);
 
   useEffect(() => {
     // Fetch counts initially
@@ -80,13 +88,25 @@ export default function AdminSidebar() {
     }
   };
 
-  const handleLogout = async () => {
+  const handleLogoutClick = () => {
+    setShowLogoutModal(true);
+  };
+
+  const handleLogoutConfirm = async () => {
+    setLogoutLoading(true);
     try {
       await logoutAdmin();
       router.push("/admin/login");
     } catch (error) {
       console.error("Logout failed:", error);
+    } finally {
+      setLogoutLoading(false);
+      setShowLogoutModal(false);
     }
+  };
+
+  const handleLogoutCancel = () => {
+    setShowLogoutModal(false);
   };
 
   return (
@@ -196,7 +216,7 @@ export default function AdminSidebar() {
       {/* Logout Button */}
       <Box sx={{ px: 2, pb: 3 }}>
         <ListItemButton
-          onClick={handleLogout}
+          onClick={handleLogoutClick}
           sx={{
             borderRadius: "12px",
             backgroundColor: "transparent",
@@ -222,6 +242,14 @@ export default function AdminSidebar() {
           />
         </ListItemButton>
       </Box>
+
+      {/* Logout Confirmation Modal */}
+      <LogoutConfirmationModal
+        open={showLogoutModal}
+        onClose={handleLogoutCancel}
+        onConfirm={handleLogoutConfirm}
+        loading={logoutLoading}
+      />
     </Box>
   );
 }

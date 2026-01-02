@@ -18,17 +18,7 @@ export const generateDetailedReportPage = (content: ReportContent): string => {
       background-repeat: no-repeat;
     ">
       <!-- Backdrop Blur Layer -->
-      <div style="
-        position: absolute;
-        top: 0;
-        left: 0;
-        width: 100%;
-        height: 100%;
-        background: rgba(255, 255, 255, 0.7);
-        backdrop-filter: blur(19px);
-        -webkit-backdrop-filter: blur(19px);
-        z-index: 0;
-      "></div>
+      
 
       <!-- Logo -->
       <div style="margin-bottom: 40px; position: relative; z-index: 1;">
@@ -64,7 +54,7 @@ export const generateDetailedReportPage = (content: ReportContent): string => {
       ">According to your self score, you posses these specific characteristics in life.</p>
 
       <!-- Characteristics List -->
-      <div style="margin-bottom: 32px; position: relative; z-index: 1;">
+      <div style="margin-bottom: 32px; width: 85%; position: relative; z-index: 1;">
         ${content.characteristics.map((char, index) => `
           <div style="margin-bottom: 24px;">
             <h3 style="

@@ -57,6 +57,14 @@ function TestContent() {
             <Level4Test />
           </Suspense>
         );
+      case "5":
+        return (
+          <Suspense
+            fallback={<Box sx={{ textAlign: "center", p: 4 }}>Loading...</Box>}
+          >
+            <Level4Test />
+          </Suspense>
+        );
       default:
         return (
           <Box sx={{ textAlign: "center", p: 4 }}>
@@ -64,7 +72,7 @@ function TestContent() {
               Invalid Level
             </Typography>
             <Typography variant="body1" sx={{ color: "#666" }}>
-              Please select a valid level from 1-4.
+              Please select a valid level from 1-5.
             </Typography>
           </Box>
         );
@@ -72,7 +80,7 @@ function TestContent() {
   };
 
   const handleBackToInfo = () => {
-    router.push("/testInfo");
+    router.push("/selfscoretest");
   };
 
   return (

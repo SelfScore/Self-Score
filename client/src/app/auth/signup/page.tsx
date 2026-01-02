@@ -11,8 +11,9 @@ import {
   FormControlLabel,
   InputAdornment,
   IconButton,
+  FormHelperText,
 } from "@mui/material";
-import { useState } from "react";
+import { useState, useEffect } from "react";
 import { useRouter } from "next/navigation";
 import { useAuth } from "../../../hooks/useAuth";
 import NextLink from "next/link";
@@ -24,6 +25,10 @@ import VisibilityOff from "@mui/icons-material/VisibilityOff";
 import ButtonSelfScore from "../../components/ui/ButtonSelfScore";
 import PhoneInput from "react-phone-input-2";
 import "react-phone-input-2/lib/style.css";
+import {
+  getUserFriendlyError,
+  getSuccessMessage,
+} from "../../../utils/errorMessages";
 
 export default function SignUpPage() {
   const router = useRouter();
@@ -32,6 +37,7 @@ export default function SignUpPage() {
   const [formData, setFormData] = useState({
     username: "",
     email: "",
+    countryCode: "1",
     phoneNumber: "",
     password: "",
     confirmPassword: "",
@@ -42,6 +48,83 @@ export default function SignUpPage() {
   const [showPassword, setShowPassword] = useState(false);
   const [showConfirmPassword, setShowConfirmPassword] = useState(false);
 
+  // Field-specific errors for inline display
+  const [fieldErrors, setFieldErrors] = useState({
+    email: "",
+    phoneNumber: "",
+    password: "",
+    confirmPassword: "",
+  });
+
+  // Load form data from localStorage on mount
+  useEffect(() => {
+    const savedFormData = localStorage.getItem("signupFormData");
+    if (savedFormData) {
+      try {
+        const parsed = JSON.parse(savedFormData);
+        setFormData(parsed);
+      } catch (error) {
+        console.error("Failed to parse saved form data:", error);
+      }
+    }
+  }, []);
+
+  // Save form data to localStorage whenever it changes
+  useEffect(() => {
+    if (
+      formData.username ||
+      formData.email ||
+      formData.phoneNumber ||
+      formData.password ||
+      formData.confirmPassword
+    ) {
+      localStorage.setItem("signupFormData", JSON.stringify(formData));
+    }
+  }, [formData]);
+
+  const validateEmail = (email: string): string => {
+    if (!email.trim()) {
+      return "";
+    }
+    if (!/^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(email)) {
+      return "Please enter a valid email address";
+    }
+    return "";
+  };
+
+  const validatePhoneNumber = (phoneNumber: string): string => {
+    if (!phoneNumber.trim()) {
+      return "";
+    }
+    if (phoneNumber.length < 7) {
+      return "Please enter a valid phone number";
+    }
+    return "";
+  };
+
+  const validatePassword = (password: string): string => {
+    if (!password) {
+      return "";
+    }
+    if (password.length < 6) {
+      return "Password must be at least 6 characters";
+    }
+    return "";
+  };
+
+  const validateConfirmPassword = (
+    password: string,
+    confirmPassword: string
+  ): string => {
+    if (!confirmPassword) {
+      return "";
+    }
+    if (password !== confirmPassword) {
+      return "Passwords do not match";
+    }
+    return "";
+  };
+
   const handleInputChange = (field: string, value: string) => {
     setFormData((prev) => ({
       ...prev,
@@ -49,66 +132,76 @@ export default function SignUpPage() {
     }));
     setLocalError("");
     clearError();
+
+    // Real-time validation for specific fields
+    if (field === "email") {
+      const error = validateEmail(value);
+      setFieldErrors((prev) => ({ ...prev, email: error }));
+    } else if (field === "phoneNumber") {
+      const error = validatePhoneNumber(value);
+      setFieldErrors((prev) => ({ ...prev, phoneNumber: error }));
+    } else if (field === "password") {
+      const error = validatePassword(value);
+      setFieldErrors((prev) => ({ ...prev, password: error }));
+      // Also revalidate confirm password if it's filled
+      if (formData.confirmPassword) {
+        const confirmError = validateConfirmPassword(
+          value,
+          formData.confirmPassword
+        );
+        setFieldErrors((prev) => ({ ...prev, confirmPassword: confirmError }));
+      }
+    } else if (field === "confirmPassword") {
+      const error = validateConfirmPassword(formData.password, value);
+      setFieldErrors((prev) => ({ ...prev, confirmPassword: error }));
+    }
   };
 
-  // Format phone number from react-phone-input-2 format to +XX-XXXXXXXXXX
-  // Extract country code and phone number separately from react-phone-input-2 format
-  // Input: "+911234567890" (from library)
-  // Output: { countryCode: "91", phoneNumber: "1234567890" }
-  const extractPhoneData = (
-    phone: string
-  ): { countryCode: string; phoneNumber: string } => {
-    // The phone already has + from our onChange handler
-    if (!phone.startsWith("+")) {
-      return { countryCode: "", phoneNumber: phone };
-    }
+  const handlePhoneChange = (phone: string, country: any) => {
+    const phoneWithoutCode = phone.slice(country.dialCode.length);
+    setFormData((prev) => ({
+      ...prev,
+      phoneNumber: phoneWithoutCode,
+      countryCode: country.dialCode,
+    }));
+    setLocalError("");
+    clearError();
 
-    const withoutPlus = phone.substring(1); // Remove the +
-
-    // Try to extract country code intelligently
-    // Priority: Try 4, then 3, then 2, then 1 digit country codes
-    for (let codeLength = 4; codeLength >= 1; codeLength--) {
-      const potentialCode = withoutPlus.substring(0, codeLength);
-      const potentialNumber = withoutPlus.substring(codeLength);
-
-      // Phone number should be at least 7 digits
-      if (potentialNumber.length >= 7) {
-        return { countryCode: potentialCode, phoneNumber: potentialNumber };
-      }
-    }
-
-    // Fallback: treat everything as phone number
-    return { countryCode: "", phoneNumber: withoutPlus };
+    // Real-time validation for phone number
+    const error = validatePhoneNumber(phoneWithoutCode);
+    setFieldErrors((prev) => ({ ...prev, phoneNumber: error }));
   };
 
   const validateForm = () => {
     // Username validation
     if (!formData.username.trim()) {
-      setLocalError("Username is required");
+      setLocalError("Please enter your full name");
       return false;
     }
     if (formData.username.trim().length < 2) {
-      setLocalError("Username must be at least 2 characters long");
+      setLocalError("Name must be at least 2 characters long");
       return false;
     }
     if (formData.username.trim().length > 20) {
-      setLocalError("Username must be at most 20 characters long");
+      setLocalError("Name must not exceed 20 characters");
       return false;
     }
 
     // Email validation
     if (!formData.email.trim()) {
-      setLocalError("Email is required");
+      setLocalError("Please enter your email address");
       return false;
     }
     if (!/^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(formData.email)) {
-      setLocalError("Please enter a valid email address");
+      setLocalError(
+        "Please enter a valid email address (e.g., name@example.com)"
+      );
       return false;
     }
 
     // Phone number validation
     if (!formData.phoneNumber.trim()) {
-      setLocalError("Phone number is required");
+      setLocalError("Please enter your phone number");
       return false;
     }
 
@@ -118,13 +211,17 @@ export default function SignUpPage() {
       return false;
     }
     if (formData.password !== formData.confirmPassword) {
-      setLocalError("Passwords do not match");
+      setLocalError(
+        "Passwords do not match. Please enter the same password in both fields"
+      );
       return false;
     }
 
     // Terms agreement validation
     if (!agreedToTerms) {
-      setLocalError("Please agree to the Terms of Service and Privacy Policy");
+      setLocalError(
+        "Please agree to the Terms of Service and Privacy Policy to continue"
+      );
       return false;
     }
     return true;
@@ -136,24 +233,19 @@ export default function SignUpPage() {
     if (!validateForm()) return;
 
     try {
-      // Extract country code and phone number separately
-      const { countryCode, phoneNumber } = extractPhoneData(
-        formData.phoneNumber
-      );
-
       const response = await signUp({
         username: formData.username.trim(),
         email: formData.email.trim().toLowerCase(),
-        countryCode,
-        phoneNumber,
+        countryCode: formData.countryCode,
+        phoneNumber: formData.phoneNumber,
         password: formData.password,
         confirmPassword: formData.confirmPassword,
       });
 
       if (response.success) {
-        setSuccess(
-          "Account created successfully! Please check your email for verification."
-        );
+        setSuccess(getSuccessMessage("signup"));
+        // Clear localStorage after successful signup
+        localStorage.removeItem("signupFormData");
         // Redirect to verification page with email
         setTimeout(() => {
           router.push(
@@ -161,13 +253,15 @@ export default function SignUpPage() {
           );
         }, 2000);
       } else {
-        setLocalError(response.message || "Failed to create account");
+        setLocalError(
+          getUserFriendlyError(
+            { response: { data: { message: response.message } } },
+            "signup"
+          )
+        );
       }
     } catch (err: any) {
-      setLocalError(
-        err.response?.data?.message ||
-          "Failed to create account. Please try again."
-      );
+      setLocalError(getUserFriendlyError(err, "signup"));
     }
   };
 
@@ -180,6 +274,7 @@ export default function SignUpPage() {
         justifyContent: "center",
         bgcolor: "#FFFFFF",
         py: { xs: 2, sm: 3, md: 4 },
+        mb: { xs: 0, md: 4 },
       }}
     >
       <Box
@@ -346,6 +441,7 @@ export default function SignUpPage() {
               fullWidth
               required
               disabled={isLoading}
+              error={!!fieldErrors.email}
               InputProps={{
                 startAdornment: (
                   <InputAdornment position="start">
@@ -354,14 +450,26 @@ export default function SignUpPage() {
                 ),
               }}
               sx={{
-                mb: 2,
+                mb: fieldErrors.email ? 0.5 : 2,
                 "& .MuiOutlinedInput-root": {
                   height: "48px",
                   borderRadius: "8px",
                   bgcolor: "#FFFFFF",
-                  "& fieldset": { border: "1px solid #3A3A3A4D" },
-                  "&:hover fieldset": { border: "1px solid #3A3A3A4D" },
-                  "&.Mui-focused fieldset": { border: "1px solid #FF5722" },
+                  "& fieldset": {
+                    border: fieldErrors.email
+                      ? "1px solid #d32f2f"
+                      : "1px solid #3A3A3A4D",
+                  },
+                  "&:hover fieldset": {
+                    border: fieldErrors.email
+                      ? "1px solid #d32f2f"
+                      : "1px solid #3A3A3A4D",
+                  },
+                  "&.Mui-focused fieldset": {
+                    border: fieldErrors.email
+                      ? "1px solid #d32f2f"
+                      : "1px solid #FF5722",
+                  },
                 },
                 "& input:-webkit-autofill": {
                   WebkitBoxShadow: "0 0 0 100px #FFFFFF inset",
@@ -377,6 +485,11 @@ export default function SignUpPage() {
                 },
               }}
             />
+            {fieldErrors.email && (
+              <FormHelperText sx={{ color: "#d32f2f", mb: 2, mt: 0.5, ml: 0 }}>
+                {fieldErrors.email}
+              </FormHelperText>
+            )}
 
             <Typography
               sx={{
@@ -391,20 +504,20 @@ export default function SignUpPage() {
             </Typography>
             <PhoneInput
               country={"us"}
-              value={formData.phoneNumber}
-              onChange={(phone) =>
-                handleInputChange("phoneNumber", `+${phone}`)
-              }
+              value={`+${formData.countryCode}${formData.phoneNumber}`}
+              onChange={handlePhoneChange}
               disabled={isLoading}
               containerStyle={{
                 width: "100%",
-                marginBottom: "16px",
+                marginBottom: fieldErrors.phoneNumber ? "4px" : "16px",
               }}
               inputStyle={{
                 width: "100%",
                 height: "48px",
                 borderRadius: "8px",
-                border: "1px solid #3A3A3A4D",
+                border: fieldErrors.phoneNumber
+                  ? "1px solid #d32f2f"
+                  : "1px solid #3A3A3A4D",
                 fontSize: "16px",
                 paddingLeft: "48px",
                 color: "#000000",
@@ -412,7 +525,9 @@ export default function SignUpPage() {
               }}
               buttonStyle={{
                 borderRadius: "8px 0 0 8px",
-                border: "1px solid #3A3A3A4D",
+                border: fieldErrors.phoneNumber
+                  ? "1px solid #d32f2f"
+                  : "1px solid #3A3A3A4D",
                 backgroundColor: "#FFFFFF",
               }}
               dropdownStyle={{
@@ -430,6 +545,11 @@ export default function SignUpPage() {
                 backgroundColor: "#FFFFFF",
               }}
             />
+            {fieldErrors.phoneNumber && (
+              <FormHelperText sx={{ color: "#d32f2f", mb: 2, mt: 0, ml: 0 }}>
+                {fieldErrors.phoneNumber}
+              </FormHelperText>
+            )}
 
             <Typography
               sx={{
@@ -450,6 +570,7 @@ export default function SignUpPage() {
               fullWidth
               required
               disabled={isLoading}
+              error={!!fieldErrors.password}
               InputProps={{
                 startAdornment: (
                   <InputAdornment position="start">
@@ -468,14 +589,26 @@ export default function SignUpPage() {
                 ),
               }}
               sx={{
-                mb: 2,
+                mb: fieldErrors.password ? 0.5 : 2,
                 "& .MuiOutlinedInput-root": {
                   height: "48px",
                   borderRadius: "8px",
                   bgcolor: "#FFFFFF",
-                  "& fieldset": { border: "1px solid #3A3A3A4D" },
-                  "&:hover fieldset": { border: "1px solid #3A3A3A4D" },
-                  "&.Mui-focused fieldset": { border: "1px solid #FF5722" },
+                  "& fieldset": {
+                    border: fieldErrors.password
+                      ? "1px solid #d32f2f"
+                      : "1px solid #3A3A3A4D",
+                  },
+                  "&:hover fieldset": {
+                    border: fieldErrors.password
+                      ? "1px solid #d32f2f"
+                      : "1px solid #3A3A3A4D",
+                  },
+                  "&.Mui-focused fieldset": {
+                    border: fieldErrors.password
+                      ? "1px solid #d32f2f"
+                      : "1px solid #FF5722",
+                  },
                 },
                 "& input:-webkit-autofill": {
                   WebkitBoxShadow: "0 0 0 100px #FFFFFF inset",
@@ -491,6 +624,11 @@ export default function SignUpPage() {
                 },
               }}
             />
+            {fieldErrors.password && (
+              <FormHelperText sx={{ color: "#d32f2f", mb: 2, mt: 0.5, ml: 0 }}>
+                {fieldErrors.password}
+              </FormHelperText>
+            )}
 
             <Typography
               sx={{
@@ -513,6 +651,7 @@ export default function SignUpPage() {
               fullWidth
               required
               disabled={isLoading}
+              error={!!fieldErrors.confirmPassword}
               InputProps={{
                 startAdornment: (
                   <InputAdornment position="start">
@@ -533,14 +672,26 @@ export default function SignUpPage() {
                 ),
               }}
               sx={{
-                mb: 2,
+                mb: fieldErrors.confirmPassword ? 0.5 : 2,
                 "& .MuiOutlinedInput-root": {
                   height: "48px",
                   borderRadius: "8px",
                   bgcolor: "#FFFFFF",
-                  "& fieldset": { border: "1px solid #3A3A3A4D" },
-                  "&:hover fieldset": { border: "1px solid #3A3A3A4D" },
-                  "&.Mui-focused fieldset": { border: "1px solid #FF5722" },
+                  "& fieldset": {
+                    border: fieldErrors.confirmPassword
+                      ? "1px solid #d32f2f"
+                      : "1px solid #3A3A3A4D",
+                  },
+                  "&:hover fieldset": {
+                    border: fieldErrors.confirmPassword
+                      ? "1px solid #d32f2f"
+                      : "1px solid #3A3A3A4D",
+                  },
+                  "&.Mui-focused fieldset": {
+                    border: fieldErrors.confirmPassword
+                      ? "1px solid #d32f2f"
+                      : "1px solid #FF5722",
+                  },
                 },
                 "& input:-webkit-autofill": {
                   WebkitBoxShadow: "0 0 0 100px #FFFFFF inset",
@@ -556,6 +707,11 @@ export default function SignUpPage() {
                 },
               }}
             />
+            {fieldErrors.confirmPassword && (
+              <FormHelperText sx={{ color: "#d32f2f", mb: 2, mt: 0.5, ml: 0 }}>
+                {fieldErrors.confirmPassword}
+              </FormHelperText>
+            )}
 
             <FormControlLabel
               control={
@@ -569,12 +725,12 @@ export default function SignUpPage() {
                 />
               }
               label={
-                <Typography variant="body2" sx={{ color: "#666" }}>
+                <Typography variant="body2" sx={{ color: "#2B2B2B" }}>
                   I agree to the{" "}
                   <Link
                     component={NextLink}
                     href="/terms-conditions"
-                    sx={{ color: "#0066cc", textDecoration: "none" }}
+                    sx={{ color: "#005F73", textDecoration: "none" }}
                   >
                     Terms of Service
                   </Link>{" "}
@@ -582,7 +738,7 @@ export default function SignUpPage() {
                   <Link
                     component={NextLink}
                     href="/privacy-policy"
-                    sx={{ color: "#0066cc", textDecoration: "none" }}
+                    sx={{ color: "#005F73", textDecoration: "none" }}
                   >
                     Privacy Policy
                   </Link>
@@ -622,7 +778,7 @@ export default function SignUpPage() {
                   component={NextLink}
                   href="/auth/signin"
                   sx={{
-                    color: "#0066cc",
+                    color: "#005F73",
                     fontWeight: "600",
                     textDecoration: "none",
                     "&:hover": { textDecoration: "underline" },

@@ -5,15 +5,24 @@ import { useRouter } from "next/navigation";
 import { useLevelAccess } from "../../../hooks/useLevelAccess";
 import TestCard from "../../components/ui/TestCard";
 import AccessTimeIcon from "@mui/icons-material/AccessTime";
+import MicIcon from "@mui/icons-material/Mic";
+import LockIcon from "@mui/icons-material/Lock";
+import CheckCircleIcon from "@mui/icons-material/CheckCircle";
 import ButtonSelfScore from "@/app/components/ui/ButtonSelfScore";
 import OutLineButton from "@/app/components/ui/OutLineButton";
+import Image from "next/image";
 
 export default function JourneyProgress() {
   const router = useRouter();
-  const { getHighestUnlockedLevel, isLevelCompleted, getTestScore } =
-    useLevelAccess();
+  const {
+    getHighestUnlockedLevel,
+    isLevelCompleted,
+    getTestScore,
+    isLevelPurchased,
+  } = useLevelAccess();
 
   const highestUnlockedLevel = getHighestUnlockedLevel();
+  const isLevel4Purchased = isLevelPurchased(4);
 
   // Level configuration with names
   const levels = [
@@ -21,6 +30,7 @@ export default function JourneyProgress() {
     { id: 2, name: "Exploration" },
     { id: 3, name: "Action" },
     { id: 4, name: "Mastery" },
+    { id: 5, name: "Excellence" },
   ];
 
   // Get the highest completed level
@@ -67,7 +77,7 @@ export default function JourneyProgress() {
         backgroundColor: "#FAFAFA",
         py: { xs: 4, sm: 6, md: 10 },
         px: { xs: 2, sm: 3, md: 6 },
-        maxHeight: { xs: "none", md: "880px" },
+        maxHeight: { xs: "none", md: "1400px" },
         mb: { xs: 8, sm: 12, md: 20 },
         minHeight: { xs: "100vh", md: "auto" },
       }}
@@ -122,7 +132,7 @@ export default function JourneyProgress() {
           >
             Your Journey Progress
           </Typography>
-          <Typography
+          {/* <Typography
             variant="body1"
             sx={{
               color: "#2B2B2B",
@@ -134,7 +144,7 @@ export default function JourneyProgress() {
           >
             You've Unlocked {highestUnlockedLevel} out of 4 happiness assessment
             levels
-          </Typography>
+          </Typography> */}
         </Box>
 
         {/* Progress Bar */}
@@ -169,7 +179,7 @@ export default function JourneyProgress() {
               fontSize: { xs: "0.875rem", sm: "0.95rem", md: "16px" },
             }}
           >
-            {Math.round((highestUnlockedLevel / 4) * 100)}%
+            {Math.round((highestUnlockedLevel / 5) * 100)}%
           </Typography>
         </Box>
         {/* Level names below progress bar */}
@@ -189,7 +199,7 @@ export default function JourneyProgress() {
         >
           <Box
             sx={{
-              width: `${(highestUnlockedLevel / 4) * 100}%`,
+              width: `${(highestUnlockedLevel / 5) * 100}%`,
               height: "100%",
               backgroundColor: "#FB7D45",
               transition: "width 0.5s ease-in-out",
@@ -240,7 +250,7 @@ export default function JourneyProgress() {
             px: { xs: 0, sm: 2, md: 0 },
           }}
         >
-          {levels.map((level) => {
+          {levels.slice(0, 4).map((level) => {
             const status = getCardStatus(level.id);
             const score = getTestScore(level.id);
 
@@ -259,6 +269,272 @@ export default function JourneyProgress() {
               />
             );
           })}
+        </Box>
+
+        {/* AI Voice Interview Card - Full Width */}
+        <Box
+          sx={{
+            mt: { xs: 6, sm: 8, md: 10 },
+            borderRadius: { xs: "12px", md: "16px" },
+            overflow: "hidden",
+            border: "2px solid #E0E0E0",
+            background: isLevel4Purchased
+              ? "linear-gradient(135deg, #FEF3EE 0%, #FFFFFF 100%)"
+              : "#F9FAFB",
+            opacity: isLevel4Purchased ? 1 : 0.7,
+            transition: "all 0.3s ease",
+            "&:hover": {
+              boxShadow: isLevel4Purchased
+                ? "0 8px 24px rgba(232,122,66,0.15)"
+                : "none",
+            },
+          }}
+        >
+          <Box
+            sx={{
+              display: "flex",
+              flexDirection: { xs: "column", md: "row" },
+              alignItems: "center",
+              gap: { xs: 3, md: 4 },
+              p: { xs: 3, sm: 4, md: 5 },
+            }}
+          >
+            {/* Left Content Section */}
+            <Box
+              sx={{
+                flex: 1,
+                order: { xs: 2, md: 1 },
+              }}
+            >
+              {/* Badge */}
+              <Box
+                sx={{
+                  display: "inline-flex",
+                  alignItems: "center",
+                  gap: 1,
+                  px: 2,
+                  py: 0.5,
+                  borderRadius: "20px",
+                  backgroundColor: isLevel4Purchased ? "#E87A42" : "#9CA3AF",
+                  mb: 2,
+                }}
+              >
+                <MicIcon sx={{ fontSize: "16px", color: "#fff" }} />
+                <Typography
+                  sx={{
+                    fontSize: { xs: "12px", md: "14px" },
+                    fontWeight: 600,
+                    color: "#fff",
+                    fontFamily: "Source Sans Pro",
+                  }}
+                >
+                  {isLevel4Purchased ? "Premium Feature" : "Locked"}
+                </Typography>
+              </Box>
+
+              {/* Title */}
+              <Typography
+                sx={{
+                  fontSize: { xs: "1.5rem", sm: "1.75rem", md: "32px" },
+                  fontWeight: 700,
+                  fontFamily: "Faustina",
+                  color: isLevel4Purchased ? "#E87A42" : "#6B7280",
+                  mb: 2,
+                  lineHeight: 1.2,
+                }}
+              >
+                AI Voice Interview - Level 5
+              </Typography>
+
+              {/* Description */}
+              <Typography
+                sx={{
+                  fontSize: { xs: "0.875rem", sm: "1rem", md: "16px" },
+                  color: isLevel4Purchased ? "#2B2B2B" : "#6B7280",
+                  fontFamily: "Source Sans Pro",
+                  lineHeight: 1.6,
+                  mb: 3,
+                }}
+              >
+                {isLevel4Purchased
+                  ? "Experience a conversational AI-powered voice interview. Speak naturally, and our AI will analyze your responses in real-time for deeper insights."
+                  : "Unlock Level 4 bundle to access this premium Level 5 voice interview feature with AI-powered analysis."}
+              </Typography>
+
+              {/* Features List */}
+              {isLevel4Purchased && (
+                <Box
+                  sx={{
+                    display: "flex",
+                    flexDirection: "column",
+                    gap: 1.5,
+                    mb: 3,
+                  }}
+                >
+                  <Box sx={{ display: "flex", alignItems: "center", gap: 1.5 }}>
+                    <CheckCircleIcon
+                      sx={{ fontSize: "20px", color: "#4CAF50" }}
+                    />
+                    <Typography
+                      sx={{
+                        fontSize: { xs: "14px", md: "15px" },
+                        color: "#2B2B2B",
+                        fontFamily: "Source Sans Pro",
+                      }}
+                    >
+                      Natural conversation with AI
+                    </Typography>
+                  </Box>
+                  <Box sx={{ display: "flex", alignItems: "center", gap: 1.5 }}>
+                    <CheckCircleIcon
+                      sx={{ fontSize: "20px", color: "#4CAF50" }}
+                    />
+                    <Typography
+                      sx={{
+                        fontSize: { xs: "14px", md: "15px" },
+                        color: "#2B2B2B",
+                        fontFamily: "Source Sans Pro",
+                      }}
+                    >
+                      Real-time voice interaction
+                    </Typography>
+                  </Box>
+                  <Box sx={{ display: "flex", alignItems: "center", gap: 1.5 }}>
+                    <CheckCircleIcon
+                      sx={{ fontSize: "20px", color: "#4CAF50" }}
+                    />
+                    <Typography
+                      sx={{
+                        fontSize: { xs: "14px", md: "15px" },
+                        color: "#2B2B2B",
+                        fontFamily: "Source Sans Pro",
+                      }}
+                    >
+                      Comprehensive AI analysis
+                    </Typography>
+                  </Box>
+                </Box>
+              )}
+
+              {/* Action Buttons */}
+              <Box
+                sx={{
+                  display: "flex",
+                  flexDirection: { xs: "column", sm: "row" },
+                  gap: 2,
+                  alignItems: { xs: "stretch", sm: "center" },
+                }}
+              >
+                {!isLevel4Purchased ? (
+                  <ButtonSelfScore
+                    text={
+                      <Box
+                        sx={{ display: "flex", alignItems: "center", gap: 1 }}
+                      >
+                        <LockIcon sx={{ fontSize: "18px" }} />
+                        <span>Unlock Level 4</span>
+                      </Box>
+                    }
+                    onClick={() => handleUnlock(4)}
+                    fontSize={"16px"}
+                    fullWidth={false}
+                    style={{
+                      backgroundColor: "#E87A42",
+                      padding: "12px 24px",
+                    }}
+                    textStyle={{
+                      color: "#fff",
+                      fontWeight: 600,
+                    }}
+                  />
+                ) : (
+                  <>
+                    <ButtonSelfScore
+                      text={
+                        <Box
+                          sx={{ display: "flex", alignItems: "center", gap: 1 }}
+                        >
+                          <MicIcon sx={{ fontSize: "18px" }} />
+                          <span>Start Voice Interview</span>
+                        </Box>
+                      }
+                      onClick={() =>
+                        router.push("/user/test?level=5&mode=voice")
+                      }
+                      fontSize={"16px"}
+                      fullWidth={false}
+                      style={{
+                        backgroundColor: "#E87A42",
+                        padding: "12px 24px",
+                      }}
+                      textStyle={{
+                        color: "#fff",
+                        fontWeight: 600,
+                      }}
+                    />
+                    <OutLineButton
+                      onClick={() => router.push("/user/test?level=4")}
+                      sx={{
+                        padding: { xs: "10px 20px", md: "12px 24px" },
+                        fontSize: "16px",
+                        borderRadius: "12px",
+                        color: "#E87A42",
+                        fontWeight: 600,
+                        border: "2px solid #E87A42",
+                        "&:hover": {
+                          backgroundColor: "#FEF3EE",
+                          borderColor: "#E87A42",
+                        },
+                      }}
+                    >
+                      Try Text Mode Instead
+                    </OutLineButton>
+                  </>
+                )}
+              </Box>
+            </Box>
+
+            {/* Right Image Section */}
+            <Box
+              sx={{
+                flex: { xs: "0 0 auto", md: "0 0 400px" },
+                order: { xs: 1, md: 2 },
+                width: { xs: "100%", sm: "300px", md: "400px" },
+                height: { xs: "250px", sm: "300px", md: "350px" },
+                position: "relative",
+                borderRadius: "12px",
+                overflow: "hidden",
+                filter: isLevel4Purchased ? "none" : "grayscale(100%)",
+                opacity: isLevel4Purchased ? 1 : 0.5,
+              }}
+            >
+              <Image
+                src="/images/LandingPage/Ai-Coach.webp"
+                alt="AI Voice Interview"
+                fill
+                style={{
+                  objectFit: "cover",
+                  objectPosition: "center",
+                }}
+                priority
+              />
+              {!isLevel4Purchased && (
+                <Box
+                  sx={{
+                    position: "absolute",
+                    top: "50%",
+                    left: "50%",
+                    transform: "translate(-50%, -50%)",
+                    backgroundColor: "rgba(0, 0, 0, 0.7)",
+                    borderRadius: "50%",
+                    p: 3,
+                  }}
+                >
+                  <LockIcon sx={{ fontSize: "48px", color: "#fff" }} />
+                </Box>
+              )}
+            </Box>
+          </Box>
         </Box>
 
         {/* Unlock Your Full Potential section - Only show after Level 1 is completed */}

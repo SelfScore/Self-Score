@@ -13,7 +13,7 @@ export const generateLevel4ThankYouPage = (data: Level4ReportData, pageNumber: n
       flex-direction: column;
       font-family: 'Faustina', 'Source Sans Pro', -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif;
       position: relative;
-      background-image: url('/images/Report/BGImg.jpg');
+      background-image: url('/images/Report/BGImgCover.jpg');
       background-size: cover;
       background-position: center;
       background-repeat: no-repeat;

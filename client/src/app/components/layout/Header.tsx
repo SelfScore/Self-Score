@@ -34,12 +34,15 @@ import {
 } from "../../../services/consultantAuthService";
 import FreeChip from "../ui/FreeChip";
 import ButtonSelfScore from "../ui/ButtonSelfScore";
+import LogoutConfirmationModal from "../ui/LogoutConfirmationModal";
 
 export default function Header() {
   const [mobileOpen, setMobileOpen] = useState(false);
   const [anchorEl, setAnchorEl] = useState<null | HTMLElement>(null);
   const [consultant, setConsultant] = useState<ConsultantData | null>(null);
   const [isConsultantAuth, setIsConsultantAuth] = useState(false);
+  const [showLogoutModal, setShowLogoutModal] = useState(false);
+  const [logoutLoading, setLogoutLoading] = useState(false);
   const theme = useTheme();
   const isMobile = useMediaQuery(theme.breakpoints.down("md"));
   const { isAuthenticated, user, logout } = useAuth();
@@ -92,21 +95,32 @@ export default function Header() {
     setAnchorEl(null);
   };
 
-  const handleLogout = () => {
-    logout();
+  const handleLogoutClick = () => {
     handleProfileMenuClose();
+    setShowLogoutModal(true);
   };
 
-  const handleConsultantLogout = async () => {
+  const handleLogoutConfirm = async () => {
+    setLogoutLoading(true);
     try {
-      await consultantAuthService.logout();
-      setConsultant(null);
-      setIsConsultantAuth(false);
-      handleProfileMenuClose();
-      router.push("/consultant/login");
+      if (isConsultantAuth) {
+        await consultantAuthService.logout();
+        setConsultant(null);
+        setIsConsultantAuth(false);
+        router.push("/consultant/login");
+      } else {
+        logout();
+      }
     } catch (error) {
       console.error("Logout error:", error);
+    } finally {
+      setLogoutLoading(false);
+      setShowLogoutModal(false);
     }
+  };
+
+  const handleLogoutCancel = () => {
+    setShowLogoutModal(false);
   };
 
   const navigationLinks = [
@@ -114,7 +128,7 @@ export default function Header() {
     { label: "Our Mission", href: "/ourMission" },
     {
       label: "Self Score Test",
-      href: "/selfscoretest",
+      href: isAuthenticated ? "/selfscoretest" : "/testInfo",
       variant: "contained",
       FreeChip: true,
     },
@@ -122,6 +136,19 @@ export default function Header() {
     { label: "Consultations", href: "/consultations" },
     { label: "Blogs", href: "/blogs" },
   ];
+
+  // Helper function to check if a link is active
+  const isLinkActive = (href: string) => {
+    if (!pathname) return false;
+    // Normalize both paths by removing trailing slashes
+    const normalizedPathname =
+      pathname.endsWith("/") && pathname !== "/"
+        ? pathname.slice(0, -1)
+        : pathname;
+    const normalizedHref =
+      href.endsWith("/") && href !== "/" ? href.slice(0, -1) : href;
+    return normalizedPathname === normalizedHref;
+  };
 
   const drawer = (
     <Box sx={{ width: { xs: 260, sm: 280 }, height: "100%" }}>
@@ -150,7 +177,7 @@ export default function Header() {
       </Box>
       <List sx={{ pt: 3 }}>
         {navigationLinks.map((link) => {
-          const isActive = pathname === link.href;
+          const isActive = isLinkActive(link.href);
           return (
             <ListItem key={link.label} sx={{ mb: 1, px: 3 }}>
               <Box sx={{ width: "100%" }}>
@@ -174,15 +201,17 @@ export default function Header() {
                       justifyContent: "flex-start",
                       py: 1.5,
                       fontSize: { xs: "18px", sm: "20px" },
-                      fontWeight: 400,
+                      fontWeight: isActive ? 600 : 400,
                       fontFamily: "Source Sans Pro, sans-serif",
-                      color: isActive ? "#307E8D" : "#1A1A1A",
-                      textDecoration: isActive ? "underline" : "none",
-                      textUnderlineOffset: "4px",
+                      color: isActive ? "#005F73" : "#1A1A1A",
+                      borderBottom: isActive
+                        ? "2px solid #005F73"
+                        : "2px solid transparent",
+                      borderRadius: 0,
                       textTransform: "none",
                       "&:hover": {
                         backgroundColor: "rgba(0, 95, 115, 0.1)",
-                        color: isActive ? "#307E8D" : "#005F73",
+                        color: isActive ? "#005F73" : "#005F73",
                       },
                     }}
                   >
@@ -214,11 +243,11 @@ export default function Header() {
                 >
                   {isConsultantAuth
                     ? consultant?.firstName?.charAt(0) ||
-                      consultant?.email?.charAt(0) ||
-                      "C"
+                    consultant?.email?.charAt(0) ||
+                    "C"
                     : user?.username?.charAt(0) ||
-                      user?.email?.charAt(0) ||
-                      "U"}
+                    user?.email?.charAt(0) ||
+                    "U"}
                 </Avatar>
                 <Box>
                   <Typography variant="subtitle2" sx={{ fontWeight: "bold" }}>
@@ -294,9 +323,7 @@ export default function Header() {
                 fullWidth
                 variant="text"
                 size="large"
-                onClick={
-                  isConsultantAuth ? handleConsultantLogout : handleLogout
-                }
+                onClick={handleLogoutClick}
                 sx={{
                   justifyContent: "flex-start",
                   py: 1.5,
@@ -342,12 +369,12 @@ export default function Header() {
         border: "1px solid #3A3A3A33",
         boxShadow: "none",
         top: 0,
-        width: { xs: "98%", sm: "95%", md: "90%", lg: "1280px" },
+        width: { xs: "98%", sm: "95%", md: "90%", lg: "90%" },
         borderRadius: { xs: "12px", md: "16px" },
         mx: "auto",
         my: { xs: "8px", md: "14px" },
         zIndex: 10,
-        px: { xs: 1.5, sm: 2, md: 1 },
+        px: { xs: 1.5, sm: 2, md: 0.5, lg: 1, xl: 1 },
       }}
     >
       <Box>
@@ -381,7 +408,7 @@ export default function Header() {
                 width={isMobile ? 100 : 120}
                 style={{
                   objectFit: "contain",
-                  scale: isMobile ? 1 : 1.2,
+                  scale: isMobile ? 1 : 1.1,
                 }}
                 priority
               />
@@ -395,14 +422,14 @@ export default function Header() {
                 sx={{
                   display: "flex",
                   alignItems: "center",
-                  gap: 2,
+                  gap: { md: 1, lg: 1.5, xl: 2 },
                   position: "absolute",
                   left: "50%",
                   transform: "translateX(-50%)",
                 }}
               >
                 {navigationLinks.map((link) => {
-                  const isActive = pathname === link.href;
+                  const isActive = isLinkActive(link.href);
                   return (
                     <Box key={link.label}>
                       {link.FreeChip && (
@@ -417,18 +444,24 @@ export default function Header() {
                       >
                         <Button
                           sx={{
-                            color: isActive ? "#307E8D" : "#1A1A1A",
-                            fontWeight: 500,
-                            fontSize: "1rem",
-                            fontFamily: "Source Sans Pro, sans-serif",
-                            px: 2,
-                            textDecoration: isActive ? "underline" : "none",
-                            textUnderlineOffset: "4px",
-                            textTransform: "none",
-                            "&:hover": {
-                              backgroundColor: "rgba(0, 95, 115, 0.1)",
-                              color: isActive ? "#307E8D" : "#005F73",
+                            color: isActive ? "#005F73" : "#1A1A1A",
+                            fontWeight: isActive ? 600 : 500,
+                            fontSize: {
+                              md: "0.875rem",
+                              lg: "1rem",
+                              xl: "1rem",
                             },
+                            fontFamily: "Source Sans Pro, sans-serif",
+                            px: { md: 1, lg: 1.5, xl: 2 },
+                            borderBottom: isActive
+                              ? "1.5px solid #005F73"
+                              : "1.5px solid transparent",
+                            borderRadius: 0,
+                            textTransform: "none",
+                            // "&:hover": {
+                            //   backgroundColor: "rgba(0, 95, 115, 0.1)",
+                            //   color: isActive ? "#005F73" : "#005F73",
+                            // },
                             transition: "all 0.3s ease",
                           }}
                         >
@@ -464,11 +497,11 @@ export default function Header() {
                       >
                         {isConsultantAuth
                           ? consultant?.firstName?.charAt(0) ||
-                            consultant?.email?.charAt(0) ||
-                            "C"
+                          consultant?.email?.charAt(0) ||
+                          "C"
                           : user?.username?.charAt(0) ||
-                            user?.email?.charAt(0) ||
-                            "U"}
+                          user?.email?.charAt(0) ||
+                          "U"}
                       </Avatar>
                     </IconButton>
 
@@ -526,13 +559,7 @@ export default function Header() {
 
                       <Divider />
 
-                      <MenuItem
-                        onClick={
-                          isConsultantAuth
-                            ? handleConsultantLogout
-                            : handleLogout
-                        }
-                      >
+                      <MenuItem onClick={handleLogoutClick}>
                         <ExitToApp sx={{ mr: 1, fontSize: 20 }} />
                         Logout
                       </MenuItem>
@@ -579,6 +606,14 @@ export default function Header() {
       >
         {drawer}
       </Drawer>
+
+      {/* Logout Confirmation Modal */}
+      <LogoutConfirmationModal
+        open={showLogoutModal}
+        onClose={handleLogoutCancel}
+        onConfirm={handleLogoutConfirm}
+        loading={logoutLoading}
+      />
     </Box>
   );
 }

@@ -38,12 +38,18 @@ import DownloadReportButton from "@/app/components/ui/DownloadReportButton";
 import ReceiptIcon from "@mui/icons-material/Receipt";
 import PaymentIcon from "@mui/icons-material/Payment";
 import { level4ReviewService } from "@/services/level4ReviewService";
+import { level5ReviewService } from "@/services/level5ReviewService";
 import { generatePDFFromHTML } from "@/app/user/report/utils/pdfGenerator";
 import {
   generateLevel4ReportHTML,
   generateLevel4ReportFilename,
 } from "@/app/user/report/level4";
 import { Level4ReportData } from "@/app/user/report/level4/types";
+import {
+  generateLevel5ReportHTML,
+  generateLevel5ReportFilename,
+} from "@/app/user/report/level5";
+import { Level5ReportData } from "@/app/user/report/level5/types";
 import ShareModal from "@/app/components/ui/ShareModal";
 
 interface TestHistoryItem {
@@ -51,6 +57,7 @@ interface TestHistoryItem {
   level: number;
   score: number | null; // null for pending Level 4 reviews
   date: string; // Formatted date for display
+  time: string; // Formatted time for display
   rawDate: string; // Raw ISO date for report generation
   timeSpent?: string;
   attemptNumber?: number;
@@ -58,7 +65,8 @@ interface TestHistoryItem {
 }
 
 export default function UserDashboard() {
-  const { user, isAuthenticated, progress, purchasedLevels } = useAuth();
+  const { user, isAuthenticated, isInitialized, progress, purchasedLevels } =
+    useAuth();
   const router = useRouter();
   const [testHistory, setTestHistory] = useState<TestHistoryItem[]>([]);
   const [loading, setLoading] = useState(true);
@@ -74,19 +82,20 @@ export default function UserDashboard() {
 
   // Filter and sort state
   const [sortOrder, setSortOrder] = useState<"latest" | "oldest">("latest");
-  const [levelFilter, setLevelFilter] = useState<"all" | "1" | "2" | "3" | "4">(
-    "all"
-  );
+  const [levelFilter, setLevelFilter] = useState<
+    "all" | "1" | "2" | "3" | "4" | "5"
+  >("all");
 
-  // ✅ Add refs to track if data has been fetched
-  const testHistoryFetched = useRef(false);
-  const transactionHistoryFetched = useRef(false);
+  // ✅ Track which user we've fetched data for (to prevent duplicate fetches for same user)
+  const fetchedUserIdForHistory = useRef<string | null>(null);
+  const fetchedUserIdForTransactions = useRef<string | null>(null);
 
+  // ✅ Wait for auth to initialize before redirecting
   useEffect(() => {
-    if (!isAuthenticated) {
+    if (isInitialized && !isAuthenticated) {
       router.push("/auth/signin");
     }
-  }, [isAuthenticated, router]);
+  }, [isInitialized, isAuthenticated, router]);
 
   useEffect(() => {
     const fetchTestHistory = async () => {
@@ -95,16 +104,20 @@ export default function UserDashboard() {
         return;
       }
 
-      // ✅ Prevent duplicate fetches
-      if (testHistoryFetched.current) {
+      // ✅ Prevent duplicate fetches for the same user
+      if (fetchedUserIdForHistory.current === user.userId) {
+        // console.log(
+        //   "📊 Test history already fetched for this user, skipping..."
+        // );
         return;
       }
 
-      testHistoryFetched.current = true;
-      console.log("📊 Fetching test history...");
+      fetchedUserIdForHistory.current = user.userId;
+      // console.log("📊 Fetching test history...");
 
       try {
         const response = await questionsApi.getUserTestHistory(user.userId);
+        // console.log("📊 Raw API response:", response.data);
         if (response.success && response.data) {
           // First, sort by level and date (oldest first) to calculate attempt numbers correctly
           const sortedData = [...response.data].sort((a: any, b: any) => {
@@ -141,29 +154,47 @@ export default function UserDashboard() {
             (item: any, index: number) => {
               // Use date or submittedAt as fallback
               const rawDateValue = item.date || item.submittedAt;
+              const dateObj = rawDateValue
+                ? new Date(rawDateValue)
+                : new Date();
+
+              // console.log(
+              //   `Item ${index} timeSpent:`,
+              //   item.timeSpent,
+              //   typeof item.timeSpent
+              // );
+
               return {
                 _id: item._id || `${user.userId}-level-${item.level}-${index}`,
                 level: item.level,
                 score: item.score,
-                date: rawDateValue
-                  ? new Date(rawDateValue).toLocaleDateString()
-                  : "N/A",
+                date: dateObj.toLocaleDateString("en-US", {
+                  month: "short",
+                  day: "numeric",
+                  year: "numeric",
+                }),
+                time: dateObj.toLocaleTimeString("en-US", {
+                  hour: "numeric",
+                  minute: "2-digit",
+                  hour12: true,
+                }),
                 rawDate: rawDateValue || new Date().toISOString(), // Keep raw ISO date for report generation
-                timeSpent: item.timeSpent
-                  ? `${Math.floor(item.timeSpent / 60)}m ${
-                      item.timeSpent % 60
-                    }s`
-                  : "N/A",
+                timeSpent:
+                  item.timeSpent && typeof item.timeSpent === "number"
+                    ? `${Math.floor(item.timeSpent / 60)}m ${
+                        item.timeSpent % 60
+                      }s`
+                    : "N/A",
                 attemptNumber: attemptMap[item._id],
                 status: item.status, // ✅ Include status for Level 4 pending/reviewed check
               };
             }
           );
           setTestHistory(history);
-          console.log("📊 Test history loaded:", history);
+          // console.log("📊 Test history loaded:", history);
         }
       } catch (error) {
-        console.error("Error fetching test history:", error);
+        // console.error("Error fetching test history:", error);
         // Fallback to building from progress data if API fails
         if (progress?.testScores) {
           const history: TestHistoryItem[] = [];
@@ -175,7 +206,16 @@ export default function UserDashboard() {
                 _id: `${user.userId}-level-${level}`,
                 level: level,
                 score: score,
-                date: now.toLocaleDateString(),
+                date: now.toLocaleDateString("en-US", {
+                  month: "short",
+                  day: "numeric",
+                  year: "numeric",
+                }),
+                time: now.toLocaleTimeString("en-US", {
+                  hour: "numeric",
+                  minute: "2-digit",
+                  hour12: true,
+                }),
                 rawDate: now.toISOString(),
                 timeSpent: "N/A",
               });
@@ -193,7 +233,6 @@ export default function UserDashboard() {
       fetchTestHistory();
     } else {
       setLoading(false);
-      testHistoryFetched.current = true;
     }
     // ✅ Remove 'progress' from dependencies - it causes unnecessary re-fetches
     // eslint-disable-next-line react-hooks/exhaustive-deps
@@ -206,13 +245,16 @@ export default function UserDashboard() {
         return;
       }
 
-      // ✅ Prevent duplicate fetches
-      if (transactionHistoryFetched.current) {
+      // ✅ Prevent duplicate fetches for the same user
+      if (fetchedUserIdForTransactions.current === user.userId) {
+        // console.log(
+        //   "💳 Transaction history already fetched for this user, skipping..."
+        // );
         return;
       }
 
-      transactionHistoryFetched.current = true;
-      console.log("💳 Fetching transaction history...");
+      fetchedUserIdForTransactions.current = user.userId;
+      // console.log("💳 Fetching transaction history...");
 
       try {
         const response = await paymentService.getPaymentHistory();
@@ -224,7 +266,7 @@ export default function UserDashboard() {
           setTransactionHistory(completedTransactions);
         }
       } catch (error) {
-        console.error("Error fetching transaction history:", error);
+        // console.error("Error fetching transaction history:", error);
       } finally {
         setLoadingTransactions(false);
       }
@@ -234,7 +276,6 @@ export default function UserDashboard() {
       fetchTransactionHistory();
     } else {
       setLoadingTransactions(false);
-      transactionHistoryFetched.current = true;
     }
     // ✅ Use user.userId instead of user object to prevent re-fetches on user object changes
     // eslint-disable-next-line react-hooks/exhaustive-deps
@@ -262,7 +303,7 @@ export default function UserDashboard() {
         alert("Failed to generate share link. Please try again.");
       }
     } catch (error) {
-      console.error("Error generating share link:", error);
+      // console.error("Error generating share link:", error);
       alert("Failed to generate share link. Please try again.");
     } finally {
       setSharingReport(null);
@@ -331,13 +372,101 @@ export default function UserDashboard() {
 
       await generatePDFFromHTML(htmlContent, filename);
     } catch (error) {
-      console.error("Error generating Level 4 PDF:", error);
+      // console.error("Error generating Level 4 PDF:", error);
       alert("Failed to generate PDF report. Please try again.");
     } finally {
       setGeneratingPDF(null);
     }
   };
 
+  // Handler for downloading Level 5 PDF report
+  const handleDownloadLevel5PDF = async (interviewId: string) => {
+    if (!user) return;
+
+    try {
+      setGeneratingPDF(interviewId);
+
+      // Fetch the Level 5 review data
+      const reviewResponse = await level5ReviewService.getUserReview();
+
+      if (!reviewResponse.success || !reviewResponse.data?.review) {
+        alert("Failed to fetch review data. Please try again.");
+        return;
+      }
+
+      const adminReview = reviewResponse.data.review;
+
+      // Format phone number with country code
+      const formattedPhone =
+        user.countryCode && user.phoneNumber
+          ? `+${user.countryCode}${user.phoneNumber}`
+          : user.phoneNumber || "N/A";
+
+      const reportData: Level5ReportData = {
+        username: user.username,
+        email: user.email,
+        phoneNumber: formattedPhone,
+        reportDate: new Date(
+          adminReview.submittedAt || adminReview.createdAt
+        ).toLocaleDateString("en-US", {
+          year: "numeric",
+          month: "long",
+          day: "numeric",
+        }),
+        attemptNumber: adminReview.attemptNumber || 1,
+        totalScore: adminReview.totalScore,
+        questionReviews: adminReview.questionReviews.map((qr, index) => ({
+          questionOrder: index + 1,
+          questionText: qr.questionText,
+          userAnswer: qr.userAnswer,
+          score: qr.score,
+          expertRemark: qr.remark,
+        })),
+      };
+
+      // Generate HTML and PDF
+      const htmlContent = generateLevel5ReportHTML(reportData);
+      const filename = generateLevel5ReportFilename(reportData);
+
+      await generatePDFFromHTML(htmlContent, filename);
+    } catch (error) {
+      // console.error("Error generating Level 5 PDF:", error);
+      alert("Failed to generate PDF report. Please try again.");
+    } finally {
+      setGeneratingPDF(null);
+    }
+  };
+
+  // ✅ Show loading spinner while auth is initializing
+  if (!isInitialized) {
+    return (
+      <Container maxWidth="xl" sx={{ backgroundColor: "#ffffff", py: 14 }}>
+        <Box
+          sx={{
+            display: "flex",
+            flexDirection: "column",
+            alignItems: "center",
+            justifyContent: "center",
+            minHeight: "60vh",
+            gap: 2,
+          }}
+        >
+          <CircularProgress size={60} sx={{ color: "#FF4F00" }} />
+          <Typography
+            sx={{
+              color: "#64748b",
+              fontSize: "18px",
+              fontFamily: "Source Sans Pro",
+            }}
+          >
+            Loading your dashboard...
+          </Typography>
+        </Box>
+      </Container>
+    );
+  }
+
+  // ✅ Redirect if not authenticated (after initialization)
   if (!isAuthenticated || !user) {
     return null; // Will redirect via useEffect
   }
@@ -352,7 +481,7 @@ export default function UserDashboard() {
   // Get next available level
   const nextLevel = progress?.highestUnlockedLevel || 1;
   const completedLevels = progress?.completedLevels || [];
-  const totalLevels = 4;
+  const totalLevels = 5;
 
   // Get last test information (most recent test from history)
   const lastTest = testHistory.length > 0 ? testHistory[0] : null;
@@ -435,7 +564,7 @@ export default function UserDashboard() {
                 fontFamily: "source Sans Pro",
               }}
             >
-              Welcome back, {user.username}
+              Welcome, {user.username}
             </Typography>
           </Box>
           <Chip
@@ -544,7 +673,7 @@ export default function UserDashboard() {
                   gap: 2,
                 }}
               >
-                {[1, 2, 3, 4].map((level) => (
+                {[1, 2, 3, 4, 5].map((level) => (
                   <Box
                     key={level}
                     sx={{
@@ -581,84 +710,193 @@ export default function UserDashboard() {
               }}
             >
               {/* Left Side - Info and Buttons */}
-              <Box sx={{ flex: 1 }}>
-                <Typography
-                  variant="h6"
-                  sx={{ fontWeight: 600, mb: 1, color: "#1e293b" }}
-                >
-                  Your Last Test Score
-                </Typography>
-                <Box
-                  sx={{
-                    display: "flex",
-                    alignItems: "center",
-                    gap: 4,
-                    mb: 4,
-                  }}
-                >
-                  <Typography variant="body2" sx={{ color: "#64748b" }}>
-                    Test Date: {lastTestDate}
+              {testHistory.length > 0 ? (
+                <Box sx={{ flex: 1 }}>
+                  <Typography
+                    variant="h6"
+                    sx={{ fontWeight: 600, mb: 1, color: "#1e293b" }}
+                  >
+                    Your Last Test Score
                   </Typography>
                   <Box
                     sx={{
                       display: "flex",
                       alignItems: "center",
-                      gap: 1.5,
+                      gap: 4,
+                      mb: 4,
                     }}
                   >
-                    <AssessmentIcon sx={{ color: "#64748b", fontSize: 20 }} />
                     <Typography variant="body2" sx={{ color: "#64748b" }}>
-                      Level {lastCompletedLevel}
-                      {/* {lastTest?.attemptNumber &&
-                        lastTest.attemptNumber > 1 &&
-                        ` (Attempt ${lastTest.attemptNumber})`} */}
+                      Test Date: {lastTestDate}
                     </Typography>
+                    <Box
+                      sx={{
+                        display: "flex",
+                        alignItems: "center",
+                        gap: 1.5,
+                      }}
+                    >
+                      <AssessmentIcon sx={{ color: "#64748b", fontSize: 20 }} />
+                      <Typography variant="body2" sx={{ color: "#64748b" }}>
+                        Level {lastCompletedLevel}
+                      </Typography>
+                    </Box>
+                  </Box>
+
+                  <Box
+                    sx={{
+                      display: "flex",
+                      flexDirection: "row",
+                      gap: 2,
+                      mt: "auto",
+                    }}
+                  >
+                    {lastCompletedLevel === 4 && lastTest ? (
+                      // Level 4 - Use special PDF download handler
+                      <Button
+                        variant="outlined"
+                        size="medium"
+                        startIcon={
+                          generatingPDF === lastTest._id ? (
+                            <CircularProgress
+                              size={20}
+                              sx={{ color: "white" }}
+                            />
+                          ) : (
+                            <DownloadIcon />
+                          )
+                        }
+                        onClick={() => handleDownloadLevel4PDF(lastTest._id)}
+                        disabled={generatingPDF === lastTest._id}
+                        sx={{
+                          background: "#005F73",
+                          color: "white",
+                          borderRadius: "16px",
+                          padding: "12px 12px",
+                          fontSize: "16px",
+                          fontWeight: "400",
+                          height: "40px",
+                          textTransform: "none",
+                          "&:hover": {
+                            background: "#004A5C",
+                          },
+                          "&:disabled": {
+                            background: "#CCCCCC",
+                            color: "#666666",
+                          },
+                        }}
+                      >
+                        {generatingPDF === lastTest._id
+                          ? "Generating..."
+                          : "Download Report"}
+                      </Button>
+                    ) : lastCompletedLevel === 5 && lastTest ? (
+                      // Level 5 - Use Level 5 PDF download handler
+                      <Button
+                        variant="outlined"
+                        size="medium"
+                        startIcon={
+                          generatingPDF === lastTest._id ? (
+                            <CircularProgress
+                              size={20}
+                              sx={{ color: "white" }}
+                            />
+                          ) : (
+                            <DownloadIcon />
+                          )
+                        }
+                        onClick={() => handleDownloadLevel5PDF(lastTest._id)}
+                        disabled={generatingPDF === lastTest._id}
+                        sx={{
+                          background: "#005F73",
+                          color: "white",
+                          borderRadius: "16px",
+                          padding: "12px 12px",
+                          fontSize: "16px",
+                          fontWeight: "400",
+                          height: "40px",
+                          textTransform: "none",
+                          "&:hover": {
+                            background: "#004A5C",
+                          },
+                          "&:disabled": {
+                            background: "#CCCCCC",
+                            color: "#666666",
+                          },
+                        }}
+                      >
+                        {generatingPDF === lastTest._id
+                          ? "Generating..."
+                          : "Download Report"}
+                      </Button>
+                    ) : (
+                      // Levels 1, 2, 3 - Use standard report download
+                      <DownloadReportButton
+                        userData={{
+                          username: user.username,
+                          email: user.email,
+                          phoneNumber:
+                            user.countryCode && user.phoneNumber
+                              ? `+${user.countryCode}${user.phoneNumber}`
+                              : user.phoneNumber || "",
+                          reportDate: lastTestRawDate,
+                          level: lastCompletedLevel,
+                          score: lastTestScore,
+                          maxScore: 900,
+                        }}
+                      />
+                    )}
+                    <OutLineButton
+                      startIcon={<RefreshIcon />}
+                      style={{
+                        background: "transparent",
+                        color: "#374151",
+                        border: "1px solid #939393",
+                        borderRadius: "16px",
+                        padding: "3.5px 14px",
+                        fontWeight: 400,
+                        fontSize: "18px",
+                        cursor: "pointer",
+                        transition: "all 0.2s",
+                      }}
+                      onClick={() =>
+                        router.push(`/user/test?level=${lastCompletedLevel}`)
+                      }
+                    >
+                      Retake
+                    </OutLineButton>
                   </Box>
                 </Box>
-
+              ) : (
                 <Box
                   sx={{
+                    flex: 1,
                     display: "flex",
-                    flexDirection: "row",
-                    gap: 2,
-                    mt: "auto",
+                    flexDirection: "column",
+                    justifyContent: "center",
+                    height: "100%",
                   }}
                 >
-                  <DownloadReportButton
-                    userData={{
-                      username: user.username,
-                      email: user.email,
-                      phoneNumber:
-                        user.countryCode && user.phoneNumber
-                          ? `+${user.countryCode}${user.phoneNumber}`
-                          : user.phoneNumber || "",
-                      reportDate: lastTestRawDate,
-                      level: lastCompletedLevel,
-                      score: lastTestScore,
-                      maxScore: 900,
-                    }}
-                  />
-                  <OutLineButton
-                    startIcon={<RefreshIcon />}
-                    style={{
-                      background: "transparent",
-                      color: "#374151",
-                      border: "1px solid #939393",
-                      borderRadius: "16px",
-                      padding: "3.5px 14px",
-                      fontWeight: 400,
-                      fontSize: "18px",
-                      cursor: "pointer",
-                      transition: "all 0.2s",
-                    }}
-                    onClick={() =>
-                      router.push(`/user/test?level=${lastCompletedLevel}`)
-                    }
+                  <Typography
+                    variant="h6"
+                    sx={{ fontWeight: 600, mb: 2, color: "#1e293b" }}
                   >
-                    Retake
-                  </OutLineButton>
+                    Take Your First Test!
+                  </Typography>
+                  <Typography variant="body2" sx={{ color: "#64748b", mb: 3 }}>
+                    Start with Level 1 to begin your journey.
+                  </Typography>
+                  <ButtonSelfScore
+                    text="Start Level 1 Test"
+                    textStyle={{ color: "#FFF", fontSize: "20px" }}
+                    background="#FF4F00"
+                    borderRadius="16px"
+                    padding="12px 24px"
+                    fontSize="1rem"
+                    onClick={() => router.push(`/testInfo?level=1`)}
+                  />
                 </Box>
-              </Box>
+              )}
 
               {/* Right Side - Circular Progress */}
               <Box
@@ -794,7 +1032,7 @@ export default function UserDashboard() {
                   value={levelFilter}
                   onChange={(e) =>
                     setLevelFilter(
-                      e.target.value as "all" | "1" | "2" | "3" | "4"
+                      e.target.value as "all" | "1" | "2" | "3" | "4" | "5"
                     )
                   }
                   sx={{
@@ -816,6 +1054,7 @@ export default function UserDashboard() {
                   <MenuItem value="2">Level 2</MenuItem>
                   <MenuItem value="3">Level 3</MenuItem>
                   <MenuItem value="4">Level 4</MenuItem>
+                  <MenuItem value="5">Level 5</MenuItem>
                 </Select>
               </FormControl>
             </Box>
@@ -832,7 +1071,7 @@ export default function UserDashboard() {
               <Typography variant="body1" sx={{ color: "#64748b", mb: 2 }}>
                 No test history yet
               </Typography>
-              <Button
+              {/* <Button
                 variant="contained"
                 onClick={() => router.push("/user/test")}
                 sx={{
@@ -841,7 +1080,7 @@ export default function UserDashboard() {
                 }}
               >
                 Take Your First Test
-              </Button>
+              </Button> */}
             </Box>
           ) : filteredTestHistory.length === 0 ? (
             <Box sx={{ textAlign: "center", py: 4 }}>
@@ -856,7 +1095,8 @@ export default function UserDashboard() {
             <Box sx={{ display: "flex", flexDirection: "column", gap: 2 }}>
               {filteredTestHistory.map((test) => {
                 const isPendingReview =
-                  test.level === 4 && test.status === "PENDING_REVIEW";
+                  (test.level === 4 || test.level === 5) &&
+                  test.status === "PENDING_REVIEW";
                 const testScorePercentage = test.score
                   ? Math.round((test.score / 900) * 100)
                   : 0;
@@ -938,7 +1178,7 @@ export default function UserDashboard() {
                             fontFamily: "source Sans Pro",
                           }}
                         >
-                          {test.date}
+                          {test.date} at {test.time}
                         </Typography>
                       </Box>
                     </Box>
@@ -1007,7 +1247,7 @@ export default function UserDashboard() {
                                 fontFamily: "Source Sans Pro",
                               }}
                             >
-                              Time: {test.timeSpent || "N/A"}
+                              Time Taken: {test.timeSpent || "N/A"}
                             </Typography>
                           </>
                         )}
@@ -1094,6 +1334,46 @@ export default function UserDashboard() {
                                   }
                                   onClick={() =>
                                     handleDownloadLevel4PDF(test._id)
+                                  }
+                                  disabled={generatingPDF === test._id}
+                                  sx={{
+                                    background: "#005F73",
+                                    color: "white",
+                                    borderRadius: "16px",
+                                    padding: "12px 12px",
+                                    fontSize: "16px",
+                                    fontWeight: "400",
+                                    height: "40px",
+                                    textTransform: "none",
+                                    "&:hover": {
+                                      background: "#004A5C",
+                                    },
+                                    "&:disabled": {
+                                      background: "#CCCCCC",
+                                      color: "#666666",
+                                    },
+                                  }}
+                                >
+                                  {generatingPDF === test._id
+                                    ? "Generating..."
+                                    : "Download Report"}
+                                </Button>
+                              ) : test.level === 5 ? (
+                                <Button
+                                  variant="outlined"
+                                  size="medium"
+                                  startIcon={
+                                    generatingPDF === test._id ? (
+                                      <CircularProgress
+                                        size={20}
+                                        sx={{ color: "white" }}
+                                      />
+                                    ) : (
+                                      <DownloadIcon />
+                                    )
+                                  }
+                                  onClick={() =>
+                                    handleDownloadLevel5PDF(test._id)
                                   }
                                   disabled={generatingPDF === test._id}
                                   sx={{

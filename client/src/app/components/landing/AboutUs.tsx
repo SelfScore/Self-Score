@@ -1,10 +1,14 @@
 "use client";
 
 import { Box, Typography, Container } from "@mui/material";
-import AboutUsIMG from "../../../../public/images/LandingPage/aboutus.jpg"
+import AboutUsIMG from "../../../../public/images/LandingPage/aboutus.jpg";
 import Image from "next/image";
+import { useRouter } from "next/navigation";
+import ButtonSelfScore from "../ui/ButtonSelfScore";
 
 export default function AboutUs() {
+  const router = useRouter();
+
   return (
     <Box
       sx={{
@@ -88,7 +92,6 @@ export default function AboutUs() {
                 fill
                 style={{ objectFit: "cover" }}
               />
-             
             </Box>
           </Box>
 
@@ -122,7 +125,7 @@ export default function AboutUs() {
                 fontFamily: "source sans pro",
                 color: "#2B2B2B",
                 mb: 3,
-                fontWeight:"400",
+                fontWeight: "400",
               }}
             >
               At SelfScore, we believe that every individual has the potential
@@ -140,7 +143,7 @@ export default function AboutUs() {
                 fontFamily: "source sans pro",
                 color: "#2B2B2B",
                 mb: 3,
-                fontWeight:"400",
+                fontWeight: "400",
               }}
             >
               Through our four-level progressive system, we provide personalized
@@ -148,7 +151,12 @@ export default function AboutUs() {
               transform self-awareness into meaningful life changes.
             </Typography>
 
-            
+            <Box sx={{ mt: 4 }}>
+              <ButtonSelfScore
+                onClick={() => router.push("/blogs")}
+                text="Explore Our Blogs"
+              />
+            </Box>
           </Box>
         </Box>
       </Container>

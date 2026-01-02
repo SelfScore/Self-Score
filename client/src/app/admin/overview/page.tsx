@@ -30,7 +30,7 @@ import {
 } from "recharts";
 
 export default function AdminOverview() {
-  const [period, setPeriod] = useState<"7" | "14" | "30" | "all">("7");
+  const [period, setPeriod] = useState<"7" | "14" | "30" | "90" | "all">("7");
   const [analytics, setAnalytics] = useState<AnalyticsData | null>(null);
   const [loading, setLoading] = useState(true);
 
@@ -185,6 +185,7 @@ export default function AdminOverview() {
             <MenuItem value="7">Last 7 Days</MenuItem>
             <MenuItem value="14">Last 14 Days</MenuItem>
             <MenuItem value="30">Last 30 Days</MenuItem>
+            <MenuItem value="90">Last 90 Days</MenuItem>
             <MenuItem value="all">All Time</MenuItem>
           </Select>
         </FormControl>

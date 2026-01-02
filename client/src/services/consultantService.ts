@@ -1,4 +1,4 @@
-import api from '../lib/api';
+import api from "../lib/api";
 
 export interface PublicConsultant {
   _id: string;
@@ -22,13 +22,15 @@ export interface PublicConsultant {
   resume?: string;
   hourlyRate: number;
   services: {
-    sessionType: '30min' | '60min' | '90min';
+    sessionType: "30min" | "60min" | "90min";
     duration: number;
     enabled: boolean;
+    isFree?: boolean;
+    price?: number;
   }[];
   generalAvailability?: string;
   introductionVideoLink?: string;
-  applicationStatus: 'approved';
+  applicationStatus: "approved";
   appliedAt: Date;
   createdAt: Date;
   updatedAt: Date;
@@ -65,21 +67,23 @@ export const consultantService = {
   // Get all approved consultants (public endpoint)
   getPublicConsultants: async (): Promise<ApiResponse<PublicConsultant[]>> => {
     try {
-      const response = await api.get('/api/consultants/public');
+      const response = await api.get("/api/consultants/public");
       return response as unknown as ApiResponse<PublicConsultant[]>;
     } catch (error) {
-      console.error('Failed to fetch consultants:', error);
+      console.error("Failed to fetch consultants:", error);
       throw error;
     }
   },
 
   // Get single consultant by ID (public endpoint)
-  getConsultantById: async (consultantId: string): Promise<ApiResponse<PublicConsultant>> => {
+  getConsultantById: async (
+    consultantId: string
+  ): Promise<ApiResponse<PublicConsultant>> => {
     try {
       const response = await api.get(`/api/consultants/public/${consultantId}`);
       return response as unknown as ApiResponse<PublicConsultant>;
     } catch (error) {
-      console.error('Failed to fetch consultant:', error);
+      console.error("Failed to fetch consultant:", error);
       throw error;
     }
   },
