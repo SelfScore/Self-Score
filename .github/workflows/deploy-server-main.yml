@@ -19,116 +19,73 @@ jobs:
         with:
           fetch-depth: 1
 
-      - name: Cache Server Dependencies
-        uses: actions/cache@v3
+      - name: Setup Node.js
+        uses: actions/setup-node@v3
         with:
-          path: server/node_modules
-          key: ${{ runner.os }}-server-${{ hashFiles('server/package-lock.json') }}
-          restore-keys: |
-            ${{ runner.os }}-server-
+          node-version: '22'
+          cache: 'npm'
+          cache-dependency-path: server/package-lock.json
 
-      - name: Install and Build Server
+      - name: Build and Package
         run: |
           cd server
           npm ci
           npm run build
-
+          # Remove devDependencies to keep the bundle small
+          npm prune --production
+          # Clean up build artifacts if necessary (adjust if your build output is elsewhere)
           if [ -d "dist/server/dist" ]; then
             mv dist/server/dist/* dist/
             rm -rf dist/server
           fi
+          # Create a deployment artifact
+          tar -czf ../deploy.tar.gz dist node_modules package.json ecosystem.config.js
 
-      - name: Clean and Prepare Remote Server Directory
-        uses: appleboy/ssh-action@v0.1.7
-        with:
-          host: ${{ secrets.AWS_HOST_MAIN }}
-          username: ${{ secrets.AWS_USER_MAIN }}
-          key: ${{ secrets.AWS_PRIVATE_KEY_MAIN }}
-          script: |
-            mkdir -p /home/ubuntu/self-score/server-new
-            rm -rf /home/ubuntu/self-score/server-old
-
-      - name: Deploy Server Files
+      - name: Upload Artifact to EC2
         uses: appleboy/scp-action@v0.1.7
         with:
           host: ${{ secrets.AWS_HOST_MAIN }}
           username: ${{ secrets.AWS_USER_MAIN }}
           key: ${{ secrets.AWS_PRIVATE_KEY_MAIN }}
-          source: "server/dist/, server/package*.json"
-          target: "/home/ubuntu/self-score/server-new/"
-          strip_components: 1
-          concurrency: 10
+          source: "deploy.tar.gz"
+          target: "/home/ubuntu/self-score/"
 
-      - name: Install Dependencies and Restart PM2
+      - name: Extract and Restart PM2
         uses: appleboy/ssh-action@v0.1.7
         with:
           host: ${{ secrets.AWS_HOST_MAIN }}
           username: ${{ secrets.AWS_USER_MAIN }}
           key: ${{ secrets.AWS_PRIVATE_KEY_MAIN }}
           script: |
-            source ~/.bashrc 2>/dev/null || true
-            source ~/.bash_profile 2>/dev/null || true
+            # Load environment
             source ~/.profile 2>/dev/null || true
-            
             export NVM_DIR="$HOME/.nvm"
             [ -s "$NVM_DIR/nvm.sh" ] && \. "$NVM_DIR/nvm.sh"
-            [ -s "$NVM_DIR/bash_completion" ] && \. "$NVM_DIR/bash_completion"
-            
-            export PATH="$PATH:/usr/local/bin:/usr/bin:/opt/node/bin:$HOME/.npm-global/bin:$HOME/.local/bin"
-            
-            if command -v nvm >/dev/null 2>&1; then
-              nvm use default 2>/dev/null || nvm use node 2>/dev/null || true
-            fi
-            
-            cd /home/ubuntu/self-score/server-new
-            npm ci --production --no-audit --prefer-offline
             
             cd /home/ubuntu/self-score/
             
-            if [ -d "/home/ubuntu/self-score/server" ]; then
-              mv /home/ubuntu/self-score/server /home/ubuntu/self-score/server-old
-            fi
-            mv /home/ubuntu/self-score/server-new /home/ubuntu/self-score/server
-            sudo chown -R ubuntu:ubuntu /home/ubuntu/self-score/server
+            # Prepare directories
+            mkdir -p server-new
+            tar -xzf deploy.tar.gz -C server-new/
             
-            if ! command -v pm2 >/dev/null 2>&1; then
-              npm install -g pm2
-              
-              NPM_GLOBAL_PATH=$(npm root -g 2>/dev/null | sed 's/node_modules$/bin/' 2>/dev/null || echo "")
-              if [ -n "$NPM_GLOBAL_PATH" ] && [ -d "$NPM_GLOBAL_PATH" ]; then
-                export PATH="$PATH:$NPM_GLOBAL_PATH"
-              fi
-              
-              if ! command -v pm2 >/dev/null 2>&1; then
-                PM2_LOCATIONS="/usr/local/bin/pm2 /usr/bin/pm2 $HOME/.npm-global/bin/pm2 $NPM_GLOBAL_PATH/pm2"
-                PM2_FOUND=""
-                for location in $PM2_LOCATIONS; do
-                  if [ -f "$location" ]; then
-                    PM2_FOUND="$location"
-                    break
-                  fi
-                done
-                
-                if [ -n "$PM2_FOUND" ]; then
-                  PM2_CMD="$PM2_FOUND"
-                else
-                  echo "ERROR: PM2 still not found after installation"
-                  exit 1
-                fi
-              else
-                PM2_CMD="pm2"
-              fi
+            # Backup current version
+            if [ -d "server" ]; then
+              rm -rf server-old
+              mv server server-old
+            fi
+            
+            # Switch to new version
+            mv server-new server
+            rm deploy.tar.gz
+            
+            # PM2 Restart Logic
+            cd server
+            if pm2 list | grep -q "self-score"; then
+              pm2 reload ecosystem.config.js --only self-score
             else
-              PM2_CMD="pm2"
+              pm2 start ecosystem.config.js --only self-score
             fi
             
-            if $PM2_CMD list | grep -q "self-score"; then
-              $PM2_CMD reload ecosystem.config.js --only self-score
-            else
-              $PM2_CMD start ecosystem.config.js --only self-score
-            fi
-            
-            $PM2_CMD list
-            $PM2_CMD save
-            
+            pm2 save
+            # Cleanup old version after successful start
             rm -rf /home/ubuntu/self-score/server-old
