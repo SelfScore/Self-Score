@@ -123,7 +123,12 @@ export default function TestInfo({ initialLevel }: TestInfoProps) {
   };
 
   const handleStartAssessment = () => {
-    router.push(`/user/test?level=${activeLevel + 1}`);
+    const level = activeLevel + 1;
+    if (level === 5) {
+      router.push(`/user/test?level=${level}&mode=voice`);
+    } else {
+      router.push(`/user/test?level=${level}`);
+    }
   };
 
   const handleBack = () => {
