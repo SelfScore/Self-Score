@@ -327,9 +327,9 @@ export const completeInterview = async (req: Request, res: Response): Promise<vo
         }
 
         // Debug logging
-        console.log(`Interview mode: ${interview.mode}`);
-        console.log(`Answers count: ${interview.answers.length}`);
-        console.log(`Transcript count: ${interview.transcript?.length || 0}`);
+        // console.log(`Interview mode: ${interview.mode}`);
+        // console.log(`Answers count: ${interview.answers.length}`);
+        // console.log(`Transcript count: ${interview.transcript?.length || 0}`);
 
         // Check if enough content is provided
         // For mixed mode (mode switching), check total answered questions across both text and voice
