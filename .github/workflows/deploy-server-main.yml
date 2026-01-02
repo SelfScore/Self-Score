@@ -32,14 +32,17 @@ jobs:
           npm ci
           npm run build
           # Remove devDependencies to keep the bundle small
-          npm prune --production
-          # Clean up build artifacts if necessary (adjust if your build output is elsewhere)
+          npm prune --omit=dev 
+          
+          # Fix the dist folder nesting if needed
           if [ -d "dist/server/dist" ]; then
             mv dist/server/dist/* dist/
             rm -rf dist/server
           fi
-          # Create a deployment artifact
-          tar -czf ../deploy.tar.gz dist node_modules package.json ecosystem.config.js
+          
+          # Only pack what is in the repository. 
+          # Removed ecosystem.config.js from here because it's already on your server.
+          tar -czf ../deploy.tar.gz dist node_modules package.json
 
       - name: Upload Artifact to EC2
         uses: appleboy/scp-action@v0.1.7
@@ -57,29 +60,35 @@ jobs:
           username: ${{ secrets.AWS_USER_MAIN }}
           key: ${{ secrets.AWS_PRIVATE_KEY_MAIN }}
           script: |
-            # Load environment
             source ~/.profile 2>/dev/null || true
             export NVM_DIR="$HOME/.nvm"
             [ -s "$NVM_DIR/nvm.sh" ] && \. "$NVM_DIR/nvm.sh"
             
             cd /home/ubuntu/self-score/
             
-            # Prepare directories
+            # Prepare fresh directory
+            rm -rf server-new
             mkdir -p server-new
             tar -xzf deploy.tar.gz -C server-new/
             
-            # Backup current version
+            # Backup current
             if [ -d "server" ]; then
               rm -rf server-old
               mv server server-old
             fi
             
-            # Switch to new version
+            # Move new version into place
             mv server-new server
             rm deploy.tar.gz
             
-            # PM2 Restart Logic
+            # CRITICAL: Copy the ecosystem file from the parent folder into the server folder 
+            # so PM2 can find it, OR point PM2 to the parent folder.
+            if [ -f "ecosystem.config.js" ]; then
+               cp ecosystem.config.js server/
+            fi
+
             cd server
+            # Use the local ecosystem file we just copied
             if pm2 list | grep -q "self-score"; then
               pm2 reload ecosystem.config.js --only self-score
             else
@@ -87,5 +96,4 @@ jobs:
             fi
             
             pm2 save
-            # Cleanup old version after successful start
             rm -rf /home/ubuntu/self-score/server-old
