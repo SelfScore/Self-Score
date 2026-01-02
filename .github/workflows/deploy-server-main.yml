@@ -1,4 +1,3 @@
-# .github/workflows/deploy-server-main.yml
 name: Deploy Server to AWS EC2 (main)
 
 on:
@@ -29,22 +28,25 @@ jobs:
       - name: Build and Package
         run: |
           cd server
+          # 1. Install all deps (including dev) to run build
           npm ci
-          npm run build
-          # Remove devDependencies to keep the bundle small
-          npm prune --omit=dev 
           
-          # Fix the dist folder nesting if needed
+          # 2. Run TypeScript build
+          npm run build
+          
+          # 3. Remove dev dependencies to save space/RAM
+          npm prune --omit=dev
+          
+          # 4. Standardize dist folder (fixes nesting if tsc output is weird)
           if [ -d "dist/server/dist" ]; then
             mv dist/server/dist/* dist/
             rm -rf dist/server
           fi
           
-          # Only pack what is in the repository. 
-          # Removed ecosystem.config.js from here because it's already on your server.
+          # 5. Create archive of only the production files
           tar -czf ../deploy.tar.gz dist node_modules package.json
 
-      - name: Upload Artifact to EC2
+      - name: Upload Archive to EC2
         uses: appleboy/scp-action@v0.1.7
         with:
           host: ${{ secrets.AWS_HOST_MAIN }}
@@ -60,40 +62,39 @@ jobs:
           username: ${{ secrets.AWS_USER_MAIN }}
           key: ${{ secrets.AWS_PRIVATE_KEY_MAIN }}
           script: |
+            # Load Node/NVM environment
             source ~/.profile 2>/dev/null || true
             export NVM_DIR="$HOME/.nvm"
             [ -s "$NVM_DIR/nvm.sh" ] && \. "$NVM_DIR/nvm.sh"
             
             cd /home/ubuntu/self-score/
             
-            # Prepare fresh directory
+            # 1. Extract into a clean temporary directory
             rm -rf server-new
             mkdir -p server-new
             tar -xzf deploy.tar.gz -C server-new/
             
-            # Backup current
+            # 2. Atomic switch: move current to 'old', new to 'server'
             if [ -d "server" ]; then
               rm -rf server-old
               mv server server-old
             fi
-            
-            # Move new version into place
             mv server-new server
+            
+            # 3. Clean up the zip file
             rm deploy.tar.gz
             
-            # CRITICAL: Copy the ecosystem file from the parent folder into the server folder 
-            # so PM2 can find it, OR point PM2 to the parent folder.
-            if [ -f "ecosystem.config.js" ]; then
-               cp ecosystem.config.js server/
-            fi
-
-            cd server
-            # Use the local ecosystem file we just copied
+            # 4. Restart Logic
+            # We run this from /home/ubuntu/self-score/ because 
+            # ecosystem.config.js is here and looks for 'server/dist/index.js'
             if pm2 list | grep -q "self-score"; then
+              echo "Reloading existing PM2 process..."
               pm2 reload ecosystem.config.js --only self-score
             else
+              echo "Starting new PM2 process..."
               pm2 start ecosystem.config.js --only self-score
             fi
             
+            # 5. Save PM2 state and clean up backup
             pm2 save
-            rm -rf /home/ubuntu/self-score/server-old
+            rm -rf server-old
