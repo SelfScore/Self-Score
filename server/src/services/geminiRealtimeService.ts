@@ -196,7 +196,7 @@ When asked to speak a question, say it naturally and warmly, as if you're having
 
     const config = {
       setup: {
-        model: "models/gemini-2.0-flash-exp",
+        model: "models/gemini-2.0-flash-live-001",
         generation_config: {
           response_modalities: ["AUDIO"], // We want audio responses
           speech_config: {
@@ -261,18 +261,16 @@ When asked to speak a question, say it naturally and warmly, as if you're having
         const aspectsText =
           instruction.missingAspects && instruction.missingAspects.length > 0
             ? ` Specifically, they need to address: ${instruction.missingAspects.join(
-                ", "
-              )}.`
+              ", "
+            )}.`
             : "";
         instructionText = `The user's answer about the CURRENT question needs more detail.${contextText}${aspectsText} Please encourage them warmly: "${instruction.content}" Keep the focus on the CURRENT question. Then wait silently for their response.`;
         break;
 
       case "redirect":
-        instructionText = `The user went off-topic.${
-          instruction.context ? ` ${instruction.context}.` : ""
-        } Acknowledge briefly (1 sentence), then redirect back to the CURRENT question: "${
-          instruction.content
-        }"`;
+        instructionText = `The user went off-topic.${instruction.context ? ` ${instruction.context}.` : ""
+          } Acknowledge briefly (1 sentence), then redirect back to the CURRENT question: "${instruction.content
+          }"`;
         break;
 
       case "close_interview":
@@ -312,8 +310,7 @@ When asked to speak a question, say it naturally and warmly, as if you're having
       console.log(`✅ Instruction sent to Gemini: ${instruction.type}`);
     } else {
       console.error(
-        `⚠️  Cannot send instruction - WebSocket state: ${
-          stateMap[ws.readyState]
+        `⚠️  Cannot send instruction - WebSocket state: ${stateMap[ws.readyState]
         }`
       );
       console.error(`   Expected: OPEN (1), Got: ${ws.readyState}`);

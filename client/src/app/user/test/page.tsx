@@ -5,6 +5,7 @@ import { Box, Typography } from "@mui/material";
 import { Suspense } from "react";
 import Level1Test from "./Level1Test";
 import Level2Test from "./Level2Test";
+import Level3Test from "./Level3Test";
 import Level4Test from "./Level4Test";
 import { useLevelAccess } from "../../../hooks/useLevelAccess";
 import SubscriptionRequired from "../../components/ui/SubscriptionRequired";
@@ -38,17 +39,7 @@ function TestContent() {
       case "2":
         return <Level2Test />;
       case "3":
-        return (
-          <Box sx={{ textAlign: "center", p: 4 }}>
-            <Typography variant="h5" sx={{ color: "#005F73", mb: 2 }}>
-              Level 3: Action Test
-            </Typography>
-            <Typography variant="body1" sx={{ color: "#666" }}>
-              Coming Soon - This test will focus on implementing positive
-              changes in your life.
-            </Typography>
-          </Box>
-        );
+        return <Level3Test />;
       case "4":
         return (
           <Suspense

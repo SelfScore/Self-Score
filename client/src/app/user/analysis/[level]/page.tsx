@@ -107,6 +107,44 @@ export default function LevelAnalysisPage() {
         }
 
         // Fetch user's responses for this level
+        // Level 3 uses a separate question model, so fetch from test history
+        if (levelNumber === 3) {
+          // For Level 3, get the score from test history
+          const testHistory = await questionsApi.getUserTestHistory(user.userId);
+
+          if (!testHistory.success) {
+            setError("Failed to load test results");
+            return;
+          }
+
+          // Find most recent Level 3 submission
+          const level3Submissions = testHistory.data
+            .filter((item: any) => item.level === 3)
+            .sort(
+              (a: any, b: any) =>
+                new Date(b.date || b.submittedAt).getTime() -
+                new Date(a.date || a.submittedAt).getTime()
+            );
+
+          if (level3Submissions.length === 0) {
+            setError("No test results found for Level 3");
+            return;
+          }
+
+          const latestSubmission = level3Submissions[0];
+
+          setAnalysisData({
+            level: 3,
+            score: latestSubmission.score,
+            totalQuestions: latestSubmission.totalQuestions || 60,
+            responses: [],
+            completedAt: latestSubmission.date || latestSubmission.submittedAt,
+            submissionId: latestSubmission._id,
+          });
+
+          return;
+        }
+
         const responsesResult = await questionsApi.getUserResponses(
           user.userId
         );
@@ -259,12 +297,12 @@ export default function LevelAnalysisPage() {
         const testHistory = await questionsApi.getUserTestHistory(user.userId);
         const currentSubmission = testHistory.success
           ? testHistory.data
-              .filter((item: any) => item.level === levelNumber)
-              .sort(
-                (a: any, b: any) =>
-                  new Date(b.date || b.submittedAt).getTime() -
-                  new Date(a.date || a.submittedAt).getTime()
-              )[0]
+            .filter((item: any) => item.level === levelNumber)
+            .sort(
+              (a: any, b: any) =>
+                new Date(b.date || b.submittedAt).getTime() -
+                new Date(a.date || a.submittedAt).getTime()
+            )[0]
           : null;
 
         console.log("Current submission for sharing:", currentSubmission);
@@ -535,9 +573,8 @@ export default function LevelAnalysisPage() {
                   fill="none"
                   stroke="#508B28"
                   strokeWidth="16"
-                  strokeDasharray={`${
-                    (scorePercentage / 100) * (2 * Math.PI * 100)
-                  } ${2 * Math.PI * 100}`}
+                  strokeDasharray={`${(scorePercentage / 100) * (2 * Math.PI * 100)
+                    } ${2 * Math.PI * 100}`}
                   strokeLinecap="round"
                   style={{ transition: "all 1s" }}
                 />
@@ -589,7 +626,7 @@ export default function LevelAnalysisPage() {
             sx={{ mb: 3, gap: "20px" }}
           >
             {user && (
-              <DownloadReportButton 
+              <DownloadReportButton
                 userData={{
                   username: user.username,
                   email: user.email,
@@ -604,7 +641,7 @@ export default function LevelAnalysisPage() {
                 }}
                 variant="contained"
                 size="large"
-                
+
               />
             )}
             <ButtonSelfScore
@@ -612,7 +649,7 @@ export default function LevelAnalysisPage() {
                 sharingReport ? (
                   <CircularProgress size={16} color="inherit" sx={{ color: "#FFF" }} />
                 ) : (
-                  <FileUploadIcon  sx={{color:"#FFF",}}/>
+                  <FileUploadIcon sx={{ color: "#FFF", }} />
                 )
               }
               text={sharingReport ? "Generating..." : "Share"}
@@ -624,7 +661,7 @@ export default function LevelAnalysisPage() {
               disabled={sharingReport || !analysisData?.submissionId}
             />
             <ButtonSelfScore
-              startIcon={<ArrowForwardIcon  sx={{color:"#FFF"}}/>}
+              startIcon={<ArrowForwardIcon sx={{ color: "#FFF" }} />}
               text="Next Level"
               background="#FF4F00"
               borderRadius="16px"
@@ -668,8 +705,8 @@ export default function LevelAnalysisPage() {
           </Typography>
 
           {/* Score Scale */}
-          <Box sx={{ mb: 6 , width:"75%", mx:"auto"}}>
-            <Box sx={{ position: "relative", mb: 2  }}>  
+          <Box sx={{ mb: 6, width: "75%", mx: "auto" }}>
+            <Box sx={{ position: "relative", mb: 2 }}>
               <Box
                 sx={{
                   height: 8,
@@ -834,7 +871,7 @@ export default function LevelAnalysisPage() {
             sx={{ gap: "20px" }}
           >
             <ButtonSelfScore
-              startIcon={<RefreshIcon sx={{color:"#FFF"}} />}
+              startIcon={<RefreshIcon sx={{ color: "#FFF" }} />}
               text="Retake"
               background="#FF4F00"
               borderRadius="16px"
