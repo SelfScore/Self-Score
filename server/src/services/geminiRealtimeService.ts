@@ -154,18 +154,24 @@ export class GeminiRealtimeService {
       // 1. AI was actually speaking (isAISpeaking = true)
       // 2. OR this turn contained audio
       if (session.isAISpeaking || hasAudioInTurn) {
-        console.log("🎤 AI finished speaking - ready for user input");
-        session.isAISpeaking = false;
+        console.log("🎤 AI turn complete - waiting for audio to finish...");
 
-        // Notify client that AI finished speaking
-        if (session.wsConnection && session.wsConnection.readyState === 1) {
-          session.wsConnection.send(
-            JSON.stringify({
-              type: "ai_speaking",
-              speaking: false,
-            })
-          );
-        }
+        // Add a small delay to ensure all audio chunks are delivered and played
+        // This prevents the "AI stopped" message from cutting off the last words
+        setTimeout(() => {
+          session.isAISpeaking = false;
+          console.log("🎤 AI finished speaking - ready for user input");
+
+          // Notify client that AI finished speaking
+          if (session.wsConnection && session.wsConnection.readyState === 1) {
+            session.wsConnection.send(
+              JSON.stringify({
+                type: "ai_speaking",
+                speaking: false,
+              })
+            );
+          }
+        }, 500); // 500ms delay to let audio play out
       }
       // Ignore turnComplete events that don't correspond to actual speech
     }
@@ -196,13 +202,13 @@ When asked to speak a question, say it naturally and warmly, as if you're having
 
     const config = {
       setup: {
-        model: "models/gemini-2.0-flash-live-001",
+        model: "models/gemini-2.5-flash-native-audio-latest",
         generation_config: {
           response_modalities: ["AUDIO"], // We want audio responses
           speech_config: {
             voice_config: {
               prebuilt_voice_config: {
-                voice_name: "Puck", // Warm, empathetic voice
+                voice_name: "Charon", // Authoritative, informative senior coach voice
               },
             },
           },
@@ -424,7 +430,7 @@ When asked to speak a question, say it naturally and warmly, as if you're having
   ): Promise<string> {
     try {
       const model = this.genAI.getGenerativeModel({
-        model: "gemini-2.0-flash-exp",
+        model: "gemini-2.5-flash-lite",
       });
 
       const prompt = `Based on this interview question and answer, generate ONE brief follow-up to encourage elaboration.
@@ -465,7 +471,7 @@ Keep it short, natural, and encouraging. Just the follow-up sentence:`;
   ): Promise<string> {
     try {
       const model = this.genAI.getGenerativeModel({
-        model: "gemini-2.0-flash-exp",
+        model: "gemini-2.5-flash-lite",
       });
 
       const prompt = `The user went off-topic. Generate a brief, kind redirect that brings them back.

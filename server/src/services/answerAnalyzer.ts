@@ -42,14 +42,13 @@ export class AnswerAnalyzer {
       }
 
       const model = this.genAI.getGenerativeModel({
-        model: "gemini-2.0-flash-exp",
+        model: "gemini-2.5-flash-lite",
       });
 
       const prompt = `You are analyzing a user's answer to an interview question for a professional life assessment.
 
-**Question ${
-        currentQuestionIndex !== undefined ? currentQuestionIndex + 1 : ""
-      }:** ${question}
+**Question ${currentQuestionIndex !== undefined ? currentQuestionIndex + 1 : ""
+        }:** ${question}
 
 **User's Answer:** ${answer}
 

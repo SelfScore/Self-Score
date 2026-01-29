@@ -43,7 +43,7 @@ interface TranscriptEntry {
 export default function Level4VoiceTest({
   onBack,
 }: // onSwitchMode,
-Level4VoiceTestProps) {
+  Level4VoiceTestProps) {
   const router = useRouter();
   const { user } = useAuth();
 
@@ -118,52 +118,54 @@ Level4VoiceTestProps) {
     setIsRecording(false);
   }, []);
 
+  // Track scheduling time for seamless audio playback
+  const nextPlayTimeRef = useRef<number>(0);
+
   const playNextAudio = useCallback(async () => {
-    if (isPlayingRef.current || audioQueueRef.current.length === 0) {
-      return;
-    }
-
     const audioContext = aiAudioContextRef.current;
-    if (!audioContext) return;
-
-    isPlayingRef.current = true;
-    setIsAISpeaking(true);
-
-    const audioBuffer = audioQueueRef.current.shift();
-    if (!audioBuffer) {
-      isPlayingRef.current = false;
-      setIsAISpeaking(false);
+    if (!audioContext || audioQueueRef.current.length === 0) {
       return;
     }
 
-    const source = audioContext.createBufferSource();
-    source.buffer = audioBuffer;
-    source.connect(audioContext.destination);
+    // Play all queued chunks with precise timing
+    while (audioQueueRef.current.length > 0) {
+      const audioBuffer = audioQueueRef.current.shift();
+      if (!audioBuffer) continue;
 
-    source.onended = () => {
-      console.log("🎵 Audio chunk finished");
-      isPlayingRef.current = false;
+      const source = audioContext.createBufferSource();
+      source.buffer = audioBuffer;
+      source.connect(audioContext.destination);
 
-      // Check if there are more chunks to play
-      if (audioQueueRef.current.length > 0) {
-        playNextAudio();
-      } else {
-        setIsAISpeaking(false);
-        console.log("🎤 AI finished speaking");
+      // Calculate when to start this chunk
+      const currentTime = audioContext.currentTime;
+      const startTime = Math.max(currentTime, nextPlayTimeRef.current);
+
+      // Schedule the next chunk to start exactly when this one ends
+      nextPlayTimeRef.current = startTime + audioBuffer.duration;
+
+      // Track the last source for completion detection
+      if (audioQueueRef.current.length === 0) {
+        source.onended = () => {
+          // Only mark as done if queue is still empty (no new chunks arrived)
+          setTimeout(() => {
+            if (audioQueueRef.current.length === 0 && !isPlayingRef.current) {
+              setIsAISpeaking(false);
+              console.log("🎤 AI finished speaking");
+            }
+          }, 100);
+        };
       }
-    };
 
-    console.log("▶️ Playing audio chunk...");
-    source.start();
+      source.start(startTime);
+    }
   }, []);
 
   const playAIAudio = useCallback(
     async (arrayBuffer: ArrayBuffer) => {
       try {
-        console.log("🎵 Attempting to play AI audio...");
-
         if (!aiAudioContextRef.current) {
           aiAudioContextRef.current = new AudioContext({ sampleRate: 24000 });
+          nextPlayTimeRef.current = 0;
           console.log("🎵 Audio context created with sample rate: 24000");
         }
 
@@ -175,18 +177,9 @@ Level4VoiceTestProps) {
           console.log("🎵 Audio context resumed");
         }
 
-        console.log("🎵 Processing raw PCM audio data...");
-
         // Gemini sends raw PCM data (16-bit signed integers)
-        // We need to convert it to Float32Array for Web Audio API
         const int16Array = new Int16Array(arrayBuffer);
         const numSamples = int16Array.length;
-
-        console.log(
-          `📊 Samples: ${numSamples}, Duration: ${(numSamples / 24000).toFixed(
-            2
-          )}s`
-        );
 
         // Create AudioBuffer manually
         const audioBuffer = audioContext.createBuffer(1, numSamples, 24000);
@@ -197,23 +190,18 @@ Level4VoiceTestProps) {
           channelData[i] = int16Array[i] / 32768.0;
         }
 
-        console.log(
-          "✅ Audio buffer created successfully. Duration:",
-          audioBuffer.duration.toFixed(2),
-          "seconds"
-        );
+        // Mark as speaking and add to queue
+        setIsAISpeaking(true);
+        isPlayingRef.current = true;
 
-        // Add to queue instead of playing immediately
         audioQueueRef.current.push(audioBuffer);
-        console.log(
-          `📥 Added to queue. Queue length: ${audioQueueRef.current.length}`
-        );
 
-        // Start playing if not already playing
+        // Schedule playback immediately (no buffering delay)
         playNextAudio();
       } catch (error) {
         console.error("❌ Error playing AI audio:", error);
         setIsAISpeaking(false);
+        isPlayingRef.current = false;
       }
     },
     [playNextAudio]
