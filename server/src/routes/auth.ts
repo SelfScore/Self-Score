@@ -38,4 +38,7 @@ router.post(
   AuthController.verifyEmailUpdate
 );
 
+// GET /api/auth/ws-token - Get token for WebSocket authentication (requires authentication)
+router.get("/ws-token", authMiddleware, AuthController.getWsToken);
+
 export default router;

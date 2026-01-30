@@ -58,8 +58,7 @@ export class InterviewController {
     }
 
     console.log(
-      `📝 Analyzing transcript (${
-        currentTranscript.length
+      `📝 Analyzing transcript (${currentTranscript.length
       } chars): "${currentTranscript.substring(0, 100)}..."`
     );
 
@@ -171,8 +170,7 @@ export class InterviewController {
     }
 
     console.log(
-      `📋 Next question (${this.session.currentQuestionIndex + 1}/${
-        this.session.questions.length
+      `📋 Next question (${this.session.currentQuestionIndex + 1}/${this.session.questions.length
       }): ${nextQuestion.questionText}`
     );
 
@@ -200,8 +198,7 @@ export class InterviewController {
     }
 
     console.log(
-      `🎙️ Sending instruction to Gemini to ask question ${
-        this.session.currentQuestionIndex + 1
+      `🎙️ Sending instruction to Gemini to ask question ${this.session.currentQuestionIndex + 1
       }`
     );
     await this.sendInstructionToGemini(instruction);
@@ -448,31 +445,39 @@ export class InterviewController {
       const allAnswers = this.stateMachine.getAllAnswers();
       const statistics = this.stateMachine.getStatistics();
 
+      // Debug: Log what we're getting from state machine
+      console.log(`📊 DEBUG: allAnswers from state machine: ${allAnswers.length} answers`);
+      allAnswers.forEach((a, i) => {
+        console.log(`   Answer ${i + 1}: questionId=${a.questionId}, transcript="${a.transcript.substring(0, 50)}...", isComplete=${a.isComplete}`);
+      });
+
       // Filter out empty transcripts and update database
-      interview.answers = allAnswers
-        .filter(
-          (answer) => answer.transcript && answer.transcript.trim().length > 0
-        )
-        .map((answer) => ({
-          questionId: answer.questionId,
-          transcript: answer.transcript,
-          confidence: answer.confidence,
-          isComplete: answer.isComplete,
-          isOffTopic: answer.isOffTopic,
-          missingAspects: answer.missingAspects,
-          followUpAsked: answer.followUpAsked,
-          followUpCount: answer.followUpCount,
-          audioTimestamp: {
-            start: new Date(answer.audioStartTime),
-            end: new Date(Date.now()),
-          },
-        }));
+      const filteredAnswers = allAnswers.filter(
+        (answer) => answer.transcript && answer.transcript.trim().length > 0
+      );
+
+      console.log(`📊 DEBUG: After filtering empty transcripts: ${filteredAnswers.length} answers`);
+
+      interview.answers = filteredAnswers.map((answer) => ({
+        questionId: answer.questionId,
+        transcript: answer.transcript,
+        confidence: answer.confidence,
+        isComplete: answer.isComplete,
+        isOffTopic: answer.isOffTopic,
+        missingAspects: answer.missingAspects,
+        followUpAsked: answer.followUpAsked,
+        followUpCount: answer.followUpCount,
+        audioTimestamp: {
+          start: new Date(answer.audioStartTime),
+          end: new Date(Date.now()),
+        },
+      }));
 
       interview.interviewMetadata = statistics;
       await interview.save();
 
       console.log(
-        `💾 Saved answer to DB - Total answers: ${interview.answers.length}/${this.session.questions.length}`
+        `💾 Saved answer to DB - Interview: ${this.session.interviewId} - Total answers: ${interview.answers.length}/${this.session.questions.length}`
       );
     } catch (error) {
       console.error("❌ Error saving answer to database:", error);

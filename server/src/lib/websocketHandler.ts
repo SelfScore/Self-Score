@@ -10,9 +10,19 @@ import { InterviewSession } from "../types/realtimeInterview.types";
  * WebSocket handler for realtime audio streaming
  */
 export function setupWebSocketServer(httpServer: HTTPServer): WebSocketServer {
-  const wss = new WebSocketServer({
-    server: httpServer,
-    path: "/ws/interview",
+  // Use noServer mode to allow multiple WebSocket servers on same HTTP server
+  const wss = new WebSocketServer({ noServer: true });
+
+  // Handle HTTP upgrade manually for /ws/interview path
+  httpServer.on("upgrade", (request, socket, head) => {
+    const pathname = new URL(request.url || "", `http://${request.headers.host}`).pathname;
+
+    if (pathname === "/ws/interview") {
+      wss.handleUpgrade(request, socket, head, (ws) => {
+        wss.emit("connection", ws, request);
+      });
+    }
+    // Let other paths be handled by other WebSocket servers
   });
 
   console.log("✅ WebSocket server initialized on /ws/interview");
@@ -57,9 +67,8 @@ export function setupWebSocketServer(httpServer: HTTPServer): WebSocketServer {
       console.error("❌ Failed to initialize services:", error);
       sendControlMessage(ws, {
         type: "error",
-        message: `Initialization failed: ${
-          error instanceof Error ? error.message : "Unknown error"
-        }`,
+        message: `Initialization failed: ${error instanceof Error ? error.message : "Unknown error"
+          }`,
       });
       ws.close(1011, "Failed to initialize interview services");
       return;
@@ -73,7 +82,7 @@ export function setupWebSocketServer(httpServer: HTTPServer): WebSocketServer {
       session.currentQuestionIndex === 0 && session.answers.size === 0;
     const isResuming = session.answers.size > 0;
 
-    if (session.geminiConnection) {
+    if (session.geminiConnection && session.geminiConnection.readyState === 1) {
       if (isNewInterview) {
         // New interview - welcome + first question
         const firstQuestion = session.questions[0];
@@ -86,7 +95,7 @@ export function setupWebSocketServer(httpServer: HTTPServer): WebSocketServer {
                   {
                     text: `Say this welcome message and then ask the first question (do not add anything else):
 
-"Hello! Welcome to your Level 4 Life Assessment Interview. I'll be guiding you through a series of questions to better understand your life management skills. Please take your time with each answer and speak openly. Let's begin.
+"Hello! Welcome to your Level 5 Life Assessment Interview. I'll be guiding you through a series of questions to better understand your life management skills. Please take your time with each answer and speak openly. Let's begin.
 
 ${firstQuestion.questionText}"
 
@@ -113,7 +122,7 @@ After asking this, stop speaking and wait for the user to respond.`,
                   {
                     text: `Say this welcome back message and then ask the current question (do not add anything else):
 
-"Welcome back! Let's continue your Level 4 Life Assessment from where we left off. Here's the next question:
+"Welcome back! Let's continue your Level 5 Life Assessment from where we left off. Here's the next question:
 
 ${currentQuestion.questionText}"
 
@@ -480,9 +489,8 @@ async function initializeGemini(
 
   session.geminiConnection = connection;
 
-  // Wait a moment for connection to stabilize
-  await new Promise((resolve) => setTimeout(resolve, 500));
-
+  // Connection is now guaranteed to be fully open since createRealtimeConnection
+  // only resolves after the WebSocket is OPEN and configuration is sent
   console.log(`✅ Gemini connection ready for session: ${session.sessionId}`);
 
   // Note: Welcome message and first question are sent from main WebSocket handler

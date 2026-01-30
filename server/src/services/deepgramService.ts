@@ -30,7 +30,7 @@ export class DeepgramService {
     try {
       const connection = this.deepgramClient.listen.live({
         model: "nova-3",
-        language: "en-US",
+        language: "multi", // Multi-language detection (supports English, Hindi, etc.)
         smart_format: true,
         interim_results: true,
         punctuate: true,

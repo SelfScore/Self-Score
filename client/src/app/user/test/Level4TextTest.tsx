@@ -47,9 +47,10 @@ export default function Level4TextTest({
 
   // Speech recognition state
   const [isRecording, setIsRecording] = useState(false);
+  const [isProcessing, setIsProcessing] = useState(false);
   const [showRecordingModal, setShowRecordingModal] = useState(false);
   const [recordingError, setRecordingError] = useState("");
-  const recognitionRef = useRef<any>(null);
+  const [interimText, setInterimText] = useState(""); // Live interim transcript
 
   const STORAGE_KEY = "level4_text_test_answers";
 
@@ -236,91 +237,205 @@ export default function Level4TextTest({
     }
   };
 
-  // Speech recognition handlers
-  const startRecording = () => {
+  // Deepgram transcription via WebSocket
+  const wsRef = useRef<WebSocket | null>(null);
+  const audioContextRef = useRef<AudioContext | null>(null);
+  const processorRef = useRef<ScriptProcessorNode | null>(null);
+  const streamRef = useRef<MediaStream | null>(null);
+
+  const startRecording = async () => {
     setRecordingError("");
     setShowRecordingModal(true);
 
-    // Check if browser supports Web Speech API
-    const SpeechRecognition =
-      (window as any).SpeechRecognition ||
-      (window as any).webkitSpeechRecognition;
-
-    if (!SpeechRecognition) {
-      setRecordingError(
-        "Speech recognition is not supported in your browser. Please use Chrome, Edge, or Safari."
-      );
-      return;
-    }
-
     try {
-      const recognition = new SpeechRecognition();
-      recognition.continuous = true;
-      recognition.interimResults = true;
-      recognition.lang = "en-US";
+      // Browser compatibility check
+      if (!navigator.mediaDevices || !navigator.mediaDevices.getUserMedia) {
+        setRecordingError("Your browser doesn't support voice recording. Please use Chrome, Firefox, or Edge.");
+        return;
+      }
 
-      let finalTranscript = "";
+      if (typeof AudioContext === "undefined" && typeof (window as any).webkitAudioContext === "undefined") {
+        setRecordingError("Your browser doesn't support audio processing. Please use Chrome, Firefox, or Edge.");
+        return;
+      }
 
-      recognition.onresult = (event: any) => {
-        let _interimTranscript = "";
+      if (typeof WebSocket === "undefined") {
+        setRecordingError("Your browser doesn't support WebSocket. Please use a modern browser.");
+        return;
+      }
 
-        for (let i = event.resultIndex; i < event.results.length; i++) {
-          const transcript = event.results[i][0].transcript;
-          if (event.results[i].isFinal) {
-            finalTranscript += transcript + " ";
-          } else {
-            _interimTranscript += transcript;
-          }
-        }
-
-        // Update the answer with the transcribed text
-        if (finalTranscript) {
-          const currentAnswer =
-            answers[currentQuestion?.questionId || ""] || "";
-          const newAnswer = currentAnswer
-            ? `${currentAnswer} ${finalTranscript}`.trim()
-            : finalTranscript.trim();
-          handleAnswerChange(newAnswer);
-          finalTranscript = "";
-        }
-      };
-
-      recognition.onerror = (event: any) => {
-        console.error("Speech recognition error:", event.error);
-        if (event.error === "no-speech") {
-          setRecordingError(
-            "No speech detected. Please speak clearly and try again."
-          );
-        } else if (event.error === "not-allowed") {
-          setRecordingError(
-            "Microphone permission denied. Please allow microphone access."
-          );
+      // Get auth token for WebSocket
+      let authToken = "";
+      try {
+        const response = await fetch(`${process.env.NEXT_PUBLIC_API_URL || "http://localhost:5001"}/api/auth/ws-token`, {
+          credentials: "include",
+        });
+        const data = await response.json();
+        if (data.success && data.data?.token) {
+          authToken = data.data.token;
         } else {
-          setRecordingError("Speech recognition error. Please try again.");
+          setRecordingError("Please log in to use voice recording.");
+          return;
         }
-        setIsRecording(false);
+      } catch (authError) {
+        console.error("Auth token fetch error:", authError);
+        setRecordingError("Failed to authenticate. Please log in again.");
+        return;
+      }
+
+      // Get microphone access
+      const stream = await navigator.mediaDevices.getUserMedia({
+        audio: {
+          channelCount: 1,
+          sampleRate: 16000,
+          echoCancellation: true,
+          noiseSuppression: true,
+        },
+      });
+      streamRef.current = stream;
+
+      // Create AudioContext for audio processing
+      const AudioContextClass = window.AudioContext || (window as any).webkitAudioContext;
+      const audioContext = new AudioContextClass({ sampleRate: 16000 });
+      audioContextRef.current = audioContext;
+
+      // Connect to transcription WebSocket with auth token
+      const wsUrl = `${process.env.NEXT_PUBLIC_WS_URL || "ws://localhost:5001"}/ws/transcribe?token=${encodeURIComponent(authToken)}`;
+      const ws = new WebSocket(wsUrl);
+      wsRef.current = ws;
+
+      ws.onopen = () => {
+        console.log("🎤 Connected to transcription service");
       };
 
-      recognition.onend = () => {
-        setIsRecording(false);
+      ws.onmessage = (event) => {
+        const data = JSON.parse(event.data);
+
+        if (data.type === "ready") {
+          console.log("✅ Transcription service ready");
+          setIsRecording(true);
+
+          // Start streaming audio
+          const source = audioContext.createMediaStreamSource(stream);
+          const processor = audioContext.createScriptProcessor(4096, 1, 1);
+          processorRef.current = processor;
+
+          processor.onaudioprocess = (e) => {
+            if (ws.readyState === WebSocket.OPEN) {
+              const inputData = e.inputBuffer.getChannelData(0);
+              // Convert Float32 to Int16 PCM
+              const pcmData = new Int16Array(inputData.length);
+              for (let i = 0; i < inputData.length; i++) {
+                pcmData[i] = Math.max(-32768, Math.min(32767, inputData[i] * 32768));
+              }
+              ws.send(pcmData.buffer);
+            }
+          };
+
+          source.connect(processor);
+          processor.connect(audioContext.destination);
+        } else if (data.type === "transcript_interim" && data.transcript) {
+          // Show interim text in real-time
+          setInterimText(data.transcript);
+        } else if (data.type === "transcript_final" && data.transcript) {
+          // Append final transcript to permanent answer, clear interim
+          setInterimText("");
+          if (currentQuestion?.questionId) {
+            setAnswers((prevAnswers) => {
+              const existingAnswer = prevAnswers[currentQuestion.questionId] || "";
+              const newAnswer = existingAnswer
+                ? `${existingAnswer} ${data.transcript}`.trim()
+                : data.transcript.trim();
+              return {
+                ...prevAnswers,
+                [currentQuestion.questionId]: newAnswer,
+              };
+            });
+          }
+        } else if (data.type === "complete") {
+          // Backend confirmed all transcripts received - safe to close
+          console.log("✅ Backend confirmed complete, closing connection");
+          setIsProcessing(false);
+          setShowRecordingModal(false);
+
+          // Close everything
+          if (wsRef.current) {
+            wsRef.current.close();
+            wsRef.current = null;
+          }
+          if (audioContextRef.current) {
+            audioContextRef.current.close();
+            audioContextRef.current = null;
+          }
+        } else if (data.type === "error") {
+          console.error("❌ Transcription error:", data.message);
+          setRecordingError(data.message);
+        }
       };
 
-      recognition.start();
-      setIsRecording(true);
-      recognitionRef.current = recognition;
-    } catch (err) {
-      console.error("Error starting speech recognition:", err);
-      setRecordingError("Failed to start recording. Please try again.");
+      ws.onerror = (error) => {
+        console.error("❌ WebSocket error:", error);
+        setRecordingError("Connection error. Please try again.");
+        stopRecording();
+      };
+
+      ws.onclose = () => {
+        console.log("🔌 Transcription connection closed");
+      };
+
+    } catch (err: any) {
+      console.error("Error starting recording:", err);
+      if (err.name === "NotAllowedError") {
+        setRecordingError("Microphone permission denied. Please allow microphone access.");
+      } else {
+        setRecordingError("Failed to start recording. Please try again.");
+      }
+      setIsRecording(false);
     }
   };
 
   const stopRecording = () => {
-    if (recognitionRef.current) {
-      recognitionRef.current.stop();
-      recognitionRef.current = null;
+    // Stop audio capture immediately (but keep WebSocket open for remaining transcripts)
+    if (processorRef.current) {
+      processorRef.current.disconnect();
+      processorRef.current = null;
     }
+
+    // Stop media stream
+    if (streamRef.current) {
+      streamRef.current.getTracks().forEach((track) => track.stop());
+      streamRef.current = null;
+    }
+
+    // Show processing state and clear interim
     setIsRecording(false);
-    setShowRecordingModal(false);
+    setIsProcessing(true);
+    setInterimText("");
+
+    // Send stop signal to backend - it will send "complete" when all transcripts are done
+    if (wsRef.current && wsRef.current.readyState === WebSocket.OPEN) {
+      console.log("📤 Sending stop_recording signal to backend");
+      wsRef.current.send(JSON.stringify({ type: "stop_recording" }));
+    } else {
+      // WebSocket not open, just close everything
+      setIsProcessing(false);
+      setShowRecordingModal(false);
+    }
+
+    // Fallback timeout in case backend doesn't respond (10 seconds)
+    setTimeout(() => {
+      if (wsRef.current) {
+        console.log("⏰ Fallback timeout - closing connection");
+        wsRef.current.close();
+        wsRef.current = null;
+      }
+      if (audioContextRef.current) {
+        audioContextRef.current.close();
+        audioContextRef.current = null;
+      }
+      setIsProcessing(false);
+      setShowRecordingModal(false);
+    }, 10000);
   };
 
   if (loading) {
@@ -556,9 +671,15 @@ export default function Level4TextTest({
             multiline
             rows={8}
             fullWidth
-            value={currentAnswer}
+            value={isRecording || isProcessing
+              ? (currentAnswer ? `${currentAnswer} ${interimText}` : interimText).trim()
+              : currentAnswer
+            }
             onChange={(e) => handleAnswerChange(e.target.value)}
             placeholder="Type your answer here... Be as detailed and thoughtful as possible."
+            InputProps={{
+              readOnly: isRecording || isProcessing,
+            }}
             sx={{
               "& .MuiOutlinedInput-root": {
                 backgroundColor: "#FFFFFF",
@@ -566,7 +687,7 @@ export default function Level4TextTest({
                 fontSize: "16px",
                 fontFamily: "Source Sans Pro",
                 "& fieldset": {
-                  borderColor: "#E0E0E0",
+                  borderColor: isRecording ? "#005F73" : "#E0E0E0",
                   borderWidth: "2px",
                 },
                 "&:hover fieldset": {
@@ -787,10 +908,11 @@ export default function Level4TextTest({
                 </Typography>
 
                 <ButtonSelfScore
-                  text="Stop Recording"
-                  startIcon={<StopCircleIcon />}
+                  text={isProcessing ? "Processing..." : "Stop Recording"}
+                  startIcon={isProcessing ? <CircularProgress size={20} sx={{ color: "#fff" }} /> : <StopCircleIcon />}
                   onClick={stopRecording}
-                  background="#E65100"
+                  disabled={isProcessing}
+                  background={isProcessing ? "#888" : "#E65100"}
                   padding="12px 32px"
                   borderRadius="8px"
                   style={{

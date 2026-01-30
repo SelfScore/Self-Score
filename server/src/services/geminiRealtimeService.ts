@@ -28,6 +28,7 @@ export class GeminiRealtimeService {
 
   /**
    * Create a realtime voice connection to Gemini Live API
+   * Waits for connection to be fully open before returning
    */
   async createRealtimeConnection(
     session: InterviewSession,
@@ -40,74 +41,109 @@ export class GeminiRealtimeService {
       `🎙️ Connecting to Gemini Live API for session: ${session.sessionId}`
     );
 
-    const ws = new WebSocket(wsUrl);
+    return new Promise((resolve, reject) => {
+      const ws = new WebSocket(wsUrl);
+      let isResolved = false;
 
-    // Connection opened
-    ws.on("open", async () => {
-      console.log(
-        `✅ Gemini Live API connected for session: ${session.sessionId}`
-      );
+      // Timeout after 15 seconds
+      const timeout = setTimeout(() => {
+        if (!isResolved) {
+          isResolved = true;
+          console.error("❌ Gemini connection timeout");
+          ws.close();
+          reject(new Error("Gemini connection timeout - please try again"));
+        }
+      }, 15000);
 
-      try {
-        // Send initial configuration (includes system instruction)
-        await this.sendConfiguration(ws);
+      // Connection opened
+      ws.on("open", async () => {
+        console.log(
+          `✅ Gemini Live API connected for session: ${session.sessionId}`
+        );
 
-        // Mark connection as ready
-        session.isAISpeaking = false;
-      } catch (error) {
-        console.error("❌ Error during Gemini initialization:", error);
+        try {
+          // Send initial configuration (includes system instruction)
+          await this.sendConfiguration(ws);
+
+          // Mark connection as ready
+          session.isAISpeaking = false;
+
+          // Now resolve - connection is fully ready
+          if (!isResolved) {
+            isResolved = true;
+            clearTimeout(timeout);
+            resolve(ws);
+          }
+        } catch (error) {
+          console.error("❌ Error during Gemini initialization:", error);
+          if (!isResolved) {
+            isResolved = true;
+            clearTimeout(timeout);
+            reject(error);
+          }
+          onError(error);
+        }
+      });
+
+      // Receive messages from Gemini
+      ws.on("message", (data: Buffer) => {
+        try {
+          const message = JSON.parse(data.toString());
+
+          // Handle server content (AI responses)
+          if (message.serverContent) {
+            this.handleServerContent(
+              message.serverContent,
+              session,
+              onAudioResponse
+            );
+          }
+
+          // Handle setup complete
+          if (message.setupComplete) {
+            console.log("✅ Gemini setup complete");
+          }
+
+          // Handle errors from Gemini
+          if (message.error) {
+            console.error("❌ Gemini error:", message.error);
+            onError(message.error);
+          }
+        } catch (error) {
+          console.error("❌ Error parsing Gemini message:", error);
+        }
+      });
+
+      // Handle errors
+      ws.on("error", (error) => {
+        console.error("❌ Gemini WebSocket error:", error);
+        if (!isResolved) {
+          isResolved = true;
+          clearTimeout(timeout);
+          reject(error);
+        }
         onError(error);
-      }
-    });
+      });
 
-    // Receive messages from Gemini
-    ws.on("message", (data: Buffer) => {
-      try {
-        const message = JSON.parse(data.toString());
+      // Handle close
+      ws.on("close", (code, reason) => {
+        console.log(
+          `🔌 Gemini connection closed for session: ${session.sessionId}`
+        );
+        console.log(`   Close Code: ${code}`);
+        console.log(
+          `   Close Reason: ${reason.toString() || "No reason provided"}`
+        );
+        session.isAISpeaking = false;
 
-        // Handle server content (AI responses)
-        if (message.serverContent) {
-          this.handleServerContent(
-            message.serverContent,
-            session,
-            onAudioResponse
-          );
+        // If closed before resolving, reject
+        if (!isResolved) {
+          isResolved = true;
+          clearTimeout(timeout);
+          reject(new Error(`Gemini connection closed unexpectedly: ${code}`));
         }
-
-        // Handle setup complete
-        if (message.setupComplete) {
-          console.log("✅ Gemini setup complete");
-        }
-
-        // Handle errors from Gemini
-        if (message.error) {
-          console.error("❌ Gemini error:", message.error);
-          onError(message.error);
-        }
-      } catch (error) {
-        console.error("❌ Error parsing Gemini message:", error);
-      }
+      });
     });
-
-    // Handle errors
-    ws.on("error", (error) => {
-      console.error("❌ Gemini WebSocket error:", error);
-      onError(error);
-    });
-
-    // Handle close
-    ws.on("close", (code, reason) => {
-      console.log(
-        `🔌 Gemini connection closed for session: ${session.sessionId}`
-      );
-      console.log(`   Close Code: ${code}`);
-      console.log(
-        `   Close Reason: ${reason.toString() || "No reason provided"}`
-      );
-      session.isAISpeaking = false;
-    });
-
-    return ws;
   }
 
   /**

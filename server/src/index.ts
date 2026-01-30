@@ -11,6 +11,7 @@ import routes from "./routes";
 import { errorHandler, notFound } from "./middleware/errorHandler";
 import { requestLogger } from "./middleware/logger";
 import { setupWebSocketServer } from "./lib/websocketHandler";
+import { setupTranscriptionWebSocket } from "./lib/transcriptionHandler";
 import sessionRegistry from "./services/sessionManager";
 
 // Create Express app
@@ -112,6 +113,9 @@ const startServer = async (): Promise<void> => {
     // Setup WebSocket server for realtime interviews
     setupWebSocketServer(httpServer);
 
+    // Setup WebSocket server for transcription-only (Level4 Text Test)
+    setupTranscriptionWebSocket(httpServer);
+
     httpServer.listen(PORT, () => {
       console.log(`🚀 Server is running on port ${PORT}`);
       console.log(`🌍 Environment: ${process.env.NODE_ENV || "development"}`);
@@ -119,11 +123,11 @@ const startServer = async (): Promise<void> => {
         `📱 Client URL: ${process.env.CLIENT_URL || "http://localhost:3000"}`
       );
       console.log(
-        `🗄️  Database: ${
-          process.env.MONGODB_URI || "mongodb://localhost:27017/lifescore"
+        `🗄️  Database: ${process.env.MONGODB_URI || "mongodb://localhost:27017/lifescore"
         }`
       );
       console.log(`🎙️  WebSocket: ws://localhost:${PORT}/ws/interview`);
+      console.log(`🎤 Transcription: ws://localhost:${PORT}/ws/transcribe`);
       console.log(`💡 Test the server: http://localhost:${PORT}`);
       console.log("📚 Available endpoints:");
       console.log("   GET  / - API information");

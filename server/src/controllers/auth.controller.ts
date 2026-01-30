@@ -854,4 +854,36 @@ export class AuthController {
       res.status(500).json(response);
     }
   }
+
+  // Get WebSocket authentication token
+  static async getWsToken(req: Request, res: Response): Promise<void> {
+    try {
+      // Token is already validated by authMiddleware
+      const token = req.cookies?.authToken;
+
+      if (!token) {
+        const response: ApiResponse = {
+          success: false,
+          message: "No authentication token found",
+        };
+        res.status(401).json(response);
+        return;
+      }
+
+      const response: ApiResponse<{ token: string }> = {
+        success: true,
+        message: "WebSocket token retrieved",
+        data: { token },
+      };
+
+      res.status(200).json(response);
+    } catch (error) {
+      console.error("Error in getWsToken route:", error);
+      const response: ApiResponse = {
+        success: false,
+        message: "Internal Server Error",
+      };
+      res.status(500).json(response);
+    }
+  }
 }

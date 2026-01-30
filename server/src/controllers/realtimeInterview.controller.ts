@@ -58,7 +58,7 @@ export const startRealtimeInterview = async (
     // CHANGE 2: Check if user has an active interview in database (but not in memory)
     const existingInterview = await RealtimeInterviewModel.findOne({
       userId,
-      level: 4,
+      level: 5,
       status: RealtimeInterviewStatus.IN_PROGRESS,
     });
 
