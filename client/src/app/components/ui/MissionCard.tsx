@@ -12,11 +12,13 @@ const MissionCard: React.FC<MissionCardProps> = ({ icon, title, points }) => {
   return (
     <Box
       sx={{
-        minWidth: "362.65625px",
-        minHeight:"296px",
-        gap: "16px",
-        borderRadius: "24px",
-        padding: "32px",
+        width: { xs: "100%", md: "auto" },
+        minWidth: { xs: "unset", md: "362.65625px" },
+        maxWidth: { xs: "100%", md: "400px" },
+        minHeight: { xs: "auto", md: "296px" },
+        gap: { xs: "12px", md: "16px" },
+        borderRadius: { xs: "16px", md: "24px" },
+        padding: { xs: "24px", md: "32px" },
         background: "#F7F7F7",
         border: "1px solid #3A3A3A4D",
         display: "flex",
@@ -26,14 +28,17 @@ const MissionCard: React.FC<MissionCardProps> = ({ icon, title, points }) => {
       {/* Icon Box */}
       <Box
         sx={{
-          width: "64px",
-          height: "64px",
-          borderRadius: "16px",
+          width: { xs: "52px", md: "64px" },
+          height: { xs: "52px", md: "64px" },
+          borderRadius: { xs: "12px", md: "16px" },
           background: "#FF834C",
           border: "1px solid #E5E7EB",
           display: "flex",
           alignItems: "center",
           justifyContent: "center",
+          "& svg": {
+            fontSize: { xs: 28, md: 32 },
+          },
         }}
       >
         {icon}
@@ -44,7 +49,7 @@ const MissionCard: React.FC<MissionCardProps> = ({ icon, title, points }) => {
         sx={{
           fontFamily: "Source Sans Pro",
           fontWeight: 600,
-          fontSize: "24px",
+          fontSize: { xs: "20px", md: "24px" },
           lineHeight: "100%",
           letterSpacing: "0%",
           color: "#111827",
@@ -58,7 +63,7 @@ const MissionCard: React.FC<MissionCardProps> = ({ icon, title, points }) => {
         sx={{
           display: "flex",
           flexDirection: "column",
-          gap: "8px",
+          gap: { xs: "6px", md: "8px" },
         }}
       >
         {points.map((point, index) => (
@@ -67,8 +72,8 @@ const MissionCard: React.FC<MissionCardProps> = ({ icon, title, points }) => {
             sx={{
               fontFamily: "Source Sans Pro",
               fontWeight: 400,
-              fontSize: "16px",
-              lineHeight: "100%",
+              fontSize: { xs: "14px", md: "16px" },
+              lineHeight: { xs: "140%", md: "100%" },
               letterSpacing: "0%",
               color: "#4B5563",
             }}

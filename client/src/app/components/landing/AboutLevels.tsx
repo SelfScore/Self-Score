@@ -212,8 +212,8 @@ export default function AboutLevels() {
                       activeTab === index
                         ? "#FF4F00"
                         : isLevelUnlocked(index)
-                        ? "#CACACA80"
-                        : "#CACACA80",
+                          ? "#CACACA80"
+                          : "#CACACA80",
                     position: "relative",
                     display: "flex",
                     alignItems: "center",
@@ -227,15 +227,15 @@ export default function AboutLevels() {
                       index === levels.length - 1
                         ? "polygon(0 0, 100% 0, 100% 100%, 0 100%, 20px 50%)"
                         : index === 0
-                        ? "polygon(0 0, calc(100% - 20px) 0, 100% 50%, calc(100% - 20px) 100%, 0 100%)"
-                        : "polygon(0 0, calc(100% - 20px) 0, 100% 50%, calc(100% - 20px) 100%, 0 100%, 20px 50%)",
+                          ? "polygon(0 0, calc(100% - 20px) 0, 100% 50%, calc(100% - 20px) 100%, 0 100%)"
+                          : "polygon(0 0, calc(100% - 20px) 0, 100% 50%, calc(100% - 20px) 100%, 0 100%, 20px 50%)",
                     opacity: isLevelUnlocked(index) ? 1 : 0.7,
                     borderRadius:
                       index === 0
                         ? "25px 0 0 25px"
                         : index === levels.length - 1
-                        ? "0 25px 25px 0"
-                        : "0",
+                          ? "0 25px 25px 0"
+                          : "0",
                     // Add blue border for Level 5
                     ...(index === 4 && {
                       border: "2px solid #FF4F00",
@@ -269,7 +269,20 @@ export default function AboutLevels() {
                         whiteSpace: "nowrap",
                       }}
                     >
-                      {level.title}
+                      {/* Full text for medium+ screens */}
+                      <Box
+                        component="span"
+                        sx={{ display: { xs: "none", md: "inline" } }}
+                      >
+                        {level.title}
+                      </Box>
+                      {/* Abbreviated text for small screens */}
+                      <Box
+                        component="span"
+                        sx={{ display: { xs: "inline", md: "none" } }}
+                      >
+                        L{level.id}
+                      </Box>
                     </Typography>
                   </Box>
                 </Box>

@@ -18,7 +18,7 @@ import {
 import {
   Menu as MenuIcon,
   Close as CloseIcon,
-  // AccountCircle,
+  AccountCircle,
   Dashboard,
   ExitToApp,
 } from "@mui/icons-material";
@@ -151,67 +151,143 @@ export default function Header() {
   };
 
   const drawer = (
-    <Box sx={{ width: { xs: 260, sm: 280 }, height: "100%" }}>
+    <Box sx={{ width: 280, height: "100%", display: "flex", flexDirection: "column", overflow: "hidden" }}>
+      {/* Header - User info (if logged in) or just close button */}
       <Box
         sx={{
           display: "flex",
           justifyContent: "space-between",
           alignItems: "center",
-          p: 2,
+          p: 1.5,
+          borderBottom: "1px solid #E8E8E8",
         }}
       >
-        <Box sx={{ display: "flex", alignItems: "center" }}>
-          <Image
-            src={LogoWithText}
-            alt="Life Score Logo"
-            height={28}
-            width={84}
-            style={{
-              objectFit: "contain",
-            }}
-          />
-        </Box>
-        <IconButton onClick={handleDrawerToggle}>
-          <CloseIcon />
+        {isAuthenticated || isConsultantAuth ? (
+          <Box sx={{ display: "flex", alignItems: "center", overflow: "hidden", flex: 1 }}>
+            <Avatar
+              sx={{
+                width: 36,
+                height: 36,
+                backgroundColor: "#E87A42",
+                mr: 1.5,
+                fontSize: "0.875rem",
+                fontWeight: "bold",
+              }}
+            >
+              {isConsultantAuth
+                ? consultant?.firstName?.charAt(0) || consultant?.email?.charAt(0) || "C"
+                : user?.username?.charAt(0) || user?.email?.charAt(0) || "U"}
+            </Avatar>
+            <Box sx={{ overflow: "hidden", minWidth: 0 }}>
+              <Typography
+                sx={{
+                  fontWeight: 600,
+                  color: "#1A1A1A",
+                  fontSize: "14px",
+                  whiteSpace: "nowrap",
+                  overflow: "hidden",
+                  textOverflow: "ellipsis",
+                  lineHeight: 1.3,
+                }}
+              >
+                {isConsultantAuth
+                  ? `${consultant?.firstName} ${consultant?.lastName}`
+                  : user?.username}
+              </Typography>
+              <Typography
+                sx={{
+                  color: "#666",
+                  fontSize: "12px",
+                  whiteSpace: "nowrap",
+                  overflow: "hidden",
+                  textOverflow: "ellipsis",
+                  lineHeight: 1.3,
+                }}
+              >
+                {isConsultantAuth ? consultant?.email : user?.email}
+              </Typography>
+            </Box>
+          </Box>
+        ) : (
+          <Box />
+        )}
+        <IconButton
+          onClick={handleDrawerToggle}
+          size="small"
+          sx={{
+            color: "#2B2B2B",
+            ml: 1,
+            "&:hover": {
+              backgroundColor: "rgba(0, 95, 115, 0.1)",
+            },
+          }}
+        >
+          <CloseIcon fontSize="small" />
         </IconButton>
       </Box>
-      <List sx={{ pt: 3 }}>
+
+      {/* Navigation Links */}
+      <List sx={{ py: 1, overflow: "hidden" }} disablePadding>
+        {/* Home Link - Only in drawer */}
+        <ListItem disablePadding sx={{ px: 1.5 }}>
+          <Link href="/" style={{ textDecoration: "none", width: "100%" }}>
+            <Button
+              fullWidth
+              variant="text"
+              onClick={handleDrawerToggle}
+              sx={{
+                justifyContent: "flex-start",
+                py: 0.75,
+                px: 1.5,
+                fontSize: "14px",
+                fontWeight: isLinkActive("/") ? 600 : 400,
+                fontFamily: "Source Sans Pro, sans-serif",
+                color: isLinkActive("/") ? "#005F73" : "#2B2B2B",
+                backgroundColor: isLinkActive("/") ? "rgba(0, 95, 115, 0.08)" : "transparent",
+                borderRadius: "8px",
+                textTransform: "none",
+                minHeight: "36px",
+                "&:hover": {
+                  backgroundColor: "rgba(0, 95, 115, 0.08)",
+                  color: "#005F73",
+                },
+              }}
+            >
+              Home
+            </Button>
+          </Link>
+        </ListItem>
+
         {navigationLinks.map((link) => {
           const isActive = isLinkActive(link.href);
           return (
-            <ListItem key={link.label} sx={{ mb: 1, px: 3 }}>
+            <ListItem key={link.label} disablePadding sx={{ px: 1.5 }}>
               <Box sx={{ width: "100%" }}>
                 {link.FreeChip && (
-                  <Box
-                    sx={{ mb: 1, display: "flex", justifyContent: "center" }}
-                  >
+                  <Box sx={{ mb: 0.5, display: "flex", justifyContent: "flex-start", pl: 1 }}>
                     <FreeChip />
                   </Box>
                 )}
-                <Link
-                  href={link.href}
-                  style={{ textDecoration: "none", width: "100%" }}
-                >
+                <Link href={link.href} style={{ textDecoration: "none", width: "100%" }}>
                   <Button
                     fullWidth
                     variant="text"
-                    size="large"
                     onClick={handleDrawerToggle}
                     sx={{
                       justifyContent: "flex-start",
-                      py: 1.5,
-                      fontSize: { xs: "18px", sm: "20px" },
+                      py: 0.75,
+                      px: 1.5,
+                      fontSize: "14px",
                       fontWeight: isActive ? 600 : 400,
                       fontFamily: "Source Sans Pro, sans-serif",
-                      color: isActive ? "#005F73" : "#1A1A1A",
-                      borderBottom: isActive
-                        ? "2px solid #005F73"
-                        : "2px solid transparent",
-                      borderRadius: 0,
+                      color: isActive ? "#005F73" : "#2B2B2B",
+                      backgroundColor: isActive ? "rgba(0, 95, 115, 0.08)" : "transparent",
+                      borderRadius: "8px",
                       textTransform: "none",
+                      minHeight: "36px",
                       "&:hover": {
-                        backgroundColor: "rgba(0, 95, 115, 0.1)",
-                        color: isActive ? "#005F73" : "#005F73",
+                        backgroundColor: "rgba(0, 95, 115, 0.08)",
+                        color: "#005F73",
                       },
                     }}
                   >
@@ -226,124 +302,99 @@ export default function Header() {
         {/* Authentication section for mobile */}
         {isAuthenticated || isConsultantAuth ? (
           <>
-            <Divider sx={{ my: 2 }} />
-            <ListItem sx={{ mb: 1, px: 3 }}>
-              <Box
-                sx={{ display: "flex", alignItems: "center", width: "100%" }}
-              >
-                <Avatar
-                  sx={{
-                    width: 40,
-                    height: 40,
-                    backgroundColor: "#E87A42",
-                    mr: 2,
-                    fontSize: "1rem",
-                    fontWeight: "bold",
-                  }}
-                >
-                  {isConsultantAuth
-                    ? consultant?.firstName?.charAt(0) ||
-                    consultant?.email?.charAt(0) ||
-                    "C"
-                    : user?.username?.charAt(0) ||
-                    user?.email?.charAt(0) ||
-                    "U"}
-                </Avatar>
-                <Box>
-                  <Typography variant="subtitle2" sx={{ fontWeight: "bold" }}>
-                    {isConsultantAuth
-                      ? `${consultant?.firstName} ${consultant?.lastName}`
-                      : user?.username}
-                  </Typography>
-                  <Typography variant="caption" sx={{ color: "#666" }}>
-                    {isConsultantAuth ? consultant?.email : user?.email}
-                  </Typography>
-                </Box>
-              </Box>
-            </ListItem>
+            <Divider sx={{ my: 1, mx: 1.5 }} />
 
-            <ListItem sx={{ mb: 1, px: 3 }}>
+            {/* Dashboard Link */}
+            <ListItem disablePadding sx={{ px: 1.5 }}>
               <Link
-                href={
-                  isConsultantAuth ? "/consultant/dashboard" : "/user/dashboard"
-                }
+                href={isConsultantAuth ? "/consultant/dashboard" : "/user/dashboard"}
                 style={{ textDecoration: "none", width: "100%" }}
               >
                 <Button
                   fullWidth
                   variant="text"
-                  size="large"
                   onClick={handleDrawerToggle}
                   sx={{
                     justifyContent: "flex-start",
-                    py: 1.5,
-                    fontSize: "1rem",
-                    fontWeight: 500,
+                    py: 0.75,
+                    px: 1.5,
+                    fontSize: "14px",
+                    fontWeight: 400,
                     color: "#2B2B2B",
+                    borderRadius: "8px",
+                    minHeight: "36px",
                     "&:hover": {
-                      backgroundColor: "rgba(0, 95, 115, 0.1)",
+                      backgroundColor: "rgba(0, 95, 115, 0.08)",
+                      color: "#005F73",
                     },
                   }}
                 >
-                  <Dashboard sx={{ mr: 1 }} />
+                  <Dashboard sx={{ mr: 1, color: "#005F73", fontSize: 18 }} />
                   Dashboard
                 </Button>
               </Link>
             </ListItem>
 
-            <ListItem sx={{ mb: 1, px: 3 }}>
-              {/* <Link
-                href="/user/profile"
+            {/* Profile Link */}
+            <ListItem disablePadding sx={{ px: 1.5 }}>
+              <Link
+                href={isConsultantAuth ? "/consultant/profile" : "/user/profile"}
                 style={{ textDecoration: "none", width: "100%" }}
               >
                 <Button
                   fullWidth
                   variant="text"
-                  size="large"
                   onClick={handleDrawerToggle}
                   sx={{
                     justifyContent: "flex-start",
-                    py: 1.5,
-                    fontSize: "1rem",
-                    fontWeight: 500,
+                    py: 0.75,
+                    px: 1.5,
+                    fontSize: "14px",
+                    fontWeight: 400,
                     color: "#2B2B2B",
+                    borderRadius: "8px",
+                    minHeight: "36px",
                     "&:hover": {
-                      backgroundColor: "rgba(0, 95, 115, 0.1)",
+                      backgroundColor: "rgba(0, 95, 115, 0.08)",
+                      color: "#005F73",
                     },
                   }}
                 >
-                  <AccountCircle sx={{ mr: 1 }} />
+                  <AccountCircle sx={{ mr: 1, color: "#005F73", fontSize: 18 }} />
                   Profile
                 </Button>
-              </Link> */}
+              </Link>
             </ListItem>
 
-            <ListItem sx={{ mb: 1, px: 3 }}>
+            {/* Logout Button */}
+            <ListItem disablePadding sx={{ px: 1.5 }}>
               <Button
                 fullWidth
                 variant="text"
-                size="large"
                 onClick={handleLogoutClick}
                 sx={{
                   justifyContent: "flex-start",
-                  py: 1.5,
-                  fontSize: "1rem",
-                  fontWeight: 500,
+                  py: 0.75,
+                  px: 1.5,
+                  fontSize: "14px",
+                  fontWeight: 400,
                   color: "#d32f2f",
+                  borderRadius: "8px",
+                  minHeight: "36px",
                   "&:hover": {
-                    backgroundColor: "rgba(211, 47, 47, 0.1)",
+                    backgroundColor: "rgba(211, 47, 47, 0.08)",
                   },
                 }}
               >
-                <ExitToApp sx={{ mr: 1 }} />
+                <ExitToApp sx={{ mr: 1, fontSize: 18 }} />
                 Logout
               </Button>
             </ListItem>
           </>
         ) : (
           <>
-            <Divider sx={{ my: 2 }} />
-            <ListItem sx={{ mb: 1, px: 3 }}>
+            <Divider sx={{ my: 1, mx: 1.5 }} />
+            <ListItem disablePadding sx={{ px: 1.5 }}>
               <Link
                 href="/auth/signin"
                 style={{ textDecoration: "none", width: "100%" }}
@@ -517,52 +568,126 @@ export default function Header() {
                         vertical: "top",
                         horizontal: "right",
                       }}
-                      sx={{ mt: 1 }}
+                      sx={{
+                        mt: 1.5,
+                        "& .MuiPaper-root": {
+                          borderRadius: "12px",
+                          minWidth: "220px",
+                          boxShadow: "0 4px 20px rgba(0, 0, 0, 0.12)",
+                          border: "1px solid #E0E0E0",
+                        },
+                      }}
                     >
                       <Box
-                        sx={{ px: 2, py: 1, borderBottom: "1px solid #eee" }}
+                        sx={{
+                          px: 2.5,
+                          py: 2,
+                          borderBottom: "1px solid #E8E8E8",
+                          background: "linear-gradient(135deg, #f8f9fa 0%, #ffffff 100%)",
+                        }}
                       >
-                        <Typography
-                          variant="subtitle2"
-                          sx={{ fontWeight: "bold" }}
-                        >
-                          {isConsultantAuth
-                            ? `${consultant?.firstName} ${consultant?.lastName}`
-                            : user?.username}
-                        </Typography>
-                        <Typography variant="caption" sx={{ color: "#666" }}>
-                          {isConsultantAuth ? consultant?.email : user?.email}
-                        </Typography>
+                        <Box sx={{ display: "flex", alignItems: "center", gap: 1.5 }}>
+                          <Avatar
+                            sx={{
+                              width: 42,
+                              height: 42,
+                              backgroundColor: "#E87A42",
+                              fontSize: "1rem",
+                              fontWeight: "bold",
+                            }}
+                          >
+                            {isConsultantAuth
+                              ? consultant?.firstName?.charAt(0) ||
+                              consultant?.email?.charAt(0) ||
+                              "C"
+                              : user?.username?.charAt(0) ||
+                              user?.email?.charAt(0) ||
+                              "U"}
+                          </Avatar>
+                          <Box>
+                            <Typography
+                              variant="subtitle2"
+                              sx={{ fontWeight: 600, color: "#1A1A1A", fontSize: "15px" }}
+                            >
+                              {isConsultantAuth
+                                ? `${consultant?.firstName} ${consultant?.lastName}`
+                                : user?.username}
+                            </Typography>
+                            <Typography variant="caption" sx={{ color: "#666", fontSize: "12px" }}>
+                              {isConsultantAuth ? consultant?.email : user?.email}
+                            </Typography>
+                          </Box>
+                        </Box>
                       </Box>
 
-                      <MenuItem
-                        onClick={() => {
-                          handleProfileMenuClose();
-                          window.location.href = isConsultantAuth
-                            ? "/consultant/dashboard"
-                            : "/user/dashboard";
-                        }}
-                      >
-                        <Dashboard sx={{ mr: 1, fontSize: 20 }} />
-                        Dashboard
-                      </MenuItem>
+                      <Box sx={{ py: 1 }}>
+                        <MenuItem
+                          onClick={() => {
+                            handleProfileMenuClose();
+                            window.location.href = isConsultantAuth
+                              ? "/consultant/dashboard"
+                              : "/user/dashboard";
+                          }}
+                          sx={{
+                            py: 1.5,
+                            px: 2.5,
+                            fontSize: "14px",
+                            color: "#2B2B2B",
+                            "&:hover": {
+                              backgroundColor: "rgba(0, 95, 115, 0.08)",
+                              color: "#005F73",
+                            },
+                            transition: "all 0.2s ease",
+                          }}
+                        >
+                          <Dashboard sx={{ mr: 1.5, fontSize: 20, color: "#005F73" }} />
+                          Dashboard
+                        </MenuItem>
 
-                      {/* <MenuItem
-                        onClick={() => {
-                          handleProfileMenuClose();
-                          window.location.href = "/user/profile";
-                        }}
-                      >
-                        <AccountCircle sx={{ mr: 1, fontSize: 20 }} />
-                        Profile
-                      </MenuItem> */}
+                        <MenuItem
+                          onClick={() => {
+                            handleProfileMenuClose();
+                            window.location.href = isConsultantAuth
+                              ? "/consultant/profile"
+                              : "/user/profile";
+                          }}
+                          sx={{
+                            py: 1.5,
+                            px: 2.5,
+                            fontSize: "14px",
+                            color: "#2B2B2B",
+                            "&:hover": {
+                              backgroundColor: "rgba(0, 95, 115, 0.08)",
+                              color: "#005F73",
+                            },
+                            transition: "all 0.2s ease",
+                          }}
+                        >
+                          <AccountCircle sx={{ mr: 1.5, fontSize: 20, color: "#005F73" }} />
+                          Profile
+                        </MenuItem>
+                      </Box>
 
-                      <Divider />
+                      <Divider sx={{ my: 0 }} />
 
-                      <MenuItem onClick={handleLogoutClick}>
-                        <ExitToApp sx={{ mr: 1, fontSize: 20 }} />
-                        Logout
-                      </MenuItem>
+                      <Box sx={{ py: 1 }}>
+                        <MenuItem
+                          onClick={handleLogoutClick}
+                          sx={{
+                            py: 1.5,
+                            px: 2.5,
+                            fontSize: "14px",
+                            color: "#d32f2f",
+                            "&:hover": {
+                              backgroundColor: "rgba(211, 47, 47, 0.08)",
+                            },
+                            transition: "all 0.2s ease",
+                          }}
+                        >
+                          <ExitToApp sx={{ mr: 1.5, fontSize: 20 }} />
+                          Logout
+                        </MenuItem>
+                      </Box>
                     </Menu>
                   </Box>
                 ) : (
@@ -599,8 +724,10 @@ export default function Header() {
           display: { xs: "block", md: "none" },
           "& .MuiDrawer-paper": {
             boxSizing: "border-box",
-            width: { xs: 260, sm: 280 },
+            width: 280,
+            maxWidth: "85vw",
             backgroundColor: "#F9F8F6",
+            overflowX: "hidden",
           },
         }}
       >

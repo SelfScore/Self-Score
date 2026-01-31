@@ -226,63 +226,83 @@ export default function ProfilePage() {
     <Box
       sx={{
         minHeight: "100vh",
-        background: "linear-gradient(135deg, #F8FAFB 0%, #EEF2F5 100%)",
-        py: { xs: 4, md: 10 },
+        backgroundColor: "#ffffff",
+        py: { xs: 12, md: 16 },
       }}
     >
-      <Container maxWidth="lg">
-        {/* Header with Back Button */}
-        <Box sx={{ mb: 4 }}>
-          {/* <IconButton
-            onClick={() => router.push("/user/dashboard")}
+      <Container maxWidth="lg" sx={{ px: { xs: 2, md: 3 } }}>
+        {/* Header Section - matching dashboard style */}
+        <Box
+          sx={{
+            display: "flex",
+            alignItems: { xs: "flex-start", md: "center" },
+            justifyContent: "space-between",
+            flexDirection: { xs: "column", md: "row" },
+            mb: 4,
+            p: { xs: 2, md: 3 },
+            backgroundColor: "#FFF",
+            borderRadius: "16px",
+            border: "1px solid #3A3A3A4D",
+            gap: { xs: 2, md: 0 },
+          }}
+        >
+          <Box>
+            <Typography
+              variant="h3"
+              sx={{
+                fontWeight: 700,
+                color: "#2B2B2B",
+                fontFamily: "Faustina",
+                fontSize: { xs: "1.5rem", sm: "1.75rem", md: "2rem" },
+                mb: 0.5,
+              }}
+            >
+              Profile Settings
+            </Typography>
+            <Typography
+              variant="body1"
+              sx={{
+                color: "#666",
+                fontFamily: "Source Sans Pro",
+                fontSize: { xs: "0.875rem", md: "1rem" },
+              }}
+            >
+              Manage your account information and preferences
+            </Typography>
+          </Box>
+          <Box
             sx={{
-              mb: 2,
-              color: "#005F73",
-              "&:hover": {
-                backgroundColor: "rgba(0, 95, 115, 0.1)",
-              },
+              px: { xs: 2, md: 2.5 },
+              py: { xs: 1, md: 1.5 },
+              backgroundColor: "#f1f5f9",
+              borderRadius: "8px",
             }}
           >
-            <ArrowBack />
-          </IconButton> */}
-
-          <Typography
-            variant="h3"
-            sx={{
-              fontWeight: 700,
-              color: "#005F73",
-              fontFamily: "Faustina",
-              fontSize: { xs: "2rem", md: "2.5rem" },
-              mb: 1,
-            }}
-          >
-            Profile Settings
-          </Typography>
-          <Typography
-            variant="body1"
-            sx={{
-              color: "#666",
-              fontFamily: "Source Sans Pro",
-              fontSize: { xs: "1rem", md: "1.1rem" },
-            }}
-          >
-            Manage your account information and preferences
-          </Typography>
+            <Typography
+              sx={{
+                color: "#475569",
+                fontWeight: 600,
+                fontSize: { xs: "0.75rem", md: "0.875rem" },
+              }}
+            >
+              {user?.email}
+            </Typography>
+          </Box>
         </Box>
 
-        <Grid container spacing={4}>
+        <Grid container spacing={{ xs: 2, md: 4 }}>
           {/* Profile Summary Card */}
           <Grid size={{ xs: 12, md: 4 }}>
             <Card
               sx={{
                 height: "fit-content",
-                borderRadius: "20px",
-                boxShadow: "0 8px 32px rgba(0, 95, 115, 0.12)",
-                background: "linear-gradient(135deg, #FFFFFF 0%, #F8FAFB 100%)",
-                border: "1px solid rgba(0, 95, 115, 0.08)",
+                borderRadius: "16px",
+                boxShadow: "none",
+                backgroundColor: "#F7F7F7",
+                border: "1px solid #3A3A3A4D",
               }}
             >
-              <CardContent sx={{ textAlign: "center", p: { xs: 3, md: 4 } }}>
+              <CardContent sx={{ textAlign: "center", p: { xs: 2.5, md: 3 } }}>
                 <Box
                   sx={{
                     position: "relative",
@@ -443,14 +463,14 @@ export default function ProfilePage() {
             {/* Quick Actions Card */}
             <Card
               sx={{
-                mt: 3,
-                borderRadius: "20px",
-                boxShadow: "0 8px 32px rgba(0, 95, 115, 0.12)",
-                background: "#FFFFFF",
-                border: "1px solid rgba(0, 95, 115, 0.08)",
+                mt: { xs: 2, md: 3 },
+                borderRadius: "16px",
+                boxShadow: "none",
+                backgroundColor: "#FFF",
+                border: "1px solid #3A3A3A4D",
               }}
             >
-              <CardContent sx={{ p: 3 }}>
+              <CardContent sx={{ p: { xs: 2, md: 3 } }}>
                 <Typography
                   variant="h6"
                   sx={{
@@ -468,7 +488,7 @@ export default function ProfilePage() {
                   <ButtonSelfScore
                     text="Go to Dashboard"
                     onClick={() => router.push("/user/dashboard")}
-                    startIcon={<Dashboard />}
+                    startIcon={<Dashboard sx={{color:"#FFF"}} />}
                     fullWidth
                     height={44}
                     background="#005F73"
@@ -504,13 +524,13 @@ export default function ProfilePage() {
           <Grid size={{ xs: 12, md: 8 }}>
             <Card
               sx={{
-                borderRadius: "20px",
-                boxShadow: "0 8px 32px rgba(0, 95, 115, 0.12)",
-                background: "#FFFFFF",
-                border: "1px solid rgba(0, 95, 115, 0.08)",
+                borderRadius: "16px",
+                boxShadow: "none",
+                backgroundColor: "#FFF",
+                border: "1px solid #3A3A3A4D",
               }}
             >
-              <CardContent sx={{ p: { xs: 3, md: 4 } }}>
+              <CardContent sx={{ p: { xs: 2.5, md: 4 } }}>
                 <Box
                   sx={{
                     display: "flex",
@@ -765,15 +785,15 @@ export default function ProfilePage() {
             {/* Account Information */}
             <Card
               sx={{
-                mt: 3,
-                borderRadius: "20px",
-                boxShadow: "0 8px 32px rgba(0, 95, 115, 0.12)",
-                background: "linear-gradient(135deg, #005F73 0%, #0A7A8F 100%)",
-                border: "1px solid rgba(255, 255, 255, 0.1)",
+                mt: { xs: 2, md: 3 },
+                borderRadius: "16px",
+                boxShadow: "none",
+                background: "#005F73",
+                border: "none",
                 color: "#fff",
               }}
             >
-              <CardContent sx={{ p: { xs: 3, md: 4 } }}>
+              <CardContent sx={{ p: { xs: 2.5, md: 4 } }}>
                 <Typography
                   variant="h6"
                   sx={{

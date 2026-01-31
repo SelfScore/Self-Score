@@ -183,27 +183,26 @@ export default function TestInfo({ initialLevel }: TestInfoProps) {
         sx={{
           display: "flex",
           justifyContent: "center",
-          mb: 8,
+          mb: { xs: 4, md: 8 },
         }}
       >
         <Chip
-          label={`${currentLevel.title} - ${
-            currentLevel.isFree ? "Free Assessment" : currentLevel.name
-          }`}
+          label={`${currentLevel.title} - ${currentLevel.isFree ? "Free Assessment" : currentLevel.name
+            }`}
           icon={
             <EmojiEventsIcon
-              sx={{ fontSize: "20px", color: "#fff !important" }}
+              sx={{ fontSize: { xs: "16px", md: "20px" }, color: "#fff !important" }}
             />
           }
           sx={{
             backgroundColor: "#005F73",
             color: "#fff",
             fontFamily: "Source Sans Pro",
-            fontSize: { xs: "14px", md: "16px" },
+            fontSize: { xs: "12px", md: "16px" },
             fontWeight: 600,
             borderRadius: "12px",
-            py: 2.5,
-            px: 2,
+            py: { xs: 2, md: 2.5 },
+            px: { xs: 1.5, md: 2 },
             "& .MuiChip-icon": {
               color: "#fff",
             },
@@ -217,13 +216,13 @@ export default function TestInfo({ initialLevel }: TestInfoProps) {
           maxWidth: "846px",
           mx: "auto",
           backgroundColor: "#F7F7F7",
-          borderRadius: "32px",
+          borderRadius: { xs: "16px", md: "32px" },
           border: "1px solid #3A3A3A4D",
           overflow: "hidden",
         }}
       >
         {/* Connected Progress Bar (Level Selector) */}
-        <Box sx={{ pt: { xs: 3, md: 5 }, pb: { xs: 2, md: 2 } }}>
+        <Box sx={{ pt: { xs: 3, md: 5 }, pb: { xs: 2, md: 2 }, px: { xs: 2, md: 0 } }}>
           <Box
             sx={{
               display: "flex",
@@ -253,16 +252,16 @@ export default function TestInfo({ initialLevel }: TestInfoProps) {
                       activeLevel === index
                         ? "#307E8D"
                         : isLevelPurchased(index + 1) || index === 0
-                        ? "#CACACA80"
-                        : "#E0E0E0",
+                          ? "#CACACA80"
+                          : "#E0E0E0",
                     position: "relative",
                     display: "flex",
                     alignItems: "center",
                     justifyContent: "center",
                     color:
                       activeLevel === index ||
-                      isLevelPurchased(index + 1) ||
-                      index === 0
+                        isLevelPurchased(index + 1) ||
+                        index === 0
                         ? "#fff"
                         : "#999",
                     transition: "all 0.3s ease",
@@ -270,16 +269,16 @@ export default function TestInfo({ initialLevel }: TestInfoProps) {
                       index === levels.length - 1
                         ? "polygon(0 0, 100% 0, 100% 100%, 0 100%, 20px 50%)"
                         : index === 0
-                        ? "polygon(0 0, calc(100% - 20px) 0, 100% 50%, calc(100% - 20px) 100%, 0 100%)"
-                        : "polygon(0 0, calc(100% - 20px) 0, 100% 50%, calc(100% - 20px) 100%, 0 100%, 20px 50%)",
+                          ? "polygon(0 0, calc(100% - 20px) 0, 100% 50%, calc(100% - 20px) 100%, 0 100%)"
+                          : "polygon(0 0, calc(100% - 20px) 0, 100% 50%, calc(100% - 20px) 100%, 0 100%, 20px 50%)",
                     opacity:
                       isLevelPurchased(index + 1) || index === 0 ? 1 : 0.6,
                     borderRadius:
                       index === 0
                         ? "25px 0 0 25px"
                         : index === levels.length - 1
-                        ? "0 25px 25px 0"
-                        : "0",
+                          ? "0 25px 25px 0"
+                          : "0",
                     "&:hover": {
                       opacity: 0.9,
                     },
@@ -311,7 +310,20 @@ export default function TestInfo({ initialLevel }: TestInfoProps) {
                         whiteSpace: "nowrap",
                       }}
                     >
-                      {level.title}
+                      {/* Full text for medium+ screens */}
+                      <Box
+                        component="span"
+                        sx={{ display: { xs: "none", md: "inline" } }}
+                      >
+                        {level.title}
+                      </Box>
+                      {/* Abbreviated text for small screens */}
+                      <Box
+                        component="span"
+                        sx={{ display: { xs: "inline", md: "none" } }}
+                      >
+                        L{level.id}
+                      </Box>
                     </Typography>
                   </Box>
                 </Box>
@@ -323,7 +335,7 @@ export default function TestInfo({ initialLevel }: TestInfoProps) {
         {/* Conditional Content - Show Pricing UI if not purchased, otherwise show What to Expect */}
         {!isCurrentLevelPurchased && !currentLevel.isFree ? (
           // PRICING/UPGRADE UI for unpurchased levels
-          <Box sx={{ px: { xs: 3, md: 12 }, py: { xs: 4, md: 4 } }}>
+          <Box sx={{ px: { xs: 2, md: 12 }, py: { xs: 3, md: 4 } }}>
             {/* Price Section */}
             <Box sx={{ textAlign: "center", mb: 4 }}>
               <Typography
@@ -410,9 +422,8 @@ export default function TestInfo({ initialLevel }: TestInfoProps) {
                 >
                   {activeLevel === 1
                     ? "Level 1 (Free)"
-                    : `${levels[activeLevel - 1].title} (${
-                        levels[activeLevel - 1].isFree ? "Free" : "Previous"
-                      })`}
+                    : `${levels[activeLevel - 1].title} (${levels[activeLevel - 1].isFree ? "Free" : "Previous"
+                    })`}
                 </Typography>
                 {activeLevel > 0 &&
                   levels[activeLevel - 1].features.map((feature, idx) => (
@@ -487,11 +498,11 @@ export default function TestInfo({ initialLevel }: TestInfoProps) {
             </Typography>
 
             {/* Duration */}
-            <Box sx={{ display: "flex", alignItems: "center", gap: 2, mb: 2 }}>
+            <Box sx={{ display: "flex", alignItems: "center", gap: { xs: 1.5, md: 2 }, mb: 2 }}>
               <Box
                 sx={{
-                  width: "40px",
-                  height: "40px",
+                  width: { xs: "32px", md: "40px" },
+                  height: { xs: "32px", md: "40px" },
                   borderRadius: "50%",
                   backgroundColor: "#307E8D",
                   display: "flex",
@@ -500,13 +511,13 @@ export default function TestInfo({ initialLevel }: TestInfoProps) {
                   flexShrink: 0,
                 }}
               >
-                <AccessTimeIcon sx={{ fontSize: "20px", color: "#fff" }} />
+                <AccessTimeIcon sx={{ fontSize: { xs: "16px", md: "20px" }, color: "#fff" }} />
               </Box>
               <Box>
                 <Typography
                   sx={{
                     fontFamily: "Source Sans Pro",
-                    fontSize: { xs: "16px", md: "18px" },
+                    fontSize: { xs: "14px", md: "18px" },
                     fontWeight: 600,
                     color: "#000",
                   }}
@@ -516,7 +527,7 @@ export default function TestInfo({ initialLevel }: TestInfoProps) {
                 <Typography
                   sx={{
                     fontFamily: "Source Sans Pro",
-                    fontSize: { xs: "13px", md: "14px" },
+                    fontSize: { xs: "12px", md: "14px" },
                     color: "#6B7280",
                   }}
                 >
@@ -526,11 +537,11 @@ export default function TestInfo({ initialLevel }: TestInfoProps) {
             </Box>
 
             {/* Questions */}
-            <Box sx={{ display: "flex", alignItems: "center", gap: 2, mb: 2 }}>
+            <Box sx={{ display: "flex", alignItems: "center", gap: { xs: 1.5, md: 2 }, mb: 2 }}>
               <Box
                 sx={{
-                  width: "40px",
-                  height: "40px",
+                  width: { xs: "32px", md: "40px" },
+                  height: { xs: "32px", md: "40px" },
                   borderRadius: "50%",
                   backgroundColor: "#307E8D",
                   display: "flex",
@@ -540,14 +551,14 @@ export default function TestInfo({ initialLevel }: TestInfoProps) {
                 }}
               >
                 <CheckCircleOutlineIcon
-                  sx={{ fontSize: "20px", color: "#fff" }}
+                  sx={{ fontSize: { xs: "16px", md: "20px" }, color: "#fff" }}
                 />
               </Box>
               <Box>
                 <Typography
                   sx={{
                     fontFamily: "Source Sans Pro",
-                    fontSize: { xs: "16px", md: "18px" },
+                    fontSize: { xs: "14px", md: "18px" },
                     fontWeight: 600,
                     color: "#000",
                   }}
@@ -557,7 +568,7 @@ export default function TestInfo({ initialLevel }: TestInfoProps) {
                 <Typography
                   sx={{
                     fontFamily: "Source Sans Pro",
-                    fontSize: { xs: "13px", md: "14px" },
+                    fontSize: { xs: "12px", md: "14px" },
                     color: "#6B7280",
                   }}
                 >
@@ -567,11 +578,11 @@ export default function TestInfo({ initialLevel }: TestInfoProps) {
             </Box>
 
             {/* Personalized Recommendations */}
-            <Box sx={{ display: "flex", alignItems: "center", gap: 2, mb: 2 }}>
+            <Box sx={{ display: "flex", alignItems: "center", gap: { xs: 1.5, md: 2 }, mb: 2 }}>
               <Box
                 sx={{
-                  width: "40px",
-                  height: "40px",
+                  width: { xs: "32px", md: "40px" },
+                  height: { xs: "32px", md: "40px" },
                   borderRadius: "50%",
                   backgroundColor: "#307E8D",
                   display: "flex",
@@ -580,13 +591,13 @@ export default function TestInfo({ initialLevel }: TestInfoProps) {
                   flexShrink: 0,
                 }}
               >
-                <FlareIcon sx={{ fontSize: "20px", color: "#fff" }} />
+                <FlareIcon sx={{ fontSize: { xs: "16px", md: "20px" }, color: "#fff" }} />
               </Box>
               <Box>
                 <Typography
                   sx={{
                     fontFamily: "Source Sans Pro",
-                    fontSize: { xs: "16px", md: "18px" },
+                    fontSize: { xs: "14px", md: "18px" },
                     fontWeight: 600,
                     color: "#000",
                   }}
@@ -596,7 +607,7 @@ export default function TestInfo({ initialLevel }: TestInfoProps) {
                 <Typography
                   sx={{
                     fontFamily: "Source Sans Pro",
-                    fontSize: { xs: "13px", md: "14px" },
+                    fontSize: { xs: "12px", md: "14px" },
                     color: "#6B7280",
                   }}
                 >
@@ -606,11 +617,11 @@ export default function TestInfo({ initialLevel }: TestInfoProps) {
             </Box>
 
             {/* Detailed Score Breakdown */}
-            <Box sx={{ display: "flex", alignItems: "center", gap: 2, mb: 4 }}>
+            <Box sx={{ display: "flex", alignItems: "center", gap: { xs: 1.5, md: 2 }, mb: { xs: 3, md: 4 } }}>
               <Box
                 sx={{
-                  width: "40px",
-                  height: "40px",
+                  width: { xs: "32px", md: "40px" },
+                  height: { xs: "32px", md: "40px" },
                   borderRadius: "50%",
                   backgroundColor: "#307E8D",
                   display: "flex",
@@ -619,13 +630,13 @@ export default function TestInfo({ initialLevel }: TestInfoProps) {
                   flexShrink: 0,
                 }}
               >
-                <LibraryBooksIcon sx={{ fontSize: "20px", color: "#fff" }} />
+                <LibraryBooksIcon sx={{ fontSize: { xs: "16px", md: "20px" }, color: "#fff" }} />
               </Box>
               <Box>
                 <Typography
                   sx={{
                     fontFamily: "Source Sans Pro",
-                    fontSize: { xs: "16px", md: "18px" },
+                    fontSize: { xs: "14px", md: "18px" },
                     fontWeight: 600,
                     color: "#000",
                   }}
@@ -635,7 +646,7 @@ export default function TestInfo({ initialLevel }: TestInfoProps) {
                 <Typography
                   sx={{
                     fontFamily: "Source Sans Pro",
-                    fontSize: { xs: "13px", md: "14px" },
+                    fontSize: { xs: "12px", md: "14px" },
                     color: "#6B7280",
                   }}
                 >
@@ -671,15 +682,15 @@ export default function TestInfo({ initialLevel }: TestInfoProps) {
           </Box>
         ) : (
           // WHAT TO EXPECT UI for purchased/free levels
-          <Box sx={{ px: { xs: 3, md: 12 }, py: { xs: 4, md: 4 } }}>
+          <Box sx={{ px: { xs: 2, md: 12 }, py: { xs: 3, md: 4 } }}>
             <Typography
               variant="h4"
               sx={{
                 fontFamily: "Faustina",
                 fontWeight: 600,
-                fontSize: { xs: "24px", md: "28px" },
+                fontSize: { xs: "20px", md: "28px" },
                 color: "#000",
-                mb: 4,
+                mb: { xs: 3, md: 4 },
                 textAlign: "left",
               }}
             >
@@ -691,16 +702,16 @@ export default function TestInfo({ initialLevel }: TestInfoProps) {
               sx={{
                 display: "flex",
                 alignItems: "flex-start",
-                gap: 3,
-                mb: 3,
-                pb: 3,
+                gap: { xs: 2, md: 3 },
+                mb: { xs: 2, md: 3 },
+                pb: { xs: 2, md: 3 },
                 borderBottom: "1px solid #3A3A3A4D",
               }}
             >
               <Box
                 sx={{
-                  width: "48px",
-                  height: "48px",
+                  width: { xs: "40px", md: "48px" },
+                  height: { xs: "40px", md: "48px" },
                   borderRadius: "50%",
                   backgroundColor: "#307E8D",
                   display: "flex",
@@ -709,13 +720,13 @@ export default function TestInfo({ initialLevel }: TestInfoProps) {
                   flexShrink: 0,
                 }}
               >
-                <AccessTimeIcon sx={{ fontSize: "24px", color: "#fff" }} />
+                <AccessTimeIcon sx={{ fontSize: { xs: "20px", md: "24px" }, color: "#fff" }} />
               </Box>
               <Box>
                 <Typography
                   sx={{
-                    fontFamily: "source Sans Pro",
-                    fontSize: { xs: "18px", md: "20px" },
+                    fontFamily: "Source Sans Pro",
+                    fontSize: { xs: "16px", md: "20px" },
                     fontWeight: 600,
                     color: "#000",
                     mb: 0.5,
@@ -727,9 +738,9 @@ export default function TestInfo({ initialLevel }: TestInfoProps) {
                 <Typography
                   sx={{
                     fontFamily: "Source Sans Pro",
-                    fontSize: { xs: "14px", md: "16px" },
+                    fontSize: { xs: "13px", md: "16px" },
                     color: "#6B7280",
-                    lineHeight: 1,
+                    lineHeight: 1.3,
                   }}
                 >
                   {currentLevel.description}
@@ -742,16 +753,16 @@ export default function TestInfo({ initialLevel }: TestInfoProps) {
               sx={{
                 display: "flex",
                 alignItems: "flex-start",
-                gap: 3,
-                mb: 3,
-                pb: 3,
+                gap: { xs: 2, md: 3 },
+                mb: { xs: 2, md: 3 },
+                pb: { xs: 2, md: 3 },
                 borderBottom: "1px solid #3A3A3A4D",
               }}
             >
               <Box
                 sx={{
-                  width: "48px",
-                  height: "48px",
+                  width: { xs: "40px", md: "48px" },
+                  height: { xs: "40px", md: "48px" },
                   borderRadius: "50%",
                   backgroundColor: "#307E8D",
                   display: "flex",
@@ -761,14 +772,14 @@ export default function TestInfo({ initialLevel }: TestInfoProps) {
                 }}
               >
                 <CheckCircleOutlineIcon
-                  sx={{ fontSize: "24px", color: "#fff" }}
+                  sx={{ fontSize: { xs: "20px", md: "24px" }, color: "#fff" }}
                 />
               </Box>
               <Box>
                 <Typography
                   sx={{
-                    fontFamily: "source Sans Pro",
-                    fontSize: { xs: "18px", md: "20px" },
+                    fontFamily: "Source Sans Pro",
+                    fontSize: { xs: "16px", md: "20px" },
                     fontWeight: 600,
                     color: "#000",
                     mb: 0.5,
@@ -780,9 +791,9 @@ export default function TestInfo({ initialLevel }: TestInfoProps) {
                 <Typography
                   sx={{
                     fontFamily: "Source Sans Pro",
-                    fontSize: { xs: "14px", md: "16px" },
+                    fontSize: { xs: "13px", md: "16px" },
                     color: "#6B7280",
-                    lineHeight: 1.5,
+                    lineHeight: 1.4,
                   }}
                 >
                   {currentLevel.questionsDetail}
@@ -795,14 +806,14 @@ export default function TestInfo({ initialLevel }: TestInfoProps) {
               sx={{
                 display: "flex",
                 alignItems: "flex-start",
-                gap: 3,
-                mb: 4,
+                gap: { xs: 2, md: 3 },
+                mb: { xs: 3, md: 4 },
               }}
             >
               <Box
                 sx={{
-                  width: "48px",
-                  height: "48px",
+                  width: { xs: "40px", md: "48px" },
+                  height: { xs: "40px", md: "48px" },
                   borderRadius: "50%",
                   backgroundColor: "#307E8D",
                   display: "flex",
@@ -811,13 +822,13 @@ export default function TestInfo({ initialLevel }: TestInfoProps) {
                   flexShrink: 0,
                 }}
               >
-                <EmojiEventsIcon sx={{ fontSize: "24px", color: "#fff" }} />
+                <EmojiEventsIcon sx={{ fontSize: { xs: "20px", md: "24px" }, color: "#fff" }} />
               </Box>
               <Box>
                 <Typography
                   sx={{
-                    fontFamily: "source Sans Pro",
-                    fontSize: { xs: "18px", md: "20px" },
+                    fontFamily: "Source Sans Pro",
+                    fontSize: { xs: "16px", md: "20px" },
                     fontWeight: 600,
                     color: "#000",
                     mb: 0.5,
@@ -829,9 +840,9 @@ export default function TestInfo({ initialLevel }: TestInfoProps) {
                 <Typography
                   sx={{
                     fontFamily: "Source Sans Pro",
-                    fontSize: { xs: "14px", md: "16px" },
+                    fontSize: { xs: "13px", md: "16px" },
                     color: "#6B7280",
-                    lineHeight: 1.5,
+                    lineHeight: 1.4,
                   }}
                 >
                   Get your self-score immediately after completion
@@ -844,7 +855,7 @@ export default function TestInfo({ initialLevel }: TestInfoProps) {
               sx={{
                 display: "flex",
                 justifyContent: "center",
-                mt: 5,
+                mt: { xs: 3, md: 5 },
               }}
             >
               <ButtonSelfScore
@@ -852,9 +863,9 @@ export default function TestInfo({ initialLevel }: TestInfoProps) {
                 endIcon={<ArrowForwardIcon sx={{ color: "#FFF" }} />}
                 onClick={handleStartAssessment}
                 maxWidth="565px"
-                height="40px"
+                height="44px"
                 borderRadius="12px"
-                fontSize="20px"
+                fontSize="16px"
                 fullWidth={true}
                 style={{
                   backgroundColor: "#FF5722",

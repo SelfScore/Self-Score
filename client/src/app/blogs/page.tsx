@@ -12,7 +12,7 @@ export default async function BlogsPage() {
       sx={{
         minHeight: "100vh",
         bgcolor: "#FFF",
-        py: { xs: 6, md: 10 },
+        py: { xs: 10, md: 10 },
       }}
     >
       <Container maxWidth="lg">
@@ -20,13 +20,13 @@ export default async function BlogsPage() {
         <Box sx={{ textAlign: "center", mb: { xs: 4, md: 6 } }}>
           <Typography
             sx={{
-            fontWeight: "700",
-            fontFamily: "faustina",
-            color: "#000",
-            mb: 3,
-            mt: { xs: 0, md: 4 },
-            fontSize: { xs: "2rem", sm: "2.5rem", md: "40px" },
-          }}
+              fontWeight: "700",
+              fontFamily: "faustina",
+              color: "#000",
+              mb: 3,
+              mt: { xs: 0, md: 4 },
+              fontSize: { xs: "2rem", sm: "2.5rem", md: "40px" },
+            }}
           >
             Blogs
           </Typography>

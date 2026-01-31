@@ -26,7 +26,7 @@ export default function Info() {
             fontFamily: "faustina",
             color: "#000",
             mb: 3,
-            mt: { xs: 4, md: 15 },
+            mt: { xs: 11, md: 15 },
             fontSize: { xs: "2rem", sm: "2.5rem", md: "40px" },
           }}
         >

@@ -79,27 +79,34 @@ function TestContent() {
       sx={{
         width: "100%",
         backgroundColor: "#fff",
-        p: 4,
+        p: { xs: 2, md: 4 },
         minHeight: "100vh",
+        mt: { xs: 8, md: 0 },
       }}
     >
-      <Box sx={{ mb: 1, ml: { xs: 0, lg: 8 }, mt: 10 }}>
+      <Box sx={{ mb: 1, ml: { xs: 0, lg: 8 }, mt: { xs: 2, md: 10 } }}>
         <OutLineButton
-          startIcon={<ArrowBackIosIcon />}
-          style={{
+          startIcon={<ArrowBackIosIcon sx={{ fontSize: { xs: 12, md: 18 } }} />}
+          sx={{
             background: "transparent",
             color: "#3A3A3A",
             border: "1px solid #3A3A3A",
-            borderRadius: "8px",
-            padding: "3.5px 14px",
+            borderRadius: "6px",
+            padding: { xs: "2px", md: "3.5px 14px" },
+            height: { xs: "20px", md: "auto" },
+            minHeight: { xs: "20px", md: "44px" },
             fontWeight: 400,
-            fontSize: "18px",
+            fontSize: { xs: "14px", md: "18px" },
+            minWidth: { xs: "28px", md: "100px" },
             cursor: "pointer",
             transition: "all 0.2s",
+            "& .MuiButton-startIcon": {
+              margin: { xs: 0, md: "0 8px 0 -4px" },
+            },
           }}
           onClick={handleBackToInfo}
         >
-          Back
+          <Box sx={{ display: { xs: "none", md: "block" } }}>Back</Box>
         </OutLineButton>
       </Box>
       {renderTestComponent()}

@@ -26,7 +26,7 @@ const ButtonSelfScore: React.FC<ButtonSelfScoreProps> = ({
   textStyle,
   iconGap,
   maxWidth = 322,
-  height = 40,
+  height = 44,
   borderRadius = 12,
   padding = "10px 32px",
   gap = 5,
@@ -37,8 +37,7 @@ const ButtonSelfScore: React.FC<ButtonSelfScoreProps> = ({
   style,
   ...rest
 }) => {
-  const defaultFontSize = "clamp(14px, 2.5vw, 20px)";
-  const actualFontSize = fontSize || defaultFontSize;
+  const defaultFontSize = fontSize || "18px";
   const actualIconGap = iconGap !== undefined ? iconGap : gap;
 
   // Default button styles - can be completely overridden by style prop
@@ -56,17 +55,19 @@ const ButtonSelfScore: React.FC<ButtonSelfScoreProps> = ({
     display: "flex",
     alignItems: "center",
     justifyContent: "center",
-    minWidth: "140px",
-    fontSize: actualFontSize,
+    minWidth: fullWidth ? undefined : "120px",
+    fontSize: defaultFontSize,
     transition: "all 0.3s ease",
+    boxSizing: "border-box",
   };
 
   // Default text styles - can be completely overridden by textStyle prop
   const defaultTextStyles: React.CSSProperties = {
     color: "#fff",
     fontWeight: 400,
-    fontSize: actualFontSize,
+    fontSize: defaultFontSize,
     fontFamily: "Source Sans Pro",
+    whiteSpace: "nowrap",
   };
 
   return (

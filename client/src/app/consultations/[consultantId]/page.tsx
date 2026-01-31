@@ -215,8 +215,8 @@ export default function ConsultantProfilePage() {
       console.error("Booking error:", error);
       setBookingError(
         error.response?.data?.message ||
-          error.message ||
-          "Failed to book session. Please try again."
+        error.message ||
+        "Failed to book session. Please try again."
       );
     } finally {
       setBookingLoading(false);
@@ -341,24 +341,30 @@ export default function ConsultantProfilePage() {
   return (
     <>
       <Box sx={{ minHeight: "100vh", backgroundColor: "#FFFFFF", pb: 6 }}>
-        <Box sx={{ py: 8, mt: 6, maxWidth: "87%", mx: "auto" }}>
+        <Box sx={{ py: { xs: 2, md: 8 }, mt: { xs: 8, md: 6 }, maxWidth: "87%", mx: "auto", px: { xs: 1, md: 0 } }}>
           {/* Back Button */}
           <OutLineButton
-            startIcon={<ArrowBackIosIcon />}
-            style={{
+            startIcon={<ArrowBackIosIcon sx={{ fontSize: { xs: 14, md: 18 } }} />}
+            sx={{
               background: "transparent",
               color: "#3A3A3A",
               border: "1px solid #3A3A3A",
               borderRadius: "8px",
-              padding: "3.5px 14px",
+              padding: { xs: "4px 8px", md: "3.5px 14px" },
               fontWeight: 400,
-              fontSize: "18px",
+              fontSize: { xs: "14px", md: "18px" },
+              minWidth: { xs: "auto", md: "100px" },
+              height: { xs: "28px", md: "auto" },
+              minHeight: { xs: "28px", md: "44px" },
               cursor: "pointer",
               transition: "all 0.2s",
+              "& .MuiButton-startIcon": {
+                margin: { xs: 0, md: "0 8px 0 -4px" },
+              },
             }}
             onClick={handleBackToInfo}
           >
-            Back
+            <Box sx={{ display: { xs: "none", md: "block" } }}>Back</Box>
           </OutLineButton>
           <Box
             sx={{
@@ -373,26 +379,24 @@ export default function ConsultantProfilePage() {
               <Paper
                 elevation={0}
                 sx={{
-                  p: 3,
+                  p: { xs: 2, md: 3 },
                   borderRadius: "14px",
                   border: "1px solid #3A3A3A4D",
-                  position: "sticky",
+                  position: { xs: "static", md: "sticky" },
                   top: 100,
-                  flexDirection: "row",
+                  flexDirection: { xs: "column", md: "row" },
                   display: "flex",
                   justifyContent: "space-between",
-                  // mb: 3,
                 }}
               >
                 {/* Profile Photo */}
-                <Box sx={{ display: "flex", justifyContent: "left", mb: 2 }}>
+                <Box sx={{ display: "flex", flexDirection: { xs: "column", md: "row" }, justifyContent: "left", mb: 2, alignItems: "flex-start" }}>
                   <Avatar
                     src={consultant.profilePhoto}
                     sx={{
-                      width: 168,
-                      height: 168,
+                      width: { xs: 100, md: 168 },
+                      height: { xs: 100, md: 168 },
                       borderRadius: "10px",
-                      // border: "4px solid #005F73",
                     }}
                   />
 
@@ -401,14 +405,17 @@ export default function ConsultantProfilePage() {
                       display: "flex",
                       flexDirection: "column",
                       gap: 1,
-                      mr: 4,
-                      ml: 4,
+                      mr: { xs: 0, md: 4 },
+                      ml: { xs: 0, md: 4 },
+                      mt: { xs: 2, md: 0 },
+                      alignItems: "flex-start",
+                      textAlign: "left",
                     }}
                   >
                     <Typography
                       sx={{
                         fontFamily: "Faustina",
-                        fontSize: "20px",
+                        fontSize: { xs: "18px", md: "20px" },
                         lineHeight: "28px",
                         fontWeight: 700,
                         color: "#1A1A1A",
@@ -481,12 +488,11 @@ export default function ConsultantProfilePage() {
                 </Box>
                 <Box
                   sx={{
-                    // textAlign: "center",
                     display: "flex",
-                    alignItems: "left",
-                    justifyContent: "left",
+                    alignItems: "flex-start",
+                    justifyContent: "flex-start",
                     flexDirection: "column",
-                    // mb: 2,
+                    mt: { xs: 2, md: 0 },
                   }}
                 >
                   <Box
@@ -554,24 +560,28 @@ export default function ConsultantProfilePage() {
               <Paper
                 elevation={0}
                 sx={{
-                  p: 3,
+                  p: { xs: 2, md: 3 },
                   borderRadius: "14px",
                   border: "1px solid #3A3A3A4D",
                   mb: 3,
-                  mt: 4,
+                  mt: { xs: 2, md: 4 },
                 }}
               >
                 <Tabs
                   value={tabValue}
                   onChange={(_, newValue) => setTabValue(newValue)}
+                  variant="scrollable"
+                  scrollButtons="auto"
                   sx={{
                     borderBottom: "1px solid #E0E0E0",
                     "& .MuiTab-root": {
                       fontFamily: "Source Sans Pro",
-                      fontSize: "16px",
+                      fontSize: { xs: "14px", md: "16px" },
                       textTransform: "none",
                       fontWeight: 600,
                       color: "#0A0A0A",
+                      minWidth: { xs: "auto", md: "90px" },
+                      px: { xs: 1, md: 2 },
                     },
                     "& .Mui-selected": {
                       color: "#005F73 !important",
@@ -879,12 +889,12 @@ export default function ConsultantProfilePage() {
             </Box>
 
             {/* Right Side - Details */}
-            <Box sx={{ flex: 1 }}>
+            <Box sx={{ flex: 1, mt: { xs: 2, md: 0 } }}>
               {/* Booking Section */}
               <Paper
                 elevation={0}
                 sx={{
-                  p: 3,
+                  p: { xs: 2, md: 3 },
                   borderRadius: "12px",
                   border: "1px solid #E0E0E0",
                 }}
@@ -892,7 +902,7 @@ export default function ConsultantProfilePage() {
                 <Typography
                   sx={{
                     fontFamily: "Source Sans Pro",
-                    fontSize: "14px",
+                    fontSize: { xs: "12px", md: "14px" },
                     fontWeight: 600,
                     color: "#1A1A1A",
                     mb: 1,
@@ -903,7 +913,7 @@ export default function ConsultantProfilePage() {
                 <Typography
                   sx={{
                     fontFamily: "Faustina",
-                    fontSize: "24px",
+                    fontSize: { xs: "18px", md: "24px" },
                     fontWeight: 700,
                     color: "#1A1A1A",
                     mb: 0.5,

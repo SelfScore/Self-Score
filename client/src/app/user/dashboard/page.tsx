@@ -181,9 +181,8 @@ export default function UserDashboard() {
                 rawDate: rawDateValue || new Date().toISOString(), // Keep raw ISO date for report generation
                 timeSpent:
                   item.timeSpent && typeof item.timeSpent === "number"
-                    ? `${Math.floor(item.timeSpent / 60)}m ${
-                        item.timeSpent % 60
-                      }s`
+                    ? `${Math.floor(item.timeSpent / 60)}m ${item.timeSpent % 60
+                    }s`
                     : "N/A",
                 attemptNumber: attemptMap[item._id],
                 status: item.status, // ✅ Include status for Level 4 pending/reviewed check
@@ -354,8 +353,8 @@ export default function UserDashboard() {
         )
           ? "TEXT"
           : adminReview.questionReviews.every((qr) => qr.answerMode === "VOICE")
-          ? "VOICE"
-          : "MIXED",
+            ? "VOICE"
+            : "MIXED",
         questionReviews: adminReview.questionReviews.map((qr) => ({
           questionOrder: adminReview.questionReviews.indexOf(qr) + 1,
           questionText: qr.questionText,
@@ -490,7 +489,7 @@ export default function UserDashboard() {
   const lastTestScore =
     lastTest?.score ||
     progress?.testScores?.[
-      `level${lastCompletedLevel}` as keyof typeof progress.testScores
+    `level${lastCompletedLevel}` as keyof typeof progress.testScores
     ] ||
     0;
   const lastTestDate = lastTest?.date || new Date().toLocaleDateString();
@@ -524,33 +523,35 @@ export default function UserDashboard() {
   const filteredTestHistory = getFilteredAndSortedHistory();
 
   return (
-    <Container maxWidth="xl" sx={{ backgroundColor: "#ffffff", py: 14 }}>
+    <Container maxWidth="xl" sx={{ backgroundColor: "#ffffff", py: { xs: 10, md: 14 }, px: { xs: 2, md: 3 } }}>
       <Box sx={{ maxWidth: "1280px", mx: "auto" }}>
         {/* Header Section */}
         <Box
           sx={{
             display: "flex",
-            alignItems: "center",
+            alignItems: { xs: "flex-start", md: "center" },
             justifyContent: "space-between",
+            flexDirection: { xs: "column", md: "row" },
             mb: 3,
-            p: 3,
+            p: { xs: 2, md: 3 },
             backgroundColor: "#FFF",
             borderRadius: "16px",
             border: "1px solid #3A3A3A4D",
+            gap: { xs: 2, md: 0 },
           }}
         >
           <Box sx={{ display: "flex", alignItems: "center", gap: 2 }}>
             <Box
               sx={{
-                width: 40,
-                height: 40,
+                width: { xs: 32, md: 40 },
+                height: { xs: 32, md: 40 },
                 borderRadius: "50%",
                 backgroundColor: "#0C677A",
                 display: "flex",
                 alignItems: "center",
                 justifyContent: "center",
                 color: "white",
-                fontSize: "18px",
+                fontSize: { xs: "14px", md: "18px" },
                 fontWeight: 400,
               }}
             >
@@ -560,7 +561,7 @@ export default function UserDashboard() {
               sx={{
                 fontWeight: 700,
                 color: "#2B2B2B",
-                fontSize: "24px",
+                fontSize: { xs: "18px", md: "24px" },
                 fontFamily: "source Sans Pro",
               }}
             >
@@ -573,9 +574,9 @@ export default function UserDashboard() {
               backgroundColor: "#f1f5f9",
               color: "#475569",
               fontWeight: 600,
-              px: 2,
-              py: 2.5,
-              fontSize: "0.875rem",
+              px: { xs: 1, md: 2 },
+              py: { xs: 1.5, md: 2.5 },
+              fontSize: { xs: "0.75rem", md: "0.875rem" },
             }}
           />
         </Box>
@@ -586,9 +587,9 @@ export default function UserDashboard() {
           <Grid size={{ xs: 12, md: 3 }}>
             <Paper
               sx={{
-                p: 4,
+                p: { xs: 2, md: 4 },
                 height: "100%",
-                maxHeight: "204px",
+                maxHeight: { xs: "180px", md: "204px" },
                 background: "#FF4F00",
                 color: "white",
                 borderRadius: 4,
@@ -596,7 +597,7 @@ export default function UserDashboard() {
                 flexDirection: "column",
                 alignItems: "center",
                 justifyContent: "center",
-                gap: 2,
+                gap: { xs: 1.5, md: 2 },
               }}
             >
               <Box
@@ -613,7 +614,7 @@ export default function UserDashboard() {
               </Box>
               <Typography
                 variant="h5"
-                sx={{ fontWeight: 400, fontSize: "20px" }}
+                sx={{ fontWeight: 400, fontSize: { xs: "16px", md: "20px" } }}
               >
                 Level {nextLevel} Test
               </Typography>
@@ -633,17 +634,17 @@ export default function UserDashboard() {
           <Grid size={{ xs: 12, md: 3 }}>
             <Box
               sx={{
-                p: 4,
+                p: { xs: 2, md: 4 },
                 backgroundColor: "#F7F7F7",
                 border: "1px solid #3A3A3A4D",
                 height: "100%",
-                maxHeight: "204px",
+                maxHeight: { xs: "180px", md: "204px" },
                 borderRadius: "16px",
                 display: "flex",
                 flexDirection: "column",
                 alignItems: "center",
                 justifyContent: "center",
-                gap: 2,
+                gap: { xs: 1.5, md: 2 },
               }}
             >
               <Box
@@ -662,7 +663,7 @@ export default function UserDashboard() {
               </Box>
               <Typography
                 variant="h6"
-                sx={{ fontWeight: 400, color: "#2B2B2B", fontSize: "20px" }}
+                sx={{ fontWeight: 400, color: "#2B2B2B", fontSize: { xs: "14px", md: "20px" }, textAlign: "center" }}
               >
                 Levels Completed ({completedLevels.length}/{totalLevels})
               </Typography>
@@ -683,9 +684,9 @@ export default function UserDashboard() {
                     }}
                   >
                     {completedLevels.includes(level) ? (
-                      <CheckCircle sx={{ fontSize: 40, color: "#51BB00E5" }} />
+                      <CheckCircle sx={{ fontSize: { xs: 28, md: 40 }, color: "#51BB00E5" }} />
                     ) : (
-                      <CheckCircle sx={{ fontSize: 40, color: "#D9D9D9" }} />
+                      <CheckCircle sx={{ fontSize: { xs: 28, md: 40 }, color: "#D9D9D9" }} />
                     )}
                   </Box>
                 ))}
@@ -697,16 +698,17 @@ export default function UserDashboard() {
           <Grid size={{ xs: 12, md: 6 }}>
             <Box
               sx={{
-                p: 4,
+                p: { xs: 2, md: 4 },
                 height: "100%",
-                maxHeight: "204px",
+                maxHeight: { xs: "none", md: "204px" },
                 borderRadius: 4,
                 display: "flex",
-                flexDirection: "row",
-                alignItems: "flex-start",
+                flexDirection: { xs: "column", md: "row" },
+                alignItems: { xs: "center", md: "flex-start" },
                 justifyContent: "space-between",
                 border: "1px solid #3A3A3A4D",
                 backgroundColor: "#F7F7F7",
+                gap: { xs: 2, md: 0 },
               }}
             >
               {/* Left Side - Info and Buttons */}
@@ -746,9 +748,10 @@ export default function UserDashboard() {
                   <Box
                     sx={{
                       display: "flex",
-                      flexDirection: "row",
+                      flexDirection: { xs: "column", md: "row" },
                       gap: 2,
                       mt: "auto",
+                      width: { xs: "100%", md: "auto" },
                     }}
                   >
                     {lastCompletedLevel === 4 && lastTest ? (
@@ -904,7 +907,8 @@ export default function UserDashboard() {
                   display: "flex",
                   alignItems: "center",
                   justifyContent: "center",
-                  ml: 4,
+                  ml: { xs: 0, md: 4 },
+                  mt: { xs: 2, md: 0 },
                 }}
               >
                 <Box
@@ -915,12 +919,11 @@ export default function UserDashboard() {
                 >
                   <Box
                     sx={{
-                      width: 140,
-                      height: 140,
+                      width: { xs: 100, md: 140 },
+                      height: { xs: 100, md: 140 },
                       borderRadius: "50%",
-                      background: `conic-gradient(#508B28 ${
-                        scorePercentage * 3.6
-                      }deg, #e5e7eb 0deg)`,
+                      background: `conic-gradient(#508B28 ${scorePercentage * 3.6
+                        }deg, #e5e7eb 0deg)`,
                       display: "flex",
                       alignItems: "center",
                       justifyContent: "center",
@@ -928,8 +931,8 @@ export default function UserDashboard() {
                   >
                     <Box
                       sx={{
-                        width: 120,
-                        height: 120,
+                        width: { xs: 80, md: 120 },
+                        height: { xs: 80, md: 120 },
                         borderRadius: "50%",
                         backgroundColor: "white",
                         display: "flex",
@@ -943,12 +946,12 @@ export default function UserDashboard() {
                         sx={{
                           fontWeight: 700,
                           color: "#1e293b",
-                          fontSize: "32px",
+                          fontSize: { xs: "24px", md: "32px" },
                         }}
                       >
                         {lastTestScore}
                       </Typography>
-                      <Typography variant="body2" sx={{ color: "#64748b" }}>
+                      <Typography variant="body2" sx={{ color: "#64748b", fontSize: { xs: "12px", md: "14px" } }}>
                         out of 900
                       </Typography>
                     </Box>
@@ -962,8 +965,8 @@ export default function UserDashboard() {
         {/* Test History Section */}
         <Box
           sx={{
-            p: 4,
-            mt: 4,
+            p: { xs: 2, md: 4 },
+            mt: { xs: 2, md: 4 },
             borderRadius: 4,
             border: "1px solid #3A3A3A4D",
             backgroundColor: "#FFF",
@@ -984,7 +987,7 @@ export default function UserDashboard() {
               variant="h5"
               sx={{
                 fontWeight: 700,
-                fontSize: "28px",
+                fontSize: { xs: "20px", md: "28px" },
                 color: "#000",
                 fontFamily: "Faustina",
               }}
@@ -1105,12 +1108,13 @@ export default function UserDashboard() {
                     key={test._id}
                     sx={{
                       display: "flex",
+                      flexDirection: { xs: "column", md: "row" },
                       borderBottom: "1px solid #E0E0E0",
-                      alignItems: "center",
+                      alignItems: { xs: "flex-start", md: "center" },
                       justifyContent: "space-between",
-                      p: 3,
+                      p: { xs: 2, md: 3 },
                       backgroundColor: "#FFF",
-                      // borderRadius: 2,
+                      gap: { xs: 2, md: 0 },
                       "&:hover": {
                         backgroundColor: "#FFF",
                       },
@@ -1126,16 +1130,17 @@ export default function UserDashboard() {
                     >
                       <Box
                         sx={{
-                          width: 50,
-                          height: 50,
+                          width: { xs: 36, md: 50 },
+                          height: { xs: 36, md: 50 },
                           borderRadius: 2,
                           backgroundColor: "#005F73",
                           display: "flex",
                           alignItems: "center",
                           justifyContent: "center",
+                          flexShrink: 0,
                         }}
                       >
-                        <TrendingUp sx={{ fontSize: 28, color: "white" }} />
+                        <TrendingUp sx={{ fontSize: { xs: 20, md: 28 }, color: "white" }} />
                       </Box>
                       <Box sx={{ flex: 1 }}>
                         <Box
@@ -1149,7 +1154,7 @@ export default function UserDashboard() {
                           <Typography
                             sx={{
                               fontWeight: 400,
-                              fontSize: "20px",
+                              fontSize: { xs: "16px", md: "20px" },
                               fontFamily: "Source Sans Pro",
                               color: "#3B3B3B",
                             }}
@@ -1189,13 +1194,14 @@ export default function UserDashboard() {
                         width: "1px",
                         height: "40px",
                         backgroundColor: "#3B3B3B4D",
-                        mx: 10,
+                        mx: { xs: 0, md: 10 },
+                        display: { xs: "none", md: "block" },
                       }}
                     />
 
                     {/* Right Side - Score and Actions */}
 
-                    <Box sx={{ display: "flex", alignItems: "center", gap: 4 }}>
+                    <Box sx={{ display: "flex", alignItems: { xs: "flex-start", md: "center" }, gap: { xs: 2, md: 4 }, flexDirection: { xs: "column", md: "row" }, width: { xs: "100%", md: "auto" } }}>
                       <Box sx={{ minWidth: 200 }}>
                         {isPendingReview ? (
                           <>
@@ -1260,6 +1266,7 @@ export default function UserDashboard() {
                           height: "40px",
                           backgroundColor: "#3B3B3B4D",
                           mx: 2,
+                          display: { xs: "none", md: "block" },
                         }}
                       />
 
@@ -1270,6 +1277,7 @@ export default function UserDashboard() {
                           height: 8,
                           backgroundColor: "#e2e8f0",
                           borderRadius: 4,
+                          display: { xs: "none", md: "block" },
                         }}
                       >
                         <Box
@@ -1283,7 +1291,7 @@ export default function UserDashboard() {
                       </Box>
 
                       {/* ✅ Action Buttons or Pending Status */}
-                      <Box sx={{ display: "flex", gap: 1 }}>
+                      <Box sx={{ display: "flex", gap: 1, flexDirection: { xs: "column", md: "row" }, width: { xs: "100%", md: "auto" } }}>
                         {isPendingReview ? (
                           // ✅ Show "Report Not Ready" message for pending Level 4 reviews
                           <Box
@@ -1464,8 +1472,8 @@ export default function UserDashboard() {
         {!loadingTransactions && transactionHistory.length > 0 && (
           <Box
             sx={{
-              p: 4,
-              mt: 4,
+              p: { xs: 2, md: 4 },
+              mt: { xs: 2, md: 4 },
               borderRadius: 4,
               border: "1px solid #3A3A3A4D",
               backgroundColor: "#FFF",
@@ -1476,7 +1484,7 @@ export default function UserDashboard() {
               sx={{
                 fontWeight: 700,
                 mb: 3,
-                fontSize: "28px",
+                fontSize: { xs: "20px", md: "28px" },
                 color: "#000",
                 fontFamily: "Faustina",
               }}
@@ -1526,11 +1534,13 @@ export default function UserDashboard() {
                     key={transaction._id}
                     sx={{
                       display: "flex",
+                      flexDirection: { xs: "column", md: "row" },
                       borderBottom: "1px solid #E0E0E0",
-                      alignItems: "center",
+                      alignItems: { xs: "flex-start", md: "center" },
                       justifyContent: "space-between",
-                      p: 3,
+                      p: { xs: 2, md: 3 },
                       backgroundColor: "#FFF",
+                      gap: { xs: 2, md: 0 },
                       "&:hover": {
                         backgroundColor: "#FFF",
                       },
@@ -1540,22 +1550,23 @@ export default function UserDashboard() {
                       sx={{
                         display: "flex",
                         alignItems: "center",
-                        gap: 3,
+                        gap: { xs: 2, md: 3 },
                         flex: 1,
                       }}
                     >
                       <Box
                         sx={{
-                          width: 50,
-                          height: 50,
+                          width: { xs: 36, md: 50 },
+                          height: { xs: 36, md: 50 },
                           borderRadius: 2,
                           backgroundColor: "#0C677A",
                           display: "flex",
                           alignItems: "center",
                           justifyContent: "center",
+                          flexShrink: 0,
                         }}
                       >
-                        <PaymentIcon sx={{ fontSize: 28, color: "white" }} />
+                        <PaymentIcon sx={{ fontSize: { xs: 20, md: 28 }, color: "white" }} />
                       </Box>
                       <Box sx={{ flex: 1 }}>
                         <Box
@@ -1569,7 +1580,7 @@ export default function UserDashboard() {
                           <Typography
                             sx={{
                               fontWeight: 400,
-                              fontSize: "20px",
+                              fontSize: { xs: "16px", md: "20px" },
                               fontFamily: "Source Sans Pro",
                               color: "#3B3B3B",
                             }}
@@ -1607,19 +1618,20 @@ export default function UserDashboard() {
                         width: "1px",
                         height: "40px",
                         backgroundColor: "#3B3B3B4D",
-                        mx: 10,
+                        mx: { xs: 0, md: 10 },
+                        display: { xs: "none", md: "block" },
                       }}
                     />
 
                     {/* Amount */}
-                    <Box sx={{ display: "flex", alignItems: "center", gap: 4 }}>
-                      <Box sx={{ minWidth: 120 }}>
+                    <Box sx={{ display: "flex", alignItems: { xs: "flex-start", md: "center" }, gap: { xs: 2, md: 4 }, flexDirection: { xs: "column", md: "row" }, width: { xs: "100%", md: "auto" } }}>
+                      <Box sx={{ minWidth: { xs: "auto", md: 120 } }}>
                         <Typography
                           sx={{
                             color: "#0C677A",
                             fontWeight: 600,
                             mb: 0.5,
-                            fontSize: "20px",
+                            fontSize: { xs: "18px", md: "20px" },
                             fontFamily: "Source Sans Pro",
                           }}
                         >
@@ -1630,7 +1642,7 @@ export default function UserDashboard() {
                           sx={{
                             color: "#3B3B3B99",
                             fontWeight: 400,
-                            fontSize: "14px",
+                            fontSize: { xs: "12px", md: "14px" },
                             fontFamily: "Source Sans Pro",
                           }}
                         >
@@ -1645,6 +1657,7 @@ export default function UserDashboard() {
                           height: "40px",
                           backgroundColor: "#3B3B3B4D",
                           mx: 2,
+                          display: { xs: "none", md: "block" },
                         }}
                       />
 

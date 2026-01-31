@@ -33,7 +33,7 @@ export default function HeroSection() {
           textAlign: "center",
           maxWidth: "800px",
           mx: "auto",
-          mt: { xs: 0, md: 4 },
+          mt: { xs: 4, md: 4 },
         }}
       >
         <Typography
@@ -81,35 +81,30 @@ export default function HeroSection() {
           display: "flex",
           justifyContent: "center",
           mt: 4,
+          px: { xs: 2, md: 0 },
         }}
       >
         <Box
           sx={{
             display: "flex",
+            flexDirection: { xs: "column", md: "row" },
             justifyContent: "center",
+            alignItems: "center",
             gap: 2,
+            width: { xs: "100%", md: "auto" },
+            maxWidth: { xs: "300px", md: "none" },
           }}
         >
-          <Link href="/testInfo">
+          <Link href="/testInfo" style={{ width: "inherit" }}>
             <ButtonSelfScore
-              // onClick={() => {
-              //   router.push(`/testInfo?`);
-              // }}
               text="Take the Happiness Test →"
+              fullWidth
             />
           </Link>
           <OutLineButton
             onClick={handleLearnMore}
-            variant="outlined"
-            color="primary"
             sx={{
-              borderRadius: "12px",
-              padding: { xs: "6.75px 14px", md: "1px 20px" },
-              border: "1px solid #FF4F00",
-              color: "#FF4F00",
-              fontWeight: 400,
-              textTransform: "none",
-              fontSize: { xs: "1rem", md: "20px" },
+              width: { xs: "100%", md: "auto" },
             }}
           >
             Learn More

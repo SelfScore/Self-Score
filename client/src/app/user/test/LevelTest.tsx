@@ -429,21 +429,22 @@ export default function LevelTest({ level }: LevelTestProps) {
         width: "100%",
         maxWidth: "1280px",
         mx: "auto",
-        p: 4,
+        p: { xs: 0.5, md: 4 },
         backgroundColor: "#FFFFFF",
-        borderRadius: "16px",
-        mt: 4,
+        borderRadius: { xs: "12px", md: "16px" },
+        mt: { xs: 2, md: 4 },
       }}
     >
       {/* Header Section */}
-      <Box sx={{ mb: 4 }}>
+      <Box sx={{ mb: { xs: 3, md: 4 } }}>
         <Typography
           sx={{
             fontWeight: "700",
-            fontSize: "32px",
+            fontSize: { xs: "24px", md: "32px" },
             color: "#005F73",
             textAlign: "center",
-            mt: -6,
+            mt: { xs: -7, md: -14 },
+            mb: { xs: 5, md: 5 },
           }}
         >
           Level {level} Assessment
@@ -451,17 +452,17 @@ export default function LevelTest({ level }: LevelTestProps) {
 
         <Box
           sx={{
-            mt: 3,
+            mt: { xs: 2, md: 3 },
             border: "1px solid #E0E0E0",
-            borderRadius: "16px",
-            p: 3,
+            borderRadius: { xs: "12px", md: "16px" },
+            p: { xs: 1, md: 3 },
             backgroundColor: "#F7F7F7",
           }}
         >
           <Typography
             sx={{
               fontWeight: "700",
-              fontSize: "18px",
+              fontSize: { xs: "16px", md: "18px" },
               color: "#2B2B2B",
               fontFamily: "source sans pro",
             }}
@@ -473,7 +474,7 @@ export default function LevelTest({ level }: LevelTestProps) {
               fontFamily: "Source Sans Pro",
               color: "#2B2B2B",
               fontWeight: 400,
-              fontSize: "18px",
+              fontSize: { xs: "14px", md: "18px" },
               lineHeight: "140%",
               mt: 1,
             }}
@@ -484,7 +485,7 @@ export default function LevelTest({ level }: LevelTestProps) {
           <Typography
             sx={{
               fontWeight: "700",
-              fontSize: "18px",
+              fontSize: { xs: "16px", md: "18px" },
               color: "#2B2B2B",
               fontFamily: "source sans pro",
               mt: 2,
@@ -499,11 +500,11 @@ export default function LevelTest({ level }: LevelTestProps) {
               fontFamily: "Source Sans Pro",
               color: "#2B2B2B",
               fontWeight: 400,
-              fontSize: "18px",
+              fontSize: { xs: "14px", md: "18px" },
               lineHeight: "140%",
               mt: 0,
               mb: 2,
-              pl: 3,
+              pl: { xs: 2, md: 3 },
             }}
           >
             {instructions.hints.map((hint, index) => (
@@ -519,7 +520,7 @@ export default function LevelTest({ level }: LevelTestProps) {
           variant="determinate"
           value={progress}
           sx={{
-            height: "14px",
+            height: { xs: "10px", md: "14px" },
             borderRadius: "11998.8px",
             backgroundColor: "#E0E0E0",
             "& .MuiLinearProgress-bar": {
@@ -532,10 +533,10 @@ export default function LevelTest({ level }: LevelTestProps) {
           variant="body2"
           sx={{
             mb: 0,
-            mt: 4,
+            mt: { xs: 2, md: 4 },
             textAlign: "left",
             color: "#6B7280",
-            fontSize: "20px",
+            fontSize: { xs: "16px", md: "20px" },
             fontWeight: "700",
           }}
         >
@@ -544,15 +545,16 @@ export default function LevelTest({ level }: LevelTestProps) {
       </Box>
 
       {/* Current Question */}
-      <Box sx={{ mb: 4 }}>
+      <Box sx={{ mb: { xs: 3, md: 4 } }}>
         <Typography
           variant="h6"
           sx={{
-            mb: 3,
+            mb: { xs: 2, md: 3 },
             fontFamily: "faustina",
             color: "#2B2B2B",
             fontWeight: "500",
             textAlign: "left",
+            fontSize: { xs: "1rem", md: "1.25rem" },
           }}
         >
           {currentQuestion.questionText}
@@ -592,7 +594,7 @@ export default function LevelTest({ level }: LevelTestProps) {
                 sx={{
                   mb: 1,
                   "& .MuiFormControlLabel-label": {
-                    fontSize: "1.1rem",
+                    fontSize: { xs: "0.95rem", md: "1.1rem" },
                   },
                 }}
               />
@@ -605,9 +607,10 @@ export default function LevelTest({ level }: LevelTestProps) {
       <Box
         sx={{
           display: "flex",
+          flexDirection: { xs: "column", md: "row" },
           justifyContent: "center",
           alignItems: "center",
-          mt: 4,
+          mt: { xs: 3, md: 4 },
           gap: 2,
         }}
       >
@@ -616,11 +619,15 @@ export default function LevelTest({ level }: LevelTestProps) {
           disabled={isFirstQuestion}
           startIcon={<ArrowBackIosIcon />}
           sx={{
-            padding: "1.5px 14px",
-            fontSize: "20px",
+            padding: "10px 20px",
+            fontSize: { xs: "16px", md: "18px" },
             fontWeight: 400,
             fontFamily: "source sans pro",
-            minWidth: "140px",
+            width: "160px",
+            minWidth: "160px",
+            maxWidth: "160px",
+            height: "44px",
+            order: { xs: 2, md: 1 },
             "&:disabled": {
               borderColor: "#ccc",
               color: "#ccc",
@@ -648,12 +655,15 @@ export default function LevelTest({ level }: LevelTestProps) {
             }
             textStyle={{
               fontFamily: "source sans pro",
-              fontSize: "20px ",
+              fontSize: "18px",
               fontWeight: 400,
             }}
             background="#FF4F00"
             borderRadius="12px"
-            padding="12px 32px"
+            padding="10px 20px"
+            height={44}
+            maxWidth={280}
+            fullWidth
             style={{
               opacity:
                 Object.keys(answers).length < questions.length || submitting
@@ -663,6 +673,8 @@ export default function LevelTest({ level }: LevelTestProps) {
                 Object.keys(answers).length < questions.length || submitting
                   ? "not-allowed"
                   : "pointer",
+              order: 1,
+              width: "160px",
             }}
           />
         ) : (
@@ -678,25 +690,32 @@ export default function LevelTest({ level }: LevelTestProps) {
                 ? "#FF4F00"
                 : "#ccc"
             }
-            padding="10px 4px"
+            padding="10px 20px"
+            height={44}
+            maxWidth={280}
+            fullWidth
             style={{
               cursor:
                 currentQuestion && currentQuestion._id in answers
                   ? "pointer"
                   : "not-allowed",
+              order: 1,
+              width: "160px",
             }}
           />
         )}
       </Box>
 
       {/* Sign Up Modal - Only for Level 1 */}
-      {level === 1 && (
-        <SignUpModal
-          open={showSignUpModal}
-          onClose={() => setShowSignUpModal(false)}
-          onSuccess={handleAuthSuccess}
-        />
-      )}
-    </Box>
+      {
+        level === 1 && (
+          <SignUpModal
+            open={showSignUpModal}
+            onClose={() => setShowSignUpModal(false)}
+            onSuccess={handleAuthSuccess}
+          />
+        )
+      }
+    </Box >
   );
 }

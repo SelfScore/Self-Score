@@ -19,9 +19,12 @@ import {
   Pagination,
   SelectChangeEvent,
   Slider,
-  //   Avatar,
+  Drawer,
+  IconButton,
 } from "@mui/material";
 import SearchIcon from "@mui/icons-material/Search";
+import FilterListIcon from "@mui/icons-material/FilterList";
+import CloseIcon from "@mui/icons-material/Close";
 import LocationOnIcon from "@mui/icons-material/LocationOn";
 import StarIcon from "@mui/icons-material/Star";
 // import PersonIcon from "@mui/icons-material/Person";
@@ -46,6 +49,7 @@ export default function ConsultationsPage() {
     "nameAsc" | "nameDesc" | "priceAsc" | "priceDesc"
   >("nameAsc");
   const [showLoginModal, setShowLoginModal] = useState(false);
+  const [filterDrawerOpen, setFilterDrawerOpen] = useState(false);
 
   // Filters
   const [locationFilter, setLocationFilter] = useState("");
@@ -224,7 +228,7 @@ export default function ConsultationsPage() {
   return (
     <>
       <Box sx={{ minHeight: "100vh", backgroundColor: "#FFFFFF", pb: 6 }}>
-        <Box sx={{ maxWidth: "87%", py: 8, mt: 6, mx: "auto" }}>
+        <Box sx={{ maxWidth: "87%", py: 8, mt: { xs: 2, md: 6 }, mx: "auto" }}>
           {/* Header */}
           <Box sx={{ textAlign: "center", mb: 4 }}>
             <Typography
@@ -325,8 +329,35 @@ export default function ConsultationsPage() {
               gap: 4,
             }}
           >
-            {/* Filters Sidebar */}
-            <Box sx={{ width: { xs: "100%", md: "300px" }, flexShrink: 0 }}>
+            {/* Mobile Filter Button */}
+            <Box
+              sx={{
+                display: { xs: "flex", md: "none" },
+                justifyContent: "flex-start",
+                mb: 2,
+              }}
+            >
+              <Button
+                startIcon={<FilterListIcon />}
+                onClick={() => setFilterDrawerOpen(true)}
+                sx={{
+                  border: "1px solid #3A3A3A4D",
+                  borderRadius: "8px",
+                  color: "#1A1A1A",
+                  fontFamily: "Source Sans Pro",
+                  fontSize: "14px",
+                  fontWeight: 600,
+                  textTransform: "none",
+                  px: 2,
+                  py: 1,
+                }}
+              >
+                Filters
+              </Button>
+            </Box>
+
+            {/* Filters Sidebar - Desktop Only */}
+            <Box sx={{ width: "300px", flexShrink: 0, display: { xs: "none", md: "block" } }}>
               <Box
                 sx={{
                   position: "sticky",
@@ -534,6 +565,243 @@ export default function ConsultationsPage() {
                 </Box>
               </Box>
             </Box>
+
+            {/* Mobile Filter Drawer */}
+            <Drawer
+              anchor="right"
+              open={filterDrawerOpen}
+              onClose={() => setFilterDrawerOpen(false)}
+              sx={{
+                display: { xs: "block", md: "none" },
+                "& .MuiDrawer-paper": {
+                  width: "85%",
+                  maxWidth: "350px",
+                  p: 3,
+                },
+              }}
+            >
+              <Box sx={{ display: "flex", justifyContent: "space-between", alignItems: "center", mb: 3 }}>
+                <Typography
+                  sx={{
+                    fontFamily: "Source Sans Pro",
+                    fontSize: "18px",
+                    fontWeight: 700,
+                    color: "#1A1A1A",
+                  }}
+                >
+                  Filters
+                </Typography>
+                <IconButton onClick={() => setFilterDrawerOpen(false)}>
+                  <CloseIcon />
+                </IconButton>
+              </Box>
+
+              {/* Location */}
+              <Box sx={{ mb: 3 }}>
+                <Typography
+                  sx={{
+                    fontFamily: "Source Sans Pro",
+                    fontSize: "14px",
+                    fontWeight: 600,
+                    color: "#1A1A1A",
+                    mb: 1,
+                  }}
+                >
+                  Location
+                </Typography>
+                <TextField
+                  fullWidth
+                  size="small"
+                  placeholder="Enter location"
+                  value={locationFilter}
+                  onChange={(e) => setLocationFilter(e.target.value)}
+                  sx={{
+                    "& .MuiOutlinedInput-root": {
+                      borderRadius: "8px",
+                      backgroundColor: "#F5F5F5",
+                    },
+                  }}
+                />
+              </Box>
+
+              {/* Services Offered */}
+              <Box sx={{ mb: 3 }}>
+                <Typography
+                  sx={{
+                    fontFamily: "Source Sans Pro",
+                    fontSize: "14px",
+                    fontWeight: 600,
+                    color: "#1A1A1A",
+                    mb: 1,
+                  }}
+                >
+                  Services Offered
+                </Typography>
+                <FormControlLabel
+                  control={
+                    <Checkbox
+                      checked={servicesFilter.includes("30min")}
+                      onChange={() => handleServiceFilterChange("30min")}
+                      sx={{ "&.Mui-checked": { color: "#005F73" } }}
+                    />
+                  }
+                  label="30-minute call"
+                />
+                <FormControlLabel
+                  control={
+                    <Checkbox
+                      checked={servicesFilter.includes("60min")}
+                      onChange={() => handleServiceFilterChange("60min")}
+                      sx={{ "&.Mui-checked": { color: "#005F73" } }}
+                    />
+                  }
+                  label="60-minute call"
+                />
+                <FormControlLabel
+                  control={
+                    <Checkbox
+                      checked={servicesFilter.includes("90min")}
+                      onChange={() => handleServiceFilterChange("90min")}
+                      sx={{ "&.Mui-checked": { color: "#005F73" } }}
+                    />
+                  }
+                  label="90-minute call"
+                />
+              </Box>
+
+              {/* Language */}
+              <Box sx={{ mb: 3 }}>
+                <Typography
+                  sx={{
+                    fontFamily: "Source Sans Pro",
+                    fontSize: "14px",
+                    fontWeight: 600,
+                    color: "#1A1A1A",
+                    mb: 1,
+                  }}
+                >
+                  Language
+                </Typography>
+                {["English (UK)", "Spanish", "Korean", "English (US)"].map(
+                  (lang) => (
+                    <FormControlLabel
+                      key={lang}
+                      control={
+                        <Checkbox
+                          checked={languageFilter.includes(lang)}
+                          onChange={() => handleLanguageFilterChange(lang)}
+                          sx={{ "&.Mui-checked": { color: "#005F73" } }}
+                        />
+                      }
+                      label={lang}
+                    />
+                  )
+                )}
+              </Box>
+
+              {/* Price Range */}
+              <Box sx={{ mb: 3 }}>
+                <Typography
+                  sx={{
+                    fontFamily: "Source Sans Pro",
+                    fontSize: "14px",
+                    fontWeight: 600,
+                    color: "#1A1A1A",
+                    mb: 1,
+                  }}
+                >
+                  Price Per Hour (${priceRange[0]} - ${priceRange[1]}+)
+                </Typography>
+                <Slider
+                  value={priceRange}
+                  onChange={(_, newValue) =>
+                    setPriceRange(newValue as number[])
+                  }
+                  valueLabelDisplay="auto"
+                  min={0}
+                  max={150}
+                  sx={{ color: "#005F73" }}
+                />
+              </Box>
+
+              {/* Minimum Rating */}
+              <Box sx={{ mb: 3 }}>
+                <Typography
+                  sx={{
+                    fontFamily: "Source Sans Pro",
+                    fontSize: "14px",
+                    fontWeight: 600,
+                    color: "#1A1A1A",
+                    mb: 1,
+                  }}
+                >
+                  Minimum Rating
+                </Typography>
+                {[1, 2, 3, 4, 5].map((rating) => (
+                  <Box key={rating} sx={{ mb: 0.5 }}>
+                    <FormControlLabel
+                      control={
+                        <Checkbox
+                          checked={minRating === rating}
+                          onChange={() =>
+                            setMinRating(minRating === rating ? 0 : rating)
+                          }
+                          sx={{ "&.Mui-checked": { color: "#005F73" } }}
+                        />
+                      }
+                      label={
+                        <Box
+                          sx={{
+                            display: "flex",
+                            alignItems: "center",
+                            gap: 0.5,
+                          }}
+                        >
+                          {[...Array(rating)].map((_, i) => (
+                            <StarIcon
+                              key={i}
+                              sx={{ fontSize: "16px", color: "#FF4F00" }}
+                            />
+                          ))}
+                          <Typography
+                            sx={{
+                              ml: 0.5,
+                              fontFamily: "Source Sans Pro",
+                              fontSize: "14px",
+                              color: "#666",
+                            }}
+                          >
+                            & up
+                          </Typography>
+                        </Box>
+                      }
+                    />
+                  </Box>
+                ))}
+              </Box>
+
+              {/* Apply Filters Button */}
+              <Button
+                fullWidth
+                onClick={() => setFilterDrawerOpen(false)}
+                sx={{
+                  backgroundColor: "#005F73",
+                  color: "#FFF",
+                  fontFamily: "Source Sans Pro",
+                  fontSize: "14px",
+                  fontWeight: 600,
+                  py: 1.5,
+                  borderRadius: "8px",
+                  textTransform: "none",
+                  mt: 2,
+                  "&:hover": {
+                    backgroundColor: "#004D5C",
+                  },
+                }}
+              >
+                Apply Filters
+              </Button>
+            </Drawer>
 
             {/* Consultants Grid */}
             <Box sx={{ flex: 1 }}>
