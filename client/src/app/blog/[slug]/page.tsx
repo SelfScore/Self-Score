@@ -3,6 +3,10 @@ import { notFound } from "next/navigation";
 import BlogDetails from "../../components/blogsComponent/BlogDetails";
 import { wordpressService } from "../../../services/wordpressService";
 
+// Don't statically generate blog pages - they'll be SSR
+export const dynamic = "force-dynamic";
+export const dynamicParams = true;
+
 // Generate dynamic metadata from WordPress post
 export async function generateMetadata({
   params,
@@ -28,11 +32,11 @@ export async function generateMetadata({
       type: "article",
       images: blog.image
         ? [
-          {
-            url: blog.image,
-            alt: blog.title,
-          },
-        ]
+            {
+              url: blog.image,
+              alt: blog.title,
+            },
+          ]
         : undefined,
     },
     twitter: {
