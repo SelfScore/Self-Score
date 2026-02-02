@@ -1,15 +1,23 @@
 // Personalized Recommendations Page Generator (Page 6)
+// Now uses score-based recommendations
 
-import { ReportContent } from '../types';
+import { UserReportData } from '../types';
+import { getScoreBasedContent, levelProTips } from '../utils/contentData';
 
 const CLIENT_URL = process.env.NEXT_PUBLIC_CLIENT_URL || 'https://www.selfscore.net';
 
-export const generateRecommendationsPage = (content: ReportContent, currentLevel: number): string => {
+export const generateRecommendationsPage = (userData: UserReportData): string => {
+  const scoreContent = getScoreBasedContent(userData.level, userData.score);
+  const proTip = levelProTips[userData.level] || levelProTips[1];
+
   // Determine next level and button content
-  const nextLevel = currentLevel + 1;
-  const buttonText = currentLevel === 1 ? 'Unlock Level 2 Test' : 
-                     nextLevel <= 4 ? `Unlock Level ${nextLevel} Test` : 'Continue Your Journey';
+  const nextLevel = userData.level + 1;
+  const buttonText = userData.level === 1 ? 'Unlock Level 2 Test' :
+    nextLevel <= 4 ? `Unlock Level ${nextLevel} Test` : 'Continue Your Journey';
   const buttonUrl = nextLevel <= 4 ? `${CLIENT_URL}/testInfo?level=${nextLevel}` : `${CLIENT_URL}/consultant`;
+
+  const recommendations = scoreContent?.recommendations || [];
+
   return `
     <div style="
       background: #FFFFFF;
@@ -49,7 +57,7 @@ export const generateRecommendationsPage = (content: ReportContent, currentLevel
         margin: 0 0 8px 0;
         position: relative;
         z-index: 1;
-      ">Your Personalized Recommendations</h2>
+      ">What You Can Start With</h2>
       
       <p style="
         font-size: 14px;
@@ -57,47 +65,42 @@ export const generateRecommendationsPage = (content: ReportContent, currentLevel
         margin: 0 0 32px 0;
         position: relative;
         z-index: 1;
-      ">Here's what can help you strengthen your emotional foundation:</p>
+      ">Here are some gentle steps to support your journey:</p>
 
-      <!-- Recommendations -->
-      <div style="position: relative; z-index: 1;">
-      ${content.recommendations.map(rec => `
+      <!-- Recommendations as Bullet Points -->
+      <div style="position: relative; z-index: 1; margin-bottom: 24px;">
+      ${recommendations.map(rec => `
         <div style="
           display: flex;
           align-items: flex-start;
           gap: 16px;
-          margin-bottom: 24px;
+          margin-bottom: 16px;
         ">
           <div style="
-            width: 48px;
-            height: 48px;
+            width: 32px;
+            height: 32px;
             background: #0C677A;
             border-radius: 50%;
             display: flex;
             align-items: center;
             justify-content: center;
             flex-shrink: 0;
+            margin-top: 2px;
           ">
-            <svg width="24" height="24" viewBox="0 0 24 24" fill="none">
+            <svg width="16" height="16" viewBox="0 0 24 24" fill="none">
               <path d="M20 6L9 17L4 12" stroke="white" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"/>
             </svg>
           </div>
-          <div style="flex: 1;">
-            <h3 style="
-              font-size: 18px;
-              font-weight: 700;
-              color: #2B2B2B;
-              margin: 0 0 8px 0;
-            ">${rec.title}</h3>
-            <p style="
-              font-size: 14px;
-              color: #666;
-              margin: 0;
-              line-height: 1.5;
-            ">${rec.description}</p>
-          </div>
+          <p style="
+            font-size: 14px;
+            color: #555;
+            margin: 0;
+            line-height: 1.6;
+            flex: 1;
+          ">${rec}</p>
         </div>
       `).join('')}
+      </div>
 
       <!-- Pro Tip -->
       <div style="
@@ -105,8 +108,9 @@ export const generateRecommendationsPage = (content: ReportContent, currentLevel
         border: 2px solid #E87A42;
         border-radius: 12px;
         padding: 16px 20px;
-        margin-top: 32px;
         margin-bottom: 32px;
+        position: relative;
+        z-index: 1;
       ">
         <div style="
           display: flex;
@@ -138,7 +142,7 @@ export const generateRecommendationsPage = (content: ReportContent, currentLevel
           color: #666;
           margin: 0;
           line-height: 1.5;
-        ">${content.proTip}</p>
+        ">${proTip}</p>
       </div>
 
       <!-- CTA Button (Clickable) -->

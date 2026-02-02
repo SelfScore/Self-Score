@@ -459,10 +459,28 @@ export default function TestInfo({ initialLevel }: TestInfoProps) {
                     fontSize: { xs: "16px", md: "18px" },
                     fontWeight: 600,
                     color: "#FF5722",
-                    mb: 2,
+                    mb: 0.5,
                   }}
                 >
                   {currentLevel.title} (Premium)
+                </Typography>
+                {/* Bundle inclusion text */}
+                <Typography
+                  sx={{
+                    fontFamily: "Source Sans Pro",
+                    fontSize: { xs: "12px", md: "14px" },
+                    fontWeight: 500,
+                    color: "#6B7280",
+                    mb: 2,
+                  }}
+                >
+                  {activeLevel === 1
+                    ? "Includes access to Level 2"
+                    : activeLevel === 2
+                      ? "Includes access to Levels 2 & 3"
+                      : activeLevel === 3 || activeLevel === 4
+                        ? "Includes access to Levels 2, 3, 4 & 5"
+                        : ""}
                 </Typography>
                 {currentLevel.features.map((feature, idx) => (
                   <Typography

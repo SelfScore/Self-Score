@@ -30,3 +30,11 @@ export interface ReportContent {
   proTip: string;
   outcomes: string[];
 }
+
+// New score-based content interface
+export interface ScoreBasedContent {
+  minScore: number;
+  maxScore: number;
+  description: string;
+  recommendations: string[];
+}

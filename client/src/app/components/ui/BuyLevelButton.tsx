@@ -3,7 +3,7 @@
 import { CircularProgress } from "@mui/material";
 import { useState } from "react";
 import { paymentService } from "../../../services/paymentService";
-import { getLevelPrice, formatPrice } from "../../../lib/stripe";
+import { getLevelPrice } from "../../../lib/stripe";
 import LockOpenIcon from "@mui/icons-material/LockOpen";
 import { useAuth } from "../../../hooks/useAuth";
 import SignUpModal from "../../user/SignUpModal";
@@ -15,18 +15,9 @@ interface BuyLevelButtonProps {
   fullWidth?: boolean;
 }
 
-// Helper to get bundle text
-const getBundleText = (level: number): string => {
-  switch (level) {
-    case 2:
-      return "Unlock Level 2";
-    case 3:
-      return "Unlock Levels 2 & 3";
-    case 4:
-      return "Unlock Levels 2, 3 & 4";
-    default:
-      return `Unlock Level ${level}`;
-  }
+// Simple button text - price shown separately in UI
+const getButtonText = (): string => {
+  return "Unlock with Premium";
 };
 
 export default function BuyLevelButton({
@@ -74,7 +65,7 @@ export default function BuyLevelButton({
     return null;
   }
 
-  const bundleText = getBundleText(level);
+  const buttonText = getButtonText();
 
   return (
     <>
@@ -91,13 +82,13 @@ export default function BuyLevelButton({
 
       <ButtonSelfScore
         text={
-          loading ? "Processing..." : `${bundleText} - ${formatPrice(price)}`
+          loading ? "Processing..." : buttonText
         }
         startIcon={
           loading ? (
             <CircularProgress size={20} sx={{ color: "#fff" }} />
           ) : (
-            <LockOpenIcon sx={{color:"#FFF"}}/>
+            <LockOpenIcon sx={{ color: "#FFF" }} />
           )
         }
         onClick={handlePurchase}

@@ -1,115 +1,224 @@
-// Level 5 Report - Thank You Page
+// Level 5 Report - Thank You Page (Matching Level 4 Design)
 
-import { Level5ReportData } from "./types";
+import { Level5ReportData } from './types';
 
-export const generateLevel5ThankYouPage = (
-  data: Level5ReportData,
-  pageNumber: number
-): string => {
+export const generateLevel5ThankYouPage = (data: Level5ReportData, pageNumber: number): string => {
   return `
     <div class="report-page" style="
-      background: linear-gradient(135deg, #005F73 0%, #0A9396 100%);
-      color: white;
+      background: #FFFFFF;
+      padding: 40px;
+      min-height: 297mm;
+      height: 297mm;
       display: flex;
       flex-direction: column;
-      align-items: center;
-      justify-content: center;
-      text-align: center;
-      padding: 60px;
+      font-family: 'Faustina', 'Source Sans Pro', -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif;
+      position: relative;
+      background-image: url('/images/Report/BGImgCover.jpg');
+      background-size: cover;
+      background-position: center;
+      background-repeat: no-repeat;
     ">
+      <!-- Backdrop Blur Layer -->
       <div style="
-        background: rgba(255, 255, 255, 0.1);
-        backdrop-filter: blur(10px);
-        border: 2px solid rgba(255, 255, 255, 0.2);
-        border-radius: 20px;
-        padding: 60px;
-        max-width: 700px;
+        position: absolute;
+        top: 0;
+        left: 0;
+        width: 100%;
+        height: 100%;
+        background: rgba(255, 255, 255, 0.7);
+        backdrop-filter: blur(19px);
+        -webkit-backdrop-filter: blur(19px);
+        z-index: 0;
+      "></div>
+
+      <!-- Logo -->
+      <div style="margin-bottom: 60px; position: relative; z-index: 1;">
+        <img 
+          src="/images/logos/LogoWithText.png" 
+          alt="Self Score Logo" 
+          style="
+            width: 150px;
+            height: auto;
+            object-fit: contain;
+          "
+        />
+      </div>
+
+      <h1 style="font-size: 64px; font-weight: 700; color: #0C677A; margin: 0 0 40px 0; position: relative; z-index: 1;">Thank You</h1>
+
+      <p style="
+        font-size: 18px;
+        color: #666;
+        margin: 0 0 40px 0;
+        max-width: 600px;
+        line-height: 1.6;
+        position: relative;
+        z-index: 1;
       ">
-        <h1 style="
-          font-size: 42px;
-          font-weight: 700;
-          margin: 0 0 30px 0;
-          line-height: 1.2;
-        ">Thank You for Completing Level 5!</h1>
-        
-        <p style="
-          font-size: 20px;
-          margin: 0 0 40px 0;
-          line-height: 1.6;
-          opacity: 0.95;
-        ">
-          You've successfully completed the Real-Time AI Voice Interview. 
-          This comprehensive assessment has evaluated your responses across 
-          ${data.questionReviews.length} critical areas of personal and professional development.
-        </p>
-        
+        Congratulations on completing the Level 5 Voice Interview! Your dedication to personal growth is commendable.
+      </p>
+
+      <!-- Key Stats -->
+      <div style="
+        background: #F7F7F780;
+        border: 2px solid #0C677A;
+        border-radius: 16px;
+        padding: 32px;
+        margin-bottom: 40px;
+        max-width: 500px;
+        position: relative;
+        z-index: 1;
+      ">
         <div style="
-          background: rgba(255, 255, 255, 0.15);
-          border-radius: 15px;
-          padding: 30px;
-          margin-bottom: 40px;
+          display: grid;
+          grid-template-columns: 1fr 1fr;
+          gap: 24px;
         ">
-          <h2 style="
-            font-size: 28px;
-            font-weight: 600;
-            margin: 0 0 20px 0;
-          ">Your Achievement</h2>
-          <p style="
-            font-size: 48px;
-            font-weight: 700;
-            margin: 0;
-            color: #FFD700;
-          ">${data.totalScore} / 900</p>
-        </div>
-        
-        <div style="
-          text-align: left;
-          background: rgba(255, 255, 255, 0.1);
-          border-radius: 15px;
-          padding: 30px;
-          margin-bottom: 40px;
-        ">
-          <h3 style="
-            font-size: 22px;
-            font-weight: 600;
-            margin: 0 0 20px 0;
-          ">Next Steps</h3>
-          <ul style="
-            margin: 0;
-            padding-left: 25px;
-            font-size: 16px;
-            line-height: 1.8;
-          ">
-            <li>Review your detailed feedback on each question</li>
-            <li>Identify patterns in your strengths and areas for growth</li>
-            <li>Consider retaking the assessment to track your progress</li>
-            <li>Connect with our consultants for personalized guidance</li>
-          </ul>
-        </div>
-        
-        <div style="
-          padding-top: 30px;
-          border-top: 1px solid rgba(255, 255, 255, 0.2);
-        ">
-          <p style="
-            font-size: 16px;
-            margin: 0;
-            opacity: 0.8;
-          ">
-            Need support? Visit our website or contact our team for personalized assistance.
-          </p>
+          <div>
+            <div style="
+              font-size: 12px;
+              color: #666;
+              margin-bottom: 8px;
+            ">Your Score</div>
+            <div style="
+              font-size: 36px;
+              font-weight: 700;
+              color: #0C677A;
+            ">${data.totalScore}</div>
+          </div>
+          <div>
+            <div style="
+              font-size: 12px;
+              color: #666;
+              margin-bottom: 8px;
+            ">Questions</div>
+            <div style="
+              font-size: 36px;
+              font-weight: 700;
+              color: #0C677A;
+            ">${data.questionReviews.length}</div>
+          </div>
         </div>
       </div>
-      
+
+      <!-- Next Steps -->
       <div style="
-        margin-top: 50px;
-        opacity: 0.6;
+        text-align: left;
+        max-width: 600px;
+        width: 100%;
+        position: relative;
+        z-index: 1;
       ">
-        <p style="
-          font-size: 14px;
-          margin: 0;
-        ">Page ${pageNumber} of ${pageNumber}</p>
+        <h3 style="
+          font-size: 24px;
+          font-weight: 600;
+          margin: 0 0 20px 0;
+          color: #0C677A;
+        ">What's Next?</h3>
+        
+        <div style="
+          display: flex;
+          flex-direction: column;
+          gap: 15px;
+        ">
+          <div style="
+            display: flex;
+            align-items: start;
+            gap: 15px;
+          ">
+            <div style="
+              min-width: 30px;
+              height: 30px;
+              background: #0C677A;
+              color: white;
+              border-radius: 50%;
+              display: flex;
+              align-items: center;
+              justify-content: center;
+              font-weight: 700;
+              font-size: 14px;
+            ">1</div>
+            <p style="margin: 0; line-height: 1.6; color: #666; font-size: 16px;">
+              Review this detailed report to understand your expert evaluation
+            </p>
+          </div>
+
+          <div style="
+            display: flex;
+            align-items: start;
+            gap: 15px;
+          ">
+            <div style="
+              min-width: 30px;
+              height: 30px;
+              background: #0C677A;
+              color: white;
+              border-radius: 50%;
+              display: flex;
+              align-items: center;
+              justify-content: center;
+              font-weight: 700;
+              font-size: 14px;
+            ">2</div>
+            <p style="margin: 0; line-height: 1.6; color: #666; font-size: 16px;">
+              Implement the personalized recommendations provided by our expert
+            </p>
+          </div>
+
+          <div style="
+            display: flex;
+            align-items: start;
+            gap: 15px;
+          ">
+            <div style="
+              min-width: 30px;
+              height: 30px;
+              background: #0C677A;
+              color: white;
+              border-radius: 50%;
+              display: flex;
+              align-items: center;
+              justify-content: center;
+              font-weight: 700;
+              font-size: 14px;
+            ">3</div>
+            <p style="margin: 0; line-height: 1.6; color: #666; font-size: 16px;">
+              Visit <a href="https://www.selfscore.net" style="color: #0C677A; text-decoration: underline; font-weight: 600;">www.selfscore.net</a> for more resources and support
+            </p>
+          </div>
+        </div>
       </div>
+
+      <!-- Footer Message -->
+      <div style="
+        position: absolute;
+        bottom: 50px;
+        left: 50px;
+        right: 50px;
+        text-align: center;
+        color: #666;
+        font-size: 14px;
+        z-index: 1;
+      ">
+        Continue your journey to emotional mastery with Self Score
+      </div>
+
+      <!-- Page Number -->
+      <div style="
+        position: absolute;
+        bottom: 30px;
+        right: 40px;
+        background: #F5F5F5;
+        padding: 6px 16px;
+        border-radius: 59px;
+        border: 1px solid #3A3A3A4D;
+        font-size: 10px;
+        color: #3A3A3AB2;
+        z-index: 1;
+        font-family: 'Source Sans Pro', -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif;
+        font-weight: 400;
+        text-align: center;
+      ">${pageNumber}</div>
     </div>
   `;
 };

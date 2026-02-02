@@ -140,7 +140,7 @@ function ConsultantBookingsContent() {
 
     if (booking.status === "CREATED") {
       const expiryTime = new Date(
-        new Date(booking.createdAt).getTime() + 10 * 60 * 1000
+        new Date(booking.createdAt).getTime() + 10 * 60 * 1000,
       );
       if (now > expiryTime) {
         return {
@@ -195,7 +195,7 @@ function ConsultantBookingsContent() {
         // Also show CREATED bookings that have expired (older than 10 mins)
         if (booking.status === "CREATED") {
           const expiryTime = new Date(
-            new Date(booking.createdAt).getTime() + 10 * 60 * 1000
+            new Date(booking.createdAt).getTime() + 10 * 60 * 1000,
           );
           return now > expiryTime;
         }
@@ -225,7 +225,7 @@ function ConsultantBookingsContent() {
         key={booking._id}
         elevation={0}
         sx={{
-          p: 3,
+          p: { xs: 2, sm: 2.5, md: 3 },
           borderRadius: "12px",
           border: "1px solid #E0E0E0",
           mb: 2,
@@ -234,20 +234,35 @@ function ConsultantBookingsContent() {
         <Box
           sx={{
             display: "flex",
+            flexDirection: { xs: "column", sm: "row" },
             justifyContent: "space-between",
-            alignItems: "flex-start",
+            alignItems: { xs: "flex-start", sm: "flex-start" },
             mb: 2,
+            gap: { xs: 2, sm: 0 },
           }}
         >
-          <Box sx={{ display: "flex", gap: 2, flex: 1 }}>
-            <Avatar sx={{ width: 64, height: 64, border: "2px solid #005F73" }}>
-              <Person sx={{ fontSize: 32 }} />
+          <Box
+            sx={{
+              display: "flex",
+              gap: { xs: 1.5, sm: 2 },
+              flex: 1,
+              width: { xs: "100%", sm: "auto" },
+            }}
+          >
+            <Avatar
+              sx={{
+                width: { xs: 48, sm: 56, md: 64 },
+                height: { xs: 48, sm: 56, md: 64 },
+                border: "2px solid #005F73",
+              }}
+            >
+              <Person sx={{ fontSize: { xs: 24, sm: 28, md: 32 } }} />
             </Avatar>
             <Box sx={{ flex: 1 }}>
               <Typography
                 sx={{
                   fontFamily: "Faustina",
-                  fontSize: "20px",
+                  fontSize: { xs: "16px", sm: "18px", md: "20px" },
                   fontWeight: 700,
                   color: "#1A1A1A",
                   mb: 0.5,
@@ -258,7 +273,7 @@ function ConsultantBookingsContent() {
               <Typography
                 sx={{
                   fontFamily: "Source Sans Pro",
-                  fontSize: "14px",
+                  fontSize: { xs: "13px", sm: "14px" },
                   color: "#666",
                   mb: 0.5,
                 }}
@@ -268,7 +283,7 @@ function ConsultantBookingsContent() {
               <Typography
                 sx={{
                   fontFamily: "Source Sans Pro",
-                  fontSize: "14px",
+                  fontSize: { xs: "13px", sm: "14px" },
                   color: "#666",
                   mb: 1,
                 }}
@@ -282,7 +297,7 @@ function ConsultantBookingsContent() {
                   backgroundColor: status.bgColor,
                   color: status.color,
                   fontWeight: 600,
-                  fontSize: "12px",
+                  fontSize: { xs: "11px", sm: "12px" },
                 }}
               />
             </Box>
@@ -419,13 +434,20 @@ function ConsultantBookingsContent() {
 
   return (
     <>
-      <Box sx={{ minHeight: "100vh", backgroundColor: "#F9F9F9", py: 8 }}>
-        <Container maxWidth="lg" sx={{ mt: 8 }}>
+      <Box
+        sx={{
+          minHeight: "100vh",
+          backgroundColor: "#F9F9F9",
+          py: { xs: 4, sm: 6, md: 8 },
+          px: { xs: 2, sm: 3, md: 0 },
+        }}
+      >
+        <Container maxWidth="lg" sx={{ mt: { xs: 6, sm: 7, md: 8 } }}>
           {/* Header */}
           <Typography
             sx={{
               fontFamily: "Faustina",
-              fontSize: { xs: "28px", md: "36px" },
+              fontSize: { xs: "24px", sm: "28px", md: "36px" },
               fontWeight: 700,
               color: "#1A1A1A",
               mb: 1,
@@ -436,9 +458,9 @@ function ConsultantBookingsContent() {
           <Typography
             sx={{
               fontFamily: "Source Sans Pro",
-              fontSize: "16px",
+              fontSize: { xs: "14px", sm: "15px", md: "16px" },
               color: "#666",
-              mb: 4,
+              mb: { xs: 3, md: 4 },
             }}
           >
             Manage your client consultation bookings
@@ -468,15 +490,20 @@ function ConsultantBookingsContent() {
             <Tabs
               value={tabValue}
               onChange={(_, newValue) => setTabValue(newValue)}
+              variant="scrollable"
+              scrollButtons="auto"
+              allowScrollButtonsMobile
               sx={{
                 borderBottom: "1px solid #E0E0E0",
-                px: 2,
+                px: { xs: 1, sm: 2 },
                 "& .MuiTab-root": {
                   fontFamily: "Source Sans Pro",
-                  fontSize: "16px",
+                  fontSize: { xs: "14px", sm: "15px", md: "16px" },
                   textTransform: "none",
                   fontWeight: 600,
                   color: "#666",
+                  minWidth: { xs: "auto", sm: 160 },
+                  px: { xs: 1.5, sm: 2 },
                 },
                 "& .Mui-selected": {
                   color: "#005F73 !important",
@@ -491,7 +518,7 @@ function ConsultantBookingsContent() {
               <Tab label={`Cancelled (${cancelledBookings.length})`} />
             </Tabs>
 
-            <Box sx={{ p: 3 }}>
+            <Box sx={{ p: { xs: 2, sm: 2.5, md: 3 } }}>
               {/* Upcoming Tab */}
               <TabPanel value={tabValue} index={0}>
                 {upcomingBookings.length === 0 ? (

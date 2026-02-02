@@ -3,12 +3,15 @@
 import { Level4ReportData } from './types';
 import { generateLevel4CoverPage } from './coverPage';
 import { generateLevel4UserDetailsPage } from './userDetailsPage';
-import { generateLevel4ScoreSummaryPage } from './scoreSummaryPage';
+import { generateLevel4ScoreSummaryPage, getScoreSummaryPageCount } from './scoreSummaryPage';
 import { generateLevel4DetailedFeedbackPages } from './detailedFeedbackPages';
 import { generateLevel4ThankYouPage } from './thankYouPage';
 
 export const generateLevel4ReportHTML = (data: Level4ReportData): string => {
-  const totalPages = 4 + data.questionReviews.length; // Cover + UserDetails + Summary + Questions + Thank You
+  // Calculate total pages dynamically
+  // Cover (1) + UserDetails (1) + ScoreSummary (variable) + Questions (variable) + ThankYou (1)
+  const scoreSummaryPages = getScoreSummaryPageCount(data.questionReviews.length);
+  const totalPages = 2 + scoreSummaryPages + data.questionReviews.length + 1;
 
   return `
     <!DOCTYPE html>

@@ -1,70 +1,87 @@
-// Level 5 Report - Cover Page
+// Level 5 Report - Cover Page (Matching Level 4 Design)
 
-import { Level5ReportData } from "./types";
+import { Level5ReportData } from './types';
 
 export const generateLevel5CoverPage = (data: Level5ReportData): string => {
   return `
     <div class="report-page" style="
-      background: linear-gradient(135deg, #005F73 0%, #0A9396 100%);
-      color: white;
+      background: #FFFFFF;
+      min-height: 297mm;
+      height: 297mm;
       display: flex;
       flex-direction: column;
-      align-items: center;
-      justify-content: center;
-      text-align: center;
-      padding: 40px;
+      font-family: 'Faustina', 'Source Sans Pro', -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif;
+      position: relative;
+      background-image: url('/images/Report/BGImgCover.jpg');
+      background-size: cover;
+      background-position: center;
+      background-repeat: no-repeat;
     ">
-      <div style="margin-bottom: 40px;">
-        <h1 style="
-          font-size: 48px;
-          font-weight: 700;
-          margin: 0 0 20px 0;
-          letter-spacing: 2px;
-        ">SELF SCORE</h1>
-        <div style="
-          width: 100px;
-          height: 4px;
-          background: white;
-          margin: 0 auto;
-        "></div>
-      </div>
-      
+      <!-- Content wrapper with padding -->
       <div style="
-        background: rgba(255, 255, 255, 0.1);
-        backdrop-filter: blur(10px);
-        border: 2px solid rgba(255, 255, 255, 0.2);
-        border-radius: 20px;
-        padding: 50px 60px;
-        max-width: 600px;
-        margin: 40px 0;
+        padding: 40px;
+        height: 100%;
+        display: flex;
+        flex-direction: column;
       ">
-        <h2 style="
-          font-size: 36px;
-          font-weight: 600;
-          margin: 0 0 30px 0;
-        ">Level 5 Report</h2>
-        <p style="
-          font-size: 20px;
-          margin: 0 0 15px 0;
-          opacity: 0.9;
-        ">Real-Time AI Voice Interview</p>
-        <p style="
-          font-size: 24px;
-          margin: 0;
-          font-weight: 500;
-        ">${data.username}</p>
-      </div>
-      
-      <div style="margin-top: 60px; opacity: 0.8;">
-        <p style="
-          font-size: 18px;
-          margin: 0 0 10px 0;
-        ">Report Generated: ${data.reportDate}</p>
-        <p style="
-          font-size: 16px;
-          margin: 0;
-          opacity: 0.8;
-        ">Attempt #${data.attemptNumber}</p>
+        <!-- Logo -->
+        <div style="margin-bottom: 60px;">
+          <img 
+            src="/images/logos/LogoWithText.png" 
+            alt="Self Score Logo" 
+            style="
+              width: 150px;
+              height: auto;
+              object-fit: contain;
+            "
+          />
+        </div>
+
+        <!-- Title Section -->
+        <div style="margin-bottom: 40px;">
+          <div style="
+            font-size: 18px;
+            color: #666;
+            margin-bottom: 16px;
+          ">(Level 5)</div>
+          
+          <h1 style="
+            font-size: 48px;
+            font-weight: 700;
+            color: #0C677A;
+            margin: 0 0 16px 0;
+            line-height: 1.2;
+          ">Self Score Report</h1>
+          
+          <p style="
+            font-size: 16px;
+            color: #666;
+            margin: 0;
+            max-width: 400px;
+            line-height: 1.5;
+          ">Real-Time AI Voice Interview - Your comprehensive assessment of emotional awareness and self-mastery.</p>
+        </div>
+
+        <!-- Spacer to push name to bottom -->
+        <div style="flex: 1;"></div>
+
+        <!-- Name Section -->
+        <div style="
+          border-left: 4px solid #0C677A;
+          padding-left: 16px;
+          margin-bottom: 60px;
+        ">
+          <div style="
+            font-size: 14px;
+            color: #666;
+            margin-bottom: 4px;
+          ">Name</div>
+          <div style="
+            font-size: 24px;
+            font-weight: 700;
+            color: #2B2B2B;
+          ">${data.username}</div>
+        </div>
       </div>
     </div>
   `;

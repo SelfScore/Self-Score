@@ -90,9 +90,9 @@ export const generateReportHTML = (userData: UserReportData): string => {
         ${generateScoreSummaryPage(userData)}
       </div>
 
-      <!-- Page 4: Detailed Report -->
+      <!-- Page 4: Detailed Report (Score-based) -->
       <div class="report-page">
-        ${generateDetailedReportPage(content)}
+        ${generateDetailedReportPage(userData)}
       </div>
 
       <!-- Page 5: Score Meaning -->
@@ -100,9 +100,9 @@ export const generateReportHTML = (userData: UserReportData): string => {
         ${generateScoreMeaningPage(userData)}
       </div>
 
-      <!-- Page 6: Recommendations -->
+      <!-- Page 6: Recommendations (Score-based) -->
       <div class="report-page">
-        ${generateRecommendationsPage(content, userData.level)}
+        ${generateRecommendationsPage(userData)}
       </div>
 
       <!-- Page 7: Upgrade Page -->

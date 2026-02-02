@@ -1,8 +1,9 @@
 "use client";
-// import React from "react";
+import { useEffect, useState } from "react";
 import { Box, Typography, Container, Chip } from "@mui/material";
 import { useRouter } from "next/navigation";
 import { useLevelAccess } from "../../../hooks/useLevelAccess";
+import { questionsApi } from "../../../services/questionsService";
 import TestCard from "../../components/ui/TestCard";
 import AccessTimeIcon from "@mui/icons-material/AccessTime";
 import MicIcon from "@mui/icons-material/Mic";
@@ -19,10 +20,59 @@ export default function JourneyProgress() {
     isLevelCompleted,
     getTestScore,
     isLevelPurchased,
+    user,
+    progress,
   } = useLevelAccess();
+
+  const [lastTestDate, setLastTestDate] = useState<string | null>(null);
 
   const highestUnlockedLevel = getHighestUnlockedLevel();
   const isLevel4Purchased = isLevelPurchased(4);
+
+  // Calculate completed levels count for progress bar
+  const completedLevelsCount = progress?.completedLevels?.length || 0;
+
+  // Fetch last test date
+  useEffect(() => {
+    const fetchLastTestDate = async () => {
+      if (!user?.userId) return;
+
+      try {
+        const response = await questionsApi.getUserTestHistory(user.userId);
+        if (response.success && response.data?.length > 0) {
+          // Get the most recent test date
+          const sortedTests = response.data.sort(
+            (a: { submittedAt: string }, b: { submittedAt: string }) =>
+              new Date(b.submittedAt).getTime() - new Date(a.submittedAt).getTime()
+          );
+          setLastTestDate(sortedTests[0].submittedAt);
+        }
+      } catch (error) {
+        console.error("Failed to fetch test history:", error);
+      }
+    };
+
+    fetchLastTestDate();
+  }, [user?.userId]);
+
+  // Format the last test date as relative time
+  const formatLastTestDate = (dateString: string | null): string => {
+    if (!dateString) return "No tests taken yet";
+
+    const date = new Date(dateString);
+    const now = new Date();
+    const diffMs = now.getTime() - date.getTime();
+    const diffMins = Math.floor(diffMs / (1000 * 60));
+    const diffHours = Math.floor(diffMs / (1000 * 60 * 60));
+    const diffDays = Math.floor(diffMs / (1000 * 60 * 60 * 24));
+
+    if (diffMins < 1) return "Just now";
+    if (diffMins < 60) return `${diffMins} minute${diffMins !== 1 ? 's' : ''} ago`;
+    if (diffHours < 24) return `${diffHours} hour${diffHours !== 1 ? 's' : ''} ago`;
+    if (diffDays < 7) return `${diffDays} day${diffDays !== 1 ? 's' : ''} ago`;
+
+    return date.toLocaleDateString('en-US', { month: 'short', day: 'numeric', year: 'numeric' });
+  };
 
   // Level configuration with names
   const levels = [
@@ -112,7 +162,7 @@ export default function JourneyProgress() {
               }}
             />
           }
-          label="Last Updated: 2 days ago"
+          label={`Last Updated: ${formatLastTestDate(lastTestDate)}`}
         />
       </Box>
       <Container maxWidth="lg">
@@ -179,7 +229,7 @@ export default function JourneyProgress() {
               fontSize: { xs: "0.875rem", sm: "0.95rem", md: "16px" },
             }}
           >
-            {Math.round((highestUnlockedLevel / 5) * 100)}%
+            {Math.round((completedLevelsCount / 5) * 100)}%
           </Typography>
         </Box>
         {/* Level names below progress bar */}
@@ -199,7 +249,7 @@ export default function JourneyProgress() {
         >
           <Box
             sx={{
-              width: `${(highestUnlockedLevel / 5) * 100}%`,
+              width: `${(completedLevelsCount / 5) * 100}%`,
               height: "100%",
               backgroundColor: "#FB7D45",
               transition: "width 0.5s ease-in-out",

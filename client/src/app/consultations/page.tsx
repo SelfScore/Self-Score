@@ -35,6 +35,7 @@ import {
 } from "@/services/consultantService";
 import { useAuth } from "@/hooks/useAuth";
 import SignUpModal from "@/app/user/SignUpModal";
+import ButtonSelfScore from "@/app/components/ui/ButtonSelfScore"; // Added import
 
 export default function ConsultationsPage() {
   const router = useRouter();
@@ -804,7 +805,21 @@ export default function ConsultationsPage() {
             </Drawer>
 
             {/* Consultants Grid */}
-            <Box sx={{ flex: 1 }}>
+            <Box
+              sx={{
+                flex: 1,
+                height: "calc(100vh - 250px)", // Fixed height for scrolling
+                overflowY: "auto", // Make it scrollable
+                pr: 1, // Add some padding for scrollbar
+                "&::-webkit-scrollbar": {
+                  width: "6px",
+                },
+                "&::-webkit-scrollbar-thumb": {
+                  backgroundColor: "#E5E7EB",
+                  borderRadius: "3px",
+                },
+              }}
+            >
               {paginatedConsultants.length === 0 ? (
                 <Box
                   sx={{
@@ -1020,6 +1035,78 @@ export default function ConsultationsPage() {
                   )}
                 </>
               )}
+            </Box>
+          </Box>
+        </Box>
+
+        {/* Become a Consultant CTA */}
+        <Box
+          sx={{
+            mt: { xs: 6, sm: 8, md: 12 },
+            mx: "auto",
+            maxWidth: "87%",
+            p: { xs: 3, sm: 3.5, md: 4 },
+            background:
+              "linear-gradient(360deg, #006E83 -36.03%, #B0D8E0 247.63%)",
+            borderRadius: { xs: "12px", md: "16px" },
+            textAlign: "center",
+            border: "1px solid #3A3A3A4D",
+          }}
+        >
+          <Typography
+            variant="h5"
+            sx={{
+              fontWeight: 600,
+              fontFamily: "Source Sans Pro",
+              color: "#fff",
+              mb: { xs: 1.5, md: 2 },
+              fontSize: { xs: "1.25rem", sm: "1.4rem", md: "24px" },
+              lineHeight: { xs: 1.3, md: 1.2 },
+              px: { xs: 1, sm: 2, md: 0 },
+            }}
+          >
+            Interested in Becoming a Consultant?
+          </Typography>
+          <Typography
+            variant="body1"
+            sx={{
+              color: "#DBEAFE",
+              fontFamily: "Source Sans Pro",
+              mb: { xs: 2.5, sm: 3, md: 3 },
+              fontSize: { xs: "0.875rem", sm: "0.95rem", md: "16px" },
+              lineHeight: { xs: "1.5", sm: "1.6", md: "24px" },
+              maxWidth: { xs: "100%", sm: "90%", md: "600px" },
+              mx: "auto",
+              px: { xs: 1, sm: 2, md: 0 },
+            }}
+          >
+            Join our network of certified wellness coaches and help others unlock
+            their full potential.
+          </Typography>
+
+          <Box
+            sx={{
+              display: "flex",
+              justifyContent: "center",
+              alignItems: "center",
+              px: { xs: 1, sm: 0 },
+            }}
+          >
+            <Box sx={{ width: { xs: "100%", sm: "auto" } }}>
+              <ButtonSelfScore
+                text="Register as Consultant"
+                onClick={() => router.push("/consultant/register")}
+                fontSize={"16px"}
+                fullWidth={true}
+                style={{
+                  backgroundColor: "#fff",
+                  padding: "10px 24px",
+                }}
+                textStyle={{
+                  color: "#006E83",
+                  fontWeight: 600,
+                }}
+              />
             </Box>
           </Box>
         </Box>

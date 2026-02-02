@@ -1,8 +1,15 @@
 // Detailed Report Page Generator (Page 4)
+// Now uses score-based descriptions instead of generic characteristics
 
-import { ReportContent } from '../types';
+import { UserReportData } from '../types';
+import { getScoreBasedContent } from '../utils/contentData';
 
-export const generateDetailedReportPage = (content: ReportContent): string => {
+export const generateDetailedReportPage = (userData: UserReportData): string => {
+  const scoreContent = getScoreBasedContent(userData.level, userData.score);
+
+  // Split description into paragraphs for better formatting
+  const descriptionParagraphs = scoreContent?.description.split('\n\n').filter(p => p.trim()) || [];
+
   return `
     <div style="
       background: #FFFFFF;
@@ -41,7 +48,7 @@ export const generateDetailedReportPage = (content: ReportContent): string => {
         margin: 0 0 8px 0;
         position: relative;
         z-index: 1;
-      ">Detailed Report</h2>
+      ">Your Detailed Report</h2>
       
       <p style="
         font-size: 14px;
@@ -51,26 +58,18 @@ export const generateDetailedReportPage = (content: ReportContent): string => {
         border-bottom: 2px solid #DDD;
         position: relative;
         z-index: 1;
-      ">According to your self score, you posses these specific characteristics in life.</p>
+      ">Based on your Self Score, here is what your current state reflects:</p>
 
-      <!-- Characteristics List -->
-      <div style="margin-bottom: 32px; width: 85%; position: relative; z-index: 1;">
-        ${content.characteristics.map((char, index) => `
-          <div style="margin-bottom: 24px;">
-            <h3 style="
-              font-size: 16px;
-              font-weight: 700;
-              color: #2B2B2B;
-              margin: 0 0 8px 0;
-            ">${index + 1}. ${char.split(':')[0]}:</h3>
-            <p style="
-              font-size: 14px;
-              color: #666;
-              margin: 0;
-              line-height: 1.6;
-              padding-left: 20px;
-            ">${char.split(':')[1] || char}</p>
-          </div>
+      <!-- Score-based Description -->
+      <div style="margin-bottom: 32px; width: 90%; position: relative; z-index: 1;">
+        ${descriptionParagraphs.map((paragraph, index) => `
+          <p style="
+            font-size: ${index === 0 ? '16px' : '14px'};
+            font-weight: ${index === 0 ? '600' : '400'};
+            color: ${index === 0 ? '#2B2B2B' : '#555'};
+            margin: 0 0 20px 0;
+            line-height: 1.7;
+          ">${paragraph}</p>
         `).join('')}
       </div>
 

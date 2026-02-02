@@ -1,14 +1,17 @@
-// Level 5 Report Generator - Main File
+// Level 5 Report Generator - Main File (Matching Level 4 Design)
 
-import { Level5ReportData } from "./types";
-import { generateLevel5CoverPage } from "./coverPage";
-import { generateLevel5UserDetailsPage } from "./userDetailsPage";
-import { generateLevel5ScoreSummaryPage } from "./scoreSummaryPage";
-import { generateLevel5DetailedFeedbackPages } from "./detailedFeedbackPages";
-import { generateLevel5ThankYouPage } from "./thankYouPage";
+import { Level5ReportData } from './types';
+import { generateLevel5CoverPage } from './coverPage';
+import { generateLevel5UserDetailsPage } from './userDetailsPage';
+import { generateLevel5ScoreSummaryPage, getScoreSummaryPageCount } from './scoreSummaryPage';
+import { generateLevel5DetailedFeedbackPages } from './detailedFeedbackPages';
+import { generateLevel5ThankYouPage } from './thankYouPage';
 
 export const generateLevel5ReportHTML = (data: Level5ReportData): string => {
-  const totalPages = 4 + data.questionReviews.length; // Cover + UserDetails + Summary + Questions + Thank You
+  // Calculate total pages dynamically
+  // Cover (1) + UserDetails (1) + ScoreSummary (variable) + Questions (variable) + ThankYou (1)
+  const scoreSummaryPages = getScoreSummaryPageCount(data.questionReviews.length);
+  const totalPages = 2 + scoreSummaryPages + data.questionReviews.length + 1;
 
   return `
     <!DOCTYPE html>
@@ -79,10 +82,8 @@ export const generateLevel5ReportHTML = (data: Level5ReportData): string => {
   `;
 };
 
-export const generateLevel5ReportFilename = (
-  data: Level5ReportData
-): string => {
+export const generateLevel5ReportFilename = (data: Level5ReportData): string => {
   const date = new Date().toISOString().slice(0, 10);
-  const safeName = data.username.replace(/[^a-zA-Z0-9]/g, "_");
+  const safeName = data.username.replace(/[^a-zA-Z0-9]/g, '_');
   return `SelfScore_Level5_${safeName}_Attempt${data.attemptNumber}_${date}.pdf`;
 };

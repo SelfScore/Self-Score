@@ -181,13 +181,14 @@ export default function UserDashboard() {
                 rawDate: rawDateValue || new Date().toISOString(), // Keep raw ISO date for report generation
                 timeSpent:
                   item.timeSpent && typeof item.timeSpent === "number"
-                    ? `${Math.floor(item.timeSpent / 60)}m ${item.timeSpent % 60
-                    }s`
+                    ? `${Math.floor(item.timeSpent / 60)}m ${
+                        item.timeSpent % 60
+                      }s`
                     : "N/A",
                 attemptNumber: attemptMap[item._id],
                 status: item.status, // ✅ Include status for Level 4 pending/reviewed check
               };
-            }
+            },
           );
           setTestHistory(history);
           // console.log("📊 Test history loaded:", history);
@@ -260,7 +261,7 @@ export default function UserDashboard() {
         if (response && Array.isArray(response)) {
           // Filter only completed transactions
           const completedTransactions = response.filter(
-            (payment) => payment.status === "completed"
+            (payment) => payment.status === "completed",
           );
           setTransactionHistory(completedTransactions);
         }
@@ -317,9 +318,8 @@ export default function UserDashboard() {
       setGeneratingPDF(interviewId);
 
       // Fetch the Level 4 review data
-      const reviewResponse = await level4ReviewService.getUserReview(
-        interviewId
-      );
+      const reviewResponse =
+        await level4ReviewService.getUserReview(interviewId);
 
       if (!reviewResponse.success || !reviewResponse.data) {
         alert("Failed to fetch review data. Please try again.");
@@ -340,7 +340,7 @@ export default function UserDashboard() {
         email: user.email,
         phoneNumber: formattedPhone,
         reportDate: new Date(
-          adminReview.submittedAt || adminReview.createdAt
+          adminReview.submittedAt || adminReview.createdAt,
         ).toLocaleDateString("en-US", {
           year: "numeric",
           month: "long",
@@ -349,7 +349,7 @@ export default function UserDashboard() {
         attemptNumber: adminReview.attemptNumber,
         totalScore: adminReview.totalScore,
         interviewMode: adminReview.questionReviews.every(
-          (qr) => qr.answerMode === "TEXT"
+          (qr) => qr.answerMode === "TEXT",
         )
           ? "TEXT"
           : adminReview.questionReviews.every((qr) => qr.answerMode === "VOICE")
@@ -406,7 +406,7 @@ export default function UserDashboard() {
         email: user.email,
         phoneNumber: formattedPhone,
         reportDate: new Date(
-          adminReview.submittedAt || adminReview.createdAt
+          adminReview.submittedAt || adminReview.createdAt,
         ).toLocaleDateString("en-US", {
           year: "numeric",
           month: "long",
@@ -481,6 +481,7 @@ export default function UserDashboard() {
   const nextLevel = progress?.highestUnlockedLevel || 1;
   const completedLevels = progress?.completedLevels || [];
   const totalLevels = 5;
+  const allLevelsCompleted = completedLevels.length === totalLevels;
 
   // Get last test information (most recent test from history)
   const lastTest = testHistory.length > 0 ? testHistory[0] : null;
@@ -489,7 +490,7 @@ export default function UserDashboard() {
   const lastTestScore =
     lastTest?.score ||
     progress?.testScores?.[
-    `level${lastCompletedLevel}` as keyof typeof progress.testScores
+      `level${lastCompletedLevel}` as keyof typeof progress.testScores
     ] ||
     0;
   const lastTestDate = lastTest?.date || new Date().toLocaleDateString();
@@ -505,7 +506,7 @@ export default function UserDashboard() {
     // Apply level filter
     if (levelFilter !== "all") {
       filtered = filtered.filter(
-        (test) => test.level === parseInt(levelFilter)
+        (test) => test.level === parseInt(levelFilter),
       );
     }
 
@@ -523,7 +524,14 @@ export default function UserDashboard() {
   const filteredTestHistory = getFilteredAndSortedHistory();
 
   return (
-    <Container maxWidth="xl" sx={{ backgroundColor: "#ffffff", py: { xs: 10, md: 14 }, px: { xs: 2, md: 3 } }}>
+    <Container
+      maxWidth="xl"
+      sx={{
+        backgroundColor: "#ffffff",
+        py: { xs: 10, md: 14 },
+        px: { xs: 2, md: 3 },
+      }}
+    >
       <Box sx={{ maxWidth: "1280px", mx: "auto" }}>
         {/* Header Section */}
         <Box
@@ -583,7 +591,7 @@ export default function UserDashboard() {
 
         {/* Main Content Grid */}
         <Grid container spacing={3}>
-          {/* Level 1 Test Card */}
+          {/* Level Test Card / Consultation Card */}
           <Grid size={{ xs: 12, md: 3 }}>
             <Paper
               sx={{
@@ -614,18 +622,32 @@ export default function UserDashboard() {
               </Box>
               <Typography
                 variant="h5"
-                sx={{ fontWeight: 400, fontSize: { xs: "16px", md: "20px" } }}
+                sx={{
+                  fontWeight: 400,
+                  fontSize: { xs: "16px", md: "20px" },
+                  textAlign: "center",
+                }}
               >
-                Level {nextLevel} Test
+                {allLevelsCompleted
+                  ? "All Levels Complete!"
+                  : `Level ${nextLevel} Test`}
               </Typography>
               <ButtonSelfScore
-                text="Start Assessment"
+                text={
+                  allLevelsCompleted ? "Book Consultation" : "Start Assessment"
+                }
                 textStyle={{ color: "#FF4F00", fontSize: "20px" }}
                 background="#F7F7F7"
                 borderRadius="16px"
                 padding="12px 24px"
                 fontSize="1rem"
-                onClick={() => router.push(`/testInfo?level=${nextLevel}`)}
+                onClick={() =>
+                  router.push(
+                    allLevelsCompleted
+                      ? "/consultations"
+                      : `/testInfo?level=${nextLevel}`,
+                  )
+                }
               />
             </Paper>
           </Grid>
@@ -663,7 +685,12 @@ export default function UserDashboard() {
               </Box>
               <Typography
                 variant="h6"
-                sx={{ fontWeight: 400, color: "#2B2B2B", fontSize: { xs: "14px", md: "20px" }, textAlign: "center" }}
+                sx={{
+                  fontWeight: 400,
+                  color: "#2B2B2B",
+                  fontSize: { xs: "14px", md: "20px" },
+                  textAlign: "center",
+                }}
               >
                 Levels Completed ({completedLevels.length}/{totalLevels})
               </Typography>
@@ -684,9 +711,16 @@ export default function UserDashboard() {
                     }}
                   >
                     {completedLevels.includes(level) ? (
-                      <CheckCircle sx={{ fontSize: { xs: 28, md: 40 }, color: "#51BB00E5" }} />
+                      <CheckCircle
+                        sx={{
+                          fontSize: { xs: 28, md: 40 },
+                          color: "#51BB00E5",
+                        }}
+                      />
                     ) : (
-                      <CheckCircle sx={{ fontSize: { xs: 28, md: 40 }, color: "#D9D9D9" }} />
+                      <CheckCircle
+                        sx={{ fontSize: { xs: 28, md: 40 }, color: "#D9D9D9" }}
+                      />
                     )}
                   </Box>
                 ))}
@@ -922,8 +956,9 @@ export default function UserDashboard() {
                       width: { xs: 100, md: 140 },
                       height: { xs: 100, md: 140 },
                       borderRadius: "50%",
-                      background: `conic-gradient(#508B28 ${scorePercentage * 3.6
-                        }deg, #e5e7eb 0deg)`,
+                      background: `conic-gradient(#508B28 ${
+                        scorePercentage * 3.6
+                      }deg, #e5e7eb 0deg)`,
                       display: "flex",
                       alignItems: "center",
                       justifyContent: "center",
@@ -951,7 +986,13 @@ export default function UserDashboard() {
                       >
                         {lastTestScore}
                       </Typography>
-                      <Typography variant="body2" sx={{ color: "#64748b", fontSize: { xs: "12px", md: "14px" } }}>
+                      <Typography
+                        variant="body2"
+                        sx={{
+                          color: "#64748b",
+                          fontSize: { xs: "12px", md: "14px" },
+                        }}
+                      >
                         out of 900
                       </Typography>
                     </Box>
@@ -1035,7 +1076,7 @@ export default function UserDashboard() {
                   value={levelFilter}
                   onChange={(e) =>
                     setLevelFilter(
-                      e.target.value as "all" | "1" | "2" | "3" | "4" | "5"
+                      e.target.value as "all" | "1" | "2" | "3" | "4" | "5",
                     )
                   }
                   sx={{
@@ -1140,7 +1181,9 @@ export default function UserDashboard() {
                           flexShrink: 0,
                         }}
                       >
-                        <TrendingUp sx={{ fontSize: { xs: 20, md: 28 }, color: "white" }} />
+                        <TrendingUp
+                          sx={{ fontSize: { xs: 20, md: 28 }, color: "white" }}
+                        />
                       </Box>
                       <Box sx={{ flex: 1 }}>
                         <Box
@@ -1201,7 +1244,15 @@ export default function UserDashboard() {
 
                     {/* Right Side - Score and Actions */}
 
-                    <Box sx={{ display: "flex", alignItems: { xs: "flex-start", md: "center" }, gap: { xs: 2, md: 4 }, flexDirection: { xs: "column", md: "row" }, width: { xs: "100%", md: "auto" } }}>
+                    <Box
+                      sx={{
+                        display: "flex",
+                        alignItems: { xs: "flex-start", md: "center" },
+                        gap: { xs: 2, md: 4 },
+                        flexDirection: { xs: "column", md: "row" },
+                        width: { xs: "100%", md: "auto" },
+                      }}
+                    >
                       <Box sx={{ minWidth: 200 }}>
                         {isPendingReview ? (
                           <>
@@ -1291,7 +1342,14 @@ export default function UserDashboard() {
                       </Box>
 
                       {/* ✅ Action Buttons or Pending Status */}
-                      <Box sx={{ display: "flex", gap: 1, flexDirection: { xs: "column", md: "row" }, width: { xs: "100%", md: "auto" } }}>
+                      <Box
+                        sx={{
+                          display: "flex",
+                          gap: 1,
+                          flexDirection: { xs: "column", md: "row" },
+                          width: { xs: "100%", md: "auto" },
+                        }}
+                      >
                         {isPendingReview ? (
                           // ✅ Show "Report Not Ready" message for pending Level 4 reviews
                           <Box
@@ -1502,7 +1560,7 @@ export default function UserDashboard() {
                     month: "short",
                     day: "numeric",
                     year: "numeric",
-                  }
+                  },
                 );
                 const formattedTime = transactionDate.toLocaleTimeString(
                   "en-US",
@@ -1510,13 +1568,13 @@ export default function UserDashboard() {
                     hour: "numeric",
                     minute: "2-digit",
                     hour12: true,
-                  }
+                  },
                 );
                 const fullDateTime = `${formattedDate}, ${formattedTime}`;
 
                 // Format amount: $5.00
                 const formattedAmount = `$${(transaction.amount / 100).toFixed(
-                  2
+                  2,
                 )}`;
 
                 // Determine levels unlocked based on purchase
@@ -1566,7 +1624,9 @@ export default function UserDashboard() {
                           flexShrink: 0,
                         }}
                       >
-                        <PaymentIcon sx={{ fontSize: { xs: 20, md: 28 }, color: "white" }} />
+                        <PaymentIcon
+                          sx={{ fontSize: { xs: 20, md: 28 }, color: "white" }}
+                        />
                       </Box>
                       <Box sx={{ flex: 1 }}>
                         <Box
@@ -1624,7 +1684,15 @@ export default function UserDashboard() {
                     />
 
                     {/* Amount */}
-                    <Box sx={{ display: "flex", alignItems: { xs: "flex-start", md: "center" }, gap: { xs: 2, md: 4 }, flexDirection: { xs: "column", md: "row" }, width: { xs: "100%", md: "auto" } }}>
+                    <Box
+                      sx={{
+                        display: "flex",
+                        alignItems: { xs: "flex-start", md: "center" },
+                        gap: { xs: 2, md: 4 },
+                        flexDirection: { xs: "column", md: "row" },
+                        width: { xs: "100%", md: "auto" },
+                      }}
+                    >
                       <Box sx={{ minWidth: { xs: "auto", md: 120 } }}>
                         <Typography
                           sx={{

@@ -83,7 +83,7 @@ export default function ConsultantDashboard() {
         `${process.env.NEXT_PUBLIC_API_URL}/api/google-calendar/status`,
         {
           credentials: "include",
-        }
+        },
       );
 
       const data = await response.json();
@@ -126,7 +126,7 @@ export default function ConsultantDashboard() {
 
     if (booking.status === "CREATED") {
       const expiryTime = new Date(
-        new Date(booking.createdAt).getTime() + 10 * 60 * 1000
+        new Date(booking.createdAt).getTime() + 10 * 60 * 1000,
       );
       if (now > expiryTime) {
         return { label: "Expired", color: "#FF9800", bgColor: "#FFF3E0" };
@@ -159,7 +159,7 @@ export default function ConsultantDashboard() {
         }
         if (booking.status === "CREATED") {
           const expiryTime = new Date(
-            new Date(booking.createdAt).getTime() + 10 * 60 * 1000
+            new Date(booking.createdAt).getTime() + 10 * 60 * 1000,
           );
           return now > expiryTime;
         }
@@ -272,7 +272,7 @@ export default function ConsultantDashboard() {
         }, 1000);
       } else {
         setError(
-          "Failed to load consultant data. Please try refreshing the page."
+          "Failed to load consultant data. Please try refreshing the page.",
         );
       }
     } finally {
@@ -361,10 +361,12 @@ export default function ConsultantDashboard() {
         {/* Header */}
         <Box
           sx={{
-            mb: 4,
+            mb: { xs: 3, md: 4 },
             display: "flex",
+            flexDirection: { xs: "column", sm: "row" },
             justifyContent: "space-between",
-            alignItems: "flex-start",
+            alignItems: { xs: "flex-start", sm: "flex-start" },
+            gap: { xs: 2, sm: 0 },
           }}
         >
           <Box>
@@ -372,11 +374,11 @@ export default function ConsultantDashboard() {
               variant="h3"
               sx={{
                 fontFamily: "Faustina",
-                fontSize: { xs: "28px", md: "36px" },
+                fontSize: { xs: "24px", sm: "28px", md: "36px" },
                 fontWeight: 700,
                 color: "#1A1A1A",
                 mb: 1,
-                mt: 8,
+                mt: { xs: 6, sm: 7, md: 8 },
               }}
             >
               Welcome, {consultant.firstName}!
@@ -392,7 +394,12 @@ export default function ConsultantDashboard() {
             </Typography>
           </Box>
 
-          <Box sx={{ mt: 8 }}>
+          <Box
+            sx={{
+              mt: { xs: 0, sm: 7, md: 8 },
+              width: { xs: "100%", sm: "auto" },
+            }}
+          >
             <ButtonSelfScore
               text="Edit Profile"
               onClick={() => router.push("/consultant/profile")}
@@ -401,6 +408,7 @@ export default function ConsultantDashboard() {
                 borderRadius: "12px",
                 fontFamily: "Source Sans Pro",
               }}
+              fullWidth={true}
             />
           </Box>
         </Box>
@@ -409,8 +417,8 @@ export default function ConsultantDashboard() {
         <Paper
           elevation={0}
           sx={{
-            p: 4,
-            mb: 4,
+            p: { xs: 3, sm: 3.5, md: 4 },
+            mb: { xs: 3, md: 4 },
             backgroundColor: statusInfo.bgColor,
             borderRadius: "12px",
             border: `2px solid ${statusInfo.color}`,
@@ -422,7 +430,7 @@ export default function ConsultantDashboard() {
             variant="h5"
             sx={{
               fontFamily: "Faustina",
-              fontSize: "24px",
+              fontSize: { xs: "20px", sm: "22px", md: "24px" },
               fontWeight: 700,
               color: statusInfo.color,
               mb: 1,
@@ -433,10 +441,11 @@ export default function ConsultantDashboard() {
           <Typography
             sx={{
               fontFamily: "Source Sans Pro",
-              fontSize: "16px",
+              fontSize: { xs: "14px", sm: "15px", md: "16px" },
               color: "#666",
               maxWidth: "600px",
               mx: "auto",
+              px: { xs: 1, sm: 0 },
             }}
           >
             {statusInfo.message}
@@ -682,7 +691,7 @@ export default function ConsultantDashboard() {
             <Paper
               elevation={0}
               sx={{
-                p: 3,
+                p: { xs: 2.5, sm: 3 },
                 backgroundColor: "white",
                 borderRadius: "12px",
                 border: "1px solid #E0E0E0",
@@ -693,33 +702,41 @@ export default function ConsultantDashboard() {
                 variant="h6"
                 sx={{
                   fontFamily: "Faustina",
-                  fontSize: "20px",
+                  fontSize: { xs: "18px", sm: "20px" },
                   fontWeight: 600,
                   color: "#1A1A1A",
-                  mb: 3,
+                  mb: { xs: 2, sm: 3 },
                 }}
               >
                 Personal Information
               </Typography>
 
-              <Box sx={{ display: "flex", alignItems: "center", mb: 3 }}>
+              <Box
+                sx={{
+                  display: "flex",
+                  alignItems: "center",
+                  mb: { xs: 2, sm: 3 },
+                  flexDirection: { xs: "column", sm: "row" },
+                  gap: { xs: 1.5, sm: 0 },
+                }}
+              >
                 <Avatar
                   src={consultant.profilePhoto}
                   sx={{
-                    width: 80,
-                    height: 80,
+                    width: { xs: 64, sm: 80 },
+                    height: { xs: 64, sm: 80 },
                     backgroundColor: "#E87A42",
-                    fontSize: "32px",
-                    mr: 2,
+                    fontSize: { xs: "24px", sm: "32px" },
+                    mr: { xs: 0, sm: 2 },
                   }}
                 >
                   {consultant.firstName.charAt(0)}
                 </Avatar>
-                <Box>
+                <Box sx={{ textAlign: { xs: "center", sm: "left" } }}>
                   <Typography
                     sx={{
                       fontFamily: "Source Sans Pro",
-                      fontSize: "18px",
+                      fontSize: { xs: "16px", sm: "18px" },
                       fontWeight: 600,
                       color: "#1A1A1A",
                     }}
@@ -799,7 +816,7 @@ export default function ConsultantDashboard() {
             <Paper
               elevation={0}
               sx={{
-                p: 3,
+                p: { xs: 2.5, sm: 3 },
                 backgroundColor: "white",
                 borderRadius: "12px",
                 border: "1px solid #E0E0E0",
@@ -810,10 +827,10 @@ export default function ConsultantDashboard() {
                 variant="h6"
                 sx={{
                   fontFamily: "Faustina",
-                  fontSize: "20px",
+                  fontSize: { xs: "18px", sm: "20px" },
                   fontWeight: 600,
                   color: "#1A1A1A",
-                  mb: 3,
+                  mb: { xs: 2, sm: 3 },
                 }}
               >
                 Professional Details
@@ -943,11 +960,15 @@ export default function ConsultantDashboard() {
               </Typography>
 
               {/* Booking Stats */}
-              <Grid container spacing={3} sx={{ mb: 3 }}>
+              <Grid
+                container
+                spacing={{ xs: 2, sm: 3 }}
+                sx={{ mb: { xs: 2, sm: 3 } }}
+              >
                 <Grid size={{ xs: 12, sm: 4 }}>
                   <Paper
                     sx={{
-                      p: 3,
+                      p: { xs: 2, sm: 2.5, md: 3 },
                       backgroundColor:
                         "linear-gradient(135deg, #005F73 0%, #0A7A8F 100%)",
                       background:
@@ -958,13 +979,21 @@ export default function ConsultantDashboard() {
                   >
                     <Typography
                       variant="caption"
-                      sx={{ opacity: 0.9, fontFamily: "Source Sans Pro" }}
+                      sx={{
+                        opacity: 0.9,
+                        fontFamily: "Source Sans Pro",
+                        fontSize: { xs: "12px", sm: "13px" },
+                      }}
                     >
                       Total Bookings
                     </Typography>
                     <Typography
                       variant="h3"
-                      sx={{ fontWeight: 700, fontFamily: "Faustina" }}
+                      sx={{
+                        fontWeight: 700,
+                        fontFamily: "Faustina",
+                        fontSize: { xs: "2rem", sm: "2.5rem", md: "3rem" },
+                      }}
                     >
                       {totalBookings}
                     </Typography>
@@ -973,7 +1002,7 @@ export default function ConsultantDashboard() {
                 <Grid size={{ xs: 12, sm: 4 }}>
                   <Paper
                     sx={{
-                      p: 3,
+                      p: { xs: 2, sm: 2.5, md: 3 },
                       backgroundColor: "#4CAF50",
                       borderRadius: "12px",
                       color: "#fff",
@@ -981,13 +1010,21 @@ export default function ConsultantDashboard() {
                   >
                     <Typography
                       variant="caption"
-                      sx={{ opacity: 0.9, fontFamily: "Source Sans Pro" }}
+                      sx={{
+                        opacity: 0.9,
+                        fontFamily: "Source Sans Pro",
+                        fontSize: { xs: "12px", sm: "13px" },
+                      }}
                     >
                       Upcoming
                     </Typography>
                     <Typography
                       variant="h3"
-                      sx={{ fontWeight: 700, fontFamily: "Faustina" }}
+                      sx={{
+                        fontWeight: 700,
+                        fontFamily: "Faustina",
+                        fontSize: { xs: "2rem", sm: "2.5rem", md: "3rem" },
+                      }}
                     >
                       {upcomingBookings.length}
                     </Typography>
@@ -996,7 +1033,7 @@ export default function ConsultantDashboard() {
                 <Grid size={{ xs: 12, sm: 4 }}>
                   <Paper
                     sx={{
-                      p: 3,
+                      p: { xs: 2, sm: 2.5, md: 3 },
                       backgroundColor: "#FF9800",
                       borderRadius: "12px",
                       color: "#fff",
@@ -1004,13 +1041,21 @@ export default function ConsultantDashboard() {
                   >
                     <Typography
                       variant="caption"
-                      sx={{ opacity: 0.9, fontFamily: "Source Sans Pro" }}
+                      sx={{
+                        opacity: 0.9,
+                        fontFamily: "Source Sans Pro",
+                        fontSize: { xs: "12px", sm: "13px" },
+                      }}
                     >
                       Completed
                     </Typography>
                     <Typography
                       variant="h3"
-                      sx={{ fontWeight: 700, fontFamily: "Faustina" }}
+                      sx={{
+                        fontWeight: 700,
+                        fontFamily: "Faustina",
+                        fontSize: { xs: "2rem", sm: "2.5rem", md: "3rem" },
+                      }}
                     >
                       {completedBookings}
                     </Typography>
@@ -1028,13 +1073,26 @@ export default function ConsultantDashboard() {
                   overflow: "hidden",
                 }}
               >
-                <Box sx={{ borderBottom: 1, borderColor: "divider", px: 3 }}>
-                  <Box sx={{ display: "flex", gap: 2 }}>
+                <Box
+                  sx={{
+                    borderBottom: 1,
+                    borderColor: "divider",
+                    px: { xs: 1.5, sm: 2, md: 3 },
+                    overflowX: "auto",
+                  }}
+                >
+                  <Box
+                    sx={{
+                      display: "flex",
+                      gap: { xs: 1, sm: 2 },
+                      minWidth: "max-content",
+                    }}
+                  >
                     <Box
                       onClick={() => setSelectedTab(0)}
                       sx={{
-                        py: 2,
-                        px: 2,
+                        py: { xs: 1.5, sm: 2 },
+                        px: { xs: 1.5, sm: 2 },
                         cursor: "pointer",
                         borderBottom:
                           selectedTab === 0
@@ -1043,6 +1101,8 @@ export default function ConsultantDashboard() {
                         color: selectedTab === 0 ? "#FF4F00" : "#666",
                         fontWeight: selectedTab === 0 ? 600 : 400,
                         fontFamily: "Source Sans Pro",
+                        fontSize: { xs: "14px", sm: "16px" },
+                        whiteSpace: "nowrap",
                       }}
                     >
                       Upcoming ({upcomingBookings.length})
@@ -1050,8 +1110,8 @@ export default function ConsultantDashboard() {
                     <Box
                       onClick={() => setSelectedTab(1)}
                       sx={{
-                        py: 2,
-                        px: 2,
+                        py: { xs: 1.5, sm: 2 },
+                        px: { xs: 1.5, sm: 2 },
                         cursor: "pointer",
                         borderBottom:
                           selectedTab === 1
@@ -1060,6 +1120,8 @@ export default function ConsultantDashboard() {
                         color: selectedTab === 1 ? "#FF4F00" : "#666",
                         fontWeight: selectedTab === 1 ? 600 : 400,
                         fontFamily: "Source Sans Pro",
+                        fontSize: { xs: "14px", sm: "16px" },
+                        whiteSpace: "nowrap",
                       }}
                     >
                       Past ({pastBookings.length})
@@ -1067,7 +1129,7 @@ export default function ConsultantDashboard() {
                   </Box>
                 </Box>
 
-                <Box sx={{ p: 3 }}>
+                <Box sx={{ p: { xs: 2, sm: 2.5, md: 3 } }}>
                   {bookingsLoading ? (
                     <Box
                       sx={{ display: "flex", justifyContent: "center", py: 4 }}
@@ -1199,7 +1261,7 @@ export default function ConsultantDashboard() {
                                             }}
                                           >
                                             {new Date(
-                                              booking.startTime
+                                              booking.startTime,
                                             ).toLocaleDateString("en-US", {
                                               weekday: "short",
                                               month: "short",
@@ -1228,7 +1290,7 @@ export default function ConsultantDashboard() {
                                             }}
                                           >
                                             {new Date(
-                                              booking.startTime
+                                              booking.startTime,
                                             ).toLocaleTimeString("en-US", {
                                               hour: "2-digit",
                                               minute: "2-digit",
@@ -1450,7 +1512,7 @@ export default function ConsultantDashboard() {
                                             }}
                                           >
                                             {new Date(
-                                              booking.startTime
+                                              booking.startTime,
                                             ).toLocaleDateString("en-US", {
                                               month: "short",
                                               day: "numeric",
