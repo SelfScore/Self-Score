@@ -5,17 +5,15 @@ applications:
       phases:
         preBuild:
           commands:
-            - cd client
             - npm ci
         build:
           commands:
-            - cd client
             - npm run build
       artifacts:
-        baseDirectory: client/.next
+        baseDirectory: .next
         files:
           - "**/*"
       cache:
         paths:
-          - client/node_modules/**/*
-          - client/.next/cache/**/*
+          - node_modules/**/*
+          - .next/cache/**/*
