@@ -269,7 +269,86 @@ export default function PrivacyPolicy() {
                   }}
                 />
               </ListItem>
+              <ListItem sx={{ py: 0.5 }}>
+                <ListItemText
+                  primary="• To read calendar availability and schedule consultation events on behalf of users who explicitly connect their Google Calendar"
+                  sx={{
+                    "& .MuiListItemText-primary": {
+                      fontFamily: "Source Sans Pro",
+                      fontSize: { xs: "1rem", md: "1.1rem" },
+                      color: "#2B2B2B",
+                    },
+                  }}
+                />
+              </ListItem>
             </List>
+          </Box>
+
+          {/* Data Sharing and Disclosure */}
+          <Box sx={{ mb: 4 }}>
+            <Typography
+              variant="h5"
+              sx={{
+                fontWeight: "bold",
+                color: "#005F73",
+                mb: 3,
+                fontFamily: "Faustina",
+              }}
+            >
+              Data Sharing and Disclosure
+            </Typography>
+            <Typography
+              variant="body1"
+              sx={{
+                color: "#2B2B2B",
+                lineHeight: 1.7,
+                mb: 3,
+                fontFamily: "Source Sans Pro",
+                fontSize: { xs: "1rem", md: "1.1rem" },
+              }}
+            >
+              SelfScore accesses Google Calendar event data only after explicit
+              user consent for the purpose of:
+            </Typography>
+            <List sx={{ pl: 2 }}>
+              <ListItem sx={{ py: 0.5 }}>
+                <ListItemText
+                  primary="• Displaying availability for consultation booking"
+                  sx={{
+                    "& .MuiListItemText-primary": {
+                      fontFamily: "Source Sans Pro",
+                      fontSize: { xs: "1rem", md: "1.1rem" },
+                      color: "#2B2B2B",
+                    },
+                  }}
+                />
+              </ListItem>
+              <ListItem sx={{ py: 0.5 }}>
+                <ListItemText
+                  primary="• Creating and managing consultation events on the consultant's calendar"
+                  sx={{
+                    "& .MuiListItemText-primary": {
+                      fontFamily: "Source Sans Pro",
+                      fontSize: { xs: "1rem", md: "1.1rem" },
+                      color: "#2B2B2B",
+                    },
+                  }}
+                />
+              </ListItem>
+            </List>
+            <Typography
+              variant="body1"
+              sx={{
+                color: "#2B2B2B",
+                lineHeight: 1.7,
+                mt: 2,
+                fontFamily: "Source Sans Pro",
+                fontSize: { xs: "1rem", md: "1.1rem" },
+              }}
+            >
+              We do not access calendar settings, contacts, emails, or other
+              Google services.
+            </Typography>
           </Box>
 
           {/* Data Security */}
