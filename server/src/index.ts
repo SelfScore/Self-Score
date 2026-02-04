@@ -14,6 +14,7 @@ import { setupWebSocketServer } from "./lib/websocketHandler";
 import { setupTranscriptionWebSocket } from "./lib/transcriptionHandler";
 import sessionRegistry from "./services/sessionManager";
 
+
 // Create Express app
 const app: Application = express();
 const PORT = process.env.PORT || 5001;
