@@ -23,12 +23,17 @@ interface TestInfoProps {
 
 export default function TestInfo({ initialLevel }: TestInfoProps) {
   const router = useRouter();
-  const { isLevelPurchased, getBundleInfo } = useLevelAccess();
+  const { isLevelPurchased, getBundleInfo, getRemainingAttempts } = useLevelAccess();
   const [activeLevel, setActiveLevel] = useState(initialLevel);
 
   // Check if current active level is purchased
   const isCurrentLevelPurchased = isLevelPurchased(activeLevel + 1);
   const bundleInfo = getBundleInfo(activeLevel + 1);
+
+  // For Level 4 and 5, get remaining attempts
+  const currentLevelNumber = activeLevel + 1;
+  const remainingAttempts = getRemainingAttempts(currentLevelNumber);
+  const showRemainingAttempts = (currentLevelNumber === 4 || currentLevelNumber === 5) && isCurrentLevelPurchased;
 
   const levels = [
     {
@@ -877,7 +882,9 @@ export default function TestInfo({ initialLevel }: TestInfoProps) {
               }}
             >
               <ButtonSelfScore
-                text="Start Assessment"
+                text={showRemainingAttempts
+                  ? `Start Assessment (${remainingAttempts} attempt${remainingAttempts !== 1 ? 's' : ''} left)`
+                  : "Start Assessment"}
                 endIcon={<ArrowForwardIcon sx={{ color: "#FFF" }} />}
                 onClick={handleStartAssessment}
                 maxWidth="565px"

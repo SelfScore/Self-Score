@@ -6,6 +6,7 @@ import {
   completeRealtimeInterview,
   getInterviewProgress,
   abandonInterview,
+  checkActiveRealtimeInterview,
 } from "../controllers/realtimeInterview.controller";
 
 const router = Router();
@@ -27,5 +28,8 @@ router.get("/progress/:sessionId", getInterviewProgress);
 
 // Abandon interview
 router.post("/abandon", abandonInterview);
+
+// Check if user has an active interview
+router.get("/check-active", checkActiveRealtimeInterview);
 
 export default router;

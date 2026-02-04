@@ -24,7 +24,12 @@ export interface TokenPayload {
             paymentId?: string;
         };
         level4: {
-            purchased: boolean;
+            remainingAttempts: number;
+            purchaseDate?: Date;
+            paymentId?: string;
+        };
+        level5: {
+            remainingAttempts: number;
             purchaseDate?: Date;
             paymentId?: string;
         };

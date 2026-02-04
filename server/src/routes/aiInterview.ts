@@ -7,7 +7,8 @@ import {
     completeInterview,
     getFeedback,
     getInterview,
-    getInterviewHistory
+    getInterviewHistory,
+    checkActiveInterview
 } from "../controllers/aiInterview.controller";
 import { getReviewByInterviewId } from "../controllers/level4Review.controller";
 
@@ -34,10 +35,13 @@ router.get("/feedback/:interviewId", getFeedback);
 // Get admin review for an interview (NEW - replaces AI feedback)
 router.get("/review/:interviewId", getReviewByInterviewId);
 
-// Get interview details
-router.get("/:interviewId", getInterview);
-
 // Get user's interview history
 router.get("/history/all", getInterviewHistory);
+
+// Check if user has an active interview (MUST be before /:interviewId)
+router.get("/check-active", checkActiveInterview);
+
+// Get interview details (dynamic route - must be last)
+router.get("/:interviewId", getInterview);
 
 export default router;

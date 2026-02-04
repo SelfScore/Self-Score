@@ -19,6 +19,10 @@ interface TestCardProps {
   onStartTest: () => void;
   onRetakeTest?: () => void;
   onUnlock?: () => void;
+  // Level 4 pay-per-use specific props
+  isPayPerUse?: boolean;
+  remainingAttempts?: number;
+  hasUsedAttempts?: boolean;
 }
 
 const TestCard: React.FC<TestCardProps> = ({
@@ -31,6 +35,9 @@ const TestCard: React.FC<TestCardProps> = ({
   onStartTest,
   onRetakeTest,
   onUnlock,
+  isPayPerUse = false,
+  remainingAttempts = 0,
+  hasUsedAttempts = false,
 }) => {
   // Background colors based on status
   const getBackgroundColor = () => {
@@ -216,9 +223,8 @@ const TestCard: React.FC<TestCardProps> = ({
               height: "100px",
               borderRadius: "50%",
               backgroundColor: "transparent",
-              border: `8px solid ${
-                status === "locked" ? "#E1D3CE" : "#A8FFC8"
-              }`,
+              border: `8px solid ${status === "locked" ? "#E1D3CE" : "#A8FFC8"
+                }`,
               display: "flex",
               justifyContent: "center",
               alignItems: "center",
@@ -252,7 +258,28 @@ const TestCard: React.FC<TestCardProps> = ({
 
       {/* Action Button */}
       <Box sx={{ mt: 0, mb: 1 }}>
-        {status === "unlocked" && (
+        {/* Pay-per-use Level 4: Show Buy Again when attempts are used */}
+        {isPayPerUse && hasUsedAttempts && remainingAttempts === 0 && (
+          <ButtonSelfScore
+            text="Buy Again"
+            fullWidth
+            fontSize={"14px"}
+            onClick={onUnlock}
+          />
+        )}
+
+        {/* Pay-per-use Level 4: Show Start Test with attempts count when has attempts */}
+        {isPayPerUse && remainingAttempts > 0 && status !== "completed" && (
+          <ButtonSelfScore
+            text={`Start Test (${remainingAttempts} attempt${remainingAttempts !== 1 ? 's' : ''} left)`}
+            fullWidth
+            fontSize={"14px"}
+            onClick={onStartTest}
+          />
+        )}
+
+        {/* Non pay-per-use: Standard unlocked button */}
+        {status === "unlocked" && !isPayPerUse && (
           <ButtonSelfScore
             text="Start Test"
             fullWidth
@@ -261,7 +288,8 @@ const TestCard: React.FC<TestCardProps> = ({
           />
         )}
 
-        {status === "locked" && (
+        {/* Standard locked button (only for non pay-per-use or first purchase) */}
+        {status === "locked" && (!isPayPerUse || (!hasUsedAttempts && remainingAttempts === 0)) && (
           <ButtonSelfScore
             text="Unlock with Premium"
             fullWidth
@@ -270,7 +298,8 @@ const TestCard: React.FC<TestCardProps> = ({
           />
         )}
 
-        {status === "completed" && (
+        {/* Completed status: Show retake for non pay-per-use, or start if pay-per-use has attempts */}
+        {status === "completed" && !isPayPerUse && (
           <OutLineButton
             fullWidth
             onClick={onRetakeTest}
@@ -282,6 +311,25 @@ const TestCard: React.FC<TestCardProps> = ({
           >
             Retake Test
           </OutLineButton>
+        )}
+
+        {/* Completed + pay-per-use: Show Buy Again if no attempts, otherwise Start Test */}
+        {status === "completed" && isPayPerUse && remainingAttempts === 0 && (
+          <ButtonSelfScore
+            text="Buy Again"
+            fullWidth
+            fontSize={"14px"}
+            onClick={onUnlock}
+          />
+        )}
+
+        {status === "completed" && isPayPerUse && remainingAttempts > 0 && (
+          <ButtonSelfScore
+            text={`Start Test (${remainingAttempts} attempt${remainingAttempts !== 1 ? 's' : ''} left)`}
+            fullWidth
+            fontSize={"14px"}
+            onClick={onStartTest}
+          />
         )}
       </Box>
     </Box>

@@ -157,6 +157,14 @@ class AIInterviewService {
         const response = await api.get('/api/ai-interview/history/all') as any;
         return response; // api interceptor already returns response.data
     }
+
+    /**
+     * Check if user has an active Level 4 interview
+     */
+    async checkActiveInterview(): Promise<{ success: boolean; data: { hasActiveInterview: boolean; interviewId: string | null; mode: string | null; progress: number } }> {
+        const response = await api.get('/api/ai-interview/check-active') as any;
+        return response; // api interceptor already returns response.data
+    }
 }
 
 export const aiInterviewService = new AIInterviewService();

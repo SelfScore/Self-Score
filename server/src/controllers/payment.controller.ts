@@ -46,15 +46,18 @@ export class PaymentController {
         return;
       }
 
-      // Check if user already purchased this level
-      const levelKey = `level${level}` as "level2" | "level3" | "level4";
-      if (user.purchasedLevels[levelKey].purchased) {
-        const response: ApiResponse = {
-          success: false,
-          message: `You have already purchased Level ${level}`,
-        };
-        res.status(400).json(response);
-        return;
+      // Check if user already purchased this level (for levels 2 and 3 only)
+      // Level 4 can be repurchased to add more attempts
+      if (level !== 4) {
+        const levelKey = `level${level}` as "level2" | "level3";
+        if (user.purchasedLevels[levelKey].purchased) {
+          const response: ApiResponse = {
+            success: false,
+            message: `You have already purchased Level ${level}`,
+          };
+          res.status(400).json(response);
+          return;
+        }
       }
 
       // NOTE: Removed previous level completion check - users can purchase any level anytime
@@ -203,33 +206,50 @@ export class PaymentController {
         const user = await UserModel.findById(payment.userId);
         if (user) {
           // Determine which levels to unlock based on purchase
-          const levelsToUnlock: Array<2 | 3 | 4> = [];
           if (payment.level === 2) {
-            levelsToUnlock.push(2);
-          } else if (payment.level === 3) {
-            levelsToUnlock.push(2, 3);
-          } else if (payment.level === 4) {
-            levelsToUnlock.push(2, 3, 4);
-          }
-
-          // Unlock all levels in the bundle
-          levelsToUnlock.forEach((level) => {
-            const levelKey = `level${level}` as "level2" | "level3" | "level4";
-            if (!user.purchasedLevels[levelKey].purchased) {
-              user.purchasedLevels[levelKey].purchased = true;
-              user.purchasedLevels[levelKey].purchaseDate = new Date();
-              user.purchasedLevels[levelKey].paymentId = (
-                payment._id as string
-              ).toString();
+            // Level 2 purchase - unlock Level 2
+            if (!user.purchasedLevels.level2.purchased) {
+              user.purchasedLevels.level2.purchased = true;
+              user.purchasedLevels.level2.purchaseDate = new Date();
+              user.purchasedLevels.level2.paymentId = (payment._id as string).toString();
             }
-          });
+            user.progress.highestUnlockedLevel = Math.max(user.progress.highestUnlockedLevel, 2);
+          } else if (payment.level === 3) {
+            // Level 3 bundle - unlock Levels 2 and 3
+            if (!user.purchasedLevels.level2.purchased) {
+              user.purchasedLevels.level2.purchased = true;
+              user.purchasedLevels.level2.purchaseDate = new Date();
+              user.purchasedLevels.level2.paymentId = (payment._id as string).toString();
+            }
+            if (!user.purchasedLevels.level3.purchased) {
+              user.purchasedLevels.level3.purchased = true;
+              user.purchasedLevels.level3.purchaseDate = new Date();
+              user.purchasedLevels.level3.paymentId = (payment._id as string).toString();
+            }
+            user.progress.highestUnlockedLevel = Math.max(user.progress.highestUnlockedLevel, 3);
+          } else if (payment.level === 4) {
+            // Level 4 bundle - unlock Levels 2, 3 and add 1 attempt each for L4 and L5
+            if (!user.purchasedLevels.level2.purchased) {
+              user.purchasedLevels.level2.purchased = true;
+              user.purchasedLevels.level2.purchaseDate = new Date();
+              user.purchasedLevels.level2.paymentId = (payment._id as string).toString();
+            }
+            if (!user.purchasedLevels.level3.purchased) {
+              user.purchasedLevels.level3.purchased = true;
+              user.purchasedLevels.level3.purchaseDate = new Date();
+              user.purchasedLevels.level3.paymentId = (payment._id as string).toString();
+            }
+            // Add 1 attempt credit for Level 4 (pay-per-use)
+            user.purchasedLevels.level4.remainingAttempts = (user.purchasedLevels.level4.remainingAttempts || 0) + 1;
+            user.purchasedLevels.level4.purchaseDate = new Date();
+            user.purchasedLevels.level4.paymentId = (payment._id as string).toString();
+            // Add 1 attempt credit for Level 5 (pay-per-use)
+            user.purchasedLevels.level5.remainingAttempts = (user.purchasedLevels.level5.remainingAttempts || 0) + 1;
+            user.purchasedLevels.level5.purchaseDate = new Date();
+            user.purchasedLevels.level5.paymentId = (payment._id as string).toString();
 
-          // Unlock highest level purchased (for UI purposes)
-          const highestPurchasedLevel = Math.max(...levelsToUnlock);
-          user.progress.highestUnlockedLevel = Math.max(
-            user.progress.highestUnlockedLevel,
-            highestPurchasedLevel
-          );
+            user.progress.highestUnlockedLevel = Math.max(user.progress.highestUnlockedLevel, 5);
+          }
 
           await user.save();
         }
@@ -340,38 +360,53 @@ export class PaymentController {
     const user = await UserModel.findById(payment.userId);
     if (user) {
       // Determine which levels to unlock based on purchase
-      const levelsToUnlock: Array<2 | 3 | 4> = [];
       if (payment.level === 2) {
-        levelsToUnlock.push(2);
+        // Level 2 purchase - unlock Level 2
+        if (!user.purchasedLevels.level2.purchased) {
+          user.purchasedLevels.level2.purchased = true;
+          user.purchasedLevels.level2.purchaseDate = new Date();
+          user.purchasedLevels.level2.paymentId = (payment._id as string).toString();
+        }
+        user.progress.highestUnlockedLevel = Math.max(user.progress.highestUnlockedLevel, 2);
       } else if (payment.level === 3) {
-        levelsToUnlock.push(2, 3);
+        // Level 3 bundle - unlock Levels 2 and 3
+        if (!user.purchasedLevels.level2.purchased) {
+          user.purchasedLevels.level2.purchased = true;
+          user.purchasedLevels.level2.purchaseDate = new Date();
+          user.purchasedLevels.level2.paymentId = (payment._id as string).toString();
+        }
+        if (!user.purchasedLevels.level3.purchased) {
+          user.purchasedLevels.level3.purchased = true;
+          user.purchasedLevels.level3.purchaseDate = new Date();
+          user.purchasedLevels.level3.paymentId = (payment._id as string).toString();
+        }
+        user.progress.highestUnlockedLevel = Math.max(user.progress.highestUnlockedLevel, 3);
       } else if (payment.level === 4) {
-        levelsToUnlock.push(2, 3, 4);
+        // Level 4 bundle - unlock Levels 2, 3 and add 1 attempt each for L4 and L5
+        if (!user.purchasedLevels.level2.purchased) {
+          user.purchasedLevels.level2.purchased = true;
+          user.purchasedLevels.level2.purchaseDate = new Date();
+          user.purchasedLevels.level2.paymentId = (payment._id as string).toString();
+        }
+        if (!user.purchasedLevels.level3.purchased) {
+          user.purchasedLevels.level3.purchased = true;
+          user.purchasedLevels.level3.purchaseDate = new Date();
+          user.purchasedLevels.level3.paymentId = (payment._id as string).toString();
+        }
+        // Add 1 attempt credit for Level 4 (pay-per-use)
+        user.purchasedLevels.level4.remainingAttempts = (user.purchasedLevels.level4.remainingAttempts || 0) + 1;
+        user.purchasedLevels.level4.purchaseDate = new Date();
+        user.purchasedLevels.level4.paymentId = (payment._id as string).toString();
+        // Add 1 attempt credit for Level 5 (pay-per-use)
+        user.purchasedLevels.level5.remainingAttempts = (user.purchasedLevels.level5.remainingAttempts || 0) + 1;
+        user.purchasedLevels.level5.purchaseDate = new Date();
+        user.purchasedLevels.level5.paymentId = (payment._id as string).toString();
+
+        user.progress.highestUnlockedLevel = Math.max(user.progress.highestUnlockedLevel, 5);
       }
 
-      // Unlock all levels in the bundle
-      levelsToUnlock.forEach((level) => {
-        const levelKey = `level${level}` as "level2" | "level3" | "level4";
-        if (!user.purchasedLevels[levelKey].purchased) {
-          user.purchasedLevels[levelKey].purchased = true;
-          user.purchasedLevels[levelKey].purchaseDate = new Date();
-          user.purchasedLevels[levelKey].paymentId = (
-            payment._id as string
-          ).toString();
-        }
-      });
-
-      // Unlock highest level purchased
-      const highestPurchasedLevel = Math.max(...levelsToUnlock);
-      user.progress.highestUnlockedLevel = Math.max(
-        user.progress.highestUnlockedLevel,
-        highestPurchasedLevel
-      );
-
       await user.save();
-      console.log(
-        `Levels ${levelsToUnlock.join(", ")} unlocked for user ${user._id}`
-      );
+      console.log(`Payment level ${payment.level} processed for user ${user._id}`);
     }
   }
 
