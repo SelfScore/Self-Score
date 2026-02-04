@@ -113,6 +113,29 @@ export const startRealtimeInterview = async (
       return;
     }
 
+    // Check if user has remaining attempts (pay-per-use)
+    const user = await UserModel.findById(userId);
+    if (!user) {
+      res.status(404).json({
+        success: false,
+        message: "User not found",
+      });
+      return;
+    }
+
+    const remainingAttempts = user.purchasedLevels?.level5?.remainingAttempts || 0;
+    if (remainingAttempts <= 0) {
+      res.status(403).json({
+        success: false,
+        message: "No remaining attempts for Level 5. Please purchase to continue.",
+        data: {
+          remainingAttempts: 0,
+          requiresPurchase: true
+        }
+      });
+      return;
+    }
+
     // Transform questions
     const questions = dbQuestions.map((q) => ({
       questionId: q.questionId,
@@ -321,12 +344,17 @@ export const completeRealtimeInterview = async (
 
     await interview.save();
 
-    // Update user's Level 5 progress to PENDING_REVIEW
-    await UserModel.findByIdAndUpdate(userId, {
-      $set: {
-        "progress.level5": "PENDING_REVIEW",
-      },
-    });
+    // Update user's Level 5 progress to PENDING_REVIEW and consume attempt
+    const user = await UserModel.findById(userId);
+    if (user) {
+      // Consume the Level 5 attempt (pay-per-use)
+      if (user.purchasedLevels?.level5?.remainingAttempts > 0) {
+        user.purchasedLevels.level5.remainingAttempts -= 1;
+        console.log(`✅ Level 5 attempt consumed. Remaining attempts: ${user.purchasedLevels.level5.remainingAttempts}`);
+      }
+      user.progress.level5 = "PENDING_REVIEW";
+      await user.save();
+    }
 
     console.log(
       `✅ Interview completed - User ${userId} Level 5 status: PENDING_REVIEW`
@@ -456,3 +484,64 @@ export const abandonInterview = async (
     });
   }
 };
+
+/**
+ * Check if user has an active Level 5 interview
+ */
+export const checkActiveRealtimeInterview = async (
+  req: Request,
+  res: Response
+): Promise<void> => {
+  try {
+    const userId = req.user?.userId;
+
+    if (!userId) {
+      res.status(401).json({
+        success: false,
+        message: "User not authenticated",
+      });
+      return;
+    }
+
+    // Check for active session in memory
+    const existingSessions = sessionRegistry.getSessionsByUserId(userId);
+    if (existingSessions.length > 0) {
+      const session = existingSessions[0];
+      res.status(200).json({
+        success: true,
+        data: {
+          hasActiveInterview: true,
+          sessionId: session.sessionId,
+          interviewId: session.interviewId,
+          progress: session.currentQuestionIndex,
+        },
+      });
+      return;
+    }
+
+    // Check for active interview in database
+    const activeInterview = await RealtimeInterviewModel.findOne({
+      userId,
+      level: 5,
+      status: RealtimeInterviewStatus.IN_PROGRESS,
+    });
+
+    res.status(200).json({
+      success: true,
+      data: {
+        hasActiveInterview: !!activeInterview,
+        sessionId: activeInterview?.sessionId || null,
+        interviewId: activeInterview?._id || null,
+        progress: activeInterview?.answers.length || 0,
+      },
+    });
+  } catch (error: any) {
+    console.error("❌ Error checking active realtime interview:", error);
+    res.status(500).json({
+      success: false,
+      message: "Failed to check active interview",
+      error: error.message,
+    });
+  }
+};
+

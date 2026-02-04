@@ -24,7 +24,12 @@ export interface UserResponse {
             paymentId?: string;
         };
         level4: {
-            purchased: boolean;
+            remainingAttempts: number;
+            purchaseDate?: Date;
+            paymentId?: string;
+        };
+        level5: {
+            remainingAttempts: number;
             purchaseDate?: Date;
             paymentId?: string;
         };
@@ -37,6 +42,7 @@ export interface UserResponse {
             level2?: number;
             level3?: number;
             level4?: number;
+            level5?: number;
         };
     };
 }

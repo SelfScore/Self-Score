@@ -23,7 +23,12 @@ export interface User extends Document {
       paymentId?: string;
     };
     level4: {
-      purchased: boolean;
+      remainingAttempts: number;  // 0 = no attempts, 1+ = can take test
+      purchaseDate?: Date;
+      paymentId?: string;
+    };
+    level5: {
+      remainingAttempts: number;  // 0 = no attempts, 1+ = can take test
       purchaseDate?: Date;
       paymentId?: string;
     };
@@ -121,9 +126,23 @@ const UserSchema: Schema<User> = new Schema(
         },
       },
       level4: {
-        purchased: {
-          type: Boolean,
-          default: false,
+        remainingAttempts: {
+          type: Number,
+          default: 0,
+        },
+        purchaseDate: {
+          type: Date,
+          required: false,
+        },
+        paymentId: {
+          type: String,
+          required: false,
+        },
+      },
+      level5: {
+        remainingAttempts: {
+          type: Number,
+          default: 0,
         },
         purchaseDate: {
           type: Date,

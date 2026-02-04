@@ -20,6 +20,8 @@ export default function JourneyProgress() {
     isLevelCompleted,
     getTestScore,
     isLevelPurchased,
+    hasUsedAttempts,
+    getRemainingAttempts,
     user,
     progress,
   } = useLevelAccess();
@@ -27,7 +29,11 @@ export default function JourneyProgress() {
   const [lastTestDate, setLastTestDate] = useState<string | null>(null);
 
   const highestUnlockedLevel = getHighestUnlockedLevel();
-  const isLevel4Purchased = isLevelPurchased(4);
+  const isLevel5Purchased = isLevelPurchased(5);
+  const level5AttemptsUsed = hasUsedAttempts(5);
+  const level4AttemptsUsed = hasUsedAttempts(4);
+  const level4RemainingAttempts = getRemainingAttempts(4);
+  const level5RemainingAttempts = getRemainingAttempts(5);
 
   // Calculate completed levels count for progress bar
   const completedLevelsCount = progress?.completedLevels?.length || 0;
@@ -303,6 +309,7 @@ export default function JourneyProgress() {
           {levels.slice(0, 4).map((level) => {
             const status = getCardStatus(level.id);
             const score = getTestScore(level.id);
+            const isLevel4 = level.id === 4;
 
             return (
               <TestCard
@@ -316,6 +323,10 @@ export default function JourneyProgress() {
                 onStartTest={() => handleStartTest(level.id)}
                 onRetakeTest={() => handleRetakeTest(level.id)}
                 onUnlock={() => handleUnlock(level.id)}
+                // Level 4 pay-per-use props
+                isPayPerUse={isLevel4}
+                remainingAttempts={isLevel4 ? level4RemainingAttempts : undefined}
+                hasUsedAttempts={isLevel4 ? level4AttemptsUsed : undefined}
               />
             );
           })}
@@ -328,13 +339,13 @@ export default function JourneyProgress() {
             borderRadius: { xs: "12px", md: "16px" },
             overflow: "hidden",
             border: "2px solid #E0E0E0",
-            background: isLevel4Purchased
+            background: isLevel5Purchased
               ? "linear-gradient(135deg, #FEF3EE 0%, #FFFFFF 100%)"
               : "#F9FAFB",
-            opacity: isLevel4Purchased ? 1 : 0.7,
+            opacity: isLevel5Purchased ? 1 : 0.7,
             transition: "all 0.3s ease",
             "&:hover": {
-              boxShadow: isLevel4Purchased
+              boxShadow: isLevel5Purchased
                 ? "0 8px 24px rgba(232,122,66,0.15)"
                 : "none",
             },
@@ -365,7 +376,7 @@ export default function JourneyProgress() {
                   px: 2,
                   py: 0.5,
                   borderRadius: "20px",
-                  backgroundColor: isLevel4Purchased ? "#E87A42" : "#9CA3AF",
+                  backgroundColor: isLevel5Purchased ? "#E87A42" : "#9CA3AF",
                   mb: 2,
                 }}
               >
@@ -378,7 +389,7 @@ export default function JourneyProgress() {
                     fontFamily: "Source Sans Pro",
                   }}
                 >
-                  {isLevel4Purchased ? "Premium Feature" : "Locked"}
+                  {isLevel5Purchased ? "Premium Feature" : "Locked"}
                 </Typography>
               </Box>
 
@@ -388,7 +399,7 @@ export default function JourneyProgress() {
                   fontSize: { xs: "1.5rem", sm: "1.75rem", md: "32px" },
                   fontWeight: 700,
                   fontFamily: "Faustina",
-                  color: isLevel4Purchased ? "#E87A42" : "#6B7280",
+                  color: isLevel5Purchased ? "#E87A42" : "#6B7280",
                   mb: 2,
                   lineHeight: 1.2,
                 }}
@@ -400,19 +411,19 @@ export default function JourneyProgress() {
               <Typography
                 sx={{
                   fontSize: { xs: "0.875rem", sm: "1rem", md: "16px" },
-                  color: isLevel4Purchased ? "#2B2B2B" : "#6B7280",
+                  color: isLevel5Purchased ? "#2B2B2B" : "#6B7280",
                   fontFamily: "Source Sans Pro",
                   lineHeight: 1.6,
                   mb: 3,
                 }}
               >
-                {isLevel4Purchased
+                {isLevel5Purchased
                   ? "Experience a conversational AI-powered voice interview. Speak naturally, and our AI will analyze your responses in real-time for deeper insights."
                   : "Unlock Level 4 bundle to access this premium Level 5 voice interview feature with AI-powered analysis."}
               </Typography>
 
               {/* Features List */}
-              {isLevel4Purchased && (
+              {isLevel5Purchased && (
                 <Box
                   sx={{
                     display: "flex",
@@ -475,7 +486,31 @@ export default function JourneyProgress() {
                   alignItems: { xs: "stretch", sm: "center" },
                 }}
               >
-                {!isLevel4Purchased ? (
+                {/* Show "Buy Again" if attempts are used (0 remaining) */}
+                {level5AttemptsUsed && level5RemainingAttempts === 0 ? (
+                  <ButtonSelfScore
+                    text={
+                      <Box
+                        sx={{ display: "flex", alignItems: "center", gap: 1 }}
+                      >
+                        <LockIcon sx={{ fontSize: "18px" }} />
+                        <span>Buy Again</span>
+                      </Box>
+                    }
+                    onClick={() => handleUnlock(4)}
+                    fontSize={"16px"}
+                    fullWidth={false}
+                    style={{
+                      backgroundColor: "#E87A42",
+                      padding: "12px 24px",
+                    }}
+                    textStyle={{
+                      color: "#fff",
+                      fontWeight: 600,
+                    }}
+                  />
+                ) : !isLevel5Purchased ? (
+                  // First time - "Unlock Level 4" to purchase bundle
                   <ButtonSelfScore
                     text={
                       <Box
@@ -498,48 +533,30 @@ export default function JourneyProgress() {
                     }}
                   />
                 ) : (
-                  <>
-                    <ButtonSelfScore
-                      text={
-                        <Box
-                          sx={{ display: "flex", alignItems: "center", gap: 1 }}
-                        >
-                          <MicIcon sx={{ fontSize: "18px" }} />
-                          <span>Start Voice Interview</span>
-                        </Box>
-                      }
-                      onClick={() =>
-                        router.push("/user/test?level=5&mode=voice")
-                      }
-                      fontSize={"16px"}
-                      fullWidth={false}
-                      style={{
-                        backgroundColor: "#E87A42",
-                        padding: "12px 24px",
-                      }}
-                      textStyle={{
-                        color: "#fff",
-                        fontWeight: 600,
-                      }}
-                    />
-                    <OutLineButton
-                      onClick={() => router.push("/user/test?level=4")}
-                      sx={{
-                        padding: { xs: "10px 20px", md: "12px 24px" },
-                        fontSize: "16px",
-                        borderRadius: "12px",
-                        color: "#E87A42",
-                        fontWeight: 600,
-                        border: "2px solid #E87A42",
-                        "&:hover": {
-                          backgroundColor: "#FEF3EE",
-                          borderColor: "#E87A42",
-                        },
-                      }}
-                    >
-                      Try Text Mode Instead
-                    </OutLineButton>
-                  </>
+                  // Has attempts - "Start Voice Interview" only
+                  <ButtonSelfScore
+                    text={
+                      <Box
+                        sx={{ display: "flex", alignItems: "center", gap: 1 }}
+                      >
+                        <MicIcon sx={{ fontSize: "18px" }} />
+                        <span>Start Voice Interview ({level5RemainingAttempts} attempt{level5RemainingAttempts !== 1 ? 's' : ''} left)</span>
+                      </Box>
+                    }
+                    onClick={() =>
+                      router.push("/user/test?level=5&mode=voice")
+                    }
+                    fontSize={"16px"}
+                    fullWidth={false}
+                    style={{
+                      backgroundColor: "#E87A42",
+                      padding: "12px 24px",
+                    }}
+                    textStyle={{
+                      color: "#fff",
+                      fontWeight: 600,
+                    }}
+                  />
                 )}
               </Box>
             </Box>
@@ -554,8 +571,8 @@ export default function JourneyProgress() {
                 position: "relative",
                 borderRadius: "12px",
                 overflow: "hidden",
-                filter: isLevel4Purchased ? "none" : "grayscale(100%)",
-                opacity: isLevel4Purchased ? 1 : 0.5,
+                filter: isLevel5Purchased ? "none" : "grayscale(100%)",
+                opacity: isLevel5Purchased ? 1 : 0.5,
               }}
             >
               <Image
@@ -568,7 +585,7 @@ export default function JourneyProgress() {
                 }}
                 priority
               />
-              {!isLevel4Purchased && (
+              {!isLevel5Purchased && (
                 <Box
                   sx={{
                     position: "absolute",

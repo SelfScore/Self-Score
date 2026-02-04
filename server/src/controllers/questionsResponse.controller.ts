@@ -372,12 +372,23 @@ export const submitLevelResponses = async (
 
     // Check if level is purchased (for levels 2-4)
     if (level > 1) {
-      const levelKey = `level${level}` as "level2" | "level3" | "level4";
-      if (!user.purchasedLevels[levelKey].purchased) {
-        return res.status(403).json({
-          success: false,
-          message: `Please purchase Level ${level} to submit responses`,
-        });
+      if (level === 4) {
+        // Level 4 uses remainingAttempts instead of purchased
+        if ((user.purchasedLevels.level4.remainingAttempts || 0) <= 0) {
+          return res.status(403).json({
+            success: false,
+            message: `Please purchase Level ${level} to submit responses`,
+          });
+        }
+      } else {
+        // Levels 2-3 use purchased boolean
+        const levelKey = `level${level}` as "level2" | "level3";
+        if (!user.purchasedLevels[levelKey].purchased) {
+          return res.status(403).json({
+            success: false,
+            message: `Please purchase Level ${level} to submit responses`,
+          });
+        }
       }
     }
 

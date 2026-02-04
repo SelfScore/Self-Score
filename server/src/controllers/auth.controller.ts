@@ -91,7 +91,8 @@ export class AuthController {
         purchasedLevels: {
           level2: { purchased: false },
           level3: { purchased: false },
-          level4: { purchased: false },
+          level4: { remainingAttempts: 0 },
+          level5: { remainingAttempts: 0 },
         },
         progress: {
           completedLevels: [],

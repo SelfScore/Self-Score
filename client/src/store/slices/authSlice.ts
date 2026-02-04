@@ -20,7 +20,12 @@ export interface PurchasedLevelsData {
     paymentId?: string;
   };
   level4: {
-    purchased: boolean;
+    remainingAttempts: number;  // 0 = no attempts, 1+ = can take test
+    purchaseDate?: Date;
+    paymentId?: string;
+  };
+  level5: {
+    remainingAttempts: number;  // 0 = no attempts, 1+ = can take test
     purchaseDate?: Date;
     paymentId?: string;
   };

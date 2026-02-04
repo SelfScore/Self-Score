@@ -181,9 +181,8 @@ export default function UserDashboard() {
                 rawDate: rawDateValue || new Date().toISOString(), // Keep raw ISO date for report generation
                 timeSpent:
                   item.timeSpent && typeof item.timeSpent === "number"
-                    ? `${Math.floor(item.timeSpent / 60)}m ${
-                        item.timeSpent % 60
-                      }s`
+                    ? `${Math.floor(item.timeSpent / 60)}m ${item.timeSpent % 60
+                    }s`
                     : "N/A",
                 attemptNumber: attemptMap[item._id],
                 status: item.status, // ✅ Include status for Level 4 pending/reviewed check
@@ -474,7 +473,10 @@ export default function UserDashboard() {
   const hasAnyPurchase =
     purchasedLevels?.level2.purchased ||
     purchasedLevels?.level3.purchased ||
-    purchasedLevels?.level4.purchased;
+    (purchasedLevels?.level4.remainingAttempts ?? 0) > 0 ||
+    (purchasedLevels?.level5?.remainingAttempts ?? 0) > 0 ||
+    purchasedLevels?.level4.purchaseDate !== undefined ||
+    purchasedLevels?.level5?.purchaseDate !== undefined;
   const planType = hasAnyPurchase ? "PREMIUM" : "FREE";
 
   // Get next available level
@@ -490,7 +492,7 @@ export default function UserDashboard() {
   const lastTestScore =
     lastTest?.score ||
     progress?.testScores?.[
-      `level${lastCompletedLevel}` as keyof typeof progress.testScores
+    `level${lastCompletedLevel}` as keyof typeof progress.testScores
     ] ||
     0;
   const lastTestDate = lastTest?.date || new Date().toLocaleDateString();
@@ -956,9 +958,8 @@ export default function UserDashboard() {
                       width: { xs: 100, md: 140 },
                       height: { xs: 100, md: 140 },
                       borderRadius: "50%",
-                      background: `conic-gradient(#508B28 ${
-                        scorePercentage * 3.6
-                      }deg, #e5e7eb 0deg)`,
+                      background: `conic-gradient(#508B28 ${scorePercentage * 3.6
+                        }deg, #e5e7eb 0deg)`,
                       display: "flex",
                       alignItems: "center",
                       justifyContent: "center",

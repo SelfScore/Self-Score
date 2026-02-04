@@ -44,17 +44,17 @@ export const startInterview = async (req: Request, res: Response): Promise<void>
             // If mode doesn't match, allow mode switching while preserving answers
             if (existingInterview.mode !== mode) {
                 console.log(`Mode switch detected: ${existingInterview.mode} -> ${mode}. Updating interview mode while preserving answers.`);
-                
+
                 // Update the mode to the new one
                 existingInterview.mode = mode;
-                
+
                 // Initialize transcript array if switching to VOICE mode and it doesn't exist
                 if (mode === InterviewMode.VOICE && !existingInterview.transcript) {
                     existingInterview.transcript = [];
                 }
-                
+
                 await existingInterview.save();
-                
+
                 // Return the updated interview with preserved answers
                 res.status(200).json({
                     success: true,
@@ -89,11 +89,34 @@ export const startInterview = async (req: Request, res: Response): Promise<void>
 
         // Fetch Level 4 questions from database
         const dbQuestions = await Level4QuestionModel.find({ level: 4 }).sort({ order: 1 });
-        
+
         if (!dbQuestions || dbQuestions.length === 0) {
             res.status(500).json({
                 success: false,
                 message: "Level 4 questions not found in database. Please contact administrator."
+            });
+            return;
+        }
+
+        // Check if user has remaining attempts (pay-per-use)
+        const user = await UserModel.findById(userId);
+        if (!user) {
+            res.status(404).json({
+                success: false,
+                message: "User not found"
+            });
+            return;
+        }
+
+        const remainingAttempts = user.purchasedLevels?.level4?.remainingAttempts || 0;
+        if (remainingAttempts <= 0) {
+            res.status(403).json({
+                success: false,
+                message: "No remaining attempts for Level 4. Please purchase to continue.",
+                data: {
+                    remainingAttempts: 0,
+                    requiresPurchase: true
+                }
             });
             return;
         }
@@ -334,23 +357,23 @@ export const completeInterview = async (req: Request, res: Response): Promise<vo
         // Check if enough content is provided
         // For mixed mode (mode switching), check total answered questions across both text and voice
         const totalQuestions = interview.questions.length;
-        
+
         // Count text answers
         const textAnsweredQuestions = interview.answers.length;
-        
+
         // Count voice answers from transcript (count user responses only)
         const voiceAnsweredQuestions = interview.transcript
             ? interview.transcript.filter((entry: any) => entry.role === 'user').length
             : 0;
-        
+
         // Get question IDs that have been answered
         const answeredQuestionIds = new Set<string>();
-        
+
         // Add text answer question IDs
         interview.answers.forEach((answer: any) => {
             answeredQuestionIds.add(answer.questionId);
         });
-        
+
         // Add voice answer question IDs from transcript
         // Match user responses to questions based on order
         if (interview.transcript) {
@@ -362,11 +385,11 @@ export const completeInterview = async (req: Request, res: Response): Promise<vo
                 }
             }
         }
-        
+
         const totalAnsweredQuestions = answeredQuestionIds.size;
-        
+
         console.log(`Text answers: ${textAnsweredQuestions}, Voice answers: ${voiceAnsweredQuestions}, Total unique: ${totalAnsweredQuestions}`);
-        
+
         // Check if all questions have been answered (either via text or voice)
         if (totalAnsweredQuestions < totalQuestions) {
             res.status(400).json({
@@ -386,9 +409,16 @@ export const completeInterview = async (req: Request, res: Response): Promise<vo
 
         // Send email notifications to user and admin
         try {
-            // Get user details
+            // Get user details and consume attempt
             const user = await UserModel.findById(userId);
             if (user) {
+                // Consume the Level 4 attempt (pay-per-use)
+                if (user.purchasedLevels?.level4?.remainingAttempts > 0) {
+                    user.purchasedLevels.level4.remainingAttempts -= 1;
+                    await user.save();
+                    console.log(`✅ Level 4 attempt consumed. Remaining attempts: ${user.purchasedLevels.level4.remainingAttempts}`);
+                }
+
                 // Send to user (pending review - no score yet)
                 await sendTestCompletionEmailToUser({
                     email: user.email,
@@ -398,7 +428,7 @@ export const completeInterview = async (req: Request, res: Response): Promise<vo
                     totalQuestions: totalQuestions,
                     isPending: true
                 });
-                
+
                 // Send to admin (notify about pending review)
                 await sendTestCompletionEmailToAdmin({
                     username: user.username,
@@ -409,7 +439,7 @@ export const completeInterview = async (req: Request, res: Response): Promise<vo
                     userId: userId,
                     isPending: true
                 });
-                
+
                 console.log(`✅ Email notifications sent for Level 4 submission (User: ${user.email})`);
             }
         } catch (emailError) {
@@ -451,7 +481,7 @@ async function generateFeedback(interview: any) {
 
         // Prepare the content for analysis
         let contentToAnalyze = "";
-        
+
         if (interview.mode === InterviewMode.TEXT) {
             // For text mode, format Q&A pairs
             contentToAnalyze = interview.questions.map((q: any) => {
@@ -460,7 +490,7 @@ async function generateFeedback(interview: any) {
             }).join('\n');
         } else {
             // For voice mode, use transcript
-            contentToAnalyze = interview.transcript?.map((t: any) => 
+            contentToAnalyze = interview.transcript?.map((t: any) =>
                 `${t.role.toUpperCase()}: ${t.content}`
             ).join('\n') || '';
         }
@@ -503,14 +533,14 @@ Be thorough, honest, and constructive in your evaluation.`;
         const result = await model.generateContent(prompt);
         const response = result.response.text();
         console.log("Received response from Gemini AI");
-        
+
         // Parse JSON from response
         const jsonMatch = response.match(/\{[\s\S]*\}/);
         if (!jsonMatch) {
             console.error("Failed to extract JSON from AI response:", response);
             throw new Error("Failed to parse AI response - no JSON found");
         }
-        
+
         console.log("Parsing JSON response...");
         const feedbackData = JSON.parse(jsonMatch[0]);
         console.log("Feedback data parsed successfully");
@@ -670,3 +700,46 @@ export const getInterviewHistory = async (req: Request, res: Response): Promise<
         });
     }
 };
+
+/**
+ * Check if user has an active Level 4 interview
+ */
+export const checkActiveInterview = async (req: Request, res: Response): Promise<void> => {
+    try {
+        const userId = req.user?.userId;
+
+        if (!userId) {
+            res.status(401).json({
+                success: false,
+                message: "User not authenticated"
+            });
+            return;
+        }
+
+        // Check for active interview (IN_PROGRESS status)
+        const activeInterview = await AIInterviewModel.findOne({
+            userId,
+            level: 4,
+            status: InterviewStatus.IN_PROGRESS
+        });
+
+        res.status(200).json({
+            success: true,
+            data: {
+                hasActiveInterview: !!activeInterview,
+                interviewId: activeInterview?._id || null,
+                mode: activeInterview?.mode || null,
+                progress: activeInterview?.answers.length || 0
+            }
+        });
+
+    } catch (error: any) {
+        console.error("Error checking active interview:", error);
+        res.status(500).json({
+            success: false,
+            message: "Failed to check active interview",
+            error: error.message
+        });
+    }
+};
+

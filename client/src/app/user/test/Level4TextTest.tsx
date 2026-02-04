@@ -24,6 +24,7 @@ import {
   aiInterviewService,
   AIInterviewQuestion,
 } from "@/services/aiInterviewService";
+import { authService } from "@/services/authService";
 
 interface Level4TextTestProps {
   onBack?: () => void;
@@ -223,6 +224,9 @@ export default function Level4TextTest({
         sessionStorage.removeItem("level4_interview_answers"); // Voice mode answers (if switched)
         sessionStorage.removeItem("level4_interview_id"); // Interview ID
         sessionStorage.removeItem("level4_interview_mode"); // Mode preference
+
+        // Refresh user data to update purchasedLevels with decremented attempts
+        await authService.getCurrentUser();
 
         // Redirect to feedback page
         router.push(`/user/test/feedback?interviewId=${interviewId}&level=4`);

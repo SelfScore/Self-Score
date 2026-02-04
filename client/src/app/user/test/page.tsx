@@ -1,8 +1,8 @@
 "use client";
 
 import { useSearchParams, useRouter } from "next/navigation";
-import { Box, Typography } from "@mui/material";
-import { Suspense } from "react";
+import { Box, Typography, Snackbar, Alert } from "@mui/material";
+import { Suspense, useEffect, useState } from "react";
 import Level1Test from "./Level1Test";
 import Level2Test from "./Level2Test";
 import Level3Test from "./Level3Test";
@@ -17,7 +17,71 @@ function TestContent() {
   const searchParams = useSearchParams();
   const router = useRouter();
   const level = parseInt(searchParams.get("level") || "1");
-  const { checkTestAttemptAccess } = useLevelAccess();
+  const { checkTestAttemptAccess, getRemainingAttempts } = useLevelAccess();
+
+  // State for toast notification
+  const [showToast, setShowToast] = useState(false);
+  const [toastMessage, setToastMessage] = useState("");
+
+  // 🛡️ PAY-PER-USE VALIDATION - Check remaining attempts for Level 4 & 5
+  useEffect(() => {
+    const checkAttempts = async () => {
+      if (level === 4 || level === 5) {
+        try {
+          // First, check if there's an active interview
+          let hasActiveInterview = false;
+
+          if (level === 4) {
+            const { aiInterviewService } = await import("../../../services/aiInterviewService");
+            const activeCheck = await aiInterviewService.checkActiveInterview();
+            hasActiveInterview = activeCheck.data.hasActiveInterview;
+          } else if (level === 5) {
+            // For Level 5, check via API
+            const api = (await import("../../../lib/api")).default;
+            const activeCheck = await api.get("/api/realtime-interview/check-active");
+            hasActiveInterview = activeCheck.data.hasActiveInterview;
+          }
+
+          // If there's an active interview, allow continuation (don't check attempts)
+          if (hasActiveInterview) {
+            console.log(`✅ Active Level ${level} interview found - allowing continuation`);
+            return;
+          }
+
+          // No active interview - check attempts for NEW test
+          const remainingAttempts = getRemainingAttempts(level);
+
+          if (remainingAttempts === 0) {
+            // Show toast notification
+            setToastMessage(
+              `You have no remaining attempts for Level ${level}. Please purchase more attempts to continue.`
+            );
+            setShowToast(true);
+
+            // Redirect to TestInfo page after a short delay
+            setTimeout(() => {
+              router.push(`/testInfo?level=${level}`);
+            }, 2000);
+          }
+        } catch (error) {
+          console.error("Error checking active interview:", error);
+          // On error, fall back to just checking attempts
+          const remainingAttempts = getRemainingAttempts(level);
+          if (remainingAttempts === 0) {
+            setToastMessage(
+              `You have no remaining attempts for Level ${level}. Please purchase more attempts to continue.`
+            );
+            setShowToast(true);
+            setTimeout(() => {
+              router.push(`/testInfo?level=${level}`);
+            }, 2000);
+          }
+        }
+      }
+    };
+
+    checkAttempts();
+  }, [level, getRemainingAttempts, router]);
 
   // 🛡️ PROTECTION LOGIC - Check if user can attempt the test
   const attemptAccess = checkTestAttemptAccess(level);
@@ -29,6 +93,29 @@ function TestContent() {
     if (attemptAccess.reason === "PREVIOUS_LEVEL_NOT_COMPLETED") {
       return <LevelLocked level={level} />;
     }
+  }
+
+  // If Level 4 or 5 has no attempts, show loading state while redirecting
+  if ((level === 4 || level === 5) && getRemainingAttempts(level) === 0) {
+    return (
+      <Box
+        sx={{
+          display: "flex",
+          flexDirection: "column",
+          justifyContent: "center",
+          alignItems: "center",
+          height: "100vh",
+          gap: 2,
+        }}
+      >
+        <Typography variant="h6" sx={{ color: "#005F73" }}>
+          Redirecting to purchase page...
+        </Typography>
+        <Typography variant="body2" sx={{ color: "#666" }}>
+          You have no remaining attempts for Level {level}
+        </Typography>
+      </Box>
+    );
   }
 
   // 🎯 ORIGINAL TEST RENDERING
@@ -110,6 +197,22 @@ function TestContent() {
         </OutLineButton>
       </Box>
       {renderTestComponent()}
+
+      {/* Toast Notification for No Attempts */}
+      <Snackbar
+        open={showToast}
+        autoHideDuration={6000}
+        onClose={() => setShowToast(false)}
+        anchorOrigin={{ vertical: "top", horizontal: "center" }}
+      >
+        <Alert
+          onClose={() => setShowToast(false)}
+          severity="warning"
+          sx={{ width: "100%" }}
+        >
+          {toastMessage}
+        </Alert>
+      </Snackbar>
     </Box>
   );
 }

@@ -26,6 +26,7 @@ import PersonIcon from "@mui/icons-material/Person";
 // import SwapHorizIcon from "@mui/icons-material/SwapHoriz";
 import { useAuth } from "@/hooks/useAuth";
 import CallEndIcon from "@mui/icons-material/CallEnd";
+import { authService } from "@/services/authService";
 
 interface Level4VoiceTestProps {
   onBack?: () => void;
@@ -520,6 +521,10 @@ export default function Level4VoiceTest({
       });
 
       wsRef.current?.close();
+
+      // Refresh user data to update purchasedLevels with decremented attempts
+      await authService.getCurrentUser();
+
       router.push("/user/dashboard");
     } catch (err: any) {
       console.error("Failed to complete interview:", err);
