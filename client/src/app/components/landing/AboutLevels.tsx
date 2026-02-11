@@ -429,31 +429,36 @@ export default function AboutLevels() {
             </Typography>
 
             {/* Button with sequential access validation */}
-            <Box sx={{ textAlign: "center", mt: 2 }}>
+            <Box
+              sx={{
+                textAlign: "center",
+                mt: 2,
+                display: "flex",
+                flexDirection: "column",
+                alignItems: "center",
+              }}
+            >
               <ButtonSelfScore
                 onClick={() => {
                   router.push(`/testInfo?level=${activeTab + 1}`);
                 }}
                 text={
-                  activeTab === 0 || isLevelUnlocked(activeTab)
-                    ? "Discover Your Starting Point"
-                    : `Level ${activeTab + 1} Locked`
+                  !isLevelUnlocked(activeTab)
+                    ? `Level ${activeTab + 1} Locked`
+                    : "Discover Your Starting Point"
                 }
-                disabled={activeTab !== 0 && !isLevelUnlocked(activeTab)}
+                disabled={!isLevelUnlocked(activeTab)}
                 style={{
-                  opacity:
-                    activeTab === 0 || isLevelUnlocked(activeTab) ? 1 : 0.6,
-                  cursor:
-                    activeTab === 0 || isLevelUnlocked(activeTab)
-                      ? "pointer"
-                      : "not-allowed",
-                  background:
-                    activeTab === 0 || isLevelUnlocked(activeTab)
-                      ? "#FF4F00"
-                      : "#CACACA",
+                  opacity: !isLevelUnlocked(activeTab) ? 0.6 : 1,
+                  cursor: !isLevelUnlocked(activeTab)
+                    ? "not-allowed"
+                    : "pointer",
+                  backgroundColor: !isLevelUnlocked(activeTab)
+                    ? "#CACACA"
+                    : undefined,
                 }}
               />
-              {activeTab !== 0 && !isLevelUnlocked(activeTab) && (
+              {!isLevelUnlocked(activeTab) && (
                 <Typography
                   sx={{
                     mt: 1.5,

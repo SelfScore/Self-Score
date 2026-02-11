@@ -180,7 +180,6 @@ export default function TestInfo({ initialLevel }: TestInfoProps) {
     if (!attemptAccess.canAttempt) {
       return;
     }
-
     // Proceed to test
     if (level === 5) {
       router.push(`/user/test?level=${level}&mode=voice`);
