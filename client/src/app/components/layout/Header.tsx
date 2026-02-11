@@ -132,9 +132,9 @@ export default function Header() {
       variant: "contained",
       FreeChip: true,
     },
-    { label: "Contact Us", href: "/contact" },
     { label: "Consultations", href: "/consultations" },
     { label: "Blogs", href: "/blogs" },
+     { label: "Contact Us", href: "/contact" },
   ];
 
   // Helper function to check if a link is active

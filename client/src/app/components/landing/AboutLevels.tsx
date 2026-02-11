@@ -29,7 +29,7 @@ export default function AboutLevels() {
       name: "Awareness",
       price: "FREE",
       description:
-        "This initial stage is all about gently tuning into your inner world. You'll begin to recognize your current patterns, discover what truly matters to you, and lay the groundwork for a more mindful existence. It's the moment you start listening to the whispers of your soul.",
+        "Level 1 helps you gently understand how balanced you feel inside right now. It looks at your everyday experience of happiness, love, peace, freedom, forgiveness, and inner harmony. This is not about judgment; it’s simply a mirror to help you know yourself better.",
     },
     {
       id: 2,
@@ -37,7 +37,7 @@ export default function AboutLevels() {
       name: "Exploration",
       price: "$5",
       description:
-        "At this stage, you embark on a journey of self-discovery. You'll delve deeper into understanding your strengths, values, and aspirations. This level encourages you to explore new perspectives, challenge limiting beliefs, and start envisioning the life you want to create.",
+        "Level 2 helps you become aware of habits, impulses, and inner tendencies that quietly affect your peace and clarity. This is not about guilt or judgment, but about honest self-observation. Awareness is the first step toward inner freedom.",
     },
     {
       id: 3,
@@ -45,7 +45,7 @@ export default function AboutLevels() {
       name: "Action",
       price: " $15",
       description:
-        "In this phase, you take decisive steps towards your goals. You'll learn to set actionable objectives, develop new skills, and implement changes in your life. This level is all about turning insights into tangible outcomes and making meaningful progress.",
+        "Level 3 explores your deepest beliefs about life, self, God, happiness, and truth. It helps you observe who you think you are, why you live, and what guides your choices. This level is not about right or wrong answers, but about honest inner clarity.",
     },
     {
       id: 4,
@@ -53,7 +53,7 @@ export default function AboutLevels() {
       name: "Mastery",
       price: "$25",
       description:
-        "The final stage is about sustaining growth and embracing lifelong learning. You'll refine your abilities, cultivate resilience, and deepen your self-awareness. This level empowers you to live authentically, lead with purpose, and inspire others on their own journeys.",
+        "Level 4 reflects how deeply you are living what you already know. It looks at consistency, inner stability, and your ability to grow without losing balance. All questions in this level are subjective. You can also use voice notes to answer.",
     },
     {
       id: 5,
@@ -71,6 +71,69 @@ export default function AboutLevels() {
   };
 
   const isLevelUnlocked = (index: number) => index <= highestUnlockedLevel;
+
+  // Guidelines for each level
+  const getLevelGuidelines = (levelIndex: number) => {
+    const guidelines = [
+      // Level 1
+      {
+        guidelines:
+          "There are no right or wrong answers, only honest ones. Answer based on how you truly feel most of the time, not how you wish to feel.",
+        beforeYouBegin:
+          "Take a quiet moment before you begin and breathe calmly. Approach the test with an open mind and a calm heart. Leave aside expectations, distractions, and comparisons. ",
+        timeCommitment:
+          "The assessment takes approximately 2-5 minutes to complete. Set aside uninterrupted time to reflect and respond.",
+        privacy:
+          "Your responses are confidential and will not be shared with anyone. We prioritize your privacy and data security.",
+      },
+      // Level 2
+      {
+        guidelines:
+          "Please answer honestly and kindly toward yourself. There are no right or wrong answers. This test is for self-understanding, not self-criticism.",
+        beforeYouBegin:
+          "Take a few quiet moments before you begin and answer without rushing. Trust that even small awareness creates meaningful change.",
+        timeCommitment:
+          "The assessment takes approximately 5-7 minutes to complete. Set aside uninterrupted time to reflect and respond.",
+        privacy:
+          "Your responses are confidential and will not be shared with anyone. We prioritize your privacy and data security.",
+      },
+      // Level 3
+      {
+        guidelines:
+          "Answer slowly and truthfully; there are no correct or incorrect views, only your current understanding. Let your answers come from lived experience, not borrowed philosophies.",
+        beforeYouBegin:
+          "It is okay if some questions feel uncomfortable or unclear. Choose the option that feels most aligned right now, not what you aspire to be. This is a mirror, not a judgment.",
+        timeCommitment:
+          "The assessment takes approximately 10-15 minutes to complete. Set aside uninterrupted time to reflect and respond.",
+        privacy:
+          "Your responses are confidential and will not be shared with anyone. We prioritize your privacy and data security.",
+      },
+      // Level 4
+      {
+        guidelines:
+          "Take a quiet moment before you begin and breathe calmly. Approach the test with an open mind and a calm heart. Leave aside expectations, distractions, and comparisons.",
+        beforeYouBegin:
+          "There are no right or wrong answers, only what feels true for you at this moment. This level is about how you live, not what you believe.",
+        timeCommitment:
+          "The assessment takes approximately 25-30 minutes to complete. Set aside uninterrupted time to reflect and respond.",
+        privacy:
+          "Your responses are confidential and will not be shared with anyone. We prioritize your privacy and data security.",
+      },
+      // Level 5
+      {
+        guidelines:
+          "There are no right or wrong answers, only what feels true for you at this moment. This level is about how you live, not what you believe.",
+        beforeYouBegin:
+          "Take a quiet moment before you begin and breathe calmly. Approach the test with an open mind and a calm heart. Leave aside expectations, distractions, and comparisons.",
+        timeCommitment:
+          "The assessment takes approximately 25-30 minutes to complete. Set aside uninterrupted time to reflect and respond.",
+        privacy:
+          "Your responses are confidential and will not be shared with anyone. We prioritize your privacy and data security.",
+      },
+    ];
+
+    return guidelines[levelIndex] || guidelines[0];
+  };
 
   return (
     <Box
@@ -362,14 +425,50 @@ export default function AboutLevels() {
               {levels[activeTab].description}
             </Typography>
 
-            {/* Always show button - let navigation handle restrictions */}
-            <Box sx={{ textAlign: "center", mt: 2 }}>
+            {/* Button with sequential access validation */}
+            <Box
+              sx={{
+                textAlign: "center",
+                mt: 2,
+                display: "flex",
+                flexDirection: "column",
+                alignItems: "center",
+              }}
+            >
               <ButtonSelfScore
                 onClick={() => {
                   router.push(`/testInfo?level=${activeTab + 1}`);
                 }}
-                text="Discover Your Starting Point"
+                text={
+                  !isLevelUnlocked(activeTab)
+                    ? `Level ${activeTab + 1} Locked`
+                    : "Discover Your Starting Point"
+                }
+                disabled={!isLevelUnlocked(activeTab)}
+                style={{
+                  opacity: !isLevelUnlocked(activeTab) ? 0.6 : 1,
+                  cursor: !isLevelUnlocked(activeTab)
+                    ? "not-allowed"
+                    : "pointer",
+                  backgroundColor: !isLevelUnlocked(activeTab)
+                    ? "#CACACA"
+                    : undefined,
+                }}
               />
+              {!isLevelUnlocked(activeTab) && (
+                <Typography
+                  sx={{
+                    mt: 1.5,
+                    color: "#E87A42",
+                    fontSize: { xs: "13px", md: "15px" },
+                    fontFamily: "Source Sans Pro",
+                    fontWeight: 600,
+                    textAlign: "center",
+                  }}
+                >
+                  ⚠️ Complete Level {activeTab} first to unlock this level
+                </Typography>
+              )}
             </Box>
           </Box>
 
@@ -402,27 +501,24 @@ export default function AboutLevels() {
               }}
             >
               <Typography sx={{ fontSize: { xs: "14px", md: "16px" } }}>
-                <strong>Guidelines:</strong> Answer honestly and thoughtfully.
-                There are no right or wrong answers. Your responses will help
-                you understand your current stage and guide you on your personal
-                growth journey.
+                <strong>Guidelines:</strong>{" "}
+                {getLevelGuidelines(activeTab).guidelines}
               </Typography>
-              <Typography sx={{ fontSize: { xs: "14px", md: "16px" } }}>
-                <strong>Before You Begin:</strong> Approach the test with an
-                open mind and a calm heart. Leave aside expectations,
-                distractions, and comparisons. Remember, this journey isn’t
-                about achieving a perfect score, it’s about understanding,
-                awareness, and progress toward inner peace and wholeness.
+              {getLevelGuidelines(activeTab).beforeYouBegin && (
+                <Typography
+                  sx={{ fontSize: { xs: "14px", md: "16px" }, mt: 1 }}
+                >
+                  <strong>Before You Begin:</strong>{" "}
+                  {getLevelGuidelines(activeTab).beforeYouBegin}
+                </Typography>
+              )}
+              <Typography sx={{ mt: 1, fontSize: { xs: "14px", md: "16px" } }}>
+                <strong>Time Commitment:</strong>{" "}
+                {getLevelGuidelines(activeTab).timeCommitment}
               </Typography>
               <Typography sx={{ mt: 1, fontSize: { xs: "14px", md: "16px" } }}>
-                <strong>Time Commitment:</strong> The assessment takes
-                approximately 10-15 minutes to complete. Set aside uninterrupted
-                time to reflect and respond.
-              </Typography>
-              <Typography sx={{ mt: 1, fontSize: { xs: "14px", md: "16px" } }}>
-                <strong>Privacy Assurance:</strong> Your responses are
-                confidential and will not be shared with anyone. We prioritize
-                your privacy and data security.
+                <strong>Privacy Assurance:</strong>{" "}
+                {getLevelGuidelines(activeTab).privacy}
               </Typography>
             </Box>
           </Box>

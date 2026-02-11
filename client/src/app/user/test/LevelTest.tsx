@@ -152,11 +152,10 @@ export default function LevelTest({ level }: LevelTestProps) {
     switch (level) {
       case 1:
         return {
-          main: "The idea of the test is to measure your overall Personality Integration or life success score within your Body, Mind and Soul Complex via a simple questionnaire.",
+          main: "This self-score test is designed to help you gently understand how aligned and integrated you feel within your body, mind, and inner self. ",
           hints: [
-            "Love, forgiveness, happiness, peace and freedom are synonyms and different facets of the same underlying life principle",
-            "Key to your happiness is in your own pocket, not someone else's pocket",
-            "Please rate yourself on a scale of 0 to 10 with 10 being the best and 0 being the worst for the following questions:",
+            "Love, forgiveness, happiness, peace, and freedom are deeply connected; they are different expressions of the same inner state. Your sense of happiness and peace comes from within you, not from external people or situations.",
+            "Please rate yourself on a scale of 0 to 10 for each question. 0 means you rarely experience this state, and 10 means you experience it consistently and naturally.",
           ],
         };
       case 2:
@@ -170,7 +169,7 @@ export default function LevelTest({ level }: LevelTestProps) {
         };
       case 3:
         return {
-          main: "The idea of the test is to measure your overall Personality Integration or life success score within your Body, Mind and Soul Complex via a simple questionnaire.",
+          main: "This reflection is designed to help you understand yourself more deeply. Take your time, answer honestly, and choose what feels closest to your current understanding.",
           hints: [
             "Love, forgiveness, happiness, peace and freedom are synonyms and different facets of the same underlying life principle",
             "Key to your happiness is in your own pocket, not someone else's pocket",

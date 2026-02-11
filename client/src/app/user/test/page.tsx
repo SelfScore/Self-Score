@@ -32,19 +32,24 @@ function TestContent() {
           let hasActiveInterview = false;
 
           if (level === 4) {
-            const { aiInterviewService } = await import("../../../services/aiInterviewService");
+            const { aiInterviewService } =
+              await import("../../../services/aiInterviewService");
             const activeCheck = await aiInterviewService.checkActiveInterview();
             hasActiveInterview = activeCheck.data.hasActiveInterview;
           } else if (level === 5) {
             // For Level 5, check via API
             const api = (await import("../../../lib/api")).default;
-            const activeCheck = await api.get("/api/realtime-interview/check-active");
+            const activeCheck = await api.get(
+              "/api/realtime-interview/check-active",
+            );
             hasActiveInterview = activeCheck.data.hasActiveInterview;
           }
 
           // If there's an active interview, allow continuation (don't check attempts)
           if (hasActiveInterview) {
-            console.log(`✅ Active Level ${level} interview found - allowing continuation`);
+            console.log(
+              `✅ Active Level ${level} interview found - allowing continuation`,
+            );
             return;
           }
 
@@ -54,7 +59,7 @@ function TestContent() {
           if (remainingAttempts === 0) {
             // Show toast notification
             setToastMessage(
-              `You have no remaining attempts for Level ${level}. Please purchase more attempts to continue.`
+              `You have no remaining attempts for Level ${level}. Please purchase more attempts to continue.`,
             );
             setShowToast(true);
 
@@ -69,7 +74,7 @@ function TestContent() {
           const remainingAttempts = getRemainingAttempts(level);
           if (remainingAttempts === 0) {
             setToastMessage(
-              `You have no remaining attempts for Level ${level}. Please purchase more attempts to continue.`
+              `You have no remaining attempts for Level ${level}. Please purchase more attempts to continue.`,
             );
             setShowToast(true);
             setTimeout(() => {
@@ -91,7 +96,8 @@ function TestContent() {
       return <SubscriptionRequired level={level} />;
     }
     if (attemptAccess.reason === "PREVIOUS_LEVEL_NOT_COMPLETED") {
-      return <LevelLocked level={level} />;
+      const missingLevel = attemptAccess.missingLevel || level - 1;
+      return <LevelLocked level={level} requiredLevel={missingLevel} />;
     }
   }
 

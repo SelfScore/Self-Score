@@ -9,14 +9,20 @@ import { useRouter } from "next/navigation";
 
 interface LevelLockedProps {
   level: number;
+  requiredLevel?: number; // The specific level that needs to be completed
 }
 
-export default function LevelLocked({ level }: LevelLockedProps) {
+export default function LevelLocked({
+  level,
+  requiredLevel,
+}: LevelLockedProps) {
   const router = useRouter();
 
-  const handleGoToPreviousLevel = () => {
-    const previousLevel = level - 1;
-    router.push(`/user/test?level=${previousLevel}`);
+  // Use requiredLevel if provided, otherwise default to level - 1
+  const missingLevel = requiredLevel || level - 1;
+
+  const handleGoToRequiredLevel = () => {
+    router.push(`/testInfo?level=${missingLevel}`);
   };
 
   const handleGoToLevelSelection = () => {
@@ -84,7 +90,7 @@ export default function LevelLocked({ level }: LevelLockedProps) {
               fontFamily: "Source Sans Pro",
             }}
           >
-            To unlock Level {level}, you need to complete Level {level - 1}{" "}
+            To unlock Level {level}, you need to complete Level {missingLevel}{" "}
             first. Our assessment is designed to build progressively on your
             insights.
           </Typography>
@@ -114,8 +120,8 @@ export default function LevelLocked({ level }: LevelLockedProps) {
                 color: "#2B2B2B",
               }}
             >
-              Complete Level {level - 1} to unlock this assessment and continue
-              your journey.
+              Complete Level {missingLevel} to unlock this assessment and
+              continue your journey.
             </Typography>
           </Box>
 
@@ -129,7 +135,7 @@ export default function LevelLocked({ level }: LevelLockedProps) {
             }}
           >
             <Button
-              onClick={handleGoToPreviousLevel}
+              onClick={handleGoToRequiredLevel}
               endIcon={<ArrowForwardIcon />}
               sx={{
                 background: "#E87A42",
@@ -143,7 +149,7 @@ export default function LevelLocked({ level }: LevelLockedProps) {
                 },
               }}
             >
-              Take Level {level - 1} Test
+              Go to Level {missingLevel}
             </Button>
             <Button
               onClick={handleGoToLevelSelection}
