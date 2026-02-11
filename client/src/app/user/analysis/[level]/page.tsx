@@ -98,11 +98,11 @@ export default function LevelAnalysisPage() {
               },
               purchasedLevels: user.purchasedLevels,
               progress: user.progress,
-            })
+            }),
           );
           console.log(
             "Redux updated successfully with progress:",
-            user.progress
+            user.progress,
           );
         }
 
@@ -110,7 +110,9 @@ export default function LevelAnalysisPage() {
         // Level 3 uses a separate question model, so fetch from test history
         if (levelNumber === 3) {
           // For Level 3, get the score from test history
-          const testHistory = await questionsApi.getUserTestHistory(user.userId);
+          const testHistory = await questionsApi.getUserTestHistory(
+            user.userId,
+          );
 
           if (!testHistory.success) {
             setError("Failed to load test results");
@@ -123,7 +125,7 @@ export default function LevelAnalysisPage() {
             .sort(
               (a: any, b: any) =>
                 new Date(b.date || b.submittedAt).getTime() -
-                new Date(a.date || a.submittedAt).getTime()
+                new Date(a.date || a.submittedAt).getTime(),
             );
 
           if (level3Submissions.length === 0) {
@@ -146,7 +148,7 @@ export default function LevelAnalysisPage() {
         }
 
         const responsesResult = await questionsApi.getUserResponses(
-          user.userId
+          user.userId,
         );
 
         if (!responsesResult.success) {
@@ -156,7 +158,7 @@ export default function LevelAnalysisPage() {
 
         // Filter responses for current level
         const levelResponses = responsesResult.data.filter(
-          (response: any) => response.level === levelNumber
+          (response: any) => response.level === levelNumber,
         );
 
         if (levelResponses.length === 0) {
@@ -167,11 +169,11 @@ export default function LevelAnalysisPage() {
         // Calculate score using level-specific logic
         const validResponses = levelResponses.filter(
           (response: any) =>
-            response.questionId && response.selectedOptionIndex !== undefined
+            response.questionId && response.selectedOptionIndex !== undefined,
         );
 
         console.log(
-          `\n========== LEVEL ${levelNumber} ANALYSIS SCORE CALCULATION ==========`
+          `\n========== LEVEL ${levelNumber} ANALYSIS SCORE CALCULATION ==========`,
         );
 
         let calculatedScore = 0;
@@ -182,7 +184,7 @@ export default function LevelAnalysisPage() {
             (acc: number, response: any) => {
               return acc + response.selectedOptionIndex * 15;
             },
-            0
+            0,
           );
         } else if (levelNumber === 2) {
           // Level 2: 900 - |Level2Score|
@@ -198,22 +200,22 @@ export default function LevelAnalysisPage() {
                 console.log(`Question ${index + 1}:`);
                 console.log(`  - Type: ${question.scoringType}`);
                 console.log(
-                  `  - Selected Option: ${response.selectedOptionIndex}`
+                  `  - Selected Option: ${response.selectedOptionIndex}`,
                 );
                 console.log(`  - Multiplier: ${multiplier}`);
                 console.log(
-                  `  - Score: ${response.selectedOptionIndex} × ${multiplier} = ${questionScore}`
+                  `  - Score: ${response.selectedOptionIndex} × ${multiplier} = ${questionScore}`,
                 );
 
                 return acc + questionScore;
               }
               // Default to negative multiplier for Level 2
               console.log(
-                `Question ${index + 1}: Missing scoringType, using default -10`
+                `Question ${index + 1}: Missing scoringType, using default -10`,
               );
               return acc + response.selectedOptionIndex * -10;
             },
-            0
+            0,
           );
 
           console.log(`\nLevel 2 Raw Score: ${level2RawScore}`);
@@ -242,22 +244,22 @@ export default function LevelAnalysisPage() {
                 console.log(`Question ${index + 1}:`);
                 console.log(`  - Type: ${question.scoringType}`);
                 console.log(
-                  `  - Selected Option: ${response.selectedOptionIndex}`
+                  `  - Selected Option: ${response.selectedOptionIndex}`,
                 );
                 console.log(`  - Multiplier: ${multiplier}`);
                 console.log(
-                  `  - Score: ${response.selectedOptionIndex} × ${multiplier} = ${questionScore}`
+                  `  - Score: ${response.selectedOptionIndex} × ${multiplier} = ${questionScore}`,
                 );
 
                 return acc + questionScore;
               }
               // Default to positive multiplier if scoringType not found
               console.log(
-                `Question ${index + 1}: Missing scoringType, using default +15`
+                `Question ${index + 1}: Missing scoringType, using default +15`,
               );
               return acc + response.selectedOptionIndex * 15;
             },
-            0
+            0,
           );
 
           console.log(`\nTotal Calculated Score: ${calculatedScore}`);
@@ -279,7 +281,7 @@ export default function LevelAnalysisPage() {
           console.log(`  - Base Score: 350`);
           console.log(`  - Calculated Score: ${calculatedScore}`);
           console.log(
-            `  - Final Score (before capping): 350 + ${calculatedScore} = ${finalScore}`
+            `  - Final Score (before capping): 350 + ${calculatedScore} = ${finalScore}`,
           );
         }
 
@@ -288,7 +290,7 @@ export default function LevelAnalysisPage() {
 
         console.log(`  - Capped Score (350-900): ${score}`);
         console.log(
-          `================================================================\n`
+          `================================================================\n`,
         );
 
         const totalQuestions = validResponses.length;
@@ -297,12 +299,12 @@ export default function LevelAnalysisPage() {
         const testHistory = await questionsApi.getUserTestHistory(user.userId);
         const currentSubmission = testHistory.success
           ? testHistory.data
-            .filter((item: any) => item.level === levelNumber)
-            .sort(
-              (a: any, b: any) =>
-                new Date(b.date || b.submittedAt).getTime() -
-                new Date(a.date || a.submittedAt).getTime()
-            )[0]
+              .filter((item: any) => item.level === levelNumber)
+              .sort(
+                (a: any, b: any) =>
+                  new Date(b.date || b.submittedAt).getTime() -
+                  new Date(a.date || a.submittedAt).getTime(),
+              )[0]
           : null;
 
         console.log("Current submission for sharing:", currentSubmission);
@@ -328,16 +330,74 @@ export default function LevelAnalysisPage() {
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [level, levelNumber]);
 
-  // Score interpretation based on ranges
-  const getScoreInterpretation = (score: number): string => {
+  // Get header description based on level
+  const getLevelHeaderDescription = (level: number): string => {
+    const descriptions = [
+      "Thank you for being honest with yourself; this awareness itself is the first step forward.",
+      "This test invites you to become aware of your habits and tendencies as they show up in daily life.",
+      "This test invites you to get a deep understanding of your internal thoughts and beliefs as they show up in daily life.",
+      "You're reflecting on how you live your truth. Consistency and awareness are the keys to lasting transformation.",
+      "You've reached an advanced stage of self-mastery. Continue refining your practice and embodying your wisdom.",
+    ];
+    return descriptions[level - 1] || descriptions[0];
+  };
+
+  // Get level-specific quote
+  const getLevelQuote = (level: number): string => {
+    const quotes = [
+      "Peace is not something you find outside; it is something you remember within.",
+      "When awareness grows, habits lose their power.",
+      "Knowing yourself is the beginning of all wisdom.",
+      "We are what we repeatedly do. Excellence, then, is not an act but a habit.",
+      "Peace is not something you find outside; it is something you remember within.",
+    ];
+    return quotes[level - 1] || quotes[0];
+  };
+
+  // Score interpretation based on level and score ranges
+  const getScoreInterpretation = (level: number, score: number): string => {
+    // Level-specific interpretations
+    const interpretations: { [key: number]: { [key: string]: string } } = {
+      1: {
+        low: "You’re becoming aware of what feels heavy and what feels right, this is a quiet but important turning point.",
+        medium:
+          "You are doing well; there is growing harmony within you, and with small care, it can deepen even more.",
+        high: "You are deeply aligned with love, peace, and clarity. Stay gentle and grounded, and keep nurturing this state.",
+      },
+      2: {
+        low: "You are becoming aware of your patterns, and that itself is quite a progress.",
+        medium:
+          "You are learning to choose awareness over impulse. Keep going gently.",
+        high: "You are moving toward inner peace with grace and understanding.",
+      },
+      3: {
+        low: " You are standing at the doorway of deeper understanding. Keep observing.",
+        medium:
+          "Your inner compass is active; trust the wisdom unfolding within you.",
+        high: "You are living inquiry itself, rooted, aware, and inwardly free.",
+      },
+      4: {
+        low: "You're learning to live your truth more consistently. Progress is gradual and that's perfectly okay.",
+        medium:
+          "You're integrating your understanding into daily life. Consistency deepens with practice.",
+        high: "You demonstrate strong alignment between knowing and living. Keep nurturing this embodiment.",
+      },
+      5: {
+        low: "You're refining your mastery. Even small adjustments at this level create profound shifts.",
+        medium:
+          "You embody wisdom with increasing consistency. Your presence itself becomes a teaching.",
+        high: "You're living in deep alignment and wholeness. Your journey inspires and guides others naturally.",
+      },
+    };
+
+    const levelInterpretations = interpretations[level] || interpretations[1];
+
     if (score >= 350 && score < 500) {
-      return "You're in a calm space, a perfect foundation for growth and self-discovery.";
-    } else if (score >= 500 && score < 650) {
-      return "You're radiating balance and calm, a beautiful space to grow from here.";
-    } else if (score >= 650 && score < 800) {
-      return "You're energized and driven, channeling your energy into meaningful action.";
+      return levelInterpretations.low;
+    } else if (score >= 500 && score < 750) {
+      return levelInterpretations.medium;
     } else {
-      return "You're experiencing high energy levels. Remember to find moments of balance.";
+      return levelInterpretations.high;
     }
   };
 
@@ -387,7 +447,7 @@ export default function LevelAnalysisPage() {
 
       // Generate share link
       const response = await questionsApi.generateShareLink(
-        analysisData.submissionId
+        analysisData.submissionId,
       );
 
       if (response.success && response.data?.shareLink) {
@@ -517,8 +577,7 @@ export default function LevelAnalysisPage() {
               my: { xs: 2, md: 1 },
             }}
           >
-            This test evaluates your self-awareness and understanding of your
-            current life situations.
+            {getLevelHeaderDescription(analysisData.level)}
           </Typography>
         </Box>
 
@@ -573,8 +632,9 @@ export default function LevelAnalysisPage() {
                   fill="none"
                   stroke="#508B28"
                   strokeWidth="16"
-                  strokeDasharray={`${(scorePercentage / 100) * (2 * Math.PI * 100)
-                    } ${2 * Math.PI * 100}`}
+                  strokeDasharray={`${
+                    (scorePercentage / 100) * (2 * Math.PI * 100)
+                  } ${2 * Math.PI * 100}`}
                   strokeLinecap="round"
                   style={{ transition: "all 1s" }}
                 />
@@ -641,15 +701,18 @@ export default function LevelAnalysisPage() {
                 }}
                 variant="contained"
                 size="large"
-
               />
             )}
             <ButtonSelfScore
               startIcon={
                 sharingReport ? (
-                  <CircularProgress size={16} color="inherit" sx={{ color: "#FFF" }} />
+                  <CircularProgress
+                    size={16}
+                    color="inherit"
+                    sx={{ color: "#FFF" }}
+                  />
                 ) : (
-                  <FileUploadIcon sx={{ color: "#FFF", }} />
+                  <FileUploadIcon sx={{ color: "#FFF" }} />
                 )
               }
               text={sharingReport ? "Generating..." : "Share"}
@@ -680,7 +743,7 @@ export default function LevelAnalysisPage() {
             fontFamily={"Source Sans Pro"}
             fontSize={"18px"}
           >
-            {getScoreInterpretation(analysisData.score)}
+            {getScoreInterpretation(analysisData.level, analysisData.score)}
           </Typography>
         </Paper>
 
@@ -908,7 +971,7 @@ export default function LevelAnalysisPage() {
             fontWeight={400}
             fontFamily={"Playfair Display"}
           >
-            "Progress is not perfection — it's awareness."
+            "{getLevelQuote(analysisData.level)}"
           </Typography>
           <Typography
             sx={{

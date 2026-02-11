@@ -23,7 +23,12 @@ interface TestInfoProps {
 
 export default function TestInfo({ initialLevel }: TestInfoProps) {
   const router = useRouter();
-  const { isLevelPurchased, getBundleInfo, getRemainingAttempts } = useLevelAccess();
+  const { 
+    isLevelPurchased, 
+    getBundleInfo, 
+    getRemainingAttempts,
+    checkTestAttemptAccess
+  } = useLevelAccess();
   const [activeLevel, setActiveLevel] = useState(initialLevel);
 
   // Check if current active level is purchased
@@ -56,7 +61,7 @@ export default function TestInfo({ initialLevel }: TestInfoProps) {
       id: 2,
       title: "Level 2",
       name: "Exploration",
-      duration: "15-20 Minutes",
+      duration: "5-7 minutes",
       questions: 9,
       description: "Still quick enough to fit in your schedule",
       questionsDetail:
@@ -73,13 +78,13 @@ export default function TestInfo({ initialLevel }: TestInfoProps) {
       id: 3,
       title: "Level 3",
       name: "Action",
-      duration: "25-30 Minutes",
-      questions: "50+",
-      description: "Comprehensive assessment for actionable insights",
-      questionsDetail: "Developing concrete strategies for personal growth",
+      duration: "10-15 minutes",
+      questions: "60",
+      description: "This reflection usually takes 10-15 minutes. It is meant to be unhurried and thoughtful",
+      questionsDetail: "You may return to this assessment anytime as your understanding grows",
       isFree: false,
       features: [
-        "50+ in-depth questions",
+        "60 in-depth questions",
         "Advanced analytics",
         "Goal-setting framework",
         "Progress tracking tools",
@@ -91,11 +96,11 @@ export default function TestInfo({ initialLevel }: TestInfoProps) {
       name: "Mastery",
       duration: "35-40 Minutes",
       questions: 25,
-      description: "Complete mastery assessment",
-      questionsDetail: "Evaluating sustained growth and leadership potential",
+      description: "It will take time to complete the assessment",
+      questionsDetail: "It will provide sustained growth, inner stability, and conscious leadership",
       isFree: false,
       features: [
-        "20 comprehensive questions",
+        "25 comprehensive questions",
         "Complete life mastery analysis",
         "Leadership assessment",
         "Lifetime access to insights",
@@ -129,6 +134,16 @@ export default function TestInfo({ initialLevel }: TestInfoProps) {
 
   const handleStartAssessment = () => {
     const level = activeLevel + 1;
+    
+    // Check if user can attempt this level
+    const attemptAccess = checkTestAttemptAccess(level);
+    
+    // Don't proceed if cannot attempt
+    if (!attemptAccess.canAttempt) {
+      return;
+    }
+    
+    // Proceed to test
     if (level === 5) {
       router.push(`/user/test?level=${level}&mode=voice`);
     } else {
@@ -868,7 +883,7 @@ export default function TestInfo({ initialLevel }: TestInfoProps) {
                     lineHeight: 1.4,
                   }}
                 >
-                  Get your self-score immediately after completion
+                  Your results are shared immediately after completion
                 </Typography>
               </Box>
             </Box>
@@ -877,7 +892,8 @@ export default function TestInfo({ initialLevel }: TestInfoProps) {
             <Box
               sx={{
                 display: "flex",
-                justifyContent: "center",
+                flexDirection: "column",
+                alignItems: "center",
                 mt: { xs: 3, md: 5 },
               }}
             >
@@ -892,13 +908,32 @@ export default function TestInfo({ initialLevel }: TestInfoProps) {
                 borderRadius="12px"
                 fontSize="16px"
                 fullWidth={true}
+                disabled={!checkTestAttemptAccess(activeLevel + 1).canAttempt}
                 style={{
-                  backgroundColor: "#FF5722",
+                  backgroundColor: checkTestAttemptAccess(activeLevel + 1).canAttempt ? "#FF5722" : "#CACACA",
+                  cursor: checkTestAttemptAccess(activeLevel + 1).canAttempt ? "pointer" : "not-allowed",
+                  opacity: checkTestAttemptAccess(activeLevel + 1).canAttempt ? 1 : 0.6,
                 }}
                 textStyle={{
                   fontWeight: 400,
                 }}
               />
+              {!checkTestAttemptAccess(activeLevel + 1).canAttempt && (
+                <Typography
+                  sx={{
+                    mt: 2,
+                    color: "#E87A42",
+                    fontSize: { xs: "14px", md: "16px" },
+                    fontFamily: "Source Sans Pro",
+                    fontWeight: 600,
+                    textAlign: "center",
+                  }}
+                >
+                  {checkTestAttemptAccess(activeLevel + 1).reason === 'PREVIOUS_LEVEL_NOT_COMPLETED'
+                    ? `⚠️ Please complete Level ${checkTestAttemptAccess(activeLevel + 1).missingLevel || activeLevel} first`
+                    : `⚠️ Please purchase this level to continue`}
+                </Typography>
+              )}
             </Box>
           </Box>
         )}

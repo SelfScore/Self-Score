@@ -123,7 +123,7 @@ export default function Level4TextTest({
 
             // Start from first unanswered question
             const firstUnansweredIndex = response.data.questions.findIndex(
-              (q: any) => !existingAnswers[q.questionId]
+              (q: any) => !existingAnswers[q.questionId],
             );
             if (firstUnansweredIndex !== -1) {
               setCurrentQuestionIndex(firstUnansweredIndex);
@@ -157,7 +157,7 @@ export default function Level4TextTest({
   const isLastQuestion = currentQuestionIndex === questions.length - 1;
   const isFirstQuestion = currentQuestionIndex === 0;
   const allQuestionsAnswered = questions.every((q) =>
-    answers[q.questionId]?.trim()
+    answers[q.questionId]?.trim(),
   );
 
   const handleAnswerChange = (value: string) => {
@@ -179,7 +179,7 @@ export default function Level4TextTest({
       await aiInterviewService.submitTextAnswer(
         interviewId,
         currentQuestion.questionId,
-        currentAnswer
+        currentAnswer,
       );
     } catch (err: any) {
       console.error("Error saving answer:", err);
@@ -254,26 +254,38 @@ export default function Level4TextTest({
     try {
       // Browser compatibility check
       if (!navigator.mediaDevices || !navigator.mediaDevices.getUserMedia) {
-        setRecordingError("Your browser doesn't support voice recording. Please use Chrome, Firefox, or Edge.");
+        setRecordingError(
+          "Your browser doesn't support voice recording. Please use Chrome, Firefox, or Edge.",
+        );
         return;
       }
 
-      if (typeof AudioContext === "undefined" && typeof (window as any).webkitAudioContext === "undefined") {
-        setRecordingError("Your browser doesn't support audio processing. Please use Chrome, Firefox, or Edge.");
+      if (
+        typeof AudioContext === "undefined" &&
+        typeof (window as any).webkitAudioContext === "undefined"
+      ) {
+        setRecordingError(
+          "Your browser doesn't support audio processing. Please use Chrome, Firefox, or Edge.",
+        );
         return;
       }
 
       if (typeof WebSocket === "undefined") {
-        setRecordingError("Your browser doesn't support WebSocket. Please use a modern browser.");
+        setRecordingError(
+          "Your browser doesn't support WebSocket. Please use a modern browser.",
+        );
         return;
       }
 
       // Get auth token for WebSocket
       let authToken = "";
       try {
-        const response = await fetch(`${process.env.NEXT_PUBLIC_API_URL || "http://localhost:5001"}/api/auth/ws-token`, {
-          credentials: "include",
-        });
+        const response = await fetch(
+          `${process.env.NEXT_PUBLIC_API_URL || "http://localhost:5001"}/api/auth/ws-token`,
+          {
+            credentials: "include",
+          },
+        );
         const data = await response.json();
         if (data.success && data.data?.token) {
           authToken = data.data.token;
@@ -299,7 +311,8 @@ export default function Level4TextTest({
       streamRef.current = stream;
 
       // Create AudioContext for audio processing
-      const AudioContextClass = window.AudioContext || (window as any).webkitAudioContext;
+      const AudioContextClass =
+        window.AudioContext || (window as any).webkitAudioContext;
       const audioContext = new AudioContextClass({ sampleRate: 16000 });
       audioContextRef.current = audioContext;
 
@@ -330,7 +343,10 @@ export default function Level4TextTest({
               // Convert Float32 to Int16 PCM
               const pcmData = new Int16Array(inputData.length);
               for (let i = 0; i < inputData.length; i++) {
-                pcmData[i] = Math.max(-32768, Math.min(32767, inputData[i] * 32768));
+                pcmData[i] = Math.max(
+                  -32768,
+                  Math.min(32767, inputData[i] * 32768),
+                );
               }
               ws.send(pcmData.buffer);
             }
@@ -346,7 +362,8 @@ export default function Level4TextTest({
           setInterimText("");
           if (currentQuestion?.questionId) {
             setAnswers((prevAnswers) => {
-              const existingAnswer = prevAnswers[currentQuestion.questionId] || "";
+              const existingAnswer =
+                prevAnswers[currentQuestion.questionId] || "";
               const newAnswer = existingAnswer
                 ? `${existingAnswer} ${data.transcript}`.trim()
                 : data.transcript.trim();
@@ -386,11 +403,12 @@ export default function Level4TextTest({
       ws.onclose = () => {
         console.log("🔌 Transcription connection closed");
       };
-
     } catch (err: any) {
       console.error("Error starting recording:", err);
       if (err.name === "NotAllowedError") {
-        setRecordingError("Microphone permission denied. Please allow microphone access.");
+        setRecordingError(
+          "Microphone permission denied. Please allow microphone access.",
+        );
       } else {
         setRecordingError("Failed to start recording. Please try again.");
       }
@@ -573,10 +591,10 @@ export default function Level4TextTest({
               mt: 1,
             }}
           >
-            This comprehensive assessment evaluates your mastery of life
-            management, emotional intelligence, and decision-making skills
-            through 8 subjective questions. Please answer each question
-            thoughtfully and in detail.
+            This reflection invites you to observe how you live, respond, and
+            grow over time. Answer each question with care, drawing from real
+            experiences rather than ideals. There is no need to impress, clarity
+            and honesty are enough.
           </Typography>
 
           <Typography
@@ -604,14 +622,19 @@ export default function Level4TextTest({
               pl: 3,
             }}
           >
-            <li>Take your time to reflect on each question</li>
-            <li>Be honest and specific in your responses</li>
             <li>
-              Aim for at least 50 characters per answer for meaningful analysis
+              Move slowly and allow space for reflection. Write what feels true,
+              even if it feels unfinished
             </li>
             <li>
-              Your answers will be analyzed by AI to provide personalized
-              feedback
+              A few thoughtful lines are more meaningful than perfect words
+            </li>
+            <li>
+              Your answers will be analyzed to provide personalized feedback, so
+              the report will take 1-2 days to arrive
+            </li>
+            <li>
+              Aim for at least 50 characters per answer for meaningful analysis
             </li>
           </Typography>
         </Box>
@@ -675,9 +698,13 @@ export default function Level4TextTest({
             multiline
             rows={8}
             fullWidth
-            value={isRecording || isProcessing
-              ? (currentAnswer ? `${currentAnswer} ${interimText}` : interimText).trim()
-              : currentAnswer
+            value={
+              isRecording || isProcessing
+                ? (currentAnswer
+                    ? `${currentAnswer} ${interimText}`
+                    : interimText
+                  ).trim()
+                : currentAnswer
             }
             onChange={(e) => handleAnswerChange(e.target.value)}
             placeholder="Type your answer here... Be as detailed and thoughtful as possible."
@@ -913,7 +940,13 @@ export default function Level4TextTest({
 
                 <ButtonSelfScore
                   text={isProcessing ? "Processing..." : "Stop Recording"}
-                  startIcon={isProcessing ? <CircularProgress size={20} sx={{ color: "#fff" }} /> : <StopCircleIcon />}
+                  startIcon={
+                    isProcessing ? (
+                      <CircularProgress size={20} sx={{ color: "#fff" }} />
+                    ) : (
+                      <StopCircleIcon />
+                    )
+                  }
                   onClick={stopRecording}
                   disabled={isProcessing}
                   background={isProcessing ? "#888" : "#E65100"}

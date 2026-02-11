@@ -41,7 +41,7 @@ export const generateUpgradePage = (currentLevel: number): string => {
       'Standard reporting'
     ],
     expectations: isLevel1 ? [
-      { title: '15-20 Minutes to Complete', desc: 'Still quick enough to fit in your schedule' },
+      { title: '5-7 minutes to Complete', desc: 'Still quick enough to fit in your schedule' },
       { title: '9 Comprehensive Questions', desc: 'Deeper exploration of life satisfaction, relationships, career, and personal growth' },
       { title: 'Personalized Recommendations', desc: 'Actionable advice based on your specific results' },
       { title: 'Detailed Score Breakdown', desc: 'Individual scores for 8+ life categories with visual charts' }

@@ -8,11 +8,12 @@ export interface LevelAccess {
 export interface TestAttemptAccess {
   canAttempt: boolean;
   reason: "PREVIOUS_LEVEL_NOT_COMPLETED" | "SUBSCRIPTION_REQUIRED" | null;
+  missingLevel?: number; // Which level needs to be completed first
 }
 
 export const useLevelAccess = () => {
   const { user, purchasedLevels, progress } = useAppSelector(
-    (state) => state.auth
+    (state) => state.auth,
   );
 
   // Check if user can ACCESS level info (view details, purchase options)
@@ -53,13 +54,8 @@ export const useLevelAccess = () => {
     return { canAccess: true, reason: null };
   };
 
-  // NEW: Check if user can ATTEMPT the test (requires previous level completion)
-  const checkTestAttemptAccess = (_level: number): TestAttemptAccess => {
-    // 🚧 TEMPORARY: Access control disabled for testing
-    // TODO: Re-enable this logic after testing Level 4 AI Interview
-    return { canAttempt: true, reason: null };
-
-    /* ORIGINAL LOGIC - COMMENTED OUT FOR TESTING
+  // Check if user can ATTEMPT the test (requires previous level completion)
+  const checkTestAttemptAccess = (level: number): TestAttemptAccess => {
     // Level 1 can always be attempted
     if (level === 1) {
       return { canAttempt: true, reason: null };
@@ -67,23 +63,37 @@ export const useLevelAccess = () => {
 
     // Must be authenticated for levels 2+
     if (!user) {
-      return { canAttempt: false, reason: 'SUBSCRIPTION_REQUIRED' };
+      return { canAttempt: false, reason: "SUBSCRIPTION_REQUIRED" };
     }
 
-    // Check if level is purchased
-    const levelKey = `level${level}` as 'level2' | 'level3' | 'level4';
-    if (!purchasedLevels || !purchasedLevels[levelKey].purchased) {
-      return { canAttempt: false, reason: 'SUBSCRIPTION_REQUIRED' };
+    // Check if ALL previous levels are completed (sequential requirement)
+    for (let i = 1; i < level; i++) {
+      if (!progress || !progress.completedLevels.includes(i)) {
+        return {
+          canAttempt: false,
+          reason: "PREVIOUS_LEVEL_NOT_COMPLETED",
+          missingLevel: i,
+        };
+      }
     }
 
-    // Check if previous level is completed
-    const previousLevel = level - 1;
-    if (!progress || !progress.completedLevels.includes(previousLevel)) {
-      return { canAttempt: false, reason: 'PREVIOUS_LEVEL_NOT_COMPLETED' };
+    // Check if level is purchased/has attempts
+    if (level === 4 || level === 5) {
+      // Levels 4 & 5 use remainingAttempts (pay-per-use)
+      const levelKey = `level${level}` as "level4" | "level5";
+      const remaining = purchasedLevels?.[levelKey]?.remainingAttempts || 0;
+      if (remaining <= 0) {
+        return { canAttempt: false, reason: "SUBSCRIPTION_REQUIRED" };
+      }
+    } else {
+      // Levels 2 & 3 use purchased boolean
+      const levelKey = `level${level}` as "level2" | "level3";
+      if (!purchasedLevels || !purchasedLevels[levelKey].purchased) {
+        return { canAttempt: false, reason: "SUBSCRIPTION_REQUIRED" };
+      }
     }
 
     return { canAttempt: true, reason: null };
-    */
   };
 
   // Check if a level can be purchased (doesn't require previous level completion)
@@ -188,7 +198,7 @@ export const useLevelAccess = () => {
 
   // Get bundle information for a level
   const getBundleInfo = (
-    level: number
+    level: number,
   ): { levels: number[]; price: number } | null => {
     switch (level) {
       case 2:
