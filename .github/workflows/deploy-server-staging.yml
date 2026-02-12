@@ -52,9 +52,6 @@ jobs:
           source: "deploy.tar.gz"
           target: "/home/ubuntu/self-score-staging/"
 
-      # -------------------------
-      # Extract + Restart PM2
-      # -------------------------
       - name: Deploy on EC2
         uses: appleboy/ssh-action@v0.1.7
         with:
@@ -63,6 +60,12 @@ jobs:
           key: ${{ secrets.AWS_PRIVATE_KEY_STAGING }}
           script: |
             set -e
+
+            # ✅ Load NVM environment (same as main)
+            source ~/.profile 2>/dev/null || true
+            export NVM_DIR="$HOME/.nvm"
+            [ -s "$NVM_DIR/nvm.sh" ] && \. "$NVM_DIR/nvm.sh"
+
             cd /home/ubuntu/self-score-staging/
 
             rm -rf server-new
@@ -77,7 +80,7 @@ jobs:
 
             mv server-new server
 
-            # IMPORTANT: ecosystem.config.js stays here on EC2
+            # ecosystem.config.js already exists on EC2
             if pm2 list | grep -q "self-score-staging"; then
               pm2 reload ecosystem.config.js --only self-score-staging
             else
