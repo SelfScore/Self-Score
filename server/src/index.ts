@@ -108,8 +108,6 @@ const startServer = async (): Promise<void> => {
     // Try to connect to database (won't crash if it fails)
     await dbConnect();
 
-
-    
     // Create HTTP server (needed for WebSocket)
     const httpServer = http.createServer(app);
     // Setup WebSocket server for realtime interviews

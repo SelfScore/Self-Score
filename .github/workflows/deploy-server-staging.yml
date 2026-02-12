@@ -35,7 +35,16 @@ jobs:
             rm -rf dist/server
           fi
 
-          tar -czf ../deploy.tar.gz dist node_modules package.json ecosystem.config.js
+          cd ..
+
+          mkdir deploy
+
+          cp -r server/dist deploy/
+          cp -r server/node_modules deploy/
+          cp server/package.json deploy/
+          cp self-score-staging/ecosystem.config.js deploy/
+
+          tar -czf deploy.tar.gz -C deploy .
 
       - name: Upload Archive to EC2
         uses: appleboy/scp-action@v0.1.7
