@@ -99,7 +99,7 @@ export class ConsultantAuthController {
         try {
           profilePhotoUrl = await uploadProfilePhoto(profilePhoto, email); // Use email as temp ID
         } catch (error) {
-          console.error("Error uploading profile photo to S3:", error);
+          console.log("Error uploading profile photo to S3:", error);
           const response: ApiResponse = {
             success: false,
             message: "Failed to upload profile photo. Please try again.",
@@ -132,12 +132,12 @@ export class ConsultantAuthController {
       const emailSent = await sendVerificationEmail(
         newConsultant.email,
         newConsultant.firstName,
-        verifyCode
+        verifyCode,
       );
 
       if (!emailSent) {
         console.warn(
-          "⚠️  Failed to send verification email, but consultant was created"
+          "⚠️  Failed to send verification email, but consultant was created",
         );
       }
 
@@ -294,7 +294,7 @@ export class ConsultantAuthController {
       const emailSent = await sendVerificationEmail(
         consultant.email,
         consultant.firstName,
-        verifyCode
+        verifyCode,
       );
 
       const response: ApiResponse = {
@@ -320,7 +320,7 @@ export class ConsultantAuthController {
    */
   static async updateProfessionalInfo(
     req: Request,
-    res: Response
+    res: Response,
   ): Promise<void> {
     try {
       const { consultantId } = req.body;
@@ -385,7 +385,7 @@ export class ConsultantAuthController {
    */
   static async updateCertifications(
     req: Request,
-    res: Response
+    res: Response,
   ): Promise<void> {
     try {
       const { consultantId, certifications, resume } = req.body;
@@ -446,7 +446,7 @@ export class ConsultantAuthController {
               certificateFileUrl = await uploadCertificate(
                 cert.certificateFile,
                 consultantId,
-                cert.name
+                cert.name,
               );
             } catch (error) {
               console.error("Error uploading certificate to S3:", error);
@@ -500,7 +500,7 @@ export class ConsultantAuthController {
    */
   static async completeRegistration(
     req: Request,
-    res: Response
+    res: Response,
   ): Promise<void> {
     try {
       const {
@@ -621,7 +621,7 @@ export class ConsultantAuthController {
 
       const isPasswordCorrect = await bcrypt.compare(
         password,
-        consultant.password
+        consultant.password,
       );
 
       if (!isPasswordCorrect) {
@@ -678,7 +678,7 @@ export class ConsultantAuthController {
    */
   static async getCurrentConsultant(
     req: Request,
-    res: Response
+    res: Response,
   ): Promise<void> {
     try {
       const consultantId = (req as any).consultant?.consultantId;
@@ -693,7 +693,7 @@ export class ConsultantAuthController {
       }
 
       const consultant = await ConsultantModel.findById(consultantId).select(
-        "-password -verifyCode"
+        "-password -verifyCode",
       );
 
       if (!consultant) {
@@ -800,7 +800,7 @@ export class ConsultantAuthController {
 
         // Generate verification code for new email
         const verifyCode = Math.floor(
-          100000 + Math.random() * 900000
+          100000 + Math.random() * 900000,
         ).toString();
         const expiryDate = new Date();
         expiryDate.setHours(expiryDate.getHours() + 1);
@@ -816,7 +816,7 @@ export class ConsultantAuthController {
         const emailSent = await sendVerificationEmail(
           email,
           consultant.firstName,
-          verifyCode
+          verifyCode,
         );
 
         const response: ApiResponse = {
