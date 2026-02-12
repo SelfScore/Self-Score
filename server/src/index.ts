@@ -14,6 +14,7 @@ import { setupWebSocketServer } from "./lib/websocketHandler";
 import { setupTranscriptionWebSocket } from "./lib/transcriptionHandler";
 import sessionRegistry from "./services/sessionManager";
 
+
 // Create Express app
 const app: Application = express();
 const PORT = process.env.PORT || 5001;
@@ -31,7 +32,7 @@ app.use(
     credentials: true,
     methods: ["GET", "POST", "PUT", "PATCH", "DELETE", "OPTIONS"],
     allowedHeaders: ["Content-Type", "Authorization", "X-Requested-With"],
-  }),
+  })
 );
 
 // Stripe webhook needs raw body for signature verification
@@ -41,10 +42,11 @@ app.post(
   express.raw({ type: "application/json" }),
   async (req, res, next) => {
     // Import and use the webhook handler directly
-    const { PaymentController } =
-      await import("./controllers/payment.controller");
+    const { PaymentController } = await import(
+      "./controllers/payment.controller"
+    );
     PaymentController.handleWebhook(req, res);
-  },
+  }
 );
 
 app.use(express.json({ limit: "10mb" }));
@@ -106,6 +108,7 @@ const startServer = async (): Promise<void> => {
     // Try to connect to database (won't crash if it fails)
     await dbConnect();
 
+    
     // Create HTTP server (needed for WebSocket)
     const httpServer = http.createServer(app);
     // Setup WebSocket server for realtime interviews
@@ -118,12 +121,11 @@ const startServer = async (): Promise<void> => {
       console.log(`🚀 Server is running on port ${PORT}`);
       console.log(`🌍 Environment: ${process.env.NODE_ENV || "development"}`);
       console.log(
-        `📱 Client URL: ${process.env.CLIENT_URL || "http://localhost:3000"}`,
+        `📱 Client URL: ${process.env.CLIENT_URL || "http://localhost:3000"}`
       );
       console.log(
-        `🗄️  Database: ${
-          process.env.MONGODB_URI || "mongodb://localhost:27017/lifescore"
-        }`,
+        `🗄️  Database: ${process.env.MONGODB_URI || "mongodb://localhost:27017/lifescore"
+        }`
       );
       console.log(`🎙️  WebSocket: ws://localhost:${PORT}/ws/interview`);
       console.log(`🎤 Transcription: ws://localhost:${PORT}/ws/transcribe`);
@@ -134,10 +136,10 @@ const startServer = async (): Promise<void> => {
       console.log("   POST /api/auth/sign-up - User registration");
       console.log("   POST /api/auth/login - User login");
       console.log(
-        "   POST /api/realtime-interview/start - Start voice interview",
+        "   POST /api/realtime-interview/start - Start voice interview"
       );
       console.log(
-        "   WS   /ws/interview?sessionId=xxx - WebSocket audio stream",
+        "   WS   /ws/interview?sessionId=xxx - WebSocket audio stream"
       );
     });
 
