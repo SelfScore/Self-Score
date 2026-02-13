@@ -44,8 +44,11 @@ export default function Level5ReviewDetailPage() {
 
   useEffect(() => {
     // Calculate total score whenever question reviews change
-    const total = questionReviews.reduce((sum, qr) => sum + qr.score, 0);
-    setTotalScore(total);
+    // Apply Level 5 formula: rawScore * (900/500)
+    const rawScore = questionReviews.reduce((sum, qr) => sum + qr.score, 0);
+    const calculatedScore = rawScore * (900 / 500);
+    const clampedScore = Math.min(Math.max(calculatedScore, 350), 900);
+    setTotalScore(clampedScore);
   }, [questionReviews]);
 
   const fetchSubmission = async () => {
@@ -67,7 +70,7 @@ export default function Level5ReviewDetailPage() {
           const newReviews: QuestionReview[] =
             response.data.interview.questions.map((q) => {
               const answer = response.data.interview.answers.find(
-                (a) => a.questionId === q.questionId
+                (a) => a.questionId === q.questionId,
               );
 
               return {
@@ -95,7 +98,8 @@ export default function Level5ReviewDetailPage() {
 
   const handleScoreChange = (index: number, value: string) => {
     const score = parseInt(value) || 0;
-    const clamped = Math.max(0, score); // No max limit, just ensure non-negative
+    // Clamp to 0-100 range
+    const clamped = Math.min(Math.max(score, 0), 100);
 
     const updated = [...questionReviews];
     updated[index].score = clamped;
@@ -109,18 +113,16 @@ export default function Level5ReviewDetailPage() {
   };
 
   const validateReview = (): boolean => {
-    // Check all questions have remarks
+    // Check all questions have scores (0-100) and remarks
     for (let i = 0; i < questionReviews.length; i++) {
+      if (questionReviews[i].score < 0 || questionReviews[i].score > 100) {
+        setError(`Question ${i + 1}: Score must be between 0 and 100`);
+        return false;
+      }
       if (!questionReviews[i].remark.trim()) {
         setError(`Please provide a remark for Question ${i + 1}`);
         return false;
       }
-    }
-
-    // Check total score is in valid range
-    if (totalScore < 350 || totalScore > 900) {
-      setError("Total score must be between 350 and 900");
-      return false;
     }
 
     return true;
@@ -135,7 +137,7 @@ export default function Level5ReviewDetailPage() {
       const response = await level5ReviewService.saveReview(
         interviewId,
         questionReviews,
-        totalScore
+        totalScore,
       );
 
       if (response.success) {
@@ -167,15 +169,15 @@ export default function Level5ReviewDetailPage() {
       const response = await level5ReviewService.submitReview(
         interviewId,
         questionReviews,
-        totalScore
+        totalScore,
       );
 
       if (response.success) {
         setSuccess(
-          "Review submitted successfully! User has been notified via email."
+          "Review submitted successfully! User has been notified via email.",
         );
         alert(
-          "Review submitted successfully! User has been notified via email."
+          "Review submitted successfully! User has been notified via email.",
         );
         setTimeout(() => {
           router.push("/admin/level5-submissions");
@@ -362,20 +364,124 @@ export default function Level5ReviewDetailPage() {
             <Divider sx={{ my: 2 }} />
 
             <Typography variant="subtitle2" color="text.secondary" gutterBottom>
-              User's Voice Response:
+              Conversation Flow:
             </Typography>
-            <Paper
-              sx={{
-                p: 2,
-                backgroundColor: "#F5F5F5",
-                borderRadius: "8px",
-                mb: 3,
-              }}
-            >
-              <Typography variant="body2" sx={{ whiteSpace: "pre-wrap" }}>
-                {qr.userAnswer}
-              </Typography>
-            </Paper>
+
+            {/* Display conversation history if available */}
+            {qr.userAnswer &&
+              (() => {
+                const answer = interview.answers.find(
+                  (a) => a.questionId === qr.questionId,
+                );
+
+                if (
+                  answer?.conversationHistory &&
+                  answer.conversationHistory.length > 0
+                ) {
+                  return (
+                    <Box sx={{ mb: 3 }}>
+                      {answer.conversationHistory.map((turn, turnIndex) => (
+                        <Paper
+                          key={turnIndex}
+                          sx={{
+                            p: 2,
+                            mb: 1.5,
+                            backgroundColor:
+                              turn.type === "main_answer" ||
+                              turn.type === "follow_up_answer"
+                                ? "#F5F5F5"
+                                : "#E3F2FD",
+                            borderRadius: "8px",
+                            borderLeft: `4px solid ${
+                              turn.type === "main_answer" ||
+                              turn.type === "follow_up_answer"
+                                ? "#666"
+                                : "#005F73"
+                            }`,
+                          }}
+                        >
+                          <Box
+                            sx={{
+                              display: "flex",
+                              alignItems: "center",
+                              mb: 0.5,
+                            }}
+                          >
+                            <Chip
+                              label={
+                                turn.type === "main_answer"
+                                  ? "Main Answer"
+                                  : turn.type === "follow_up_question"
+                                    ? "Follow-up Question"
+                                    : turn.type === "follow_up_answer"
+                                      ? "Follow-up Answer"
+                                      : "Redirect"
+                              }
+                              size="small"
+                              sx={{
+                                backgroundColor:
+                                  turn.type === "main_answer" ||
+                                  turn.type === "follow_up_answer"
+                                    ? "#E0E0E0"
+                                    : "#90CAF9",
+                                fontWeight: 600,
+                                fontSize: "11px",
+                              }}
+                            />
+                            {turn.confidence !== undefined && (
+                              <Chip
+                                label={`Confidence: ${turn.confidence}%`}
+                                size="small"
+                                sx={{
+                                  ml: 1,
+                                  backgroundColor: getScoreColor(
+                                    turn.confidence,
+                                  ),
+                                  color: "#FFF",
+                                  fontSize: "11px",
+                                }}
+                              />
+                            )}
+                          </Box>
+                          <Typography
+                            variant="body2"
+                            sx={{
+                              whiteSpace: "pre-wrap",
+                              mt: 1,
+                              fontStyle:
+                                turn.type === "follow_up_question" ||
+                                turn.type === "redirect"
+                                  ? "italic"
+                                  : "normal",
+                            }}
+                          >
+                            {turn.content}
+                          </Typography>
+                        </Paper>
+                      ))}
+                    </Box>
+                  );
+                } else {
+                  // Fallback: show full transcript if no conversation history
+                  return (
+                    <Paper
+                      sx={{
+                        p: 2,
+                        backgroundColor: "#F5F5F5",
+                        borderRadius: "8px",
+                        mb: 3,
+                      }}
+                    >
+                      <Typography
+                        variant="body2"
+                        sx={{ whiteSpace: "pre-wrap" }}
+                      >
+                        {qr.userAnswer}
+                      </Typography>
+                    </Paper>
+                  );
+                }
+              })()}
 
             <Box
               sx={{
@@ -391,7 +497,8 @@ export default function Level5ReviewDetailPage() {
                   value={qr.score}
                   onChange={(e) => handleScoreChange(index, e.target.value)}
                   fullWidth
-                  inputProps={{ min: 0 }}
+                  inputProps={{ min: 0, max: 100 }}
+                  helperText="Score: 0-100"
                   disabled={isReviewed}
                 />
               </Box>

@@ -37,6 +37,7 @@ export interface ConsultantData {
     price?: number;
   }[];
   introductionVideoLink?: string;
+  generalAvailability?: string;
   applicationStatus: "draft" | "pending" | "approved" | "rejected";
   registrationStep: number;
   isVerified?: boolean;
@@ -305,5 +306,45 @@ export const consultantAuthService = {
     } catch (error) {
       throw error;
     }
+  },
+
+  // Helper: Transform consultant data from API into step-specific formats
+  transformConsultantDataToSteps: (consultant: ConsultantData) => {
+    const step1Data: Step1Data = {
+      firstName: consultant.firstName,
+      lastName: consultant.lastName,
+      email: consultant.email,
+      password: "", // Don't populate password for security
+      countryCode: consultant.countryCode,
+      phoneNumber: consultant.phoneNumber,
+      location: consultant.location,
+      profilePhoto: consultant.profilePhoto,
+    };
+
+    const step2Data: Omit<Step2Data, "consultantId"> = {
+      coachingSpecialties: consultant.coachingSpecialties || [],
+      yearsOfExperience: consultant.yearsOfExperience || 0,
+      professionalBio: consultant.professionalBio || "",
+      languagesSpoken: consultant.languagesSpoken || [],
+    };
+
+    const step3Data: Omit<Step3Data, "consultantId"> = {
+      certifications: consultant.certifications || [],
+      resume: consultant.resume || "",
+    };
+
+    const step4Data: Omit<Step4Data, "consultantId"> = {
+      hourlyRate: consultant.hourlyRate || 0,
+      services: consultant.services || [],
+      generalAvailability: consultant.generalAvailability,
+      introductionVideoLink: consultant.introductionVideoLink,
+    };
+
+    return {
+      step1Data,
+      step2Data,
+      step3Data,
+      step4Data,
+    };
   },
 };

@@ -680,11 +680,18 @@ export const getInterviewHistory = async (req: Request, res: Response): Promise<
             return;
         }
 
+        // Get all interviews that are completed, pending review, or reviewed
         const interviews = await AIInterviewModel.find({
             userId,
             level: 4,
-            status: InterviewStatus.COMPLETED
-        }).sort({ completedAt: -1 });
+            status: {
+                $in: [
+                    InterviewStatus.COMPLETED,
+                    InterviewStatus.PENDING_REVIEW,
+                    InterviewStatus.REVIEWED
+                ]
+            }
+        }).sort({ completedAt: -1, submittedAt: -1 });
 
         res.status(200).json({
             success: true,

@@ -49,6 +49,7 @@ const QuestionReviewSchema = new Schema(
       type: Number,
       required: true,
       min: 0,
+      max: 100,
     },
     remark: {
       type: String,
@@ -88,9 +89,9 @@ const Level4ReviewSchema: Schema<Level4Review> = new Schema(
       required: true,
       validate: {
         validator: function (v: QuestionReview[]) {
-          return v.length >= 1 && v.length <= 25; // Must have 1-25 question reviews
+          return v.length === 25; // Must have exactly 25 question reviews
         },
-        message: "Question reviews must contain between 1 and 25 questions",
+        message: "Question reviews must contain exactly 25 questions",
       },
     },
     totalScore: {

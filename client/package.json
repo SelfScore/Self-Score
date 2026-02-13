@@ -36,6 +36,7 @@
     "react-timezone-select": "^3.2.8",
     "recharts": "^3.3.0",
     "slick-carousel": "^1.8.1",
+    "use-places-autocomplete": "^4.0.1",
     "zod": "^4.1.3"
   },
   "devDependencies": {

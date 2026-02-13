@@ -10,11 +10,13 @@ import { useRouter } from "next/navigation";
 interface LevelLockedProps {
   level: number;
   requiredLevel?: number; // The specific level that needs to be completed
+  isPendingReview?: boolean; // True if the required level is pending admin review
 }
 
 export default function LevelLocked({
   level,
   requiredLevel,
+  isPendingReview = false,
 }: LevelLockedProps) {
   const router = useRouter();
 
@@ -90,9 +92,18 @@ export default function LevelLocked({
               fontFamily: "Source Sans Pro",
             }}
           >
-            To unlock Level {level}, you need to complete Level {missingLevel}{" "}
-            first. Our assessment is designed to build progressively on your
-            insights.
+            {isPendingReview ? (
+              <>
+                Your Level {missingLevel} review is currently pending approval by our admin team.
+                Once the admin reviews and scores your Level {missingLevel} submission, you will be able to access Level {level}.
+              </>
+            ) : (
+              <>
+                To unlock Level {level}, you need to complete Level {missingLevel}{" "}
+                first. Our assessment is designed to build progressively on your
+                insights.
+              </>
+            )}
           </Typography>
 
           {/* Progress Info */}
@@ -112,7 +123,7 @@ export default function LevelLocked({
                 mb: 1,
               }}
             >
-              Next Step:
+              {isPendingReview ? "Current Status:" : "Next Step:"}
             </Typography>
             <Typography
               variant="body1"
@@ -120,8 +131,16 @@ export default function LevelLocked({
                 color: "#2B2B2B",
               }}
             >
-              Complete Level {missingLevel} to unlock this assessment and
-              continue your journey.
+              {isPendingReview ? (
+                <>
+                  Your Level {missingLevel} submission is under review. You will receive an email notification once the review is complete.
+                </>
+              ) : (
+                <>
+                  Complete Level {missingLevel} to unlock this assessment and
+                  continue your journey.
+                </>
+              )}
             </Typography>
           </Box>
 
@@ -134,23 +153,25 @@ export default function LevelLocked({
               flexWrap: "wrap",
             }}
           >
-            <Button
-              onClick={handleGoToRequiredLevel}
-              endIcon={<ArrowForwardIcon />}
-              sx={{
-                background: "#E87A42",
-                color: "#fff",
-                borderRadius: "25px",
-                padding: "12px 32px",
-                fontWeight: "bold",
-                fontSize: "1rem",
-                "&:hover": {
-                  background: "#D16A35",
-                },
-              }}
-            >
-              Go to Level {missingLevel}
-            </Button>
+            {!isPendingReview && (
+              <Button
+                onClick={handleGoToRequiredLevel}
+                endIcon={<ArrowForwardIcon />}
+                sx={{
+                  background: "#E87A42",
+                  color: "#fff",
+                  borderRadius: "25px",
+                  padding: "12px 32px",
+                  fontWeight: "bold",
+                  fontSize: "1rem",
+                  "&:hover": {
+                    background: "#D16A35",
+                  },
+                }}
+              >
+                Go to Level {missingLevel}
+              </Button>
+            )}
             <Button
               onClick={handleGoToLevelSelection}
               variant="outlined"

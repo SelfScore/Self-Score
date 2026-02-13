@@ -303,18 +303,20 @@ export default function Level4TextTest({
       const stream = await navigator.mediaDevices.getUserMedia({
         audio: {
           channelCount: 1,
-          sampleRate: 16000,
           echoCancellation: true,
           noiseSuppression: true,
         },
       });
       streamRef.current = stream;
 
-      // Create AudioContext for audio processing
+      // Use default sample rate (hardware native) for Firefox compatibility
       const AudioContextClass =
         window.AudioContext || (window as any).webkitAudioContext;
-      const audioContext = new AudioContextClass({ sampleRate: 16000 });
+      const audioContext = new AudioContextClass();
       audioContextRef.current = audioContext;
+      const nativeSampleRate = audioContext.sampleRate;
+      const targetSampleRate = 16000;
+      console.log("🎤 Mic AudioContext sample rate:", nativeSampleRate, "→ target:", targetSampleRate);
 
       // Connect to transcription WebSocket with auth token
       const wsUrl = `${process.env.NEXT_PUBLIC_WS_URL || "ws://localhost:5001"}/ws/transcribe?token=${encodeURIComponent(authToken)}`;
@@ -340,12 +342,31 @@ export default function Level4TextTest({
           processor.onaudioprocess = (e) => {
             if (ws.readyState === WebSocket.OPEN) {
               const inputData = e.inputBuffer.getChannelData(0);
+
+              // Downsample from native rate to 16000 Hz if needed
+              let outputData: Float32Array;
+              if (nativeSampleRate !== targetSampleRate) {
+                const ratio = nativeSampleRate / targetSampleRate;
+                const outputLength = Math.round(inputData.length / ratio);
+                outputData = new Float32Array(outputLength);
+                for (let i = 0; i < outputLength; i++) {
+                  const srcIndex = i * ratio;
+                  const idx = Math.floor(srcIndex);
+                  const frac = srcIndex - idx;
+                  const s0 = inputData[idx] || 0;
+                  const s1 = inputData[Math.min(idx + 1, inputData.length - 1)] || 0;
+                  outputData[i] = s0 + frac * (s1 - s0);
+                }
+              } else {
+                outputData = inputData;
+              }
+
               // Convert Float32 to Int16 PCM
-              const pcmData = new Int16Array(inputData.length);
-              for (let i = 0; i < inputData.length; i++) {
+              const pcmData = new Int16Array(outputData.length);
+              for (let i = 0; i < outputData.length; i++) {
                 pcmData[i] = Math.max(
                   -32768,
-                  Math.min(32767, inputData[i] * 32768),
+                  Math.min(32767, outputData[i] * 32768),
                 );
               }
               ws.send(pcmData.buffer);
@@ -701,9 +722,9 @@ export default function Level4TextTest({
             value={
               isRecording || isProcessing
                 ? (currentAnswer
-                    ? `${currentAnswer} ${interimText}`
-                    : interimText
-                  ).trim()
+                  ? `${currentAnswer} ${interimText}`
+                  : interimText
+                ).trim()
                 : currentAnswer
             }
             onChange={(e) => handleAnswerChange(e.target.value)}

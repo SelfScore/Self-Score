@@ -242,11 +242,11 @@ export const getLevel4SubmissionDetails = async (
         questionAnswers,
         existingReview: existingReview
           ? {
-              _id: existingReview._id,
-              totalScore: existingReview.totalScore,
-              status: existingReview.status,
-              reviewedAt: existingReview.reviewedAt,
-            }
+            _id: existingReview._id,
+            totalScore: existingReview.totalScore,
+            status: existingReview.status,
+            reviewedAt: existingReview.reviewedAt,
+          }
           : null,
       },
     });
@@ -293,6 +293,18 @@ export const saveDraftReview = async (
       return;
     }
 
+    // Validate question scores are within 0-100 range
+    const invalidScores = questionReviews.filter(
+      (qr: any) => qr.score < 0 || qr.score > 100
+    );
+    if (invalidScores.length > 0) {
+      res.status(400).json({
+        success: false,
+        message: "All question scores must be between 0 and 100",
+      });
+      return;
+    }
+
     // Get interview details
     const interview = await AIInterviewModel.findById(interviewId);
     if (!interview) {
@@ -303,14 +315,17 @@ export const saveDraftReview = async (
       return;
     }
 
-    // Calculate total score
-    const totalScore = questionReviews.reduce(
+    // Calculate raw score (sum of all question scores)
+    const rawScore = questionReviews.reduce(
       (sum: number, qr: any) => sum + (qr.score || 0),
       0
     );
 
+    // Apply Level 4 formula: rawScore * (900/2500)
+    const calculatedScore = rawScore * (900 / 2500);
+
     // Clamp total score to 350-900 range
-    const clampedTotalScore = Math.min(Math.max(totalScore, 350), 900);
+    const clampedTotalScore = Math.min(Math.max(calculatedScore, 350), 900);
 
     // Check if review already exists
     let review = await Level4ReviewModel.findOne({ interviewId });
@@ -388,16 +403,20 @@ export const submitFinalReview = async (
       return;
     }
 
-    // Validate all questions have scores and remarks
+    // Validate all questions have scores (0-100) and remarks
     const invalidReviews = questionReviews.filter(
       (qr: any) =>
-        !qr.score || qr.score < 0 || !qr.remark || qr.remark.trim() === ""
+        qr.score == null ||
+        qr.score < 0 ||
+        qr.score > 100 ||
+        !qr.remark ||
+        qr.remark.trim() === ""
     );
 
     if (invalidReviews.length > 0) {
       res.status(400).json({
         success: false,
-        message: "All questions must have a score (>= 0) and a remark",
+        message: "All questions must have a score (0-100) and a remark",
       });
       return;
     }
@@ -416,14 +435,17 @@ export const submitFinalReview = async (
       return;
     }
 
-    // Calculate total score
-    const totalScore = questionReviews.reduce(
+    // Calculate raw score (sum of all question scores)
+    const rawScore = questionReviews.reduce(
       (sum: number, qr: any) => sum + qr.score,
       0
     );
 
+    // Apply Level 4 formula: rawScore * (900/2500)
+    const calculatedScore = rawScore * (900 / 2500);
+
     // Clamp total score to 350-900 range
-    const clampedTotalScore = Math.min(Math.max(totalScore, 350), 900);
+    const clampedTotalScore = Math.min(Math.max(calculatedScore, 350), 900);
 
     // Check if review already exists
     let review = await Level4ReviewModel.findOne({ interviewId });

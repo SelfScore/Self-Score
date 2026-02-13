@@ -20,6 +20,7 @@ import {
   Step2Data,
   Step3Data,
   Step4Data,
+  consultantAuthService,
 } from "../../../services/consultantAuthService";
 
 const STEPS = [
@@ -94,6 +95,58 @@ function ConsultantRegisterContent() {
     if (saved3) setStep3Data(JSON.parse(saved3));
     if (saved4) setStep4Data(JSON.parse(saved4));
   }, [mounted, searchParams]);
+
+  // Fetch consultant data from database if sessionStorage is empty (returning user)
+  useEffect(() => {
+    if (!mounted || !consultantId) return;
+
+    // Check if we already have data in sessionStorage
+    const hasSessionData = sessionStorage.getItem("consultantStep1");
+
+    // If no session data, fetch from database
+    if (!hasSessionData) {
+      fetchConsultantDataFromDatabase();
+    }
+  }, [mounted, consultantId]);
+
+  const fetchConsultantDataFromDatabase = async () => {
+    try {
+      const response = await consultantAuthService.getCurrentConsultant();
+
+      if (response.success && response.data) {
+        const transformed = consultantAuthService.transformConsultantDataToSteps(
+          response.data
+        );
+
+        // Set state for each step
+        setStep1Data(transformed.step1Data);
+        setStep2Data(transformed.step2Data);
+        setStep3Data(transformed.step3Data);
+        setStep4Data(transformed.step4Data);
+
+        // Save to sessionStorage for future navigation
+        sessionStorage.setItem(
+          "consultantStep1",
+          JSON.stringify(transformed.step1Data)
+        );
+        sessionStorage.setItem(
+          "consultantStep2",
+          JSON.stringify(transformed.step2Data)
+        );
+        sessionStorage.setItem(
+          "consultantStep3",
+          JSON.stringify(transformed.step3Data)
+        );
+        sessionStorage.setItem(
+          "consultantStep4",
+          JSON.stringify(transformed.step4Data)
+        );
+      }
+    } catch (error) {
+      console.error("Failed to fetch consultant data from database:", error);
+      // Don't show error to user - they can still proceed with empty forms
+    }
+  };
 
   // Update URL when step changes
   useEffect(() => {
@@ -270,20 +323,20 @@ function ConsultantRegisterContent() {
                     currentStep === step.number
                       ? "#005F73"
                       : currentStep > step.number
-                      ? "#E8F4F8"
-                      : "#F5F5F5",
+                        ? "#E8F4F8"
+                        : "#F5F5F5",
                   color:
                     currentStep === step.number
                       ? "white"
                       : currentStep > step.number
-                      ? "#005F73"
-                      : "#999",
+                        ? "#005F73"
+                        : "#999",
                   border:
                     currentStep === step.number
                       ? "none"
                       : currentStep > step.number
-                      ? "1px solid #005F73"
-                      : "1px solid #E0E0E0",
+                        ? "1px solid #005F73"
+                        : "1px solid #E0E0E0",
                 }}
               />
             ))}

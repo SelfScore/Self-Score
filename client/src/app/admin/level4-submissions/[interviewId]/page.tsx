@@ -99,11 +99,13 @@ export default function ReviewSubmissionPage() {
 
   const handleScoreChange = (questionId: string, value: string) => {
     const numValue = parseInt(value) || 0;
+    // Clamp to 0-100 range
+    const clampedValue = Math.min(Math.max(numValue, 0), 100);
     setReviews((prev) => ({
       ...prev,
       [questionId]: {
         ...prev[questionId],
-        score: Math.max(0, numValue), // Ensure non-negative
+        score: clampedValue,
       },
     }));
   };
@@ -119,20 +121,23 @@ export default function ReviewSubmissionPage() {
   };
 
   const calculateTotalScore = (): number => {
-    const total = Object.values(reviews).reduce(
+    // Calculate raw score (sum of all question scores)
+    const rawScore = Object.values(reviews).reduce(
       (sum, review) => sum + review.score,
       0
     );
+    // Apply Level 4 formula: rawScore * (900/2500)
+    const calculatedScore = rawScore * (900 / 2500);
     // Clamp to 350-900 range
-    return Math.min(Math.max(total, 350), 900);
+    return Math.min(Math.max(calculatedScore, 350), 900);
   };
 
   const validateReviews = (): boolean => {
     const errors: string[] = [];
 
     Object.entries(reviews).forEach(([, review], index) => {
-      if (review.score < 0) {
-        errors.push(`Question ${index + 1}: Score must be non-negative`);
+      if (review.score < 0 || review.score > 100) {
+        errors.push(`Question ${index + 1}: Score must be between 0 and 100`);
       }
       if (!review.remark || review.remark.trim() === "") {
         errors.push(`Question ${index + 1}: Remark is required`);
@@ -475,7 +480,8 @@ export default function ReviewSubmissionPage() {
                     handleScoreChange(qa.questionId, e.target.value)
                   }
                   fullWidth
-                  inputProps={{ min: 0 }}
+                  inputProps={{ min: 0, max: 100 }}
+                  helperText="Score: 0-100"
                   sx={{
                     "& .MuiOutlinedInput-root": {
                       borderRadius: "8px",

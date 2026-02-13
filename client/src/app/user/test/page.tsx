@@ -17,11 +17,56 @@ function TestContent() {
   const searchParams = useSearchParams();
   const router = useRouter();
   const level = parseInt(searchParams.get("level") || "1");
-  const { checkTestAttemptAccess, getRemainingAttempts } = useLevelAccess();
+  const { checkTestAttemptAccess, getRemainingAttempts, progress } = useLevelAccess();
 
   // State for toast notification
   const [showToast, setShowToast] = useState(false);
   const [toastMessage, setToastMessage] = useState("");
+
+
+  // State to track if Level 4 is pending review (for Level 5 locked message)
+  const [isLevel4PendingReview, setIsLevel4PendingReview] = useState(false);
+
+  // 🔍 CHECK LEVEL 4 STATUS - For Level 5 locked message
+  useEffect(() => {
+    const checkLevel4Status = async () => {
+      // Only check if we're on Level 5
+      if (level !== 5) {
+        setIsLevel4PendingReview(false);
+        return;
+      }
+
+      // Check if Level 4 is already completed (reviewed by admin)
+      const isLevel4Completed = progress?.completedLevels?.includes(4) || false;
+
+      if (isLevel4Completed) {
+        // Level 4 is completed, no need to show pending message
+        setIsLevel4PendingReview(false);
+        return;
+      }
+
+      // Level 4 not completed - check if it's been submitted (pending review)
+      try {
+        const { aiInterviewService } = await import("../../../services/aiInterviewService");
+        const historyResponse = await aiInterviewService.getInterviewHistory();
+
+        const hasSubmittedLevel4 = historyResponse.data?.some(
+          (interview: any) =>
+            interview.level === 4 &&
+            (interview.status === "PENDING_REVIEW" || interview.status === "REVIEWED")
+        );
+
+        setIsLevel4PendingReview(hasSubmittedLevel4);
+        console.log(`🔍 Level 4 pending review check: ${hasSubmittedLevel4}`);
+      } catch (error) {
+        console.error("Error checking Level 4 status:", error);
+        setIsLevel4PendingReview(false);
+      }
+    };
+
+    checkLevel4Status();
+  }, [level, progress]);
+
 
   // 🛡️ PAY-PER-USE VALIDATION - Check remaining attempts for Level 4 & 5
   useEffect(() => {
@@ -86,7 +131,7 @@ function TestContent() {
     };
 
     checkAttempts();
-  }, [level, getRemainingAttempts, router]);
+  }, [level, getRemainingAttempts, router, progress]);
 
   // 🛡️ PROTECTION LOGIC - Check if user can attempt the test
   const attemptAccess = checkTestAttemptAccess(level);
@@ -97,7 +142,9 @@ function TestContent() {
     }
     if (attemptAccess.reason === "PREVIOUS_LEVEL_NOT_COMPLETED") {
       const missingLevel = attemptAccess.missingLevel || level - 1;
-      return <LevelLocked level={level} requiredLevel={missingLevel} />;
+      // For Level 5, check if Level 4 is pending review
+      const isPendingReview = level === 5 && missingLevel === 4 && isLevel4PendingReview;
+      return <LevelLocked level={level} requiredLevel={missingLevel} isPendingReview={isPendingReview} />;
     }
   }
 

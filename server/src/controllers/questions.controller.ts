@@ -9,7 +9,7 @@ export const getAllQuestions = async (
 ): Promise<Response> => {
   console.log("Fetching all questions");
   try {
-    const questions = await QuestionModel.find();
+    const questions = await QuestionModel.find().sort({ order: 1 });
     return res.status(200).json({
       success: true,
       count: questions.length,
@@ -33,7 +33,7 @@ export const getQuestionsByLevel = async (
     const { level } = req.params;
     const { userId } = req.query; // Optional userId to include user responses
 
-    const questions = await QuestionModel.find({ level: Number(level) });
+    const questions = await QuestionModel.find({ level: Number(level) }).sort({ order: 1 });
 
     if (!questions.length) {
       return res.status(404).json({
@@ -58,13 +58,13 @@ export const getQuestionsByLevel = async (
           ...question.toObject(),
           userResponse: response
             ? {
-                selectedOptionIndex: response.selectedOptionIndex,
-                answeredAt: (response as any).createdAt,
-              }
+              selectedOptionIndex: response.selectedOptionIndex,
+              answeredAt: (response as any).createdAt,
+            }
             : null,
         };
       });
-      
+
       return res.status(200).json({
         success: true,
         count: questions.length,
@@ -99,7 +99,7 @@ export const getQuestionsWithResponses = async (
 
     // Build query for questions
     const questionQuery = level ? { level: Number(level) } : {};
-    const questions = await QuestionModel.find(questionQuery);
+    const questions = await QuestionModel.find(questionQuery).sort({ order: 1 });
 
     if (!questions.length) {
       return res.status(404).json({
@@ -123,10 +123,10 @@ export const getQuestionsWithResponses = async (
         ...question.toObject(),
         userResponse: response
           ? {
-              selectedOptionIndex: response.selectedOptionIndex,
-              answeredAt: (response as any).createdAt,
-              responseId: response._id,
-            }
+            selectedOptionIndex: response.selectedOptionIndex,
+            answeredAt: (response as any).createdAt,
+            responseId: response._id,
+          }
           : null,
       };
     });

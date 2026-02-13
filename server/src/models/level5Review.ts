@@ -50,6 +50,7 @@ const QuestionReviewSchema = new Schema(
       type: Number,
       required: true,
       min: 0,
+      max: 100,
     },
     remark: {
       type: String,
@@ -57,7 +58,7 @@ const QuestionReviewSchema = new Schema(
       trim: true,
     },
   },
-  { _id: false }
+  { _id: false },
 );
 
 const Level5ReviewSchema: Schema<Level5Review> = new Schema(
@@ -89,9 +90,9 @@ const Level5ReviewSchema: Schema<Level5Review> = new Schema(
       required: true,
       validate: {
         validator: function (v: QuestionReview[]) {
-          return v.length >= 1 && v.length <= 25; // Must have 1-25 question reviews
+          return v.length === 25; // Must have exactly 25 question reviews
         },
-        message: "Question reviews must contain between 1 and 25 questions",
+        message: "Question reviews must contain exactly 25 questions",
       },
     },
     totalScore: {
@@ -114,7 +115,7 @@ const Level5ReviewSchema: Schema<Level5Review> = new Schema(
   },
   {
     timestamps: true,
-  }
+  },
 );
 
 // Indexes for faster queries
@@ -134,7 +135,7 @@ Level5ReviewSchema.pre("save", function (next) {
 
 const Level5ReviewModel = mongoose.model<Level5Review>(
   "Level5Review",
-  Level5ReviewSchema
+  Level5ReviewSchema,
 );
 
 export default Level5ReviewModel;

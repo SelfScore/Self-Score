@@ -1,5 +1,12 @@
 import api from "@/lib/api";
 
+export interface ConversationTurn {
+  type: "main_answer" | "follow_up_question" | "follow_up_answer" | "redirect";
+  content: string;
+  timestamp: string;
+  confidence?: number;
+}
+
 export interface Level5Submission {
   _id: string;
   userId: string;
@@ -60,6 +67,7 @@ export interface Level5Interview {
   answers: {
     questionId: string;
     transcript: string;
+    conversationHistory?: ConversationTurn[];
     confidence: number;
     isComplete: boolean;
     isOffTopic: boolean;
@@ -90,7 +98,7 @@ class Level5ReviewService {
     limit: number = 10,
     search: string = "",
     sortBy: "latest" | "oldest" = "latest",
-    status: "all" | "PENDING_REVIEW" | "REVIEWED" = "all"
+    status: "all" | "PENDING_REVIEW" | "REVIEWED" = "all",
   ): Promise<{
     success: boolean;
     data: {
@@ -104,7 +112,7 @@ class Level5ReviewService {
     };
   }> {
     const response = (await api.get(
-      `/api/admin/level5/submissions?page=${page}&limit=${limit}&search=${search}&sortBy=${sortBy}&status=${status}`
+      `/api/admin/level5/submissions?page=${page}&limit=${limit}&search=${search}&sortBy=${sortBy}&status=${status}`,
     )) as any;
     return response;
   }
@@ -120,7 +128,7 @@ class Level5ReviewService {
     };
   }> {
     const response = (await api.get(
-      `/api/admin/level5/submissions/${interviewId}`
+      `/api/admin/level5/submissions/${interviewId}`,
     )) as any;
     return response;
   }
@@ -131,7 +139,7 @@ class Level5ReviewService {
   async saveReview(
     interviewId: string,
     questionReviews: QuestionReview[],
-    totalScore: number
+    totalScore: number,
   ): Promise<{
     success: boolean;
     message: string;
@@ -142,7 +150,7 @@ class Level5ReviewService {
       {
         questionReviews,
         totalScore,
-      }
+      },
     )) as any;
     return response;
   }
@@ -153,7 +161,7 @@ class Level5ReviewService {
   async submitReview(
     interviewId: string,
     questionReviews: QuestionReview[],
-    totalScore: number
+    totalScore: number,
   ): Promise<{
     success: boolean;
     message: string;
@@ -164,7 +172,7 @@ class Level5ReviewService {
       {
         questionReviews,
         totalScore,
-      }
+      },
     )) as any;
     return response;
   }

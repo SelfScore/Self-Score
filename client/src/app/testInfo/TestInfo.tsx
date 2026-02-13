@@ -1,6 +1,6 @@
 "use client";
 
-import { useState } from "react";
+import { useState, useEffect } from "react";
 import { Box, Typography, Chip } from "@mui/material";
 import { useRouter } from "next/navigation";
 import { Lock as LockIcon } from "@mui/icons-material";
@@ -23,13 +23,51 @@ interface TestInfoProps {
 
 export default function TestInfo({ initialLevel }: TestInfoProps) {
   const router = useRouter();
-  const { 
-    isLevelPurchased, 
-    getBundleInfo, 
+  const {
+    isLevelPurchased,
+    getBundleInfo,
     getRemainingAttempts,
-    checkTestAttemptAccess
+    checkTestAttemptAccess,
+    user,
+    progress,
   } = useLevelAccess();
   const [activeLevel, setActiveLevel] = useState(initialLevel);
+  const [isLevel4PendingReview, setIsLevel4PendingReview] = useState(false);
+
+  // Check if Level 4 is pending review (for Level 5 button state)
+  useEffect(() => {
+    const checkLevel4Status = async () => {
+      if (!user?.userId) return;
+
+      // Check if Level 4 is already completed (reviewed by admin)
+      const isLevel4Completed = progress?.completedLevels?.includes(4) || false;
+
+      if (isLevel4Completed) {
+        setIsLevel4PendingReview(false);
+        return;
+      }
+
+      // Level 4 not completed - check if it's been submitted (pending review)
+      try {
+        const { aiInterviewService } = await import("../../services/aiInterviewService");
+        const historyResponse = await aiInterviewService.getInterviewHistory();
+
+        const hasSubmittedLevel4 = historyResponse.data?.some(
+          (interview: any) =>
+            interview.level === 4 &&
+            (interview.status === "PENDING_REVIEW" || interview.status === "REVIEWED")
+        );
+
+        setIsLevel4PendingReview(hasSubmittedLevel4);
+      } catch (error) {
+        console.error("Error checking Level 4 status:", error);
+        setIsLevel4PendingReview(false);
+      }
+    };
+
+    checkLevel4Status();
+  }, [user?.userId, progress]);
+
 
   // Check if current active level is purchased
   const isCurrentLevelPurchased = isLevelPurchased(activeLevel + 1);
@@ -108,19 +146,19 @@ export default function TestInfo({ initialLevel }: TestInfoProps) {
     },
     {
       id: 5,
-      title: "Level 5",
-      name: "Excellence",
-      duration: "45-60 Minutes",
-      questions: "Expert Review",
-      description: "Pinnacle of personal development",
+      title: "Bonus",
+      name: "AI-Assisted Consultation",
+      duration: "25-30 Minutes",
+      questions: "AI Voice Interview",
+      description: "A one-on-one reflective conversation with AI",
       questionsDetail:
-        "Expert review and personalized guidance for lasting transformation",
+        "This is not a questionnaire; it is a curated conversation that explores your thinking patterns, emotional intelligence, and inner alignment",
       isFree: false,
       features: [
-        "Expert consultant review",
-        "Personalized transformation plan",
-        "Legacy building framework",
-        "Ongoing support access",
+        "Live, natural voice conversation",
+        "Intelligent follow-up questions",
+        "Deep personalized insight report",
+        "Real-time adaptive dialogue",
       ],
     },
   ];
@@ -134,15 +172,15 @@ export default function TestInfo({ initialLevel }: TestInfoProps) {
 
   const handleStartAssessment = () => {
     const level = activeLevel + 1;
-    
+
     // Check if user can attempt this level
     const attemptAccess = checkTestAttemptAccess(level);
-    
+
     // Don't proceed if cannot attempt
     if (!attemptAccess.canAttempt) {
       return;
     }
-    
+
     // Proceed to test
     if (level === 5) {
       router.push(`/user/test?level=${level}&mode=voice`);
@@ -342,7 +380,7 @@ export default function TestInfo({ initialLevel }: TestInfoProps) {
                         component="span"
                         sx={{ display: { xs: "inline", md: "none" } }}
                       >
-                        L{level.id}
+                        {level.id === 5 ? "Bonus" : `L${level.id}`}
                       </Box>
                     </Typography>
                   </Box>
@@ -367,7 +405,7 @@ export default function TestInfo({ initialLevel }: TestInfoProps) {
                 }}
               >
                 {activeLevel === 4
-                  ? "Unlock complete bundle including Level 5 (Excellence) for one-time fee of"
+                  ? "Unlock complete bundle including Bonus Level (AI-Assisted Consultation) for one-time fee of"
                   : "Unlock this assessment for lifetime access for one-time fee of"}
               </Typography>
               <Typography
@@ -392,7 +430,7 @@ export default function TestInfo({ initialLevel }: TestInfoProps) {
                     fontWeight: 600,
                   }}
                 >
-                  🎁 Bonus: Level 5 (Excellence) included FREE!
+                  🎁 Bonus: AI-Assisted Consultation included FREE!
                 </Typography>
               )}
             </Box>
@@ -693,13 +731,38 @@ export default function TestInfo({ initialLevel }: TestInfoProps) {
               </Box>
             </Box>
 
-            {/* Unlock Button */}
-            <Box sx={{ display: "flex", justifyContent: "center", mt: 4 }}>
-              <BuyLevelButton
-                level={activeLevel === 4 ? 4 : activeLevel + 1}
-                fullWidth
-              />
-            </Box>
+            {/* Unlock Button - Hide for Level 5, show message instead */}
+            {activeLevel !== 4 ? (
+              <Box sx={{ display: "flex", justifyContent: "center", mt: 4 }}>
+                <BuyLevelButton
+                  level={activeLevel + 1}
+                  fullWidth
+                />
+              </Box>
+            ) : (
+              <Box sx={{ textAlign: "center", mt: 4 }}>
+                <Typography
+                  sx={{
+                    fontFamily: "Source Sans Pro",
+                    fontSize: { xs: "16px", md: "18px" },
+                    color: "#FF5722",
+                    fontWeight: 600,
+                    mb: 1,
+                  }}
+                >
+                  🔓 Unlock Level 4 to access this bonus level
+                </Typography>
+                <Typography
+                  sx={{
+                    fontFamily: "Source Sans Pro",
+                    fontSize: { xs: "14px", md: "16px" },
+                    color: "#6B7280",
+                  }}
+                >
+                  The AI-Assisted Consultation is included free with Level 4 purchase
+                </Typography>
+              </Box>
+            )}
 
             {/* Security Note */}
             <Box sx={{ display: "flex", justifyContent: "center", mt: 2 }}>
@@ -923,15 +986,17 @@ export default function TestInfo({ initialLevel }: TestInfoProps) {
                   sx={{
                     mt: 2,
                     color: "#E87A42",
-                    fontSize: { xs: "14px", md: "16px" },
+                    fontSize: { xs: "13px", md: "14px" },
                     fontFamily: "Source Sans Pro",
-                    fontWeight: 600,
+                    fontStyle: "italic",
                     textAlign: "center",
                   }}
                 >
-                  {checkTestAttemptAccess(activeLevel + 1).reason === 'PREVIOUS_LEVEL_NOT_COMPLETED'
-                    ? `⚠️ Please complete Level ${checkTestAttemptAccess(activeLevel + 1).missingLevel || activeLevel} first`
-                    : `⚠️ Please purchase this level to continue`}
+                  {activeLevel === 4 && isLevel4PendingReview
+                    ? "⚠️ Level 4 review is pending. You can attempt Level 5 after admin reviews your Level 4 submission."
+                    : checkTestAttemptAccess(activeLevel + 1).reason === 'PREVIOUS_LEVEL_NOT_COMPLETED'
+                      ? `⚠️ Please complete Level ${checkTestAttemptAccess(activeLevel + 1).missingLevel || activeLevel} first`
+                      : `⚠️ Please purchase this level to continue`}
                 </Typography>
               )}
             </Box>

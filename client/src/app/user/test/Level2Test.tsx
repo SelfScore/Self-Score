@@ -7,7 +7,7 @@ import {
   CircularProgress,
   Alert,
 } from "@mui/material";
-import { useState, useEffect } from "react";
+import { useState, useEffect, useRef } from "react";
 import { useRouter, useSearchParams } from "next/navigation";
 import { questionsApi, Question } from "../../../services/questionsService";
 import { authService } from "../../../services/authService";
@@ -26,6 +26,7 @@ export default function Level2Test() {
   const [error, setError] = useState<string>("");
   const [submitting, setSubmitting] = useState(false);
   const [currentQuestionIndex, setCurrentQuestionIndex] = useState(0);
+  const startTime = useRef<number>(Date.now()); // Track test start time
 
   const router = useRouter();
   const searchParams = useSearchParams();
@@ -190,6 +191,9 @@ export default function Level2Test() {
       // Calculate the score before submission
       const calculatedScore = calculateUserScore();
 
+      // Calculate time spent in seconds
+      const timeSpentSeconds = Math.floor((Date.now() - startTime.current) / 1000);
+
       // Convert answers object to responses array format
       const responses = Object.entries(answers).map(
         ([questionId, selectedOptionIndex]) => ({
@@ -205,7 +209,8 @@ export default function Level2Test() {
       const response = await questionsApi.submitLevelResponse(
         user.userId,
         level,
-        responses
+        responses,
+        timeSpentSeconds
       );
 
       if (response.success) {
@@ -457,11 +462,10 @@ export default function Level2Test() {
               <Box
                 sx={{
                   height: "100%",
-                  width: `${
-                    currentQuestionIndex < SECTION_1_COUNT
-                      ? ((currentQuestionIndex + 1) / SECTION_1_COUNT) * 100
-                      : 100
-                  }%`,
+                  width: `${currentQuestionIndex < SECTION_1_COUNT
+                    ? ((currentQuestionIndex + 1) / SECTION_1_COUNT) * 100
+                    : 100
+                    }%`,
                   backgroundColor: "#E87A42",
                   borderRadius: "11998.8px",
                   transition: "width 0.3s ease",
@@ -483,13 +487,12 @@ export default function Level2Test() {
               <Box
                 sx={{
                   height: "100%",
-                  width: `${
-                    currentQuestionIndex >= SECTION_1_COUNT
-                      ? ((currentQuestionIndex - SECTION_1_COUNT + 1) /
-                          SECTION_2_COUNT) *
-                        100
-                      : 0
-                  }%`,
+                  width: `${currentQuestionIndex >= SECTION_1_COUNT
+                    ? ((currentQuestionIndex - SECTION_1_COUNT + 1) /
+                      SECTION_2_COUNT) *
+                    100
+                    : 0
+                    }%`,
                   backgroundColor: "#E87A42",
                   borderRadius: "11998.8px",
                   transition: "width 0.3s ease",
