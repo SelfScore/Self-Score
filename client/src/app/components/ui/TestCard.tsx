@@ -258,8 +258,8 @@ const TestCard: React.FC<TestCardProps> = ({
 
       {/* Action Button */}
       <Box sx={{ mt: 0, mb: 1 }}>
-        {/* Pay-per-use Level 4: Show Buy Again when attempts are used */}
-        {isPayPerUse && hasUsedAttempts && remainingAttempts === 0 && (
+        {/* Pay-per-use Level 4: Show Buy Again when attempts are used (but NOT completed) */}
+        {isPayPerUse && hasUsedAttempts && remainingAttempts === 0 && status !== "completed" && (
           <ButtonSelfScore
             text="Buy Again"
             fullWidth
@@ -325,7 +325,7 @@ const TestCard: React.FC<TestCardProps> = ({
 
         {status === "completed" && isPayPerUse && remainingAttempts > 0 && (
           <ButtonSelfScore
-            text={`Start Test (${remainingAttempts} attempt${remainingAttempts !== 1 ? 's' : ''} left)`}
+            text={`Start Test `}
             fullWidth
             fontSize={"14px"}
             onClick={onStartTest}
