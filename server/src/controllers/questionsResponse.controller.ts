@@ -736,12 +736,19 @@ export const getUserTestHistory = async (
     const level4History = level4Interviews.map((interview: any) => {
       const review = reviewMap.get(interview._id.toString());
 
+      // Calculate time spent in seconds if we have both timestamps
+      let timeSpent = null;
+      if (interview.startedAt && (interview.completedAt || interview.submittedAt)) {
+        const endTime = interview.completedAt || interview.submittedAt;
+        timeSpent = Math.floor((new Date(endTime).getTime() - new Date(interview.startedAt).getTime()) / 1000);
+      }
+
       return {
         _id: interview._id.toString(),
         level: 4,
         score: review ? review.totalScore : null, // null if pending review
         totalQuestions: 8, // Level 4 always has 8 questions
-        timeSpent: null, // Level 4 doesn't track time the same way
+        timeSpent: timeSpent,
         submittedAt: interview.submittedAt || interview.completedAt,
         date: interview.submittedAt || interview.completedAt,
         status: interview.status, // PENDING_REVIEW or REVIEWED
@@ -780,12 +787,22 @@ export const getUserTestHistory = async (
     const level5History = level5Interviews.map((interview: any) => {
       const review = level5ReviewMap.get(interview._id.toString());
 
+      // Calculate time spent in seconds
+      // Prefer interviewMetadata.totalDuration if available, otherwise calculate from timestamps
+      let timeSpent = null;
+      if (interview.interviewMetadata?.totalDuration) {
+        timeSpent = interview.interviewMetadata.totalDuration;
+      } else if (interview.startedAt && (interview.completedAt || interview.submittedAt)) {
+        const endTime = interview.completedAt || interview.submittedAt;
+        timeSpent = Math.floor((new Date(endTime).getTime() - new Date(interview.startedAt).getTime()) / 1000);
+      }
+
       return {
         _id: interview._id.toString(),
         level: 5,
         score: review ? review.totalScore : null, // null if pending review
         totalQuestions: 25, // Level 5 always has 25 questions
-        timeSpent: null, // Level 5 doesn't track time the same way
+        timeSpent: timeSpent,
         submittedAt: interview.submittedAt || interview.completedAt,
         date: interview.submittedAt || interview.completedAt,
         status: review ? "REVIEWED" : "PENDING_REVIEW",

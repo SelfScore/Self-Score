@@ -13,7 +13,6 @@ import {
   DialogTitle,
   DialogContent,
   DialogActions,
-  Autocomplete,
   Chip,
   Button,
 } from "@mui/material";
@@ -28,84 +27,11 @@ import {
 import PhoneInput from "react-phone-input-2";
 import "react-phone-input-2/lib/style.css";
 import ButtonSelfScore from "../../components/ui/ButtonSelfScore";
+import GooglePlacesAutocomplete from "@/components/GooglePlacesAutocomplete";
 import {
   consultantAuthService,
   Step1Data,
 } from "../../../services/consultantAuthService";
-
-// Location options list - major cities and locations
-const LOCATION_OPTIONS = [
-  // United States
-  "New York, NY, USA",
-  "Los Angeles, CA, USA",
-  "Chicago, IL, USA",
-  "Houston, TX, USA",
-  "Phoenix, AZ, USA",
-  "Philadelphia, PA, USA",
-  "San Antonio, TX, USA",
-  "San Diego, CA, USA",
-  "Dallas, TX, USA",
-  "San Jose, CA, USA",
-  "Austin, TX, USA",
-  "Jacksonville, FL, USA",
-  "Fort Worth, TX, USA",
-  "Columbus, OH, USA",
-  "Charlotte, NC, USA",
-  "San Francisco, CA, USA",
-  "Indianapolis, IN, USA",
-  "Seattle, WA, USA",
-  "Denver, CO, USA",
-  "Boston, MA, USA",
-  "Nashville, TN, USA",
-  "Detroit, MI, USA",
-  "Portland, OR, USA",
-  "Las Vegas, NV, USA",
-  "Miami, FL, USA",
-  "Atlanta, GA, USA",
-  "Minneapolis, MN, USA",
-  "Tampa, FL, USA",
-  "Orlando, FL, USA",
-  "St. Louis, MO, USA",
-  "Pittsburgh, PA, USA",
-  "Cincinnati, OH, USA",
-  "Cleveland, OH, USA",
-  "Kansas City, MO, USA",
-  "Salt Lake City, UT, USA",
-  // Canada
-  "Toronto, ON, Canada",
-  "Vancouver, BC, Canada",
-  "Montreal, QC, Canada",
-  "Calgary, AB, Canada",
-  "Ottawa, ON, Canada",
-  // United Kingdom
-  "London, UK",
-  "Manchester, UK",
-  "Birmingham, UK",
-  "Edinburgh, UK",
-  "Glasgow, UK",
-  // Australia
-  "Sydney, NSW, Australia",
-  "Melbourne, VIC, Australia",
-  "Brisbane, QLD, Australia",
-  "Perth, WA, Australia",
-  // India
-  "Mumbai, Maharashtra, India",
-  "Delhi, India",
-  "Bangalore, Karnataka, India",
-  "Hyderabad, Telangana, India",
-  "Chennai, Tamil Nadu, India",
-  "Kolkata, West Bengal, India",
-  "Pune, Maharashtra, India",
-  // Other major cities
-  "Singapore",
-  "Dubai, UAE",
-  "Hong Kong",
-  "Tokyo, Japan",
-  "Berlin, Germany",
-  "Paris, France",
-  "Amsterdam, Netherlands",
-  "Remote / Online",
-];
 
 interface Step1PersonalInfoProps {
   onNext: (data: Step1Data, consultantId: string) => void;
@@ -150,37 +76,43 @@ export default function Step1PersonalInfo({
 
   // Load saved data from sessionStorage on mount (for page refresh)
   useEffect(() => {
-    const saved = sessionStorage.getItem("consultantStep1");
-    if (saved && !initialData?.email) {
-      // Only load from sessionStorage if not already provided via initialData
-      try {
-        const parsed = JSON.parse(saved);
-        setFormData(parsed);
-        if (parsed.profilePhoto) {
-          setProfilePhotoPreview(parsed.profilePhoto);
+    if (typeof window !== 'undefined') {
+      const saved = sessionStorage.getItem("consultantStep1");
+      if (saved && !initialData?.email) {
+        // Only load from sessionStorage if not already provided via initialData
+        try {
+          const parsed = JSON.parse(saved);
+          setFormData(parsed);
+          if (parsed.profilePhoto) {
+            setProfilePhotoPreview(parsed.profilePhoto);
+          }
+        } catch (e) {
+          console.error("Error loading saved step 1 data", e);
         }
-      } catch (e) {
-        console.error("Error loading saved step 1 data", e);
       }
     }
   }, []);
 
   // Auto-save form data to sessionStorage whenever it changes
   useEffect(() => {
-    // Only save if user has started filling the form
-    if (formData.firstName || formData.lastName || formData.email) {
-      sessionStorage.setItem("consultantStep1", JSON.stringify(formData));
+    if (typeof window !== 'undefined') {
+      // Only save if user has started filling the form
+      if (formData.firstName || formData.lastName || formData.email) {
+        sessionStorage.setItem("consultantStep1", JSON.stringify(formData));
+      }
     }
   }, [formData]);
 
   // Also save profile photo preview separately
   useEffect(() => {
-    if (profilePhotoPreview && formData.profilePhoto) {
-      const currentData = sessionStorage.getItem("consultantStep1");
-      if (currentData) {
-        const parsed = JSON.parse(currentData);
-        parsed.profilePhoto = profilePhotoPreview;
-        sessionStorage.setItem("consultantStep1", JSON.stringify(parsed));
+    if (typeof window !== 'undefined') {
+      if (profilePhotoPreview && formData.profilePhoto) {
+        const currentData = sessionStorage.getItem("consultantStep1");
+        if (currentData) {
+          const parsed = JSON.parse(currentData);
+          parsed.profilePhoto = profilePhotoPreview;
+          sessionStorage.setItem("consultantStep1", JSON.stringify(parsed));
+        }
       }
     }
   }, [profilePhotoPreview, formData.profilePhoto]);
@@ -306,7 +238,7 @@ export default function Step1PersonalInfo({
     if (!validateForm()) return;
 
     // Check if consultant already exists (returning from later steps)
-    const existingConsultantId = sessionStorage.getItem("consultantId");
+    const existingConsultantId = typeof window !== 'undefined' ? sessionStorage.getItem("consultantId") : null;
 
     if (existingConsultantId) {
       // Consultant already registered, just proceed to next step
@@ -360,9 +292,11 @@ export default function Step1PersonalInfo({
         // Mark email as verified
         setIsEmailVerified(true);
         // Store consultantId in sessionStorage for persistence
-        sessionStorage.setItem("consultantId", consultantId);
-        // Store form data for persistence
-        sessionStorage.setItem("consultantStep1", JSON.stringify(formData));
+        if (typeof window !== 'undefined') {
+          sessionStorage.setItem("consultantId", consultantId);
+          // Store form data for persistence
+          sessionStorage.setItem("consultantStep1", JSON.stringify(formData));
+        }
         // Close modal and proceed to next step
         setVerificationModal(false);
         onNext(formData, consultantId);
@@ -404,7 +338,7 @@ export default function Step1PersonalInfo({
   };
 
   // Check if returning user with verified email
-  const existingConsultantId = sessionStorage.getItem("consultantId");
+  const existingConsultantId = typeof window !== 'undefined' ? sessionStorage.getItem("consultantId") : null;
   const emailAlreadyVerified = !!existingConsultantId || isEmailVerified;
 
   return (
@@ -641,7 +575,7 @@ export default function Step1PersonalInfo({
           />
         </Grid>
 
-        {/* Location - Autocomplete Dropdown */}
+        {/* Location - Google Places Autocomplete */}
         <Grid size={{ xs: 12, sm: 6 }}>
           <Typography
             sx={{
@@ -654,35 +588,11 @@ export default function Step1PersonalInfo({
           >
             Location <span style={{ color: "#E87A42" }}>*</span>
           </Typography>
-          <Autocomplete
-            freeSolo
-            options={LOCATION_OPTIONS}
+          <GooglePlacesAutocomplete
             value={formData.location}
-            onChange={(_, newValue) => {
-              handleInputChange("location", newValue || "");
-            }}
-            onInputChange={(_, newInputValue) => {
-              handleInputChange("location", newInputValue);
-            }}
-            renderInput={(params) => (
-              <TextField
-                {...params}
-                placeholder="Select or type your location"
-                error={!!errors.location}
-                helperText={errors.location}
-                sx={{
-                  "& .MuiOutlinedInput-root": {
-                    backgroundColor: "#FFF",
-                    borderRadius: "8px",
-                    height: "48px",
-                    "& fieldset": {
-                      borderColor: "#3A3A3A4D",
-                      borderWidth: "1px",
-                    },
-                  },
-                }}
-              />
-            )}
+            onChange={(value) => handleInputChange("location", value)}
+            error={errors.location}
+            placeholder="Search for your city or location"
           />
         </Grid>
 
@@ -948,7 +858,7 @@ export default function Step1PersonalInfo({
       {/* Email Verification Modal */}
       <Dialog
         open={verificationModal}
-        onClose={() => {}}
+        onClose={() => { }}
         maxWidth="sm"
         fullWidth
         PaperProps={{

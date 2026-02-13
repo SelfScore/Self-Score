@@ -71,7 +71,7 @@ export interface UserDetailResponse {
 export const adminService = {
   // Get analytics data
   getAnalytics: async (
-    period: "7" | "14" | "30" | "90" | "all" = "all"
+    period: "7" | "14" | "30" | "90" | "all" = "all",
   ): Promise<AnalyticsData> => {
     try {
       const response = await api.get(`/api/admin/analytics?period=${period}`);
@@ -88,11 +88,11 @@ export const adminService = {
     limit: number = 10,
     search: string = "",
     sortBy: "latest" | "oldest" = "latest",
-    filter: "all" | "purchased" | "unpurchased" = "all"
+    filter: "all" | "purchased" | "unpurchased" = "all",
   ): Promise<UsersResponse> => {
     try {
       const response = await api.get(
-        `/api/admin/users?page=${page}&limit=${limit}&search=${search}&sortBy=${sortBy}&filter=${filter}`
+        `/api/admin/users?page=${page}&limit=${limit}&search=${search}&sortBy=${sortBy}&filter=${filter}`,
       );
       return response.data;
     } catch (error) {
@@ -115,7 +115,7 @@ export const adminService = {
   // Update user
   updateUser: async (
     userId: string,
-    updates: Partial<AdminUser>
+    updates: Partial<AdminUser>,
   ): Promise<AdminUser> => {
     try {
       const response = await api.put(`/api/admin/users/${userId}`, updates);
@@ -139,6 +139,8 @@ export const adminService = {
   // Get badge counts for sidebar
   getCounts: async (): Promise<{
     pendingReviews: number;
+    pendingLevel4Reviews: number;
+    pendingLevel5Reviews: number;
     unreadMessages: number;
     pendingConsultants: number;
   }> => {
@@ -158,11 +160,11 @@ export const adminService = {
     status: "all" | "pending" | "approved" | "rejected" = "all",
     search: string = "",
     sortBy: string = "createdAt",
-    order: "asc" | "desc" = "desc"
+    order: "asc" | "desc" = "desc",
   ): Promise<any> => {
     try {
       const response = await api.get(
-        `/api/admin/consultants?status=${status}&search=${search}&sortBy=${sortBy}&order=${order}`
+        `/api/admin/consultants?status=${status}&search=${search}&sortBy=${sortBy}&order=${order}`,
       );
       return response.data;
     } catch (error) {
@@ -186,7 +188,7 @@ export const adminService = {
   approveConsultant: async (consultantId: string): Promise<any> => {
     try {
       const response = await api.patch(
-        `/api/admin/consultants/${consultantId}/approve`
+        `/api/admin/consultants/${consultantId}/approve`,
       );
       return response.data;
     } catch (error) {
@@ -198,14 +200,14 @@ export const adminService = {
   // Reject consultant
   rejectConsultant: async (
     consultantId: string,
-    rejectionReason: string
+    rejectionReason: string,
   ): Promise<any> => {
     try {
       const response = await api.patch(
         `/api/admin/consultants/${consultantId}/reject`,
         {
           rejectionReason,
-        }
+        },
       );
       return response.data;
     } catch (error) {

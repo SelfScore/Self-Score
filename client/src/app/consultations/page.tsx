@@ -21,6 +21,7 @@ import {
   Slider,
   Drawer,
   IconButton,
+  Autocomplete,
 } from "@mui/material";
 import SearchIcon from "@mui/icons-material/Search";
 import FilterListIcon from "@mui/icons-material/FilterList";
@@ -33,6 +34,8 @@ import {
   consultantService,
   PublicConsultant,
 } from "@/services/consultantService";
+import GooglePlacesAutocomplete from "@/components/GooglePlacesAutocomplete";
+import { LANGUAGES } from "@/constants/languages";
 import { useAuth } from "@/hooks/useAuth";
 import SignUpModal from "@/app/user/SignUpModal";
 import ButtonSelfScore from "@/app/components/ui/ButtonSelfScore"; // Added import
@@ -193,14 +196,6 @@ export default function ConsultationsPage() {
       prev.includes(sessionType)
         ? prev.filter((s) => s !== sessionType)
         : [...prev, sessionType]
-    );
-  };
-
-  const handleLanguageFilterChange = (language: string) => {
-    setLanguageFilter((prev) =>
-      prev.includes(language)
-        ? prev.filter((l) => l !== language)
-        : [...prev, language]
     );
   };
 
@@ -394,15 +389,12 @@ export default function ConsultationsPage() {
                   >
                     Location
                   </Typography>
-                  <TextField
-                    fullWidth
-                    size="small"
-                    placeholder="Enter location"
+                  <GooglePlacesAutocomplete
                     value={locationFilter}
-                    onChange={(e) => setLocationFilter(e.target.value)}
+                    onChange={setLocationFilter}
+                    placeholder="Search location"
                     sx={{
                       "& .MuiOutlinedInput-root": {
-                        borderRadius: "8px",
                         backgroundColor: "#F5F5F5",
                       },
                     }}
@@ -467,21 +459,38 @@ export default function ConsultationsPage() {
                   >
                     Language
                   </Typography>
-                  {["English (UK)", "Spanish", "Korean", "English (US)"].map(
-                    (lang) => (
-                      <FormControlLabel
-                        key={lang}
-                        control={
-                          <Checkbox
-                            checked={languageFilter.includes(lang)}
-                            onChange={() => handleLanguageFilterChange(lang)}
-                            sx={{ "&.Mui-checked": { color: "#005F73" } }}
-                          />
-                        }
-                        label={lang}
+                  <Autocomplete
+                    multiple
+                    options={LANGUAGES}
+                    value={languageFilter}
+                    onChange={(_: any, newValue: string[]) => setLanguageFilter(newValue)}
+                    renderInput={(params: any) => (
+                      <TextField
+                        {...params}
+                        size="small"
+                        placeholder="Search languages"
+                        sx={{
+                          "& .MuiOutlinedInput-root": {
+                            borderRadius: "8px",
+                            backgroundColor: "#F5F5F5",
+                          },
+                        }}
                       />
-                    )
-                  )}
+                    )}
+                    renderTags={(value: string[], getTagProps: any) =>
+                      value.map((option: string, index: number) => (
+                        <Chip
+                          label={option}
+                          size="small"
+                          {...getTagProps({ index })}
+                          sx={{
+                            backgroundColor: "#005F73",
+                            color: "white",
+                          }}
+                        />
+                      ))
+                    }
+                  />
                 </Box>
 
                 {/* Price Range */}
@@ -610,15 +619,12 @@ export default function ConsultationsPage() {
                 >
                   Location
                 </Typography>
-                <TextField
-                  fullWidth
-                  size="small"
-                  placeholder="Enter location"
+                <GooglePlacesAutocomplete
                   value={locationFilter}
-                  onChange={(e) => setLocationFilter(e.target.value)}
+                  onChange={setLocationFilter}
+                  placeholder="Search location"
                   sx={{
                     "& .MuiOutlinedInput-root": {
-                      borderRadius: "8px",
                       backgroundColor: "#F5F5F5",
                     },
                   }}
@@ -683,21 +689,38 @@ export default function ConsultationsPage() {
                 >
                   Language
                 </Typography>
-                {["English (UK)", "Spanish", "Korean", "English (US)"].map(
-                  (lang) => (
-                    <FormControlLabel
-                      key={lang}
-                      control={
-                        <Checkbox
-                          checked={languageFilter.includes(lang)}
-                          onChange={() => handleLanguageFilterChange(lang)}
-                          sx={{ "&.Mui-checked": { color: "#005F73" } }}
-                        />
-                      }
-                      label={lang}
+                <Autocomplete
+                  multiple
+                  options={LANGUAGES}
+                  value={languageFilter}
+                  onChange={(_: any, newValue: string[]) => setLanguageFilter(newValue)}
+                  renderInput={(params: any) => (
+                    <TextField
+                      {...params}
+                      size="small"
+                      placeholder="Search languages"
+                      sx={{
+                        "& .MuiOutlinedInput-root": {
+                          borderRadius: "8px",
+                          backgroundColor: "#F5F5F5",
+                        },
+                      }}
                     />
-                  )
-                )}
+                  )}
+                  renderTags={(value: string[], getTagProps: any) =>
+                    value.map((option: string, index: number) => (
+                      <Chip
+                        label={option}
+                        size="small"
+                        {...getTagProps({ index })}
+                        sx={{
+                          backgroundColor: "#005F73",
+                          color: "white",
+                        }}
+                      />
+                    ))
+                  }
+                />
               </Box>
 
               {/* Price Range */}
@@ -808,7 +831,7 @@ export default function ConsultationsPage() {
             <Box
               sx={{
                 flex: 1,
-                height: "calc(100vh - 250px)", // Fixed height for scrolling
+                height: "calc(140vh - 250px)", // Fixed height for scrolling
                 overflowY: "auto", // Make it scrollable
                 pr: 1, // Add some padding for scrollbar
                 "&::-webkit-scrollbar": {

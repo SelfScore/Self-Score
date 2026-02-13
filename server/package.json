@@ -8,7 +8,8 @@
     "build": "tsc",
     "test": "echo \"Error: no test specified\" && exit 1",
     "create-admin": "ts-node src/scripts/createAdmin.ts",
-    "seed-level5-questions": "ts-node src/scripts/seedLevel5Questions.ts"
+    "seed-level5-questions": "ts-node src/scripts/seedLevel5Questions.ts",
+    "migrate-level5-status": "ts-node src/scripts/migrateLevel5Status.ts"
   },
   "keywords": [
     "lifescore",
@@ -22,6 +23,7 @@
     "@aws-sdk/client-s3": "^3.948.0",
     "@deepgram/sdk": "^4.11.3",
     "@google/generative-ai": "^0.24.1",
+    "@googlemaps/google-maps-services-js": "^3.4.2",
     "@types/pdfkit": "^0.17.4",
     "@types/ws": "^8.18.1",
     "axios": "^1.13.2",

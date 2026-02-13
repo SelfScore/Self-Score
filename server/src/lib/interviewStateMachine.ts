@@ -4,6 +4,7 @@ import {
   AnswerState,
   AnalysisResult,
   InterviewAction,
+  ConversationTurn,
 } from "../types/realtimeInterview.types";
 
 /**
@@ -45,7 +46,7 @@ export class InterviewStateMachine {
 
     if (this.session.currentQuestionIndex >= this.session.questions.length) {
       console.log(
-        `✅ Interview completed - all ${this.session.questions.length} questions answered`
+        `✅ Interview completed - all ${this.session.questions.length} questions answered`,
       );
       return null;
     }
@@ -54,7 +55,7 @@ export class InterviewStateMachine {
     console.log(
       `➡️  Moving to question ${this.session.currentQuestionIndex + 1}/${
         this.session.questions.length
-      }`
+      }`,
     );
 
     // Initialize answer state for new question
@@ -73,6 +74,7 @@ export class InterviewStateMachine {
       const answerState: AnswerState = {
         questionId,
         transcript: "",
+        conversationHistory: [], // Initialize conversation history
         confidence: 0,
         isComplete: false,
         isOffTopic: false,
@@ -103,8 +105,121 @@ export class InterviewStateMachine {
         : transcript.trim();
 
       console.log(
-        `📝 Transcript updated for question ${currentQ.order}: ${answerState.transcript.length} chars`
+        `📝 Transcript updated for question ${currentQ.order}: ${answerState.transcript.length} chars`,
       );
+    }
+  }
+
+  /**
+   * Add or update main answer in conversation history
+   */
+  addMainAnswer(answer: string, confidence: number): void {
+    const currentQ = this.currentQuestion();
+    if (!currentQ) return;
+
+    const answerState = this.session.answers.get(currentQ.questionId);
+    if (answerState && answerState.conversationHistory) {
+      // Check if main_answer already exists
+      const existingMainAnswer = answerState.conversationHistory.find(
+        (turn) => turn.type === "main_answer",
+      );
+
+      if (existingMainAnswer) {
+        // Update existing turn
+        existingMainAnswer.content = answer;
+        existingMainAnswer.confidence = confidence;
+        existingMainAnswer.timestamp = Date.now();
+        console.log(`✅ Updated main answer in conversation history`);
+      } else {
+        // Add new turn
+        const turn: ConversationTurn = {
+          type: "main_answer",
+          content: answer,
+          timestamp: Date.now(),
+          confidence,
+        };
+        answerState.conversationHistory.push(turn);
+        console.log(`✅ Added main answer to conversation history`);
+      }
+    }
+  }
+
+  /**
+   * Add follow-up question to conversation history
+   */
+  addFollowUpQuestion(question: string): void {
+    const currentQ = this.currentQuestion();
+    if (!currentQ) return;
+
+    const answerState = this.session.answers.get(currentQ.questionId);
+    if (answerState && answerState.conversationHistory) {
+      const turn: ConversationTurn = {
+        type: "follow_up_question",
+        content: question,
+        timestamp: Date.now(),
+      };
+      answerState.conversationHistory.push(turn);
+      console.log(`✅ Added follow-up question to conversation history`);
+    }
+  }
+
+  /**
+   * Add or update follow-up answer in conversation history
+   */
+  addFollowUpAnswer(answer: string, confidence: number): void {
+    const currentQ = this.currentQuestion();
+    if (!currentQ) return;
+
+    const answerState = this.session.answers.get(currentQ.questionId);
+    if (answerState && answerState.conversationHistory) {
+      // Find the last follow-up question to see if we already have an answer for it
+      const lastFollowUpQuestionIndex = answerState.conversationHistory
+        .map((turn, idx) => ({ turn, idx }))
+        .reverse()
+        .find((item) => item.turn.type === "follow_up_question")?.idx;
+
+      if (lastFollowUpQuestionIndex !== undefined) {
+        // Check if there's already an answer after this question
+        const existingAnswer =
+          answerState.conversationHistory[lastFollowUpQuestionIndex + 1];
+
+        if (existingAnswer && existingAnswer.type === "follow_up_answer") {
+          // Update existing answer
+          existingAnswer.content = answer;
+          existingAnswer.confidence = confidence;
+          existingAnswer.timestamp = Date.now();
+          console.log(`✅ Updated follow-up answer in conversation history`);
+        } else {
+          // Add new follow-up answer after the question
+          const turn: ConversationTurn = {
+            type: "follow_up_answer",
+            content: answer,
+            timestamp: Date.now(),
+            confidence,
+          };
+          answerState.conversationHistory.push(turn);
+          console.log(`✅ Added follow-up answer to conversation history`);
+        }
+      }
+    }
+  }
+
+  /**
+   * Add redirect to conversation history
+   */
+  addRedirect(redirect: string): void {
+    const currentQ = this.currentQuestion();
+    if (!currentQ) return;
+
+    const answerState = this.session.answers.get(currentQ.questionId);
+    if (answerState && answerState.conversationHistory) {
+      const turn: ConversationTurn = {
+        type: "redirect",
+        content: redirect,
+        timestamp: Date.now(),
+      };
+      answerState.conversationHistory.push(turn);
+      console.log(`✅ Added redirect to conversation history`);
     }
   }
 
@@ -128,7 +243,7 @@ export class InterviewStateMachine {
           analysis.confidence
         }%, Complete: ${analysis.isComplete}, Has follow-up: ${
           analysis.suggestedFollowUp.length > 0
-        }`
+        }`,
       );
     }
   }
@@ -149,7 +264,7 @@ export class InterviewStateMachine {
       console.log(`   Follow-up count: ${answerState.followUpCount}/3`);
     } else {
       console.log(
-        `⚠️  WARNING: No answer state found for question ${currentQ.order}`
+        `⚠️  WARNING: No answer state found for question ${currentQ.order}`,
       );
     }
   }
@@ -211,7 +326,7 @@ export class InterviewStateMachine {
     answeredCount: number;
   } {
     const answeredCount = Array.from(this.session.answers.values()).filter(
-      (a) => a.isComplete
+      (a) => a.isComplete,
     ).length;
 
     return {
@@ -220,7 +335,7 @@ export class InterviewStateMachine {
       percentage: Math.round(
         ((this.session.currentQuestionIndex + 1) /
           this.session.questions.length) *
-          100
+          100,
       ),
       answeredCount,
     };
@@ -322,14 +437,14 @@ export class InterviewStateMachine {
     const redirectCount = answerState.redirectCount || 0;
     if (answerState.isOffTopic && redirectCount < MAX_REDIRECTS) {
       console.log(
-        `   1. Needs Redirect? true (${redirectCount}/${MAX_REDIRECTS})`
+        `   1. Needs Redirect? true (${redirectCount}/${MAX_REDIRECTS})`,
       );
       console.log("   → Decision: REDIRECT");
       console.log("=".repeat(70) + "\n");
       return InterviewAction.REDIRECT;
     } else if (answerState.isOffTopic && redirectCount >= MAX_REDIRECTS) {
       console.log(
-        `   1. User is off-topic but max redirects reached (${redirectCount}/${MAX_REDIRECTS})`
+        `   1. User is off-topic but max redirects reached (${redirectCount}/${MAX_REDIRECTS})`,
       );
       console.log("   → Decision: NEXT_QUESTION (moving on despite off-topic)");
       console.log("=".repeat(70) + "\n");
@@ -341,7 +456,7 @@ export class InterviewStateMachine {
     console.log(
       `   2. Confidence >= 60? ${answerState.confidence >= 60} (${
         answerState.confidence
-      }% vs 60%)`
+      }% vs 60%)`,
     );
     if (answerState.confidence >= 60) {
       console.log("   → Decision: NEXT_QUESTION (confidence sufficient)");
@@ -355,11 +470,11 @@ export class InterviewStateMachine {
     console.log(`      - followUpCount: ${answerState.followUpCount}/3`);
     console.log(`      - confidence < 60: ${answerState.confidence < 60}`);
     console.log(
-      `      - transcript length > 20: ${answerState.transcript.length > 20}`
+      `      - transcript length > 20: ${answerState.transcript.length > 20}`,
     );
     if (needsFollowUp) {
       console.log(
-        `   → Decision: FOLLOW_UP (attempt ${answerState.followUpCount + 1}/3)`
+        `   → Decision: FOLLOW_UP (attempt ${answerState.followUpCount + 1}/3)`,
       );
       console.log("=".repeat(70) + "\n");
       return InterviewAction.FOLLOW_UP;
@@ -369,7 +484,7 @@ export class InterviewStateMachine {
     console.log(`   4. Exhausted follow-ups (${answerState.followUpCount}/3)?`);
     if (answerState.followUpCount >= 3) {
       console.log(
-        "   → Decision: NEXT_QUESTION (max follow-ups reached, moving on)"
+        "   → Decision: NEXT_QUESTION (max follow-ups reached, moving on)",
       );
       console.log("=".repeat(70) + "\n");
       return InterviewAction.NEXT_QUESTION;
@@ -378,10 +493,10 @@ export class InterviewStateMachine {
     // If transcript is very short (< 20 chars), continue listening
     if (answerState.transcript.length < 20) {
       console.log(
-        `   5. Transcript too short (${answerState.transcript.length} < 20 chars)`
+        `   5. Transcript too short (${answerState.transcript.length} < 20 chars)`,
       );
       console.log(
-        "   → Decision: CONTINUE (waiting for more substantial answer)"
+        "   → Decision: CONTINUE (waiting for more substantial answer)",
       );
       console.log("=".repeat(70) + "\n");
       return InterviewAction.CONTINUE;

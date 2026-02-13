@@ -52,14 +52,15 @@ export class InterviewController {
     // Check if we have any content
     if (currentTranscript.length < 10) {
       console.log(
-        "⏳ Transcript too short (<10 chars), waiting for more input..."
+        "⏳ Transcript too short (<10 chars), waiting for more input...",
       );
       return;
     }
 
     console.log(
-      `📝 Analyzing transcript (${currentTranscript.length
-      } chars): "${currentTranscript.substring(0, 100)}..."`
+      `📝 Analyzing transcript (${
+        currentTranscript.length
+      } chars): "${currentTranscript.substring(0, 100)}..."`,
     );
 
     // Send "processing" indicator to frontend immediately
@@ -75,7 +76,7 @@ export class InterviewController {
     const analysisPromise = answerAnalyzer.analyzeAnswer(
       currentQuestion.questionText,
       currentTranscript,
-      this.session.currentQuestionIndex
+      this.session.currentQuestionIndex,
     );
     this.session.pendingAnalysis = analysisPromise;
 
@@ -91,6 +92,49 @@ export class InterviewController {
       // Update state with analysis
       this.stateMachine.updateAnswerAnalysis(analysis);
 
+      // Track conversation history
+      const answerState = this.stateMachine.getCurrentAnswerState();
+      if (answerState && answerState.conversationHistory) {
+        // Find the last turn to determine what we're responding to
+        const lastTurn =
+          answerState.conversationHistory[
+            answerState.conversationHistory.length - 1
+          ];
+
+        if (!lastTurn) {
+          // No turns yet, this is the main answer
+          this.stateMachine.addMainAnswer(
+            currentTranscript,
+            analysis.confidence,
+          );
+        } else if (
+          lastTurn.type === "follow_up_question" ||
+          lastTurn.type === "redirect"
+        ) {
+          // We're responding to a follow-up or redirect
+          this.stateMachine.addFollowUpAnswer(
+            currentTranscript,
+            analysis.confidence,
+          );
+        } else if (
+          lastTurn.type === "main_answer" ||
+          lastTurn.type === "follow_up_answer"
+        ) {
+          // User is continuing to speak, update the existing answer
+          if (lastTurn.type === "main_answer") {
+            this.stateMachine.addMainAnswer(
+              currentTranscript,
+              analysis.confidence,
+            );
+          } else {
+            this.stateMachine.addFollowUpAnswer(
+              currentTranscript,
+              analysis.confidence,
+            );
+          }
+        }
+      }
+
       // Decide next action
       console.log("\n🎯 CALLING DECISION ENGINE...");
       const action = this.stateMachine.decideNextAction();
@@ -105,7 +149,7 @@ export class InterviewController {
 
       // On error, show error message and move to next question
       this.sendErrorMessage(
-        "Failed to analyze your response. Moving to next question."
+        "Failed to analyze your response. Moving to next question.",
       );
       await this.executeAction(InterviewAction.NEXT_QUESTION);
     } finally {
@@ -170,8 +214,9 @@ export class InterviewController {
     }
 
     console.log(
-      `📋 Next question (${this.session.currentQuestionIndex + 1}/${this.session.questions.length
-      }): ${nextQuestion.questionText}`
+      `📋 Next question (${this.session.currentQuestionIndex + 1}/${
+        this.session.questions.length
+      }): ${nextQuestion.questionText}`,
     );
 
     // Send instruction to Gemini to ask next question FIRST
@@ -198,8 +243,9 @@ export class InterviewController {
     }
 
     console.log(
-      `🎙️ Sending instruction to Gemini to ask question ${this.session.currentQuestionIndex + 1
-      }`
+      `🎙️ Sending instruction to Gemini to ask question ${
+        this.session.currentQuestionIndex + 1
+      }`,
     );
     await this.sendInstructionToGemini(instruction);
   }
@@ -224,8 +270,11 @@ export class InterviewController {
       `Could you elaborate more on ${answerState.missingAspects.join(", ")}?`;
 
     console.log(
-      `🔄 Asking follow-up ${answerState.followUpCount}/3: ${followUpQuestion}`
+      `🔄 Asking follow-up ${answerState.followUpCount}/3: ${followUpQuestion}`,
     );
+
+    // Add follow-up question to conversation history
+    this.stateMachine.addFollowUpQuestion(followUpQuestion);
 
     // Send to frontend
     if (this.session.wsConnection) {
@@ -264,8 +313,11 @@ export class InterviewController {
     // Generate redirect message
     const redirect = await geminiRealtimeService.generateRedirect(
       currentQuestion.questionText,
-      answerState.transcript
+      answerState.transcript,
     );
+
+    // Add redirect to conversation history
+    this.stateMachine.addRedirect(redirect);
 
     const instruction: GeminiInstruction = {
       type: "redirect",
@@ -322,7 +374,7 @@ export class InterviewController {
    * Send instruction to Gemini
    */
   private async sendInstructionToGemini(
-    instruction: GeminiInstruction
+    instruction: GeminiInstruction,
   ): Promise<void> {
     if (!this.session.geminiConnection) {
       console.error("❌ No Gemini connection available in session");
@@ -331,18 +383,18 @@ export class InterviewController {
 
     const ws = this.session.geminiConnection;
     console.log(
-      `🔍 Checking Gemini connection before sending ${instruction.type}...`
+      `🔍 Checking Gemini connection before sending ${instruction.type}...`,
     );
     console.log(`   Connection exists: ${!!ws}`);
     console.log(
-      `   ReadyState: ${ws.readyState} (1=OPEN, 0=CONNECTING, 2=CLOSING, 3=CLOSED)`
+      `   ReadyState: ${ws.readyState} (1=OPEN, 0=CONNECTING, 2=CLOSING, 3=CLOSED)`,
     );
 
     // If connection is closed or closing, attempt to reconnect
     if (ws.readyState !== 1) {
       // Not OPEN
       console.warn(
-        `⚠️  Gemini connection not open. Attempting to reconnect...`
+        `⚠️  Gemini connection not open. Attempting to reconnect...`,
       );
 
       // Try to recreate connection
@@ -358,7 +410,7 @@ export class InterviewController {
             },
             (error: any) => {
               console.error("❌ Gemini reconnection error:", error);
-            }
+            },
           );
 
         this.session.geminiConnection = newConnection;
@@ -375,7 +427,7 @@ export class InterviewController {
 
     await geminiRealtimeService.sendInstruction(
       this.session.geminiConnection,
-      instruction
+      instruction,
     );
   }
 
@@ -433,7 +485,7 @@ export class InterviewController {
       const RealtimeInterviewModel =
         require("../models/realtimeInterview").default;
       const interview = await RealtimeInterviewModel.findById(
-        this.session.interviewId
+        this.session.interviewId,
       );
 
       if (!interview) {
@@ -446,17 +498,23 @@ export class InterviewController {
       const statistics = this.stateMachine.getStatistics();
 
       // Debug: Log what we're getting from state machine
-      console.log(`📊 DEBUG: allAnswers from state machine: ${allAnswers.length} answers`);
+      console.log(
+        `📊 DEBUG: allAnswers from state machine: ${allAnswers.length} answers`,
+      );
       allAnswers.forEach((a, i) => {
-        console.log(`   Answer ${i + 1}: questionId=${a.questionId}, transcript="${a.transcript.substring(0, 50)}...", isComplete=${a.isComplete}`);
+        console.log(
+          `   Answer ${i + 1}: questionId=${a.questionId}, transcript="${a.transcript.substring(0, 50)}...", isComplete=${a.isComplete}`,
+        );
       });
 
       // Filter out empty transcripts and update database
       const filteredAnswers = allAnswers.filter(
-        (answer) => answer.transcript && answer.transcript.trim().length > 0
+        (answer) => answer.transcript && answer.transcript.trim().length > 0,
       );
 
-      console.log(`📊 DEBUG: After filtering empty transcripts: ${filteredAnswers.length} answers`);
+      console.log(
+        `📊 DEBUG: After filtering empty transcripts: ${filteredAnswers.length} answers`,
+      );
 
       interview.answers = filteredAnswers.map((answer) => ({
         questionId: answer.questionId,
@@ -477,7 +535,7 @@ export class InterviewController {
       await interview.save();
 
       console.log(
-        `💾 Saved answer to DB - Interview: ${this.session.interviewId} - Total answers: ${interview.answers.length}/${this.session.questions.length}`
+        `💾 Saved answer to DB - Interview: ${this.session.interviewId} - Total answers: ${interview.answers.length}/${this.session.questions.length}`,
       );
     } catch (error) {
       console.error("❌ Error saving answer to database:", error);

@@ -12,6 +12,7 @@ import {
   MenuItem,
   OutlinedInput,
   SelectChangeEvent,
+  Autocomplete,
 } from "@mui/material";
 import { useState } from "react";
 import ButtonSelfScore from "../../components/ui/ButtonSelfScore";
@@ -20,6 +21,7 @@ import {
   consultantAuthService,
   Step2Data,
 } from "../../../services/consultantAuthService";
+import { LANGUAGES } from "@/constants/languages";
 
 interface Step2ProfessionalProps {
   consultantId: string;
@@ -38,21 +40,6 @@ const COACHING_SPECIALTIES = [
   "Fitness & Exercise",
   "Sleep & Recovery",
   "Mental Health Support",
-];
-
-const LANGUAGES = [
-  "English",
-  "Spanish",
-  "French",
-  "German",
-  "Mandarin",
-  "Japanese",
-  "Korean",
-  "Portuguese",
-  "Italian",
-  "Arabic",
-  "Hindi",
-  "Russian",
 ];
 
 export default function Step2Professional({
@@ -82,11 +69,10 @@ export default function Step2Professional({
     }
   };
 
-  const handleLanguagesChange = (event: SelectChangeEvent<string[]>) => {
-    const value = event.target.value;
+  const handleLanguagesChange = (_: any, newValue: string[]) => {
     setFormData((prev) => ({
       ...prev,
-      languagesSpoken: typeof value === "string" ? value.split(",") : value,
+      languagesSpoken: newValue,
     }));
     if (errors.languagesSpoken) {
       setErrors((prev) => ({ ...prev, languagesSpoken: "" }));
@@ -304,63 +290,55 @@ export default function Step2Professional({
           >
             Languages Spoken <span style={{ color: "#E87A42" }}>*</span>{" "}
             <span style={{ fontWeight: 400, fontSize: "12px", color: "#666" }}>
-              (Select all that apply)
+              (Search and select)
             </span>
           </Typography>
-          <FormControl fullWidth error={!!errors.languagesSpoken}>
-            <Select
-              multiple
-              value={formData.languagesSpoken}
-              onChange={handleLanguagesChange}
-              input={<OutlinedInput />}
-              renderValue={(selected) => (
-                <Box sx={{ display: "flex", flexWrap: "wrap", gap: 0.5 }}>
-                  {selected.map((value) => (
-                    <Chip
-                      key={value}
-                      label={value}
-                      size="small"
-                      sx={{
-                        backgroundColor: "#005F73",
-                        color: "white",
-                        fontFamily: "Source Sans Pro",
-                      }}
-                    />
-                  ))}
-                </Box>
-              )}
-              MenuProps={{
-                PaperProps: {
-                  style: {
-                    maxHeight: 220,
+          <Autocomplete
+            multiple
+            options={LANGUAGES}
+            value={formData.languagesSpoken}
+            onChange={handleLanguagesChange}
+            renderInput={(params) => (
+              <TextField
+                {...params}
+                placeholder="Search and select languages"
+                error={!!errors.languagesSpoken}
+                helperText={errors.languagesSpoken}
+                sx={{
+                  "& .MuiOutlinedInput-root": {
+                    backgroundColor: "#FFF",
+                    borderRadius: "8px",
+                    minHeight: "48px",
+                    "& fieldset": {
+                      borderColor: "#3A3A3A4D",
+                      borderWidth: "1px",
+                    },
                   },
-                },
-                disableScrollLock: true,
-              }}
-              sx={{
-                backgroundColor: "#FFF",
-                borderRadius: "8px",
-                height: "48px",
-                "& fieldset": {
-                  borderColor: "#3A3A3A4D",
-                  borderWidth: "1px",
-                },
-              }}
-            >
-              {LANGUAGES.map((language) => (
-                <MenuItem key={language} value={language}>
-                  {language}
-                </MenuItem>
-              ))}
-            </Select>
-          </FormControl>
-          {errors.languagesSpoken && (
-            <Typography
-              sx={{ color: "#d32f2f", fontSize: "12px", mt: 0.5, ml: 1.5 }}
-            >
-              {errors.languagesSpoken}
-            </Typography>
-          )}
+                }}
+              />
+            )}
+            renderTags={(value, getTagProps) =>
+              value.map((option, index) => (
+                <Chip
+                  label={option}
+                  size="small"
+                  {...getTagProps({ index })}
+                  sx={{
+                    backgroundColor: "#005F73",
+                    color: "white",
+                    fontFamily: "Source Sans Pro",
+                  }}
+                />
+              ))
+            }
+            ChipProps={{
+              size: "small",
+              sx: {
+                backgroundColor: "#005F73",
+                color: "white",
+              },
+            }}
+          />
         </Grid>
 
         {/* Professional Bio */}

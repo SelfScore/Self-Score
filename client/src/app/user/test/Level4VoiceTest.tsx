@@ -23,10 +23,12 @@ import MicOffIcon from "@mui/icons-material/MicOff";
 import ArrowBackIosIcon from "@mui/icons-material/ArrowBackIos";
 import SmartToyIcon from "@mui/icons-material/SmartToy";
 import PersonIcon from "@mui/icons-material/Person";
+import WarningAmberIcon from "@mui/icons-material/WarningAmber";
 // import SwapHorizIcon from "@mui/icons-material/SwapHoriz";
 import { useAuth } from "@/hooks/useAuth";
 import CallEndIcon from "@mui/icons-material/CallEnd";
 import { authService } from "@/services/authService";
+import CoachImg from "../../../../public/images/test/Ai-Consultant.webp"
 
 interface Level4VoiceTestProps {
   onBack?: () => void;
@@ -62,7 +64,11 @@ export default function Level4VoiceTest({
   const [error, setError] = useState<string | null>(null);
   const [showEndDialog, setShowEndDialog] = useState(false);
   const [isCompleting, setIsCompleting] = useState(false);
-  const [isCCEnabled, setIsCCEnabled] = useState(true);
+  // const [isCCEnabled, setIsCCEnabled] = useState(true);
+
+  // Audio compatibility check state
+  const [audioCheckPassed, setAudioCheckPassed] = useState<boolean | null>(null); // null = not checked yet
+  const [showAudioWarning, setShowAudioWarning] = useState(false);
 
   // Refs for WebSocket and MediaRecorder
   const wsRef = useRef<WebSocket | null>(null);
@@ -165,9 +171,11 @@ export default function Level4VoiceTest({
     async (arrayBuffer: ArrayBuffer) => {
       try {
         if (!aiAudioContextRef.current) {
+          // AI playback context can use 24000 Hz directly — it only uses createBufferSource
+          // (the Firefox sample-rate error only affects createMediaStreamSource, which is in the mic context)
           aiAudioContextRef.current = new AudioContext({ sampleRate: 24000 });
           nextPlayTimeRef.current = 0;
-          console.log("🎵 Audio context created with sample rate: 24000");
+          console.log("🎵 AI playback context created at 24000 Hz");
         }
 
         const audioContext = aiAudioContextRef.current;
@@ -178,11 +186,12 @@ export default function Level4VoiceTest({
           console.log("🎵 Audio context resumed");
         }
 
-        // Gemini sends raw PCM data (16-bit signed integers)
+        // Gemini sends raw PCM data at 24000 Hz (16-bit signed integers)
         const int16Array = new Int16Array(arrayBuffer);
         const numSamples = int16Array.length;
 
-        // Create AudioBuffer manually
+        // Create AudioBuffer at SOURCE rate (24000 Hz)
+        // The browser's native high-quality resampler handles 24000→native conversion during playback
         const audioBuffer = audioContext.createBuffer(1, numSamples, 24000);
         const channelData = audioBuffer.getChannelData(0);
 
@@ -303,13 +312,15 @@ export default function Level4VoiceTest({
         audio: {
           echoCancellation: true,
           noiseSuppression: true,
-          sampleRate: 16000,
         },
       });
 
-      // Create AudioContext for processing
-      const audioContext = new AudioContext({ sampleRate: 16000 });
+      // Use default sample rate (hardware native) for Firefox compatibility
+      const audioContext = new AudioContext();
       audioContextRef.current = audioContext;
+      const nativeSampleRate = audioContext.sampleRate;
+      const targetSampleRate = 16000;
+      console.log("🎤 Mic AudioContext sample rate:", nativeSampleRate, "→ target:", targetSampleRate);
 
       const source = audioContext.createMediaStreamSource(stream);
       const processor = audioContext.createScriptProcessor(4096, 1, 1);
@@ -318,10 +329,28 @@ export default function Level4VoiceTest({
         if (wsRef.current?.readyState === WebSocket.OPEN) {
           const inputData = e.inputBuffer.getChannelData(0);
 
+          // Downsample from native rate to 16000 Hz if needed
+          let outputData: Float32Array;
+          if (nativeSampleRate !== targetSampleRate) {
+            const ratio = nativeSampleRate / targetSampleRate;
+            const outputLength = Math.round(inputData.length / ratio);
+            outputData = new Float32Array(outputLength);
+            for (let i = 0; i < outputLength; i++) {
+              const srcIndex = i * ratio;
+              const idx = Math.floor(srcIndex);
+              const frac = srcIndex - idx;
+              const s0 = inputData[idx] || 0;
+              const s1 = inputData[Math.min(idx + 1, inputData.length - 1)] || 0;
+              outputData[i] = s0 + frac * (s1 - s0);
+            }
+          } else {
+            outputData = inputData;
+          }
+
           // Convert Float32Array to Int16Array (PCM)
-          const pcmData = new Int16Array(inputData.length);
-          for (let i = 0; i < inputData.length; i++) {
-            const s = Math.max(-1, Math.min(1, inputData[i]));
+          const pcmData = new Int16Array(outputData.length);
+          for (let i = 0; i < outputData.length; i++) {
+            const s = Math.max(-1, Math.min(1, outputData[i]));
             pcmData[i] = s < 0 ? s * 0x8000 : s * 0x7fff;
           }
 
@@ -343,59 +372,104 @@ export default function Level4VoiceTest({
     }
   }, []);
 
-  // Initialize interview session
-  useEffect(() => {
-    const startSession = async () => {
-      // Prevent duplicate initialization (React Strict Mode)
-      if (initializingRef.current || sessionId) {
-        console.log("⏭️ Skipping duplicate session initialization");
-        return;
-      }
-
-      initializingRef.current = true;
+  // Audio compatibility check
+  const checkAudioCompatibility = useCallback(async (): Promise<boolean> => {
+    try {
+      // Test: Can the browser connect a mic stream to a cross-rate AudioContext?
+      // Chrome/Safari handle this seamlessly. Firefox throws an error.
+      // If it throws, the browser has weaker audio handling and our workarounds
+      // may cause mild quality issues during AI voice playback.
+      const testCtx = new AudioContext({ sampleRate: 16000 });
+      const stream = await navigator.mediaDevices.getUserMedia({ audio: true });
 
       try {
-        const API_URL =
-          process.env.NEXT_PUBLIC_API_URL || "http://localhost:5001";
-        const response = await fetch(
-          `${API_URL}/api/realtime-interview/start`,
-          {
-            method: "POST",
-            headers: {
-              "Content-Type": "application/json",
-            },
-            credentials: "include",
-            body: JSON.stringify({ userId: user?.userId }),
-          }
-        );
+        const source = testCtx.createMediaStreamSource(stream);
+        source.disconnect();
+        console.log("✅ Audio compatibility check passed — cross-rate MediaStreamSource supported");
+        // Clean up
+        stream.getTracks().forEach((t) => t.stop());
+        await testCtx.close();
+        return true;
+      } catch {
+        console.warn("⚠️ Audio check: Cross-rate MediaStreamSource not supported — potential quality issues");
+        stream.getTracks().forEach((t) => t.stop());
+        await testCtx.close();
+        return false;
+      }
+    } catch (err) {
+      console.error("❌ Audio compatibility check failed:", err);
+      return false;
+    }
+  }, []);
 
-        if (!response.ok) {
-          throw new Error("Failed to start interview session");
+  // Start the actual interview session
+  const startSession = useCallback(async () => {
+    // Prevent duplicate initialization (React Strict Mode)
+    if (initializingRef.current || sessionId) {
+      console.log("⏭️ Skipping duplicate session initialization");
+      return;
+    }
+
+    initializingRef.current = true;
+
+    try {
+      const API_URL =
+        process.env.NEXT_PUBLIC_API_URL || "http://localhost:5001";
+      const response = await fetch(
+        `${API_URL}/api/realtime-interview/start`,
+        {
+          method: "POST",
+          headers: {
+            "Content-Type": "application/json",
+          },
+          credentials: "include",
+          body: JSON.stringify({ userId: user?.userId }),
         }
+      );
 
-        const data = await response.json();
-        console.log("✅ Interview session started:", data);
+      if (!response.ok) {
+        throw new Error("Failed to start interview session");
+      }
 
-        // The response structure is: { success: true, data: { sessionId, interviewId, ... } }
-        if (data.success && data.data) {
-          setSessionId(data.data.sessionId);
-          setTotalQuestions(data.data.totalQuestions);
-          console.log("📝 SessionId set:", data.data.sessionId);
-        } else {
-          throw new Error("Invalid response format");
-        }
-      } catch (err: any) {
-        console.error("❌ Failed to start session:", err);
-        setError(err.message || "Failed to start interview");
-        setConnectionState("error");
-        initializingRef.current = false;
+      const data = await response.json();
+      console.log("✅ Interview session started:", data);
+
+      // The response structure is: { success: true, data: { sessionId, interviewId, ... } }
+      if (data.success && data.data) {
+        setSessionId(data.data.sessionId);
+        setTotalQuestions(data.data.totalQuestions);
+        console.log("📝 SessionId set:", data.data.sessionId);
+      } else {
+        throw new Error("Invalid response format");
+      }
+    } catch (err: any) {
+      console.error("❌ Failed to start session:", err);
+      setError(err.message || "Failed to start interview");
+      setConnectionState("error");
+      initializingRef.current = false;
+    }
+  }, [user, sessionId]);
+
+  // Initialize: run audio check first, then start session
+  useEffect(() => {
+    const initialize = async () => {
+      if (!user || sessionId || initializingRef.current) return;
+      if (audioCheckPassed !== null) return; // Already checked
+
+      const passed = await checkAudioCompatibility();
+      setAudioCheckPassed(passed);
+
+      if (passed) {
+        // Audio is fine, start session directly
+        startSession();
+      } else {
+        // Show warning modal
+        setShowAudioWarning(true);
       }
     };
 
-    if (user && !sessionId && !initializingRef.current) {
-      startSession();
-    }
-  }, [user, sessionId]);
+    initialize();
+  }, [user, sessionId, audioCheckPassed, checkAudioCompatibility, startSession]);
 
   // Connect WebSocket when sessionId is ready
   useEffect(() => {
@@ -588,7 +662,7 @@ export default function Level4VoiceTest({
                   mb: 0.5,
                 }}
               >
-                Level 5: AI Voice Interview
+                AI-Assisted Consultation Interview
               </Typography>
               {/* <Typography
                 sx={{
@@ -709,6 +783,7 @@ export default function Level4VoiceTest({
             }}
           >
             <Avatar
+              src={CoachImg.src}
               sx={{
                 width: { xs: 120, md: 160 },
                 height: { xs: 120, md: 160 },
@@ -727,11 +802,7 @@ export default function Level4VoiceTest({
                   },
                 },
               }}
-            >
-              <SmartToyIcon
-                sx={{ fontSize: { xs: 60, md: 80 }, color: "white" }}
-              />
-            </Avatar>
+            />
 
             {/* Status Badge on Avatar */}
             {isProcessing && (
@@ -748,14 +819,14 @@ export default function Level4VoiceTest({
                   size={16}
                   sx={{ color: "rgba(255,255,255,0.7)" }}
                 />
-                <CircularProgress
+                {/* <CircularProgress
                   size={16}
                   sx={{ color: "rgba(255,255,255,0.5)" }}
                 />
                 <CircularProgress
                   size={16}
                   sx={{ color: "rgba(255,255,255,0.3)" }}
-                />
+                /> */}
               </Box>
             )}
           </Box>
@@ -887,7 +958,7 @@ export default function Level4VoiceTest({
       </Box>
 
       {/* Live Captions */}
-      <Box
+      {/* <Box
         sx={{
           mx: "auto",
           width: { xs: "calc(100% - 32px)", md: "95%" },
@@ -951,7 +1022,7 @@ export default function Level4VoiceTest({
             </Box>
           );
         })}
-      </Box>
+      </Box> */}
 
       {/* Control Bar */}
       <Box
@@ -1029,7 +1100,7 @@ export default function Level4VoiceTest({
           </IconButton>
 
           {/* CC Button */}
-          <IconButton
+          {/* <IconButton
             onClick={() => setIsCCEnabled(!isCCEnabled)}
             sx={{
               width: { xs: 48, md: 48 },
@@ -1046,9 +1117,97 @@ export default function Level4VoiceTest({
             <Typography sx={{ fontSize: "16px", fontWeight: "bold" }}>
               CC
             </Typography>
-          </IconButton>
+          </IconButton> */}
         </Box>
       </Box>
+
+      {/* Audio Compatibility Warning Dialog */}
+      <Dialog
+        open={showAudioWarning}
+        onClose={() => { }}
+        PaperProps={{
+          sx: {
+            borderRadius: "16px",
+            maxWidth: "480px",
+            p: 1,
+          },
+        }}
+      >
+        <DialogTitle
+          sx={{
+            display: "flex",
+            alignItems: "center",
+            gap: 1.5,
+            pb: 1,
+          }}
+        >
+          <WarningAmberIcon sx={{ color: "#E87A42", fontSize: 28 }} />
+          <Typography sx={{ fontWeight: 700, fontSize: "20px", color: "#1A1A1A" }}>
+            Audio Compatibility Notice
+          </Typography>
+        </DialogTitle>
+        <DialogContent>
+          <Typography
+            sx={{
+              fontSize: "15px",
+              color: "#444",
+              lineHeight: 1.6,
+              mb: 2,
+            }}
+          >
+            Your current browser or system audio configuration may cause minor
+            voice quality issues during the interview (such as slight audio
+            breaks or overlap).
+          </Typography>
+          <Alert
+            severity="info"
+            sx={{
+              borderRadius: "10px",
+              "& .MuiAlert-message": { fontSize: "14px" },
+            }}
+          >
+            For the best experience, we recommend using{" "}
+            <strong>Google Chrome</strong> or <strong>Safari</strong>.
+          </Alert>
+        </DialogContent>
+        <DialogActions sx={{ px: 3, pb: 2.5, gap: 1 }}>
+          <Button
+            onClick={() => {
+              setShowAudioWarning(false);
+              onBack?.();
+            }}
+            sx={{
+              color: "#555",
+              textTransform: "none",
+              fontWeight: 600,
+              fontSize: "15px",
+              borderRadius: "8px",
+              px: 3,
+              "&:hover": { bgcolor: "rgba(0,0,0,0.04)" },
+            }}
+          >
+            Go Back
+          </Button>
+          <Button
+            onClick={() => {
+              setShowAudioWarning(false);
+              startSession();
+            }}
+            variant="contained"
+            sx={{
+              bgcolor: "#005F73",
+              textTransform: "none",
+              fontWeight: 600,
+              fontSize: "15px",
+              borderRadius: "8px",
+              px: 3,
+              "&:hover": { bgcolor: "#004A5A" },
+            }}
+          >
+            Continue Anyway
+          </Button>
+        </DialogActions>
+      </Dialog>
 
       {/* End Interview Dialog */}
       <Dialog

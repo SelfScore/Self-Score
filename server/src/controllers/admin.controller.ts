@@ -4,6 +4,7 @@ import PaymentModel from "../models/payment";
 import TestSubmissionModel from "../models/testSubmission";
 import ContactMessageModel from "../models/contactMessage";
 import AIInterviewModel from "../models/aiInterview";
+import RealtimeInterviewModel from "../models/realtimeInterview";
 import ConsultantModel from "../models/consultant";
 import { ApiResponse } from "../types/api";
 import {
@@ -36,9 +37,8 @@ export class AdminController {
 
       // Total Tests Completed in period
       const testsQuery = startDate ? { submittedAt: { $gte: startDate } } : {};
-      const totalTestsCompleted = await TestSubmissionModel.countDocuments(
-        testsQuery
-      );
+      const totalTestsCompleted =
+        await TestSubmissionModel.countDocuments(testsQuery);
 
       // Active Users (users who completed at least one test in period)
       const activeUsersQuery = startDate
@@ -49,9 +49,8 @@ export class AdminController {
           ]
         : [{ $group: { _id: "$userId" } }, { $count: "count" }];
 
-      const activeUsersResult = await TestSubmissionModel.aggregate(
-        activeUsersQuery
-      );
+      const activeUsersResult =
+        await TestSubmissionModel.aggregate(activeUsersQuery);
       const activeUsers =
         activeUsersResult.length > 0 ? activeUsersResult[0].count : 0;
 
@@ -203,7 +202,7 @@ export class AdminController {
       // Get users with pagination
       const users = await UserModel.find(searchQuery)
         .select(
-          "-password -verifyCode -verifyCodeExpiry -resetPasswordToken -resetPasswordExpiry"
+          "-password -verifyCode -verifyCodeExpiry -resetPasswordToken -resetPasswordExpiry",
         )
         .sort({ createdAt: sortOrder })
         .skip(skip)
@@ -225,7 +224,7 @@ export class AdminController {
             lastActive:
               lastTest?.submittedAt || (user as any).createdAt || new Date(),
           };
-        })
+        }),
       );
 
       const response: ApiResponse = {
@@ -260,7 +259,7 @@ export class AdminController {
 
       const user = await UserModel.findById(userId)
         .select(
-          "-password -verifyCode -verifyCodeExpiry -resetPasswordToken -resetPasswordExpiry"
+          "-password -verifyCode -verifyCodeExpiry -resetPasswordToken -resetPasswordExpiry",
         )
         .lean();
 
@@ -335,9 +334,9 @@ export class AdminController {
       const user = await UserModel.findByIdAndUpdate(
         userId,
         { $set: updates },
-        { new: true, runValidators: true }
+        { new: true, runValidators: true },
       ).select(
-        "-password -verifyCode -verifyCodeExpiry -resetPasswordToken -resetPasswordExpiry"
+        "-password -verifyCode -verifyCodeExpiry -resetPasswordToken -resetPasswordExpiry",
       );
 
       if (!user) {
@@ -386,7 +385,7 @@ export class AdminController {
       await TestSubmissionModel.deleteMany({ userId });
       await PaymentModel.updateMany(
         { userId },
-        { $set: { status: "refunded" } }
+        { $set: { status: "refunded" } },
       );
 
       const response: ApiResponse = {
@@ -473,7 +472,7 @@ export class AdminController {
   // Get single contact message by ID
   static async getContactMessageById(
     req: Request,
-    res: Response
+    res: Response,
   ): Promise<void> {
     try {
       const { messageId } = req.params;
@@ -509,7 +508,7 @@ export class AdminController {
   // Update contact message (mark as read, add reply, or delete)
   static async updateContactMessage(
     req: Request,
-    res: Response
+    res: Response,
   ): Promise<void> {
     try {
       const { messageId } = req.params;
@@ -517,9 +516,8 @@ export class AdminController {
 
       // Handle delete action
       if (action === "delete") {
-        const deletedMessage = await ContactMessageModel.findByIdAndDelete(
-          messageId
-        );
+        const deletedMessage =
+          await ContactMessageModel.findByIdAndDelete(messageId);
 
         if (!deletedMessage) {
           const response: ApiResponse = {
@@ -546,7 +544,7 @@ export class AdminController {
       const message = await ContactMessageModel.findByIdAndUpdate(
         messageId,
         updateData,
-        { new: true }
+        { new: true },
       );
 
       if (!message) {
@@ -578,9 +576,15 @@ export class AdminController {
   // Get badge counts for sidebar
   static async getCounts(req: Request, res: Response): Promise<void> {
     try {
-      // Count pending Level 4 reviews
-      const pendingReviews = await AIInterviewModel.countDocuments({
+      // Count pending Level 4 reviews (from AIInterviewModel)
+      const pendingLevel4Reviews = await AIInterviewModel.countDocuments({
         level: 4,
+        status: "PENDING_REVIEW",
+      });
+
+      // Count pending Level 5 reviews (from RealtimeInterviewModel)
+      const pendingLevel5Reviews = await RealtimeInterviewModel.countDocuments({
+        level: 5,
         status: "PENDING_REVIEW",
       });
 
@@ -598,7 +602,9 @@ export class AdminController {
         success: true,
         message: "Counts retrieved successfully",
         data: {
-          pendingReviews,
+          pendingReviews: pendingLevel4Reviews, // Legacy - keep for backward compatibility
+          pendingLevel4Reviews,
+          pendingLevel5Reviews,
           unreadMessages,
           pendingConsultants,
         },
@@ -759,7 +765,7 @@ export class AdminController {
       // Send approval email
       const emailSent = await sendConsultantApprovalEmail(
         consultant.email,
-        consultant.firstName
+        consultant.firstName,
       );
 
       if (!emailSent) {
@@ -828,7 +834,7 @@ export class AdminController {
       const emailSent = await sendConsultantRejectionEmail(
         consultant.email,
         consultant.firstName,
-        rejectionReason
+        rejectionReason,
       );
 
       if (!emailSent) {

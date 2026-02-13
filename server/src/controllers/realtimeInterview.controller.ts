@@ -14,7 +14,7 @@ import { InterviewStateMachine } from "../lib/interviewStateMachine";
  */
 export const startRealtimeInterview = async (
   req: Request,
-  res: Response
+  res: Response,
 ): Promise<void> => {
   try {
     const userId = req.user?.userId;
@@ -32,7 +32,7 @@ export const startRealtimeInterview = async (
     if (existingSessions.length > 0) {
       const session = existingSessions[0];
       console.log(
-        `✅ Found existing session in memory: ${session.sessionId} - Resuming`
+        `✅ Found existing session in memory: ${session.sessionId} - Resuming`,
       );
 
       // Get current question for display
@@ -64,13 +64,12 @@ export const startRealtimeInterview = async (
 
     if (existingInterview) {
       console.log(
-        `✅ Found existing interview in DB (not in memory): ${existingInterview._id} - Restoring session`
+        `✅ Found existing interview in DB (not in memory): ${existingInterview._id} - Restoring session`,
       );
 
       // Restore session from database
-      const restoredSessionId = await sessionRegistry.restoreSessionFromDB(
-        existingInterview
-      );
+      const restoredSessionId =
+        await sessionRegistry.restoreSessionFromDB(existingInterview);
 
       const session = sessionRegistry.getSession(restoredSessionId);
       if (!session) {
@@ -123,15 +122,17 @@ export const startRealtimeInterview = async (
       return;
     }
 
-    const remainingAttempts = user.purchasedLevels?.level5?.remainingAttempts || 0;
+    const remainingAttempts =
+      user.purchasedLevels?.level5?.remainingAttempts || 0;
     if (remainingAttempts <= 0) {
       res.status(403).json({
         success: false,
-        message: "No remaining attempts for Level 5. Please purchase to continue.",
+        message:
+          "No remaining attempts for Level 5. Please purchase to continue.",
         data: {
           remainingAttempts: 0,
-          requiresPurchase: true
-        }
+          requiresPurchase: true,
+        },
       });
       return;
     }
@@ -168,11 +169,11 @@ export const startRealtimeInterview = async (
       userId,
       (interview._id as string).toString(),
       questions,
-      tempSessionId
+      tempSessionId,
     );
 
     console.log(
-      `✅ Realtime interview started - Session: ${sessionId}, Interview: ${interview._id}`
+      `✅ Realtime interview started - Session: ${sessionId}, Interview: ${interview._id}`,
     );
 
     res.status(201).json({
@@ -201,7 +202,7 @@ export const startRealtimeInterview = async (
  */
 export const initializeAudioConnection = async (
   req: Request,
-  res: Response
+  res: Response,
 ): Promise<void> => {
   try {
     const userId = req.user?.userId;
@@ -267,7 +268,7 @@ export const initializeAudioConnection = async (
  */
 export const completeRealtimeInterview = async (
   req: Request,
-  res: Response
+  res: Response,
 ): Promise<void> => {
   try {
     const userId = req.user?.userId;
@@ -301,7 +302,7 @@ export const completeRealtimeInterview = async (
 
     // Get interview document
     const interview = await RealtimeInterviewModel.findById(
-      session.interviewId
+      session.interviewId,
     );
 
     if (!interview) {
@@ -321,11 +322,17 @@ export const completeRealtimeInterview = async (
     // Filter out answers with empty transcripts (unanswered questions)
     interview.answers = finalAnswers
       .filter(
-        (answer) => answer.transcript && answer.transcript.trim().length > 0
+        (answer) => answer.transcript && answer.transcript.trim().length > 0,
       )
       .map((answer) => ({
         questionId: answer.questionId,
         transcript: answer.transcript,
+        conversationHistory: (answer.conversationHistory || []).map((turn) => ({
+          type: turn.type,
+          content: turn.content,
+          timestamp: new Date(turn.timestamp), // Convert number to Date
+          confidence: turn.confidence,
+        })),
         confidence: answer.confidence,
         isComplete: answer.isComplete,
         isOffTopic: answer.isOffTopic,
@@ -338,7 +345,7 @@ export const completeRealtimeInterview = async (
       }));
 
     interview.interviewMetadata = statistics;
-    interview.status = RealtimeInterviewStatus.COMPLETED;
+    interview.status = RealtimeInterviewStatus.PENDING_REVIEW; // Changed from COMPLETED to PENDING_REVIEW
     interview.completedAt = new Date();
     interview.submittedAt = new Date();
 
@@ -350,14 +357,16 @@ export const completeRealtimeInterview = async (
       // Consume the Level 5 attempt (pay-per-use)
       if (user.purchasedLevels?.level5?.remainingAttempts > 0) {
         user.purchasedLevels.level5.remainingAttempts -= 1;
-        console.log(`✅ Level 5 attempt consumed. Remaining attempts: ${user.purchasedLevels.level5.remainingAttempts}`);
+        console.log(
+          `✅ Level 5 attempt consumed. Remaining attempts: ${user.purchasedLevels.level5.remainingAttempts}`,
+        );
       }
       user.progress.level5 = "PENDING_REVIEW";
       await user.save();
     }
 
     console.log(
-      `✅ Interview completed - User ${userId} Level 5 status: PENDING_REVIEW`
+      `✅ Interview completed - User ${userId} Level 5 status: PENDING_REVIEW`,
     );
 
     // Cleanup session
@@ -390,7 +399,7 @@ export const completeRealtimeInterview = async (
  */
 export const getInterviewProgress = async (
   req: Request,
-  res: Response
+  res: Response,
 ): Promise<void> => {
   try {
     const userId = req.user?.userId;
@@ -444,7 +453,7 @@ export const getInterviewProgress = async (
  */
 export const abandonInterview = async (
   req: Request,
-  res: Response
+  res: Response,
 ): Promise<void> => {
   try {
     const userId = req.user?.userId;
@@ -490,7 +499,7 @@ export const abandonInterview = async (
  */
 export const checkActiveRealtimeInterview = async (
   req: Request,
-  res: Response
+  res: Response,
 ): Promise<void> => {
   try {
     const userId = req.user?.userId;
@@ -544,4 +553,3 @@ export const checkActiveRealtimeInterview = async (
     });
   }
 };
-

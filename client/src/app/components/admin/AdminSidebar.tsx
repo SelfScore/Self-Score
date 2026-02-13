@@ -60,6 +60,8 @@ export default function AdminSidebar() {
   const router = useRouter();
   const [counts, setCounts] = useState({
     pendingReviews: 0,
+    pendingLevel4Reviews: 0,
+    pendingLevel5Reviews: 0,
     unreadMessages: 0,
     pendingConsultants: 0,
   });
@@ -157,7 +159,9 @@ export default function AdminSidebar() {
           // Determine badge count for this item
           let badgeCount = 0;
           if (item.path === "/admin/level4-submissions") {
-            badgeCount = counts.pendingReviews;
+            badgeCount = counts.pendingLevel4Reviews;
+          } else if (item.path === "/admin/level5-submissions") {
+            badgeCount = counts.pendingLevel5Reviews;
           } else if (item.path === "/admin/messages") {
             badgeCount = counts.unreadMessages;
           } else if (item.path === "/admin/consultants") {

@@ -27,6 +27,41 @@ export default function JourneyProgress() {
   } = useLevelAccess();
 
   const [lastTestDate, setLastTestDate] = useState<string | null>(null);
+  const [isLevel4PendingReview, setIsLevel4PendingReview] = useState(false);
+
+  // Check if Level 4 is pending review (for Level 5 button state)
+  useEffect(() => {
+    const checkLevel4Status = async () => {
+      if (!user?.userId) return;
+
+      // Check if Level 4 is already completed (reviewed by admin)
+      const isLevel4Completed = progress?.completedLevels?.includes(4) || false;
+
+      if (isLevel4Completed) {
+        setIsLevel4PendingReview(false);
+        return;
+      }
+
+      // Level 4 not completed - check if it's been submitted (pending review)
+      try {
+        const { aiInterviewService } = await import("../../../services/aiInterviewService");
+        const historyResponse = await aiInterviewService.getInterviewHistory();
+
+        const hasSubmittedLevel4 = historyResponse.data?.some(
+          (interview: any) =>
+            interview.level === 4 &&
+            (interview.status === "PENDING_REVIEW" || interview.status === "REVIEWED")
+        );
+
+        setIsLevel4PendingReview(hasSubmittedLevel4);
+      } catch (error) {
+        console.error("Error checking Level 4 status:", error);
+        setIsLevel4PendingReview(false);
+      }
+    };
+
+    checkLevel4Status();
+  }, [user?.userId, progress]);
 
   const highestUnlockedLevel = getHighestUnlockedLevel();
   const isLevel5Purchased = isLevelPurchased(5);
@@ -404,7 +439,7 @@ export default function JourneyProgress() {
                   lineHeight: 1.2,
                 }}
               >
-                AI Voice Interview - Level 5
+                BONUS: AI-Assisted Consultation
               </Typography>
 
               {/* Description */}
@@ -418,7 +453,7 @@ export default function JourneyProgress() {
                 }}
               >
                 {isLevel5Purchased
-                  ? "Experience a conversational AI-powered voice interview. Speak naturally, and our AI will analyze your responses in real-time for deeper insights."
+                  ? "Step into a private, guided voice conversation designed to explore your thinking, emotional depth, and clarity in real time. Speak naturally. The AI listens, understands patterns, and delivers thoughtful insights tailored specifically to you."
                   : "Unlock Level 4 bundle to access this premium Level 5 voice interview feature with AI-powered analysis."}
               </Typography>
 
@@ -443,7 +478,7 @@ export default function JourneyProgress() {
                         fontFamily: "Source Sans Pro",
                       }}
                     >
-                      Natural conversation with AI
+                      Live, natural voice conversation
                     </Typography>
                   </Box>
                   <Box sx={{ display: "flex", alignItems: "center", gap: 1.5 }}>
@@ -457,7 +492,7 @@ export default function JourneyProgress() {
                         fontFamily: "Source Sans Pro",
                       }}
                     >
-                      Real-time voice interaction
+                      Intelligent follow-up questions
                     </Typography>
                   </Box>
                   <Box sx={{ display: "flex", alignItems: "center", gap: 1.5 }}>
@@ -471,7 +506,7 @@ export default function JourneyProgress() {
                         fontFamily: "Source Sans Pro",
                       }}
                     >
-                      Comprehensive AI analysis
+                      Deep personalized insight report
                     </Typography>
                   </Box>
                 </Box>
@@ -533,30 +568,49 @@ export default function JourneyProgress() {
                     }}
                   />
                 ) : (
-                  // Has attempts - "Start Voice Interview" only
-                  <ButtonSelfScore
-                    text={
-                      <Box
-                        sx={{ display: "flex", alignItems: "center", gap: 1 }}
+                  // Has attempts - "Start Voice Interview" or disabled if Level 4 pending
+                  <>
+                    <ButtonSelfScore
+                      text={
+                        <Box
+                          sx={{ display: "flex", alignItems: "center", gap: 1 }}
+                        >
+                          <MicIcon sx={{ fontSize: "18px" }} />
+                          <span>Begin Your Private Voice Session</span>
+                        </Box>
+                      }
+                      onClick={() =>
+                        router.push("/user/test?level=5&mode=voice")
+                      }
+                      fontSize={"16px"}
+                      fullWidth={false}
+                      disabled={isLevel4PendingReview}
+                      style={{
+                        backgroundColor: isLevel4PendingReview ? "#CCCCCC" : "#E87A42",
+                        padding: "12px 24px",
+                        cursor: isLevel4PendingReview ? "not-allowed" : "pointer",
+                        opacity: isLevel4PendingReview ? 0.6 : 1,
+                      }}
+                      textStyle={{
+                        color: "#fff",
+                        fontWeight: 600,
+                      }}
+                    />
+                    {isLevel4PendingReview && (
+                      <Typography
+                        sx={{
+                          fontSize: "13px",
+                          color: "#E87A42",
+                          mt: 1.5,
+                          fontFamily: "Source Sans Pro",
+                          fontStyle: "italic",
+                          textAlign: "center",
+                        }}
                       >
-                        <MicIcon sx={{ fontSize: "18px" }} />
-                        <span>Start Voice Interview ({level5RemainingAttempts} attempt{level5RemainingAttempts !== 1 ? 's' : ''} left)</span>
-                      </Box>
-                    }
-                    onClick={() =>
-                      router.push("/user/test?level=5&mode=voice")
-                    }
-                    fontSize={"16px"}
-                    fullWidth={false}
-                    style={{
-                      backgroundColor: "#E87A42",
-                      padding: "12px 24px",
-                    }}
-                    textStyle={{
-                      color: "#fff",
-                      fontWeight: 600,
-                    }}
-                  />
+                        Level 4 review is pending. You can attempt Level 5 after admin reviews your Level 4 submission.
+                      </Typography>
+                    )}
+                  </>
                 )}
               </Box>
             </Box>

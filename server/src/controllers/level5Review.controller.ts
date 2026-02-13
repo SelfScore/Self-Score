@@ -12,7 +12,7 @@ import { sendLevel5ReviewCompleteEmail } from "../lib/email";
  */
 export const getAllLevel5Submissions = async (
   req: Request,
-  res: Response
+  res: Response,
 ): Promise<void> => {
   try {
     const {
@@ -30,7 +30,7 @@ export const getAllLevel5Submissions = async (
     const matchStage: any = {
       level: 5,
       status: {
-        $in: [RealtimeInterviewStatus.COMPLETED, "PENDING_REVIEW", "REVIEWED"],
+        $in: ["PENDING_REVIEW", "REVIEWED"],
       },
     };
 
@@ -155,7 +155,7 @@ export const getAllLevel5Submissions = async (
  */
 export const getLevel5SubmissionById = async (
   req: Request,
-  res: Response
+  res: Response,
 ): Promise<void> => {
   try {
     const { interviewId } = req.params;
@@ -199,7 +199,7 @@ export const getLevel5SubmissionById = async (
  */
 export const saveLevel5Review = async (
   req: Request,
-  res: Response
+  res: Response,
 ): Promise<void> => {
   try {
     const adminId = (req as any).admin?.adminId;
@@ -225,13 +225,50 @@ export const saveLevel5Review = async (
       return;
     }
 
+    // Validate questionReviews
+    if (
+      !questionReviews ||
+      !Array.isArray(questionReviews) ||
+      questionReviews.length !== 25
+    ) {
+      res.status(400).json({
+        success: false,
+        message: "Exactly 25 question reviews are required for Level 5",
+      });
+      return;
+    }
+
+    // Validate question scores are within 0-100 range
+    const invalidScores = questionReviews.filter(
+      (qr: any) => qr.score < 0 || qr.score > 100,
+    );
+    if (invalidScores.length > 0) {
+      res.status(400).json({
+        success: false,
+        message: "All question scores must be between 0 and 100",
+      });
+      return;
+    }
+
+    // Calculate raw score (sum of all question scores)
+    const rawScore = questionReviews.reduce(
+      (sum: number, qr: any) => sum + (qr.score || 0),
+      0,
+    );
+
+    // Apply Level 5 formula: rawScore * (900/500)
+    const calculatedScore = rawScore * (900 / 500);
+
+    // Clamp total score to 350-900 range
+    const finalScore = Math.min(Math.max(calculatedScore, 350), 900);
+
     // Check for existing review
     let review = await Level5ReviewModel.findOne({ interviewId });
 
     if (review) {
       // Update existing review
       review.questionReviews = questionReviews;
-      review.totalScore = totalScore;
+      review.totalScore = finalScore;
       review.adminId = adminId;
       review.reviewedAt = new Date();
       await review.save();
@@ -248,7 +285,7 @@ export const saveLevel5Review = async (
         adminId,
         attemptNumber: previousAttempts + 1,
         questionReviews,
-        totalScore,
+        totalScore: finalScore,
         status: ReviewStatus.DRAFT,
         reviewedAt: new Date(),
       });
@@ -274,7 +311,7 @@ export const saveLevel5Review = async (
  */
 export const submitLevel5Review = async (
   req: Request,
-  res: Response
+  res: Response,
 ): Promise<void> => {
   try {
     const adminId = (req as any).admin?.adminId;
@@ -300,13 +337,56 @@ export const submitLevel5Review = async (
       return;
     }
 
+    // Validate questionReviews
+    if (
+      !questionReviews ||
+      !Array.isArray(questionReviews) ||
+      questionReviews.length !== 25
+    ) {
+      res.status(400).json({
+        success: false,
+        message: "Exactly 25 question reviews are required for Level 5",
+      });
+      return;
+    }
+
+    // Validate all questions have scores (0-100) and remarks
+    const invalidReviews = questionReviews.filter(
+      (qr: any) =>
+        qr.score == null ||
+        qr.score < 0 ||
+        qr.score > 100 ||
+        !qr.remark ||
+        qr.remark.trim() === "",
+    );
+
+    if (invalidReviews.length > 0) {
+      res.status(400).json({
+        success: false,
+        message: "All questions must have a score (0-100) and a remark",
+      });
+      return;
+    }
+
+    // Calculate raw score (sum of all question scores)
+    const rawScore = questionReviews.reduce(
+      (sum: number, qr: any) => sum + qr.score,
+      0,
+    );
+
+    // Apply Level 5 formula: rawScore * (900/500)
+    const calculatedScore = rawScore * (900 / 500);
+
+    // Clamp total score to 350-900 range
+    const finalScore = Math.min(Math.max(calculatedScore, 350), 900);
+
     // Check for existing review
     let review = await Level5ReviewModel.findOne({ interviewId });
 
     if (review) {
       // Update existing review and submit
       review.questionReviews = questionReviews;
-      review.totalScore = totalScore;
+      review.totalScore = finalScore;
       review.adminId = adminId;
       review.status = ReviewStatus.SUBMITTED;
       review.reviewedAt = new Date();
@@ -325,7 +405,7 @@ export const submitLevel5Review = async (
         adminId,
         attemptNumber: previousAttempts + 1,
         questionReviews,
-        totalScore,
+        totalScore: finalScore,
         status: ReviewStatus.SUBMITTED,
         reviewedAt: new Date(),
         submittedAt: new Date(),
@@ -345,7 +425,7 @@ export const submitLevel5Review = async (
       if (!user.scores) {
         user.scores = {};
       }
-      user.scores.level5 = totalScore;
+      user.scores.level5 = finalScore;
 
       // Update progress
       if (!user.progress) {
@@ -360,7 +440,7 @@ export const submitLevel5Review = async (
       if (!user.progress.testScores) {
         user.progress.testScores = {};
       }
-      user.progress.testScores.level5 = totalScore;
+      user.progress.testScores.level5 = finalScore;
 
       // Add to completedLevels if not already there
       if (!user.progress.completedLevels.includes(5)) {
@@ -377,7 +457,7 @@ export const submitLevel5Review = async (
     try {
       await sendLevel5ReviewCompleteEmail(
         interview.userId.toString(),
-        totalScore
+        totalScore,
       );
     } catch (emailError) {
       console.error("Failed to send review email:", emailError);
@@ -404,7 +484,7 @@ export const submitLevel5Review = async (
  */
 export const getUserLevel5Review = async (
   req: Request,
-  res: Response
+  res: Response,
 ): Promise<void> => {
   try {
     const userId = req.user?.userId;

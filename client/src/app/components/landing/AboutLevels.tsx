@@ -57,11 +57,11 @@ export default function AboutLevels() {
     },
     {
       id: 5,
-      title: "Level 5",
-      name: "Excellence",
-      price: "Bonus Included with level 4",
+      title: "Bonus",
+      name: "AI-Assisted Consultation",
+      price: "Included with level 4",
       description:
-        "This advanced stage represents the pinnacle of personal development. You'll embody wisdom, demonstrate consistent growth, and serve as a guide for others. This level is about continuous refinement, lasting impact, and creating a legacy of positive transformation.",
+        "This stage is a one-on-one reflective conversation. It explores your thinking patterns, emotional maturity, and self-awareness in depth. The AI Interview is a private, high-level reflective dialogue designed for those who seek depth beyond surface insight. This is not a questionnaire; it is a curated conversation that explores your thinking patterns, emotional intelligence, and inner alignment.",
     },
   ];
 
@@ -344,7 +344,7 @@ export default function AboutLevels() {
                         component="span"
                         sx={{ display: { xs: "inline", md: "none" } }}
                       >
-                        L{level.id}
+                        {level.id === 5 ? "Bonus" : `L${level.id}`}
                       </Box>
                     </Typography>
                   </Box>
@@ -391,7 +391,10 @@ export default function AboutLevels() {
                   fontSize: { xs: "1.5rem", md: "2.125rem" },
                 }}
               >
-                {levels[activeTab].title}: {levels[activeTab].name}
+                {/* Show only name for Level 5, show "Level X: Name" for others */}
+                {activeTab === 4
+                  ? levels[activeTab].name
+                  : `${levels[activeTab].title}: ${levels[activeTab].name}`}
               </Typography>
               <Box
                 sx={{

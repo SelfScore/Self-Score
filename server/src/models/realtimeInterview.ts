@@ -8,9 +8,17 @@ export enum RealtimeInterviewStatus {
   ABANDONED = "ABANDONED",
 }
 
+export interface ConversationTurn {
+  type: "main_answer" | "follow_up_question" | "follow_up_answer" | "redirect";
+  content: string;
+  timestamp: Date;
+  confidence?: number; // Only for answers
+}
+
 export interface AnswerState {
   questionId: string;
-  transcript: string; // Verbatim answer
+  transcript: string; // Verbatim answer (full conversation merged for backward compatibility)
+  conversationHistory: ConversationTurn[]; // Structured conversation flow
   confidence: number; // 0-100 (from Gemini Flash)
   isComplete: boolean;
   isOffTopic: boolean;
@@ -59,6 +67,36 @@ const AnswerStateSchema = new Schema(
       type: String,
       required: true,
     },
+    conversationHistory: {
+      type: [
+        {
+          type: {
+            type: String,
+            enum: [
+              "main_answer",
+              "follow_up_question",
+              "follow_up_answer",
+              "redirect",
+            ],
+            required: true,
+          },
+          content: {
+            type: String,
+            required: true,
+          },
+          timestamp: {
+            type: Date,
+            required: true,
+          },
+          confidence: {
+            type: Number,
+            min: 0,
+            max: 100,
+          },
+        },
+      ],
+      default: [],
+    },
     confidence: {
       type: Number,
       required: true,
@@ -92,7 +130,7 @@ const AnswerStateSchema = new Schema(
       },
     },
   },
-  { _id: false }
+  { _id: false },
 );
 
 const RealtimeInterviewSchema: Schema<RealtimeInterview> = new Schema(
@@ -166,7 +204,7 @@ const RealtimeInterviewSchema: Schema<RealtimeInterview> = new Schema(
   },
   {
     timestamps: true,
-  }
+  },
 );
 
 // Indexes for efficient querying
@@ -175,7 +213,7 @@ RealtimeInterviewSchema.index({ userId: 1, status: 1 });
 
 const RealtimeInterviewModel = mongoose.model<RealtimeInterview>(
   "RealtimeInterview",
-  RealtimeInterviewSchema
+  RealtimeInterviewSchema,
 );
 
 export default RealtimeInterviewModel;

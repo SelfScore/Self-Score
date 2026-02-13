@@ -9,6 +9,7 @@ export interface Question {
 export interface AnswerState {
   questionId: string;
   transcript: string;
+  conversationHistory?: ConversationTurn[]; // Optional for backward compatibility
   confidence: number;
   isComplete: boolean;
   isOffTopic: boolean;
@@ -18,6 +19,13 @@ export interface AnswerState {
   followUpCount: number; // Track number of follow-ups asked (max 3)
   redirectCount?: number; // Track number of redirects given (max 2)
   audioStartTime: number;
+}
+
+export interface ConversationTurn {
+  type: "main_answer" | "follow_up_question" | "follow_up_answer" | "redirect";
+  content: string;
+  timestamp: number;
+  confidence?: number; // Only for answer turns
 }
 
 export interface InterviewSession {
