@@ -224,6 +224,7 @@ const Footer: React.FC = () => {
           href="https://www.instagram.com/YourProfile"
           target="_blank"
           rel="noopener noreferrer"
+          aria-label="Instagram"
           sx={{ color: "#F7F7F7" }}
         >
           <Box
@@ -250,6 +251,7 @@ const Footer: React.FC = () => {
           href="https://www.linkedin.com/YourProfile"
           target="_blank"
           rel="noopener noreferrer"
+          aria-label="LinkedIn"
           sx={{ color: "#F7F7F7" }}
         >
           <Box
@@ -271,7 +273,7 @@ const Footer: React.FC = () => {
               }}
             />
           </Box>
-          </Link>
+        </Link>
       </Box>
 
       {/* self score text  */}
@@ -345,6 +347,7 @@ const Footer: React.FC = () => {
               letterSpacing: "0%",
               verticalAlign: "middle",
               color: "#F7F7F7",
+              textDecoration: "underline",
             }}
           >
             Privacy Policy
@@ -359,6 +362,7 @@ const Footer: React.FC = () => {
               letterSpacing: "0%",
               verticalAlign: "middle",
               color: "#F7F7F7",
+              textDecoration: "underline",
             }}
           >
             Terms of Service
@@ -373,6 +377,7 @@ const Footer: React.FC = () => {
               letterSpacing: "0%",
               verticalAlign: "middle",
               color: "#F7F7F7",
+              textDecoration: "underline",
             }}
           >
             Refund Policy

@@ -391,10 +391,7 @@ const ContactUs: React.FC = () => {
                   href="/privacy-policy"
                   sx={{
                     color: "#FF5722",
-                    textDecoration: "none",
-                    "&:hover": {
-                      textDecoration: "underline",
-                    },
+                    textDecoration: "underline",
                   }}
                 >
                   Privacy Policy
