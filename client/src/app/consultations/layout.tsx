@@ -14,10 +14,10 @@ export const metadata: Metadata = {
         title: "Consultation | Personal Growth & Self Awareness Guidance",
         description:
             "Book a personalised consultation for deeper insight into your life goals. Get supportive guidance for self-reflection, inner balance, life purpose, and happiness.",
-        url: "https://selfscore.net/consultations/",
+        url: "https://www.selfscore.net/consultations/",
     },
     alternates: {
-        canonical: "https://selfscore.net/consultations/",
+        canonical: "https://www.selfscore.net/consultations/",
     },
 };
 

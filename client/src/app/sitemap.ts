@@ -40,7 +40,7 @@ async function getBlogPosts(): Promise<WordPressPost[]> {
 }
 
 export default async function sitemap(): Promise<MetadataRoute.Sitemap> {
-  const baseUrl = "https://selfscore.net";
+  const baseUrl = "https://www.selfscore.net";
 
   // Static pages with their priorities
   const staticPages: MetadataRoute.Sitemap = [

@@ -18,10 +18,10 @@ export const metadata: Metadata = {
     title: "Self Score Blog | Personal Growth, Mindfulness & Self Awareness Insights",
     description:
       "Read the Self Score blog for practical tips on self-improvement, happiness, mindfulness, inner peace, personal growth, and spiritual reflection.",
-    url: "https://selfscore.net/blogs/",
+    url: "https://www.selfscore.net/blogs/",
   },
   alternates: {
-    canonical: "https://selfscore.net/blogs/",
+    canonical: "https://www.selfscore.net/blogs/",
   },
 };
 // Server Component - Fetch data at request time (SSR)

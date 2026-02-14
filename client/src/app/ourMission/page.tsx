@@ -17,10 +17,10 @@ export const metadata: Metadata = {
     title: "Our Mission | Self Score: Transform Yourself, Transform the World",
     description:
       "Discover how improving the self leads to a peaceful, meaningful life and contributes to a better world.",
-    url: "https://selfscore.net/ourMission/",
+    url: "https://www.selfscore.net/ourMission/",
   },
   alternates: {
-    canonical: "https://selfscore.net/ourMission/",
+    canonical: "https://www.selfscore.net/ourMission/",
   },
 };
 

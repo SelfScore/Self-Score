@@ -3,35 +3,19 @@ import type { MetadataRoute } from "next";
 export const dynamic = "force-static";
 
 export default function robots(): MetadataRoute.Robots {
-  const baseUrl = "https://selfscore.net";
-
   return {
-    rules: [
-      {
-        userAgent: "*",
-        allow: [
-          "/",
-          "/ourMission/",
-          "/testInfo/",
-          "/contact/",
-          "/consultations/",
-          "/blogs/",
-          "/blog/",
-        ],
-        disallow: [
-          "/user/",
-          "/admin/",
-          "/consultant/",
-          "/auth/",
-          "/api/",
-          "/privacy-policy/",
-          "/terms-conditions/",
-          "/refund-policy/",
-          "/selfscoretest/",
-          "/shared-report/",
-        ],
-      },
-    ],
-    sitemap: `${baseUrl}/sitemap.xml`,
+    rules: {
+      userAgent: "*",
+      disallow: [
+        "/user/",
+        "/admin/",
+        "/consultant/",
+        "/auth/",
+        "/api/",
+        "/selfscoretest/",
+        "/shared-report/",
+      ],
+    },
+    sitemap: "https://www.selfscore.net/sitemap.xml",
   };
 }

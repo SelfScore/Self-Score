@@ -16,10 +16,10 @@ export const metadata: Metadata = {
         title: "Self Score Test | Personal Growth & Life Awareness Assessment",
         description:
             "Find your personal happiness score, inner peace level, and growth path with guided reflective questions designed for deep insight.",
-        url: "https://selfscore.net/testInfo/",
+        url: "https://www.selfscore.net/testInfo/",
     },
     alternates: {
-        canonical: "https://selfscore.net/testInfo/",
+        canonical: "https://www.selfscore.net/testInfo/",
     },
 };
 

@@ -30,7 +30,7 @@ const spaceGrotesk = Space_Grotesk({
 });
 
 // Base URL for the website
-const baseUrl = "https://selfscore.net";
+const baseUrl = "https://www.selfscore.net";
 
 export const metadata: Metadata = {
   metadataBase: new URL(baseUrl),

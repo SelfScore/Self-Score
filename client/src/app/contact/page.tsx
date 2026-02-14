@@ -16,10 +16,10 @@ export const metadata: Metadata = {
     title: "Contact Self Score | Reach Out for Support & Questions",
     description:
       "Have questions about Self Score, assessments, or how to begin your self-discovery journey? Reach our support team today.",
-    url: "https://selfscore.net/contact/",
+    url: "https://www.selfscore.net/contact/",
   },
   alternates: {
-    canonical: "https://selfscore.net/contact/",
+    canonical: "https://www.selfscore.net/contact/",
   },
 };
 export default function ContactUsPage() {

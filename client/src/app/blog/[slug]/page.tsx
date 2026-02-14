@@ -28,15 +28,15 @@ export async function generateMetadata({
     openGraph: {
       title: blog.title,
       description: blog.description,
-      url: `https://selfscore.net/blog/${slug}/`,
+      url: `https://www.selfscore.net/blog/${slug}/`,
       type: "article",
       images: blog.image
         ? [
-            {
-              url: blog.image,
-              alt: blog.title,
-            },
-          ]
+          {
+            url: blog.image,
+            alt: blog.title,
+          },
+        ]
         : undefined,
     },
     twitter: {
@@ -46,7 +46,7 @@ export async function generateMetadata({
       images: blog.image ? [blog.image] : undefined,
     },
     alternates: {
-      canonical: `https://selfscore.net/blog/${slug}/`,
+      canonical: `https://www.selfscore.net/blog/${slug}/`,
     },
   };
 }
