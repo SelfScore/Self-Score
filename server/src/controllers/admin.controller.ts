@@ -272,10 +272,98 @@ export class AdminController {
         return;
       }
 
-      // Get user's test history
-      const testHistory = await TestSubmissionModel.find({ userId })
+      // Get user's test history from Levels 1-3
+      const level123Tests = await TestSubmissionModel.find({ userId })
         .sort({ submittedAt: -1 })
         .lean();
+
+      // Get Level 4 interviews (only REVIEWED ones)
+      const level4Interviews = await AIInterviewModel.find({
+        userId,
+        level: 4,
+        status: "REVIEWED",
+      }).lean();
+
+      // Get Level 4 reviews to fetch scores
+      const level4Reviews = await (
+        await import("../models/level4Review")
+      ).default
+        .find({
+          userId,
+          status: "SUBMITTED",
+        })
+        .lean();
+
+      // Get Level 5 interviews (only REVIEWED ones)
+      const level5Interviews = await RealtimeInterviewModel.find({
+        userId,
+        level: 5,
+        status: "REVIEWED",
+      }).lean();
+
+      // Get Level 5 reviews to fetch scores
+      const level5Reviews = await (
+        await import("../models/level5Review")
+      ).default
+        .find({
+          userId,
+          status: "SUBMITTED",
+        })
+        .lean();
+
+      // Create a map of interviewId to review for Level 4
+      const level4ReviewMap = new Map();
+      level4Reviews.forEach((review: any) => {
+        level4ReviewMap.set(review.interviewId.toString(), review);
+      });
+
+      // Create a map of interviewId to review for Level 5
+      const level5ReviewMap = new Map();
+      level5Reviews.forEach((review: any) => {
+        level5ReviewMap.set(review.interviewId.toString(), review);
+      });
+
+      // Transform Level 4 data
+      const level4History = level4Interviews.map((interview: any) => {
+        const review = level4ReviewMap.get(interview._id.toString());
+        return {
+          _id: interview._id.toString(),
+          level: 4,
+          score: review ? review.totalScore : null,
+          totalQuestions: 25,
+          timeSpent: null,
+          submittedAt: interview.submittedAt || interview.completedAt,
+          attemptNumber: interview.attemptNumber,
+          mode: interview.mode, // TEXT or VOICE
+          status: "REVIEWED",
+        };
+      });
+
+      // Transform Level 5 data
+      const level5History = level5Interviews.map((interview: any) => {
+        const review = level5ReviewMap.get(interview._id.toString());
+        return {
+          _id: interview._id.toString(),
+          level: 5,
+          score: review ? review.totalScore : null,
+          totalQuestions: review ? review.questionReviews?.length : null,
+          timeSpent: null,
+          submittedAt: interview.submittedAt || interview.completedAt,
+          attemptNumber: interview.attemptNumber,
+          mode: "VOICE",
+          status: "REVIEWED",
+        };
+      });
+
+      // Merge all test history and sort by submission date
+      const testHistory = [
+        ...level123Tests,
+        ...level4History,
+        ...level5History,
+      ].sort(
+        (a: any, b: any) =>
+          new Date(b.submittedAt).getTime() - new Date(a.submittedAt).getTime(),
+      );
 
       // Get user's payment history
       const paymentHistory = await PaymentModel.find({ userId })

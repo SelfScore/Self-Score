@@ -1,27 +1,28 @@
 // Level 4 Report Score Summary Page - With Pagination Support
 
-import { Level4ReportData } from './types';
+import { Level4ReportData } from "./types";
 
-const QUESTIONS_FIRST_PAGE = 8;  // First page has less space due to overall score card
+const QUESTIONS_FIRST_PAGE = 8; // First page has less space due to overall score card
 const QUESTIONS_PER_OVERFLOW_PAGE = 12; // Overflow pages can fit more (2 columns x 6 rows)
 
-
-export const generateLevel4ScoreSummaryPage = (data: Level4ReportData): string => {
+export const generateLevel4ScoreSummaryPage = (
+  data: Level4ReportData,
+): string => {
   const getScoreColor = (score: number): string => {
-    if (score >= 800) return '#4CAF50';
-    if (score >= 700) return '#8BC34A';
-    if (score >= 600) return '#FFC107';
-    if (score >= 500) return '#FF9800';
-    return '#F44336';
+    if (score >= 800) return "#4CAF50";
+    if (score >= 700) return "#8BC34A";
+    if (score >= 600) return "#FFC107";
+    if (score >= 500) return "#FF9800";
+    return "#F44336";
   };
 
   const getScoreLabel = (score: number): string => {
-    if (score >= 800) return 'Outstanding';
-    if (score >= 700) return 'Excellent';
-    if (score >= 600) return 'Very Good';
-    if (score >= 500) return 'Good';
-    if (score >= 400) return 'Satisfactory';
-    return 'Needs Improvement';
+    if (score >= 800) return "Outstanding";
+    if (score >= 700) return "Excellent";
+    if (score >= 600) return "Very Good";
+    if (score >= 500) return "Good";
+    if (score >= 400) return "Satisfactory";
+    return "Needs Improvement";
   };
 
   const scorePercentage = ((data.totalScore / 900) * 100).toFixed(1);
@@ -31,12 +32,17 @@ export const generateLevel4ScoreSummaryPage = (data: Level4ReportData): string =
   // Calculate total pages needed for question breakdown
   const totalQuestions = data.questionReviews.length;
   const needsOverflow = totalQuestions > QUESTIONS_FIRST_PAGE;
-  const firstPageQuestions = data.questionReviews.slice(0, QUESTIONS_FIRST_PAGE);
+  const firstPageQuestions = data.questionReviews.slice(
+    0,
+    QUESTIONS_FIRST_PAGE,
+  );
   const overflowQuestions = data.questionReviews.slice(QUESTIONS_FIRST_PAGE);
 
   // Generate question grid HTML
   const generateQuestionGrid = (questions: typeof data.questionReviews) => {
-    return questions.map((review) => `
+    return questions
+      .map(
+        (review) => `
       <div style="
         background: #F7F7F780;
         border-left: 4px solid #0C677A;
@@ -74,7 +80,9 @@ export const generateLevel4ScoreSummaryPage = (data: Level4ReportData): string =
           ${review.answerMode} Mode
         </div>
       </div>
-    `).join('');
+    `,
+      )
+      .join("");
   };
 
   // First page with overall score and first set of questions
@@ -189,7 +197,7 @@ export const generateLevel4ScoreSummaryPage = (data: Level4ReportData): string =
           font-size: 24px;
           font-weight: 600;
           margin-bottom: 20px;
-        ">Question-wise Performance${needsOverflow ? ' (Page 1)' : ''}</h3>
+        ">Question-wise Performance${needsOverflow ? " (Page 1)" : ""}</h3>
         
         <div style="
           display: grid;
@@ -220,15 +228,21 @@ export const generateLevel4ScoreSummaryPage = (data: Level4ReportData): string =
   `;
 
   // Generate overflow pages if needed
-  let overflowPages = '';
+  let overflowPages = "";
   if (needsOverflow) {
     // Split remaining questions into chunks of QUESTIONS_PER_OVERFLOW_PAGE
-    const chunks: typeof data.questionReviews[] = [];
-    for (let i = 0; i < overflowQuestions.length; i += QUESTIONS_PER_OVERFLOW_PAGE) {
+    const chunks: (typeof data.questionReviews)[] = [];
+    for (
+      let i = 0;
+      i < overflowQuestions.length;
+      i += QUESTIONS_PER_OVERFLOW_PAGE
+    ) {
       chunks.push(overflowQuestions.slice(i, i + QUESTIONS_PER_OVERFLOW_PAGE));
     }
 
-    overflowPages = chunks.map((chunk, pageIndex) => `
+    overflowPages = chunks
+      .map(
+        (chunk, pageIndex) => `
       <div class="report-page" style="
         background: #FFFFFF;
         padding: 40px;
@@ -289,7 +303,54 @@ export const generateLevel4ScoreSummaryPage = (data: Level4ReportData): string =
         </div>
 
         <!-- Score Interpretation on last overflow page -->
-        ${pageIndex === chunks.length - 1 ? `
+        ${
+          pageIndex === chunks.length - 1
+            ? `
+          <!-- Resources Card -->
+          <div style="
+            background: white;
+            border: 2px solid #0C677A;
+            border-radius: 12px;
+            padding: 16px 20px;
+            margin-bottom: 24px;
+            margin-top: auto;
+            position: relative;
+            z-index: 1;
+          ">
+            <div style="
+              display: flex;
+              align-items: center;
+              gap: 12px;
+              margin-bottom: 12px;
+            ">
+              <div style="
+                width: 36px;
+                height: 36px;
+                background: #0C677A;
+                border-radius: 50%;
+                display: flex;
+                align-items: center;
+                justify-content: center;
+              ">
+                <svg width="20" height="20" viewBox="0 0 24 24" fill="none">
+                  <path d="M4 19.5C4 18.837 4.26339 18.2011 4.73223 17.7322C5.20107 17.2634 5.83696 17 6.5 17H20" stroke="white" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"/>
+                  <path d="M6.5 2H20V22H6.5C5.83696 22 5.20107 21.7366 4.73223 21.2678C4.26339 20.7989 4 20.163 4 19.5V4.5C4 3.83696 4.26339 3.20107 4.73223 2.73223C5.20107 2.26339 5.83696 2 6.5 2Z" stroke="white" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"/>
+                </svg>
+              </div>
+              <span style="
+                font-size: 18px;
+                font-weight: 700;
+                color: #2B2B2B;
+              ">Resources</span>
+            </div>
+            <p style="
+              font-size: 14px;
+              color: #666;
+              margin: 0;
+              line-height: 1.5;
+            ">Explore additional resources and support for your journey at <a href="https://ved.org/" style="color: #0C677A; text-decoration: underline; font-weight: 600;">ved.org</a></p>
+          </div>
+
           <div style="
             background: #FFEBE4;
             border-left: 4px solid #E87A42;
@@ -297,7 +358,6 @@ export const generateLevel4ScoreSummaryPage = (data: Level4ReportData): string =
             border-radius: 8px;
             position: relative;
             z-index: 1;
-            margin-top: auto;
             margin-bottom: 50px;
           ">
             <h4 style="
@@ -311,21 +371,24 @@ export const generateLevel4ScoreSummaryPage = (data: Level4ReportData): string =
               font-size: 14px;
               line-height: 1.6;
             ">
-              ${data.totalScore >= 800
-          ? 'Exceptional performance! You have demonstrated outstanding mastery of Level 4 concepts and skills.'
-          : data.totalScore >= 700
-            ? 'Excellent work! You show strong understanding and application of Level 4 principles.'
-            : data.totalScore >= 600
-              ? 'Very good performance. You have a solid grasp of Level 4 concepts with room for refinement.'
-              : data.totalScore >= 500
-                ? 'Good effort! You understand the fundamentals but should focus on strengthening key areas.'
-                : data.totalScore >= 400
-                  ? 'Satisfactory performance. Consider reviewing the material and practicing more to improve.'
-                  : 'You may benefit from additional study and practice. Review the expert feedback carefully.'
-        }
+              ${
+                data.totalScore >= 800
+                  ? "Exceptional performance! You have demonstrated outstanding mastery of Level 4 concepts and skills."
+                  : data.totalScore >= 700
+                    ? "Excellent work! You show strong understanding and application of Level 4 principles."
+                    : data.totalScore >= 600
+                      ? "Very good performance. You have a solid grasp of Level 4 concepts with room for refinement."
+                      : data.totalScore >= 500
+                        ? "Good effort! You understand the fundamentals but should focus on strengthening key areas."
+                        : data.totalScore >= 400
+                          ? "Satisfactory performance. Consider reviewing the material and practicing more to improve."
+                          : "You may benefit from additional study and practice. Review the expert feedback carefully."
+              }
             </div>
           </div>
-        ` : ''}
+        `
+            : ""
+        }
 
         <!-- Page Number -->
         <div style="
@@ -344,11 +407,61 @@ export const generateLevel4ScoreSummaryPage = (data: Level4ReportData): string =
           text-align: center;
         ">3.${pageIndex + 1}</div>
       </div>
-    `).join('');
+    `,
+      )
+      .join("");
   }
 
   // Add score interpretation to first page only if no overflow
-  const scoreInterpretation = !needsOverflow ? `
+  const scoreInterpretation = !needsOverflow
+    ? `
+    <!-- Resources Card -->
+    <div style="
+      background: white;
+      border: 2px solid #0C677A;
+      border-radius: 12px;
+      padding: 16px 20px;
+      margin-bottom: 24px;
+      position: absolute;
+      bottom: 160px;
+      left: 40px;
+      right: 40px;
+      z-index: 1;
+    ">
+      <div style="
+        display: flex;
+        align-items: center;
+        gap: 12px;
+        margin-bottom: 12px;
+      ">
+        <div style="
+          width: 36px;
+          height: 36px;
+          background: #0C677A;
+          border-radius: 50%;
+          display: flex;
+          align-items: center;
+          justify-content: center;
+        ">
+          <svg width="20" height="20" viewBox="0 0 24 24" fill="none">
+            <path d="M4 19.5C4 18.837 4.26339 18.2011 4.73223 17.7322C5.20107 17.2634 5.83696 17 6.5 17H20" stroke="white" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"/>
+            <path d="M6.5 2H20V22H6.5C5.83696 22 5.20107 21.7366 4.73223 21.2678C4.26339 20.7989 4 20.163 4 19.5V4.5C4 3.83696 4.26339 3.20107 4.73223 2.73223C5.20107 2.26339 5.83696 2 6.5 2Z" stroke="white" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"/>
+          </svg>
+        </div>
+        <span style="
+          font-size: 18px;
+          font-weight: 700;
+          color: #2B2B2B;
+        ">Resources</span>
+      </div>
+      <p style="
+        font-size: 14px;
+        color: #666;
+        margin: 0;
+        line-height: 1.5;
+      ">Explore additional resources and support for your journey at <a href="https://ved.org/" style="color: #0C677A; text-decoration: underline; font-weight: 600;">ved.org</a></p>
+    </div>
+
     <!-- Score Interpretation -->
     <div style="
       background: #FFEBE4;
@@ -372,26 +485,31 @@ export const generateLevel4ScoreSummaryPage = (data: Level4ReportData): string =
         font-size: 14px;
         line-height: 1.6;
       ">
-        ${data.totalScore >= 800
-      ? 'Exceptional performance! You have demonstrated outstanding mastery of Level 4 concepts and skills.'
-      : data.totalScore >= 700
-        ? 'Excellent work! You show strong understanding and application of Level 4 principles.'
-        : data.totalScore >= 600
-          ? 'Very good performance. You have a solid grasp of Level 4 concepts with room for refinement.'
-          : data.totalScore >= 500
-            ? 'Good effort! You understand the fundamentals but should focus on strengthening key areas.'
-            : data.totalScore >= 400
-              ? 'Satisfactory performance. Consider reviewing the material and practicing more to improve.'
-              : 'You may benefit from additional study and practice. Review the expert feedback carefully.'
-    }
+        ${
+          data.totalScore >= 800
+            ? "Exceptional performance! You have demonstrated outstanding mastery of Level 4 concepts and skills."
+            : data.totalScore >= 700
+              ? "Excellent work! You show strong understanding and application of Level 4 principles."
+              : data.totalScore >= 600
+                ? "Very good performance. You have a solid grasp of Level 4 concepts with room for refinement."
+                : data.totalScore >= 500
+                  ? "Good effort! You understand the fundamentals but should focus on strengthening key areas."
+                  : data.totalScore >= 400
+                    ? "Satisfactory performance. Consider reviewing the material and practicing more to improve."
+                    : "You may benefit from additional study and practice. Review the expert feedback carefully."
+        }
       </div>
     </div>
-  ` : '';
+  `
+    : "";
 
   // Insert score interpretation into first page if no overflow
   const firstPageWithInterpretation = needsOverflow
     ? firstPage
-    : firstPage.replace('<!-- Page Number -->', scoreInterpretation + '<!-- Page Number -->');
+    : firstPage.replace(
+        "<!-- Page Number -->",
+        scoreInterpretation + "<!-- Page Number -->",
+      );
 
   return firstPageWithInterpretation + overflowPages;
 };
@@ -399,5 +517,10 @@ export const generateLevel4ScoreSummaryPage = (data: Level4ReportData): string =
 // Export the number of score summary pages for accurate page numbering
 export const getScoreSummaryPageCount = (questionCount: number): number => {
   if (questionCount <= QUESTIONS_FIRST_PAGE) return 1;
-  return 1 + Math.ceil((questionCount - QUESTIONS_FIRST_PAGE) / QUESTIONS_PER_OVERFLOW_PAGE);
+  return (
+    1 +
+    Math.ceil(
+      (questionCount - QUESTIONS_FIRST_PAGE) / QUESTIONS_PER_OVERFLOW_PAGE,
+    )
+  );
 };

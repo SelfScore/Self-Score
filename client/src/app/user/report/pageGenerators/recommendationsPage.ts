@@ -1,20 +1,30 @@
 // Personalized Recommendations Page Generator (Page 6)
 // Now uses score-based recommendations
 
-import { UserReportData } from '../types';
-import { getScoreBasedContent, levelProTips } from '../utils/contentData';
+import { UserReportData } from "../types";
+import { getScoreBasedContent, levelProTips } from "../utils/contentData";
 
-const CLIENT_URL = process.env.NEXT_PUBLIC_CLIENT_URL || 'https://www.selfscore.net';
+const CLIENT_URL =
+  process.env.NEXT_PUBLIC_CLIENT_URL || "https://www.selfscore.net";
 
-export const generateRecommendationsPage = (userData: UserReportData): string => {
+export const generateRecommendationsPage = (
+  userData: UserReportData,
+): string => {
   const scoreContent = getScoreBasedContent(userData.level, userData.score);
   const proTip = levelProTips[userData.level] || levelProTips[1];
 
   // Determine next level and button content
   const nextLevel = userData.level + 1;
-  const buttonText = userData.level === 1 ? 'Unlock Level 2 Test' :
-    nextLevel <= 4 ? `Unlock Level ${nextLevel} Test` : 'Continue Your Journey';
-  const buttonUrl = nextLevel <= 4 ? `${CLIENT_URL}/testInfo?level=${nextLevel}` : `${CLIENT_URL}/consultant`;
+  const buttonText =
+    userData.level === 1
+      ? "Unlock Level 2 Test"
+      : nextLevel <= 4
+        ? `Unlock Level ${nextLevel} Test`
+        : "Continue Your Journey";
+  const buttonUrl =
+    nextLevel <= 4
+      ? `${CLIENT_URL}/testInfo?level=${nextLevel}`
+      : `${CLIENT_URL}/consultant`;
 
   const recommendations = scoreContent?.recommendations || [];
 
@@ -69,7 +79,9 @@ export const generateRecommendationsPage = (userData: UserReportData): string =>
 
       <!-- Recommendations as Bullet Points -->
       <div style="position: relative; z-index: 1; margin-bottom: 24px;">
-      ${recommendations.map(rec => `
+      ${recommendations
+        .map(
+          (rec) => `
         <div style="
           display: flex;
           align-items: flex-start;
@@ -99,7 +111,9 @@ export const generateRecommendationsPage = (userData: UserReportData): string =>
             flex: 1;
           ">${rec}</p>
         </div>
-      `).join('')}
+      `,
+        )
+        .join("")}
       </div>
 
       <!-- Pro Tip -->
@@ -108,7 +122,7 @@ export const generateRecommendationsPage = (userData: UserReportData): string =>
         border: 2px solid #E87A42;
         border-radius: 12px;
         padding: 16px 20px;
-        margin-bottom: 32px;
+        margin-bottom: 24px;
         position: relative;
         z-index: 1;
       ">
@@ -143,6 +157,50 @@ export const generateRecommendationsPage = (userData: UserReportData): string =>
           margin: 0;
           line-height: 1.5;
         ">${proTip}</p>
+      </div>
+
+      <!-- Resources -->
+      <div style="
+        background: white;
+        border: 2px solid #0C677A;
+        border-radius: 12px;
+        padding: 16px 20px;
+        margin-bottom: 32px;
+        position: relative;
+        z-index: 1;
+      ">
+        <div style="
+          display: flex;
+          align-items: center;
+          gap: 12px;
+          margin-bottom: 12px;
+        ">
+          <div style="
+            width: 36px;
+            height: 36px;
+            background: #0C677A;
+            border-radius: 50%;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+          ">
+            <svg width="20" height="20" viewBox="0 0 24 24" fill="none">
+              <path d="M4 19.5C4 18.837 4.26339 18.2011 4.73223 17.7322C5.20107 17.2634 5.83696 17 6.5 17H20" stroke="white" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"/>
+              <path d="M6.5 2H20V22H6.5C5.83696 22 5.20107 21.7366 4.73223 21.2678C4.26339 20.7989 4 20.163 4 19.5V4.5C4 3.83696 4.26339 3.20107 4.73223 2.73223C5.20107 2.26339 5.83696 2 6.5 2Z" stroke="white" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"/>
+            </svg>
+          </div>
+          <span style="
+            font-size: 18px;
+            font-weight: 700;
+            color: #2B2B2B;
+          ">Resources</span>
+        </div>
+        <p style="
+          font-size: 14px;
+          color: #666;
+          margin: 0;
+          line-height: 1.5;
+        ">Explore additional resources and support for your journey at <a href="https://ved.org/" style="color: #0C677A; text-decoration: underline; font-weight: 600;">ved.org</a></p>
       </div>
 
       <!-- CTA Button (Clickable) -->

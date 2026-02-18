@@ -62,9 +62,8 @@ export default function ReviewSubmissionPage() {
     try {
       setLoading(true);
       setError("");
-      const response = await level4ReviewService.getSubmissionDetails(
-        interviewId
-      );
+      const response =
+        await level4ReviewService.getSubmissionDetails(interviewId);
 
       if (response.success) {
         setSubmission(response.data);
@@ -124,12 +123,14 @@ export default function ReviewSubmissionPage() {
     // Calculate raw score (sum of all question scores)
     const rawScore = Object.values(reviews).reduce(
       (sum, review) => sum + review.score,
-      0
+      0,
     );
     // Apply Level 4 formula: rawScore * (900/2500)
     const calculatedScore = rawScore * (900 / 2500);
+    // Round to nearest integer
+    const roundedScore = Math.round(calculatedScore);
     // Clamp to 350-900 range
-    return Math.min(Math.max(calculatedScore, 350), 900);
+    return Math.min(Math.max(roundedScore, 350), 900);
   };
 
   const validateReviews = (): boolean => {
@@ -156,7 +157,7 @@ export default function ReviewSubmissionPage() {
       const questionReviews = Object.values(reviews);
       const response = await level4ReviewService.saveDraft(
         interviewId,
-        questionReviews
+        questionReviews,
       );
 
       if (response.success) {
@@ -186,7 +187,7 @@ export default function ReviewSubmissionPage() {
       const questionReviews = Object.values(reviews);
       const response = await level4ReviewService.submitReview(
         interviewId,
-        questionReviews
+        questionReviews,
       );
 
       if (response.success) {
