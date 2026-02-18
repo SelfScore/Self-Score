@@ -1,8 +1,11 @@
 // Level 5 Report - Thank You Page (Matching Level 4 Design)
 
-import { Level5ReportData } from './types';
+import { Level5ReportData } from "./types";
 
-export const generateLevel5ThankYouPage = (data: Level5ReportData, pageNumber: number): string => {
+export const generateLevel5ThankYouPage = (
+  data: Level5ReportData,
+  pageNumber: number,
+): string => {
   return `
     <div class="report-page" style="
       background: #FFFFFF;
@@ -139,7 +142,7 @@ export const generateLevel5ThankYouPage = (data: Level5ReportData, pageNumber: n
               font-size: 14px;
             ">1</div>
             <p style="margin: 0; line-height: 1.6; color: #666; font-size: 16px;">
-              Review this detailed report to understand your expert evaluation
+              Explore additional resources and support for your journey at <a href="https://ved.org/" style="color: #0C677A; text-decoration: underline; font-weight: 600;">ved.org</a>
             </p>
           </div>
 

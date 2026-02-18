@@ -44,13 +44,15 @@ export default function JourneyProgress() {
 
       // Level 4 not completed - check if it's been submitted (pending review)
       try {
-        const { aiInterviewService } = await import("../../../services/aiInterviewService");
+        const { aiInterviewService } =
+          await import("../../../services/aiInterviewService");
         const historyResponse = await aiInterviewService.getInterviewHistory();
 
         const hasSubmittedLevel4 = historyResponse.data?.some(
           (interview: any) =>
             interview.level === 4 &&
-            (interview.status === "PENDING_REVIEW" || interview.status === "REVIEWED")
+            (interview.status === "PENDING_REVIEW" ||
+              interview.status === "REVIEWED"),
         );
 
         setIsLevel4PendingReview(hasSubmittedLevel4);
@@ -84,7 +86,8 @@ export default function JourneyProgress() {
           // Get the most recent test date
           const sortedTests = response.data.sort(
             (a: { submittedAt: string }, b: { submittedAt: string }) =>
-              new Date(b.submittedAt).getTime() - new Date(a.submittedAt).getTime()
+              new Date(b.submittedAt).getTime() -
+              new Date(a.submittedAt).getTime(),
           );
           setLastTestDate(sortedTests[0].submittedAt);
         }
@@ -108,11 +111,17 @@ export default function JourneyProgress() {
     const diffDays = Math.floor(diffMs / (1000 * 60 * 60 * 24));
 
     if (diffMins < 1) return "Just now";
-    if (diffMins < 60) return `${diffMins} minute${diffMins !== 1 ? 's' : ''} ago`;
-    if (diffHours < 24) return `${diffHours} hour${diffHours !== 1 ? 's' : ''} ago`;
-    if (diffDays < 7) return `${diffDays} day${diffDays !== 1 ? 's' : ''} ago`;
+    if (diffMins < 60)
+      return `${diffMins} minute${diffMins !== 1 ? "s" : ""} ago`;
+    if (diffHours < 24)
+      return `${diffHours} hour${diffHours !== 1 ? "s" : ""} ago`;
+    if (diffDays < 7) return `${diffDays} day${diffDays !== 1 ? "s" : ""} ago`;
 
-    return date.toLocaleDateString('en-US', { month: 'short', day: 'numeric', year: 'numeric' });
+    return date.toLocaleDateString("en-US", {
+      month: "short",
+      day: "numeric",
+      year: "numeric",
+    });
   };
 
   // Level configuration with names
@@ -139,7 +148,7 @@ export default function JourneyProgress() {
 
   // Determine card status for each level
   const getCardStatus = (
-    levelId: number
+    levelId: number,
   ): "unlocked" | "locked" | "completed" => {
     if (isLevelCompleted(levelId)) return "completed";
     if (levelId <= highestUnlockedLevel) return "unlocked";
@@ -360,7 +369,9 @@ export default function JourneyProgress() {
                 onUnlock={() => handleUnlock(level.id)}
                 // Level 4 pay-per-use props
                 isPayPerUse={isLevel4}
-                remainingAttempts={isLevel4 ? level4RemainingAttempts : undefined}
+                remainingAttempts={
+                  isLevel4 ? level4RemainingAttempts : undefined
+                }
                 hasUsedAttempts={isLevel4 ? level4AttemptsUsed : undefined}
               />
             );
@@ -586,9 +597,13 @@ export default function JourneyProgress() {
                       fullWidth={false}
                       disabled={isLevel4PendingReview}
                       style={{
-                        backgroundColor: isLevel4PendingReview ? "#CCCCCC" : "#E87A42",
+                        backgroundColor: isLevel4PendingReview
+                          ? "#CCCCCC"
+                          : "#E87A42",
                         padding: "12px 24px",
-                        cursor: isLevel4PendingReview ? "not-allowed" : "pointer",
+                        cursor: isLevel4PendingReview
+                          ? "not-allowed"
+                          : "pointer",
                         opacity: isLevel4PendingReview ? 0.6 : 1,
                       }}
                       textStyle={{
@@ -607,7 +622,8 @@ export default function JourneyProgress() {
                           textAlign: "center",
                         }}
                       >
-                        Level 4 review is pending. You can attempt Level 5 after admin reviews your Level 4 submission.
+                        Level 4 review is pending. You can attempt Level 5 after
+                        admin reviews your Level 4 submission.
                       </Typography>
                     )}
                   </>
@@ -716,10 +732,15 @@ export default function JourneyProgress() {
             >
               <Box sx={{ width: { xs: "100%", sm: "auto" } }}>
                 <ButtonSelfScore
-                  text={<> Unlock Level {highestUnlockedLevel + 1} Test</>}
-                  onClick={() => handleUnlock(highestUnlockedLevel + 1)}
-                  fontSize={"16px"}
-                  fullWidth={true}
+                  text={
+                    <>
+                      {" "}
+                      Unlock Level {Math.min(highestUnlockedLevel + 1, 4)} Test
+                    </>
+                  }
+                  onClick={() =>
+                    handleUnlock(Math.min(highestUnlockedLevel + 1, 4))
+                  }
                   style={{
                     backgroundColor: "#fff",
                     padding: "10px 20px",
@@ -732,7 +753,9 @@ export default function JourneyProgress() {
               </Box>
 
               <OutLineButton
-                onClick={() => handleRetakeTest(highestCompletedLevel)}
+                onClick={() =>
+                  handleRetakeTest(Math.min(highestCompletedLevel, 4))
+                }
                 sx={{
                   padding: { xs: "8px 16px", sm: "5px 14px" },
                   fontSize: { xs: "14px", sm: "15px", md: "16px" },
@@ -744,7 +767,7 @@ export default function JourneyProgress() {
                   minWidth: { xs: "100%", sm: "auto" },
                 }}
               >
-                Retake Level {highestCompletedLevel} Test
+                Retake Level {Math.min(highestCompletedLevel, 4)} Test
               </OutLineButton>
             </Box>
           </Box>

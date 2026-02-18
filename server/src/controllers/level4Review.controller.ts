@@ -10,7 +10,7 @@ import { sendLevel4ReviewCompleteEmail } from "../lib/email";
  */
 export const getAllLevel4Submissions = async (
   req: Request,
-  res: Response
+  res: Response,
 ): Promise<void> => {
   try {
     const {
@@ -154,7 +154,7 @@ export const getAllLevel4Submissions = async (
  */
 export const getLevel4SubmissionDetails = async (
   req: Request,
-  res: Response
+  res: Response,
 ): Promise<void> => {
   try {
     const { interviewId } = req.params;
@@ -180,14 +180,14 @@ export const getLevel4SubmissionDetails = async (
     const questionAnswers = interview.questions.map((q: any) => {
       // Find text answer
       const textAnswer = interview.answers?.find(
-        (a: any) => a.questionId === q.questionId
+        (a: any) => a.questionId === q.questionId,
       );
 
       // Find voice answer from transcript using questionId
       let voiceAnswer = "";
       if (interview.transcript && interview.transcript.length > 0) {
         const voiceResponse = interview.transcript.find(
-          (t: any) => t.role === "user" && t.questionId === q.questionId
+          (t: any) => t.role === "user" && t.questionId === q.questionId,
         );
         if (voiceResponse) {
           voiceAnswer = voiceResponse.content;
@@ -213,7 +213,7 @@ export const getLevel4SubmissionDetails = async (
 
       // Find existing review for this question if any
       const existingQuestionReview = existingReview?.questionReviews.find(
-        (qr: any) => qr.questionId === q.questionId
+        (qr: any) => qr.questionId === q.questionId,
       );
 
       return {
@@ -242,11 +242,11 @@ export const getLevel4SubmissionDetails = async (
         questionAnswers,
         existingReview: existingReview
           ? {
-            _id: existingReview._id,
-            totalScore: existingReview.totalScore,
-            status: existingReview.status,
-            reviewedAt: existingReview.reviewedAt,
-          }
+              _id: existingReview._id,
+              totalScore: existingReview.totalScore,
+              status: existingReview.status,
+              reviewedAt: existingReview.reviewedAt,
+            }
           : null,
       },
     });
@@ -265,7 +265,7 @@ export const getLevel4SubmissionDetails = async (
  */
 export const saveDraftReview = async (
   req: Request,
-  res: Response
+  res: Response,
 ): Promise<void> => {
   try {
     const adminId = req.admin?.adminId;
@@ -295,7 +295,7 @@ export const saveDraftReview = async (
 
     // Validate question scores are within 0-100 range
     const invalidScores = questionReviews.filter(
-      (qr: any) => qr.score < 0 || qr.score > 100
+      (qr: any) => qr.score < 0 || qr.score > 100,
     );
     if (invalidScores.length > 0) {
       res.status(400).json({
@@ -318,14 +318,17 @@ export const saveDraftReview = async (
     // Calculate raw score (sum of all question scores)
     const rawScore = questionReviews.reduce(
       (sum: number, qr: any) => sum + (qr.score || 0),
-      0
+      0,
     );
 
     // Apply Level 4 formula: rawScore * (900/2500)
     const calculatedScore = rawScore * (900 / 2500);
 
+    // Round to nearest integer
+    const roundedScore = Math.round(calculatedScore);
+
     // Clamp total score to 350-900 range
-    const clampedTotalScore = Math.min(Math.max(calculatedScore, 350), 900);
+    const clampedTotalScore = Math.min(Math.max(roundedScore, 350), 900);
 
     // Check if review already exists
     let review = await Level4ReviewModel.findOne({ interviewId });
@@ -375,7 +378,7 @@ export const saveDraftReview = async (
  */
 export const submitFinalReview = async (
   req: Request,
-  res: Response
+  res: Response,
 ): Promise<void> => {
   try {
     const adminId = req.admin?.adminId;
@@ -410,7 +413,7 @@ export const submitFinalReview = async (
         qr.score < 0 ||
         qr.score > 100 ||
         !qr.remark ||
-        qr.remark.trim() === ""
+        qr.remark.trim() === "",
     );
 
     if (invalidReviews.length > 0) {
@@ -424,7 +427,7 @@ export const submitFinalReview = async (
     // Get interview details
     const interview = await AIInterviewModel.findById(interviewId).populate(
       "userId",
-      "username email"
+      "username email",
     );
 
     if (!interview) {
@@ -438,14 +441,17 @@ export const submitFinalReview = async (
     // Calculate raw score (sum of all question scores)
     const rawScore = questionReviews.reduce(
       (sum: number, qr: any) => sum + qr.score,
-      0
+      0,
     );
 
     // Apply Level 4 formula: rawScore * (900/2500)
     const calculatedScore = rawScore * (900 / 2500);
 
+    // Round to nearest integer
+    const roundedScore = Math.round(calculatedScore);
+
     // Clamp total score to 350-900 range
-    const clampedTotalScore = Math.min(Math.max(calculatedScore, 350), 900);
+    const clampedTotalScore = Math.min(Math.max(roundedScore, 350), 900);
 
     // Check if review already exists
     let review = await Level4ReviewModel.findOne({ interviewId });
@@ -493,7 +499,7 @@ export const submitFinalReview = async (
         // Update highest unlocked level
         user.progress.highestUnlockedLevel = Math.max(
           user.progress.highestUnlockedLevel,
-          4
+          4,
         );
 
         // Save the Level 4 test score (use latest score if retaken)
@@ -502,7 +508,7 @@ export const submitFinalReview = async (
         await user.save();
 
         console.log(
-          `User ${interview.userId} Level 4 review completed with score ${clampedTotalScore}`
+          `User ${interview.userId} Level 4 review completed with score ${clampedTotalScore}`,
         );
       }
     } catch (error: any) {
@@ -518,10 +524,10 @@ export const submitFinalReview = async (
         await sendLevel4ReviewCompleteEmail(
           userEmail,
           userName,
-          clampedTotalScore
+          clampedTotalScore,
         );
         console.log(
-          `Email sent to ${userEmail} about Level 4 review completion`
+          `Email sent to ${userEmail} about Level 4 review completion`,
         );
       }
     } catch (error: any) {
@@ -553,7 +559,7 @@ export const submitFinalReview = async (
  */
 export const getReviewByInterviewId = async (
   req: Request,
-  res: Response
+  res: Response,
 ): Promise<void> => {
   try {
     const userId = req.user?.userId;

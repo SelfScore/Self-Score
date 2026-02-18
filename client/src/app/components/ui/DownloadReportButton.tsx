@@ -80,7 +80,7 @@ export default function DownloadReportButton({
         },
       }}
     >
-      {isGenerating ? `Generating... ${progress}%` : "Download Report"}
+      {isGenerating ? `Generating... ${progress}%` : "Download"}
     </Button>
   );
 }
