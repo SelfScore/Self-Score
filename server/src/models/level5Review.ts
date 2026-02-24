@@ -90,9 +90,9 @@ const Level5ReviewSchema: Schema<Level5Review> = new Schema(
       required: true,
       validate: {
         validator: function (v: QuestionReview[]) {
-          return v.length === 25; // Must have exactly 25 question reviews
+          return v.length >= 1; // At least 1 question review required
         },
-        message: "Question reviews must contain exactly 25 questions",
+        message: "Question reviews must contain at least 1 question",
       },
     },
     totalScore: {

@@ -47,7 +47,8 @@ export default function Level5ReviewDetailPage() {
     // Apply Level 5 formula: rawScore * (900/500)
     const rawScore = questionReviews.reduce((sum, qr) => sum + qr.score, 0);
     const calculatedScore = rawScore * (900 / 500);
-    const clampedScore = Math.min(Math.max(calculatedScore, 350), 900);
+    const roundedScore = Math.round(calculatedScore);
+    const clampedScore = Math.min(Math.max(roundedScore, 350), 900);
     setTotalScore(clampedScore);
   }, [questionReviews]);
 

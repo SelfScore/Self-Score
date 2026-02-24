@@ -225,15 +225,18 @@ export const saveLevel5Review = async (
       return;
     }
 
+    // Get expected number of questions from the interview
+    const expectedQuestions = interview.questions?.length || 0;
+
     // Validate questionReviews
     if (
       !questionReviews ||
       !Array.isArray(questionReviews) ||
-      questionReviews.length !== 25
+      questionReviews.length !== expectedQuestions
     ) {
       res.status(400).json({
         success: false,
-        message: "Exactly 25 question reviews are required for Level 5",
+        message: `Exactly ${expectedQuestions} question reviews are required for this Level 5 interview`,
       });
       return;
     }
@@ -259,8 +262,11 @@ export const saveLevel5Review = async (
     // Apply Level 5 formula: rawScore * (900/500)
     const calculatedScore = rawScore * (900 / 500);
 
+    // Round to nearest integer
+    const roundedScore = Math.round(calculatedScore);
+
     // Clamp total score to 350-900 range
-    const finalScore = Math.min(Math.max(calculatedScore, 350), 900);
+    const finalScore = Math.min(Math.max(roundedScore, 350), 900);
 
     // Check for existing review
     let review = await Level5ReviewModel.findOne({ interviewId });
@@ -337,15 +343,18 @@ export const submitLevel5Review = async (
       return;
     }
 
+    // Get expected number of questions from the interview
+    const expectedQuestions = interview.questions?.length || 0;
+
     // Validate questionReviews
     if (
       !questionReviews ||
       !Array.isArray(questionReviews) ||
-      questionReviews.length !== 25
+      questionReviews.length !== expectedQuestions
     ) {
       res.status(400).json({
         success: false,
-        message: "Exactly 25 question reviews are required for Level 5",
+        message: `Exactly ${expectedQuestions} question reviews are required for this Level 5 interview`,
       });
       return;
     }
@@ -377,8 +386,11 @@ export const submitLevel5Review = async (
     // Apply Level 5 formula: rawScore * (900/500)
     const calculatedScore = rawScore * (900 / 500);
 
+    // Round to nearest integer
+    const roundedScore = Math.round(calculatedScore);
+
     // Clamp total score to 350-900 range
-    const finalScore = Math.min(Math.max(calculatedScore, 350), 900);
+    const finalScore = Math.min(Math.max(roundedScore, 350), 900);
 
     // Check for existing review
     let review = await Level5ReviewModel.findOne({ interviewId });
