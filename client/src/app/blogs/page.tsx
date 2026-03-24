@@ -3,8 +3,12 @@ import { Box, Container, Typography } from "@mui/material";
 import { wordpressService } from "../../services/wordpressService";
 import BlogsClientWrapper from "@/app/components/blogsComponent/BlogsClientWrapper";
 
+// Ensure latest WordPress posts are fetched on each request.
+export const dynamic = "force-dynamic";
+
 export const metadata: Metadata = {
-  title: "Self Score Blog | Personal Growth, Mindfulness & Self Awareness Insights",
+  title:
+    "Self Score Blog | Personal Growth, Mindfulness & Self Awareness Insights",
   description:
     "Read the Self Score blog for practical tips on self-improvement, happiness, mindfulness, inner peace, personal growth, and spiritual reflection.",
   keywords: [
@@ -15,7 +19,8 @@ export const metadata: Metadata = {
     "happiness tips",
   ],
   openGraph: {
-    title: "Self Score Blog | Personal Growth, Mindfulness & Self Awareness Insights",
+    title:
+      "Self Score Blog | Personal Growth, Mindfulness & Self Awareness Insights",
     description:
       "Read the Self Score blog for practical tips on self-improvement, happiness, mindfulness, inner peace, personal growth, and spiritual reflection.",
     url: "https://www.selfscore.net/blogs/",

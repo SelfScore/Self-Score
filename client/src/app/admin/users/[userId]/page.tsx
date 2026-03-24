@@ -256,6 +256,7 @@ export default function AdminUserDetail() {
 
   // Get last test information
   const lastTest = testHistory.length > 0 ? testHistory[0] : null;
+  const hasGivenAnyTest = testHistory.length > 0;
   const lastCompletedLevel =
     lastTest?.level || completedLevels[completedLevels.length - 1] || 1;
   const lastTestScore =
@@ -719,6 +720,7 @@ export default function AdminUserDetail() {
                         score: lastTestScore,
                         maxScore: 900,
                       }}
+                      disabled={!hasGivenAnyTest}
                     />
                   )}
                   <OutLineButton
