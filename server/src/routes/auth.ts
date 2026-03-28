@@ -16,6 +16,12 @@ router.post("/verify-email", AuthController.verifyEmail);
 // POST /api/auth/resend-verification
 router.post("/resend-verification", AuthController.resendVerification);
 
+// GET /api/auth/unsubscribe-promotional
+router.get(
+  "/unsubscribe-promotional",
+  AuthController.unsubscribePromotional
+);
+
 // GET /api/auth/me - Get current user (requires authentication)
 router.get("/me", authMiddleware, AuthController.getCurrentUser);
 

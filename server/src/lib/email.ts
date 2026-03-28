@@ -1,4 +1,7 @@
-import { Resend } from "resend";
+import fs from "node:fs";
+import path from "node:path";
+import { Resend, type Attachment } from "resend";
+import jwt from "jsonwebtoken";
 import { formatBookingTimeForEmail } from "./timezoneHelpers";
 
 const resendApiKey = process.env.RESEND_API_KEY;
@@ -15,12 +18,428 @@ export const resend = new Resend(resendApiKey || "dummy-key");
 const FROM_EMAIL = process.env.FROM_EMAIL || "onboarding@resend.dev";
 const APP_NAME = "SelfScore";
 const CLIENT_URL = process.env.CLIENT_URL || "http://localhost:3000";
+const PUBLIC_SITE_URL =
+  process.env.PUBLIC_SITE_URL ||
+  process.env.NEXT_PUBLIC_CLIENT_URL ||
+  "https://www.selfscore.net";
+const API_BASE_URL =
+  process.env.API_URL ||
+  process.env.SERVER_URL ||
+  process.env.NEXT_PUBLIC_API_URL ||
+  CLIENT_URL;
+const EMAIL_TOKEN_SECRET =
+  process.env.EMAIL_TOKEN_SECRET ||
+  process.env.JWT_SECRET ||
+  "lifescore-email-secret-change-in-production";
+const LOGO_URL = `${PUBLIC_SITE_URL}/images/logos/LogoWithText.png`;
+const WELCOME_IMAGE_URL = `${PUBLIC_SITE_URL}/images/emails/welcome.png`;
+const CUP_IMAGE_URL = `${PUBLIC_SITE_URL}/images/emails/cup.png`;
+const GIFT_IMAGE_URL = `${PUBLIC_SITE_URL}/images/emails/Gift.png`;
+const TERMS_URL = `${PUBLIC_SITE_URL}/terms-conditions`;
+const PRIVACY_URL = `${PUBLIC_SITE_URL}/privacy-policy`;
+const BRAND_COLORS = {
+  page: "#ECE9E2",
+  panel: "#FFFFFF",
+  panelBorder: "#D8D2C8",
+  text: "#2B2B2B",
+  muted: "#6F6F6F",
+  subtle: "#8A8A8A",
+  teal: "#005F73",
+  tealSoft: "#0A9396",
+  orange: "#E87A42",
+  orangeStrong: "#FF8D23",
+};
+
+type EmailAudience = "user" | "admin" | "consultant";
+
+interface PromotionalUnsubscribePayload {
+  email: string;
+  type: "promotional-unsubscribe";
+}
+
+interface EmailLayoutOptions {
+  previewText?: string;
+  bodyHtml: string;
+  recipientEmail?: string;
+  audience?: EmailAudience;
+  emailType?: "transactional" | "promotional";
+  showUnsubscribe?: boolean;
+}
 
 export interface EmailOptions {
   to: string;
   subject: string;
   html: string;
+  attachments?: Attachment[];
 }
+
+const escapeHtml = (value: string): string =>
+  value
+    .replace(/&/g, "&amp;")
+    .replace(/</g, "&lt;")
+    .replace(/>/g, "&gt;")
+    .replace(/"/g, "&quot;")
+    .replace(/'/g, "&#39;");
+
+const resolveLocalAssetPath = (relativePath: string): string | null => {
+  const candidates = [
+    path.resolve(process.cwd(), relativePath),
+    path.resolve(process.cwd(), "..", relativePath),
+  ];
+
+  for (const candidate of candidates) {
+    if (fs.existsSync(candidate)) {
+      return candidate;
+    }
+  }
+
+  return null;
+};
+
+const formatEmailDateOnly = (value: Date): string =>
+  new Intl.DateTimeFormat("en-US", {
+    day: "numeric",
+    month: "long",
+    year: "numeric",
+  }).format(value);
+
+const renderLevelProgress = (
+  completedLevel: number,
+  isPending: boolean
+): string => {
+  const activeLevel = isPending
+    ? Math.min(completedLevel, 4)
+    : Math.min(completedLevel + 1, 4);
+
+  const stages = [1, 2, 3, 4];
+
+  const stageCell = (stage: number): string => {
+    const isCompleted = stage < activeLevel;
+    const isActive = stage === activeLevel;
+    const background = isActive
+      ? "#F7931E"
+      : isCompleted
+        ? "#F7EFE8"
+        : "#F1F1F1";
+    const color = "#111111";
+
+    return `
+      <td align="center" valign="middle" style="width:132px;">
+        <table role="presentation" cellpadding="0" cellspacing="0" border="0" align="center">
+          <tr>
+            <td
+              style="
+                background:${background};
+                color:${color};
+                font-family:'Source Sans Pro', Arial, Helvetica, sans-serif;
+                font-size:18px;
+                line-height:1.2;
+                font-weight:400;
+                padding:16px 18px;
+                text-align:center;
+                min-width:132px;
+              "
+            >
+              Level ${stage}
+            </td>
+          </tr>
+        </table>
+      </td>
+    `;
+  };
+
+  const connectorCell = (stage: number): string => {
+    const isUnlocked = stage < activeLevel;
+    const borderColor = isUnlocked ? "#F7931E" : "#2F2F2F";
+    const symbol = isUnlocked ? "&#10003;" : "&#128274;";
+
+    return `
+      <td align="center" valign="middle" style="width:82px;">
+        <table role="presentation" cellpadding="0" cellspacing="0" border="0" width="82">
+          <tr>
+            <td style="height:26px; font-size:0; line-height:0;">&nbsp;</td>
+          </tr>
+          <tr>
+            <td align="center" style="padding:0; font-size:0; line-height:0;">
+              <table role="presentation" cellpadding="0" cellspacing="0" border="0" width="82">
+                <tr>
+                  <td style="border-top:2px dashed ${borderColor}; font-size:0; line-height:0;">&nbsp;</td>
+                </tr>
+              </table>
+            </td>
+          </tr>
+          <tr>
+            <td align="center" style="padding:0; font-size:0; line-height:0;">
+              <table role="presentation" cellpadding="0" cellspacing="0" border="0" align="center" style="margin-top:-18px;">
+                <tr>
+                  <td
+                    align="center"
+                    valign="middle"
+                    style="
+                      width:34px;
+                      height:34px;
+                      border-radius:17px;
+                      background:#D9D9D9;
+                      color:#111111;
+                      font-family:'Source Sans Pro', Arial, Helvetica, sans-serif;
+                      font-size:18px;
+                      line-height:34px;
+                      text-align:center;
+                    "
+                  >${symbol}</td>
+                </tr>
+              </table>
+            </td>
+          </tr>
+          <tr>
+            <td style="height:26px; font-size:0; line-height:0;">&nbsp;</td>
+          </tr>
+        </table>
+      </td>
+    `;
+  };
+
+  return `
+    <table role="presentation" cellpadding="0" cellspacing="0" border="0" width="100%" style="margin:0 auto 36px auto;">
+      <tr>
+        ${stages
+          .map((stage, index) =>
+            index === stages.length - 1
+              ? stageCell(stage)
+              : `${stageCell(stage)}${connectorCell(stage)}`
+          )
+          .join("")}
+      </tr>
+    </table>
+  `;
+};
+
+const generatePromotionalUnsubscribeToken = (email: string): string =>
+  jwt.sign(
+    {
+      email,
+      type: "promotional-unsubscribe",
+    } satisfies PromotionalUnsubscribePayload,
+    EMAIL_TOKEN_SECRET,
+    {
+      expiresIn: "365d",
+      issuer: "lifescore-email",
+      audience: "lifescore-promotional-unsubscribe",
+    } as jwt.SignOptions
+  );
+
+export const verifyPromotionalUnsubscribeToken = (
+  token: string
+): PromotionalUnsubscribePayload => {
+  const decoded = jwt.verify(token, EMAIL_TOKEN_SECRET, {
+    issuer: "lifescore-email",
+    audience: "lifescore-promotional-unsubscribe",
+  }) as PromotionalUnsubscribePayload;
+
+  if (decoded.type !== "promotional-unsubscribe") {
+    throw new Error("Invalid unsubscribe token");
+  }
+
+  return decoded;
+};
+
+export const canSendPromotionalEmail = async (
+  email: string
+): Promise<boolean> => {
+  const UserModel = (await import("../models/user")).default;
+  const user = await UserModel.findOne({ email }).select("emailPreferences");
+
+  if (!user) {
+    return false;
+  }
+
+  return user.emailPreferences?.promotional !== false;
+};
+
+const buildPromotionalUnsubscribeUrl = (email: string): string => {
+  const token = generatePromotionalUnsubscribeToken(email);
+  return `${API_BASE_URL}/api/auth/unsubscribe-promotional?token=${encodeURIComponent(
+    token
+  )}`;
+};
+
+const renderEmailLayout = ({
+  previewText,
+  bodyHtml,
+  recipientEmail,
+  audience = "user",
+  emailType = "transactional",
+  showUnsubscribe = audience === "user" && emailType === "promotional",
+}: EmailLayoutOptions): string => {
+  const unsubscribeUrl =
+    showUnsubscribe && recipientEmail
+      ? buildPromotionalUnsubscribeUrl(recipientEmail)
+      : null;
+  const leftColumnLinks =
+    audience === "user"
+      ? `
+        <p style="margin:0 0 14px 0;">
+          <a href="${TERMS_URL}" style="color:${BRAND_COLORS.muted}; text-decoration:none;">Terms of Service</a>
+        </p>
+        <p style="margin:0;">
+          <a href="${PRIVACY_URL}" style="color:${BRAND_COLORS.muted}; text-decoration:none;">Privacy Policy</a>
+        </p>
+      `
+      : `
+        <p style="margin:0 0 18px 0; color:${BRAND_COLORS.muted};">SelfScore Communications</p>
+        <p style="margin:0; color:${BRAND_COLORS.muted};">Support and notifications</p>
+      `;
+  const unsubscribeBlock = unsubscribeUrl
+    ? `
+      <tr>
+        <td colspan="2" align="center" class="unsubscribe-cell" style="padding:34px 20px 0 20px; text-align:center;">
+          <a
+            href="${unsubscribeUrl}"
+            style="
+              display:inline-block;
+              color:${BRAND_COLORS.muted};
+              text-decoration:underline;
+              font-family:'Source Sans Pro', Arial, Helvetica, sans-serif;
+              font-size:14px;
+              line-height:1.4;
+              text-align:center;
+            "
+          >Unsubscribe from SelfScore</a>
+        </td>
+      </tr>
+    `
+    : "";
+
+  return `
+    <!DOCTYPE html>
+    <html>
+      <head>
+        <meta charset="utf-8">
+        <meta name="viewport" content="width=device-width, initial-scale=1.0">
+        <meta name="x-apple-disable-message-reformatting">
+        <title>${APP_NAME}</title>
+        <style>
+          @media only screen and (max-width: 600px) {
+            .email-shell {
+              width: 100% !important;
+            }
+
+            .email-header,
+            .email-body,
+            .email-footer {
+              padding-left: 20px !important;
+              padding-right: 20px !important;
+            }
+
+            .email-header {
+              padding-top: 22px !important;
+              padding-bottom: 22px !important;
+            }
+
+            .email-body {
+              padding-top: 32px !important;
+              padding-bottom: 36px !important;
+            }
+
+            .email-footer {
+              padding-top: 24px !important;
+              padding-bottom: 28px !important;
+            }
+
+            .email-logo {
+              width: 210px !important;
+            }
+
+            .footer-column {
+              display: block !important;
+              width: 100% !important;
+              padding: 0 0 22px 0 !important;
+            }
+
+            .footer-column-right {
+              padding-bottom: 0 !important;
+            }
+
+            .unsubscribe-cell {
+              padding-top: 24px !important;
+            }
+          }
+        </style>
+      </head>
+      <body style="margin:0; padding:0; background:#FFFFFF; color:${BRAND_COLORS.text};">
+        ${
+          previewText
+            ? `<div style="display:none; max-height:0; overflow:hidden; opacity:0; mso-hide:all;">${escapeHtml(
+                previewText
+              )}</div>`
+            : ""
+        }
+        <table role="presentation" cellpadding="0" cellspacing="0" border="0" width="100%" style="background:#FFFFFF;">
+          <tr>
+            <td align="center" style="padding:0;">
+              <table role="presentation" cellpadding="0" cellspacing="0" border="0" width="100%" class="email-shell" style="max-width:760px; margin:0 auto;">
+                <tr>
+                  <td
+                    class="email-header"
+                    style="
+                      padding:28px 32px;
+                      background:rgba(218, 218, 218, 0.4);
+                      background:#DADADA66;
+                    "
+                  >
+                    <img
+                      src="${LOGO_URL}"
+                      alt="${APP_NAME}"
+                      width="257"
+                      class="email-logo"
+                      style="display:block; width:257px; max-width:100%; height:auto; border:0;"
+                    />
+                  </td>
+                </tr>
+                <tr>
+                  <td
+                    class="email-body"
+                    style="
+                      background:#FFFFFF;
+                      padding:48px 48px 54px 48px;
+                    "
+                  >
+                    ${bodyHtml}
+                  </td>
+                </tr>
+                <tr>
+                  <td
+                    class="email-footer"
+                    style="
+                      padding:30px 48px 34px 48px;
+                      background:rgba(218, 218, 218, 0.4);
+                      background:#DADADA66;
+                    "
+                  >
+                    <table role="presentation" cellpadding="0" cellspacing="0" border="0" width="100%" style="font-family:'Source Sans Pro', Arial, Helvetica, sans-serif; color:${BRAND_COLORS.muted}; font-size:14px;">
+                      <tr>
+                        <td width="50%" valign="top" class="footer-column" style="padding:0 20px 18px 0; font-size:14px; line-height:1.6;">
+                          ${leftColumnLinks}
+                          <!-- Follow us on section intentionally hidden for now -->
+                        </td>
+                        <td width="50%" valign="top" class="footer-column footer-column-right" style="padding:0 0 18px 20px; font-size:14px; line-height:1.6; word-break:break-word;">
+                          <p style="margin:0 0 14px 0;"><a href="mailto:info@selfscore.net" style="color:${BRAND_COLORS.muted}; text-decoration:none;">info@selfscore.net</a></p>
+                          <p style="margin:0 0 14px 0;"><a href="tel:+15614300610" style="color:${BRAND_COLORS.muted}; text-decoration:none;">+1 (561) 430-0610</a></p>
+                          <p style="margin:0;">Charlottesville, Virginia, United States</p>
+                        </td>
+                      </tr>
+                      ${unsubscribeBlock}
+                    </table>
+                  </td>
+                </tr>
+              </table>
+            </td>
+          </tr>
+        </table>
+      </body>
+    </html>
+  `;
+};
 
 // Send generic email
 export const sendEmail = async (options: EmailOptions): Promise<boolean> => {
@@ -30,6 +449,7 @@ export const sendEmail = async (options: EmailOptions): Promise<boolean> => {
       to: options.to,
       subject: options.subject,
       html: options.html,
+      attachments: options.attachments,
     });
 
     if (error) {
@@ -51,48 +471,35 @@ export const sendVerificationEmail = async (
   username: string,
   verifyCode: string
 ): Promise<boolean> => {
-  const html = `
-        <!DOCTYPE html>
-        <html>
-        <head>
-            <meta charset="utf-8">
-            <meta name="viewport" content="width=device-width, initial-scale=1.0">
-            <title>Verify Your Email</title>
-        </head>
-        <body style="font-family: Arial, sans-serif; line-height: 1.6; color: #333; max-width: 600px; margin: 0 auto; padding: 20px;">
-            <div style="background: linear-gradient(135deg, #005F73 0%, #0A9396 100%); padding: 30px; text-align: center; border-radius: 10px 10px 0 0;">
-                <h1 style="color: white; margin: 0; font-size: 28px;">${APP_NAME}</h1>
-            </div>
-            
-            <div style="background: #f9f9f9; padding: 30px; border-radius: 0 0 10px 10px;">
-                <h2 style="color: #005F73; margin-top: 0;">Welcome, ${username}!</h2>
-                
-                <p style="font-size: 16px; color: #555;">
-                    Thank you for signing up with ${APP_NAME}. To complete your registration, please verify your email address using the code below:
-                </p>
-                
-                <div style="background: white; padding: 20px; text-align: center; border-radius: 8px; margin: 30px 0; border: 2px solid #E87A42;">
-                    <p style="margin: 0; font-size: 14px; color: #666; text-transform: uppercase; letter-spacing: 1px;">Your Verification Code</p>
-                    <h1 style="margin: 10px 0; font-size: 42px; color: #E87A42; letter-spacing: 8px; font-weight: bold;">${verifyCode}</h1>
-                </div>
-                
-                <p style="font-size: 14px; color: #666;">
-                    <strong>This code will expire in 1 hour.</strong>
-                </p>
-                
-                <p style="font-size: 14px; color: #666;">
-                    If you didn't create an account with ${APP_NAME}, you can safely ignore this email.
-                </p>
-                
-                <div style="margin-top: 30px; padding-top: 20px; border-top: 1px solid #ddd;">
-                    <p style="font-size: 12px; color: #999; margin: 0;">
-                        © ${new Date().getFullYear()} ${APP_NAME}. All rights reserved.
-                    </p>
-                </div>
-            </div>
-        </body>
-        </html>
-    `;
+  const safeUsername = escapeHtml(username);
+
+  const html = renderEmailLayout({
+    previewText: `Verify your ${APP_NAME} account`,
+    recipientEmail: email,
+    emailType: "transactional",
+    bodyHtml: `
+      <h1 style="margin:0 0 22px 0; color:#111111; font-family:'Source Sans Pro', Arial, Helvetica, sans-serif; font-size:24px; line-height:1.3; font-weight:700;">
+        Confirm your email address
+      </h1>
+      <p style="margin:0 0 40px 0; color:#111111; font-family:'Source Sans Pro', Arial, Helvetica, sans-serif; font-size:18px; line-height:1.6;">
+        Hi ${safeUsername}, use the verification code below to complete your sign-up.
+      </p>
+      <div style="margin:0 0 34px 0;">
+        <p style="margin:0 0 14px 0; color:#9D9D9D; font-family:'Source Sans Pro', Arial, Helvetica, sans-serif; font-size:18px; line-height:1.4;">
+          Your verification code
+        </p>
+        <div style="margin:0; color:#B34700; font-family:'Source Sans Pro', Arial, Helvetica, sans-serif; font-size:48px; line-height:1; font-weight:400; letter-spacing:6px;">
+          ${verifyCode}
+        </div>
+      </div>
+      <p style="margin:0 0 42px 0; color:#9D9D9D; font-family:'Source Sans Pro', Arial, Helvetica, sans-serif; font-size:18px; line-height:1.5; font-weight:700;">
+        This code will expire in 1 hour.
+      </p>
+      <p style="margin:0; color:#111111; font-family:'Source Sans Pro', Arial, Helvetica, sans-serif; font-size:18px; line-height:1.6;">
+        If you didn&apos;t create an account with ${APP_NAME} please ignore this mail.
+      </p>
+    `,
+  });
 
   return await sendEmail({
     to: email,
@@ -108,59 +515,50 @@ export const sendPasswordResetEmail = async (
   resetToken: string
 ): Promise<boolean> => {
   const resetLink = `${CLIENT_URL}/auth/reset-password?token=${resetToken}`;
+  const safeUsername = escapeHtml(username);
 
-  const html = `
-        <!DOCTYPE html>
-        <html>
-        <head>
-            <meta charset="utf-8">
-            <meta name="viewport" content="width=device-width, initial-scale=1.0">
-            <title>Reset Your Password</title>
-        </head>
-        <body style="font-family: Arial, sans-serif; line-height: 1.6; color: #333; max-width: 600px; margin: 0 auto; padding: 20px;">
-            <div style="background: linear-gradient(135deg, #005F73 0%, #0A9396 100%); padding: 30px; text-align: center; border-radius: 10px 10px 0 0;">
-                <h1 style="color: white; margin: 0; font-size: 28px;">${APP_NAME}</h1>
-            </div>
-            
-            <div style="background: #f9f9f9; padding: 30px; border-radius: 0 0 10px 10px;">
-                <h2 style="color: #005F73; margin-top: 0;">Password Reset Request</h2>
-                
-                <p style="font-size: 16px; color: #555;">
-                    Hi ${username},
-                </p>
-                
-                <p style="font-size: 16px; color: #555;">
-                    We received a request to reset your password. Click the button below to create a new password:
-                </p>
-                
-                <div style="text-align: center; margin: 30px 0;">
-                    <a href="${resetLink}" style="display: inline-block; background: #E87A42; color: white; padding: 14px 30px; text-decoration: none; border-radius: 8px; font-weight: bold; font-size: 16px;">Reset Password</a>
-                </div>
-                
-                <p style="font-size: 14px; color: #666;">
-                    Or copy and paste this link into your browser:
-                </p>
-                <p style="font-size: 12px; color: #0A9396; word-break: break-all; background: white; padding: 10px; border-radius: 4px;">
-                    ${resetLink}
-                </p>
-                
-                <p style="font-size: 14px; color: #666;">
-                    <strong>This link will expire in 1 hour.</strong>
-                </p>
-                
-                <p style="font-size: 14px; color: #666;">
-                    If you didn't request a password reset, you can safely ignore this email. Your password will remain unchanged.
-                </p>
-                
-                <div style="margin-top: 30px; padding-top: 20px; border-top: 1px solid #ddd;">
-                    <p style="font-size: 12px; color: #999; margin: 0;">
-                        © ${new Date().getFullYear()} ${APP_NAME}. All rights reserved.
-                    </p>
-                </div>
-            </div>
-        </body>
-        </html>
-    `;
+  const html = renderEmailLayout({
+    previewText: `Reset your ${APP_NAME} password`,
+    recipientEmail: email,
+    emailType: "transactional",
+    bodyHtml: `
+      <h1 style="margin:0 0 26px 0; color:#111111; font-family:'Source Sans Pro', Arial, Helvetica, sans-serif; font-size:24px; line-height:1.35; font-weight:700;">
+        Forgot your password? No worries, it happens.
+      </h1>
+      <p style="margin:0 0 12px 0; color:#111111; font-family:'Source Sans Pro', Arial, Helvetica, sans-serif; font-size:18px; line-height:1.55;">
+        Hi ${safeUsername},
+      </p>
+      <p style="margin:0 0 34px 0; color:#111111; font-family:'Source Sans Pro', Arial, Helvetica, sans-serif; font-size:18px; line-height:1.55;">
+        Click the button below to create a new one. This link will expire in 1 hour.
+      </p>
+      <div style="margin:0 0 42px 0; text-align:left;">
+        <a
+          href="${resetLink}"
+          style="
+            display:inline-block;
+            padding:18px 36px;
+            background:#0C677A;
+            color:#FFFFFF;
+            text-decoration:none;
+            border-radius:16px;
+            font-family:'Source Sans Pro', Arial, Helvetica, sans-serif;
+            font-size:18px;
+            line-height:1.2;
+            font-weight:400;
+          "
+        >
+          Reset your password
+        </a>
+      </div>
+      <p style="margin:0 0 20px 0; color:#111111; font-family:'Source Sans Pro', Arial, Helvetica, sans-serif; font-size:18px; line-height:1.55;">
+        Didn&apos;t ask to reset your password? You can ignore and delete this email.
+      </p>
+      <p style="margin:0; color:#707070; font-family:'Source Sans Pro', Arial, Helvetica, sans-serif; font-size:14px; line-height:1.6; word-break:break-word;">
+        If the button doesn&apos;t work, open this link:
+        <a href="${resetLink}" style="color:#0C677A; text-decoration:underline;">${resetLink}</a>
+      </p>
+    `,
+  });
 
   return await sendEmail({
     to: email,
@@ -174,73 +572,80 @@ export const sendWelcomeEmail = async (
   email: string,
   username: string
 ): Promise<boolean> => {
-  const dashboardLink = `${CLIENT_URL}/user/dashboard`;
+  const firstTestLink = `${PUBLIC_SITE_URL}/testInfo/?level=1`;
+  const safeUsername = escapeHtml(username);
+  const welcomeImagePath = resolveLocalAssetPath(
+    "client/public/images/emails/welcome.png"
+  );
+  const welcomeImageSrc = welcomeImagePath
+    ? "cid:welcome-image"
+    : WELCOME_IMAGE_URL;
 
-  const html = `
-        <!DOCTYPE html>
-        <html>
-        <head>
-            <meta charset="utf-8">
-            <meta name="viewport" content="width=device-width, initial-scale=1.0">
-            <title>Welcome to ${APP_NAME}</title>
-        </head>
-        <body style="font-family: Arial, sans-serif; line-height: 1.6; color: #333; max-width: 600px; margin: 0 auto; padding: 20px;">
-            <div style="background: linear-gradient(135deg, #005F73 0%, #0A9396 100%); padding: 30px; text-align: center; border-radius: 10px 10px 0 0;">
-                <h1 style="color: white; margin: 0; font-size: 28px;">${APP_NAME}</h1>
-            </div>
-            
-            <div style="background: #f9f9f9; padding: 30px; border-radius: 0 0 10px 10px;">
-                <h2 style="color: #005F73; margin-top: 0;">Welcome to ${APP_NAME}! 🎉</h2>
-                
-                <p style="font-size: 16px; color: #555;">
-                    Hi ${username},
-                </p>
-                
-                <p style="font-size: 16px; color: #555;">
-                    Congratulations! Your email has been successfully verified, and your account is now active.
-                </p>
-                
-                <p style="font-size: 16px; color: #555;">
-                    You're all set to begin your journey of self-discovery and wellness. We're excited to have you as part of our community!
-                </p>
-                
-                <div style="text-align: center; margin: 30px 0;">
-                    <a href="${dashboardLink}" style="display: inline-block; background: #E87A42; color: white; padding: 14px 30px; text-decoration: none; border-radius: 8px; font-weight: bold; font-size: 16px;">Access Your Dashboard</a>
-                </div>
-                
-                <div style="background: white; padding: 20px; border-radius: 8px; margin: 20px 0; border-left: 4px solid #0A9396;">
-                    <h3 style="color: #005F73; margin-top: 0; font-size: 18px;">What's Next?</h3>
-                    <ul style="color: #555; padding-left: 20px;">
-                        <li style="margin-bottom: 10px;">Complete your wellness assessment</li>
-                        <li style="margin-bottom: 10px;">Explore personalized recommendations</li>
-                        <li style="margin-bottom: 10px;">Connect with certified wellness coaches</li>
-                        <li style="margin-bottom: 10px;">Track your progress over time</li>
-                    </ul>
-                </div>
-                
-                <p style="font-size: 14px; color: #666;">
-                    If you have any questions or need assistance, feel free to reach out to our support team.
-                </p>
-                
-                <p style="font-size: 16px; color: #555;">
-                    Best regards,<br>
-                    <strong>The ${APP_NAME} Team</strong>
-                </p>
-                
-                <div style="margin-top: 30px; padding-top: 20px; border-top: 1px solid #ddd;">
-                    <p style="font-size: 12px; color: #999; margin: 0;">
-                        © ${new Date().getFullYear()} ${APP_NAME}. All rights reserved.
-                    </p>
-                </div>
-            </div>
-        </body>
-        </html>
-    `;
+  const html = renderEmailLayout({
+    previewText: `Welcome to ${APP_NAME}`,
+    recipientEmail: email,
+    emailType: "transactional",
+    bodyHtml: `
+      <div style="margin:0 0 34px 0; text-align:center;">
+        <img
+          src="${welcomeImageSrc}"
+          alt="Welcome to SelfScore"
+          width="360"
+          style="display:inline-block; width:100%; max-width:360px; height:auto; border:0;"
+        />
+      </div>
+      <p style="margin:0 0 12px 0; color:#111111; font-family:'Source Sans Pro', Arial, Helvetica, sans-serif; font-size:18px; line-height:1.55;">
+        Hi ${safeUsername},
+      </p>
+      <p style="margin:0 0 10px 0; color:#111111; font-family:'Source Sans Pro', Arial, Helvetica, sans-serif; font-size:18px; line-height:1.55;">
+        Small steps lead to meaningful change, and today, you&apos;ve taken one.
+      </p>
+      <p style="margin:0 0 10px 0; color:#111111; font-family:'Source Sans Pro', Arial, Helvetica, sans-serif; font-size:18px; line-height:1.55;">
+        ${APP_NAME} helps you measure, reflect, and grow at your own pace. No pressure. Just progress.
+      </p>
+      <p style="margin:0 0 34px 0; color:#111111; font-family:'Source Sans Pro', Arial, Helvetica, sans-serif; font-size:18px; line-height:1.55;">
+        Ready to see where you stand?
+      </p>
+      <div style="margin:0; text-align:left;">
+        <a
+          href="${firstTestLink}"
+          style="
+            display:inline-block;
+            padding:18px 36px;
+            background:#0C677A;
+            color:#FFFFFF;
+            text-decoration:none;
+            border-radius:16px;
+            font-family:'Source Sans Pro', Arial, Helvetica, sans-serif;
+            font-size:18px;
+            line-height:1.2;
+            font-weight:400;
+          "
+        >
+          Take your first test
+        </a>
+      </div>
+      <p style="margin:26px 0 0 0; color:#111111; font-family:'Source Sans Pro', Arial, Helvetica, sans-serif; font-size:16px; line-height:1.55;">
+        If the button doesn&apos;t work, open this link:
+        <a href="${firstTestLink}" style="color:#0C677A; text-decoration:underline;">${firstTestLink}</a>
+      </p>
+    `,
+  });
 
   return await sendEmail({
     to: email,
     subject: `Welcome to ${APP_NAME} - Your Account is Verified!`,
     html,
+    attachments: welcomeImagePath
+      ? [
+          {
+            filename: "welcome.png",
+            content: fs.readFileSync(welcomeImagePath),
+            contentType: "image/png",
+            contentId: "welcome-image",
+          },
+        ]
+      : undefined,
   });
 };
 
@@ -261,52 +666,39 @@ export const sendContactNotificationEmail = async (data: {
   }
 
   const { name, email, message, messageId } = data;
-  const adminDashboardUrl = `${CLIENT_URL}/admin/messages`;
+  const safeName = escapeHtml(name);
+  const safeEmail = escapeHtml(email);
+  const safeMessage = escapeHtml(message);
+  const submittedDate = formatEmailDateOnly(new Date());
 
-  const html = `
-        <!DOCTYPE html>
-        <html>
-        <head>
-            <meta charset="utf-8">
-            <meta name="viewport" content="width=device-width, initial-scale=1.0">
-            <title>New Contact Message</title>
-        </head>
-        <body style="font-family: Arial, sans-serif; line-height: 1.6; color: #333; max-width: 600px; margin: 0 auto; padding: 20px;">
-            <div style="background: linear-gradient(135deg, #005F73 0%, #0A9396 100%); padding: 30px; text-align: center; border-radius: 10px 10px 0 0;">
-                <h1 style="color: white; margin: 0; font-size: 28px;">${APP_NAME} - Admin</h1>
-            </div>
-            
-            <div style="background: #f9f9f9; padding: 30px; border-radius: 0 0 10px 10px;">
-                <h2 style="color: #005F73; margin-top: 0;">📧 New Contact Message</h2>
-                
-                <p style="font-size: 16px; color: #555;">
-                    You have received a new message from the contact form.
-                </p>
-                
-                <div style="background: white; padding: 20px; border-radius: 8px; margin: 20px 0; border-left: 4px solid #E87A42;">
-                    <p style="margin: 5px 0;"><strong>From:</strong> ${name}</p>
-                    <p style="margin: 5px 0;"><strong>Email:</strong> <a href="mailto:${email}" style="color: #0A9396;">${email}</a></p>
-                    <p style="margin: 5px 0;"><strong>Message ID:</strong> ${messageId}</p>
-                </div>
-                
-                <div style="background: white; padding: 20px; border-radius: 8px; margin: 20px 0;">
-                    <p style="margin: 0 0 10px 0;"><strong>Message:</strong></p>
-                    <p style="margin: 0; color: #555; white-space: pre-wrap;">${message}</p>
-                </div>
-                
-                <div style="text-align: center; margin: 30px 0;">
-                    <a href="${adminDashboardUrl}" style="display: inline-block; background: #E87A42; color: white; padding: 14px 30px; text-decoration: none; border-radius: 8px; font-weight: bold; font-size: 16px;">View in Dashboard</a>
-                </div>
-                
-                <div style="margin-top: 30px; padding-top: 20px; border-top: 1px solid #ddd;">
-                    <p style="font-size: 12px; color: #999; margin: 0;">
-                        © ${new Date().getFullYear()} ${APP_NAME}. All rights reserved.
-                    </p>
-                </div>
-            </div>
-        </body>
-        </html>
-    `;
+  const html = renderEmailLayout({
+    previewText: `New contact message from ${name}`,
+    audience: "user",
+    emailType: "transactional",
+    showUnsubscribe: false,
+    bodyHtml: `
+      <p style="margin:0 0 38px 0; color:#111111; font-family:'Source Sans Pro', Arial, Helvetica, sans-serif; font-size:18px; line-height:1.55;">
+        New inquiry submitted via contact form.
+      </p>
+      <p style="margin:0 0 14px 0; color:#111111; font-family:'Source Sans Pro', Arial, Helvetica, sans-serif; font-size:18px; line-height:1.55;">
+        <strong>Name:</strong> ${safeName}
+      </p>
+      <p style="margin:0 0 34px 0; color:#111111; font-family:'Source Sans Pro', Arial, Helvetica, sans-serif; font-size:18px; line-height:1.55;">
+        <strong>Email:</strong> <a href="mailto:${safeEmail}" style="color:#111111; text-decoration:underline;">${safeEmail}</a>
+      </p>
+      <p style="margin:0 0 14px 0; color:#111111; font-family:'Source Sans Pro', Arial, Helvetica, sans-serif; font-size:18px; line-height:1.55; font-weight:700;">
+        Message
+      </p>
+      <div style="margin:0 0 14px 0; background:#F5F5F5; border-radius:18px; padding:22px 24px;">
+        <p style="margin:0; color:#111111; white-space:pre-wrap; font-family:'Source Sans Pro', Arial, Helvetica, sans-serif; font-size:18px; line-height:1.45;">
+          ${safeMessage}
+        </p>
+      </div>
+      <p style="margin:0; color:#9D9D9D; font-family:'Source Sans Pro', Arial, Helvetica, sans-serif; font-size:18px; line-height:1.4;">
+        Submitted on: ${submittedDate}
+      </p>
+    `,
+  });
 
   return await sendEmail({
     to: adminEmail,
@@ -333,79 +725,109 @@ export const sendTestCompletionEmailToUser = async (data: {
     isPending = false,
   } = data;
   const dashboardUrl = `${CLIENT_URL}/user/dashboard`;
+  const safeUsername = escapeHtml(username);
+  const cupImagePath = resolveLocalAssetPath("client/public/images/emails/cup.png");
+  const cupImageSrc = cupImagePath ? "cid:cup-image" : CUP_IMAGE_URL;
 
-  // Different messages for pending Level 4
   const scoreDisplay = isPending
-    ? `<p style="font-size: 16px; color: #555;">Your submission is currently under review by our expert team. You'll receive another email once your score is ready.</p>`
-    : `<div style="background: white; padding: 25px; text-align: center; border-radius: 8px; margin: 30px 0; border: 2px solid #E87A42;">
-            <p style="margin: 0; font-size: 14px; color: #666; text-transform: uppercase; letter-spacing: 1px;">Your Score</p>
-            <h1 style="margin: 10px 0; font-size: 48px; color: #E87A42; font-weight: bold;">${score}</h1>
-            <p style="margin: 0; font-size: 12px; color: #999;">Total Questions: ${totalQuestions}</p>
-        </div>`;
-
-  const title = isPending
-    ? "✅ Test Submitted Successfully!"
-    : "🎉 Test Completed!";
-
-  const html = `
-        <!DOCTYPE html>
-        <html>
-        <head>
-            <meta charset="utf-8">
-            <meta name="viewport" content="width=device-width, initial-scale=1.0">
-            <title>Test Completed - Level ${level}</title>
-        </head>
-        <body style="font-family: Arial, sans-serif; line-height: 1.6; color: #333; max-width: 600px; margin: 0 auto; padding: 20px;">
-            <div style="background: linear-gradient(135deg, #005F73 0%, #0A9396 100%); padding: 30px; text-align: center; border-radius: 10px 10px 0 0;">
-                <h1 style="color: white; margin: 0; font-size: 28px;">${APP_NAME}</h1>
+    ? ""
+    : `
+      <table role="presentation" cellpadding="0" cellspacing="0" border="0" width="100%" style="margin:0 0 40px 0; border:2px solid #B34700; border-radius:20px;">
+        <tr>
+          <td style="padding:18px 18px 12px 18px; text-align:center;">
+            <p style="margin:0 0 20px 0; color:#111111; font-family:'Source Sans Pro', Arial, Helvetica, sans-serif; font-size:18px; line-height:1.4; font-weight:700;">
+              Your score
+            </p>
+            <div style="margin:0 0 22px 0; color:#B34700; font-family:'Source Sans Pro', Arial, Helvetica, sans-serif; font-size:64px; line-height:1; font-weight:400;">
+              ${score}
             </div>
-            
-            <div style="background: #f9f9f9; padding: 30px; border-radius: 0 0 10px 10px;">
-                <h2 style="color: #005F73; margin-top: 0;">${title}</h2>
-                
-                <p style="font-size: 16px; color: #555;">
-                    Hi ${username},
-                </p>
-                
-                <p style="font-size: 16px; color: #555;">
-                    Congratulations on completing Level ${level} of the SelfScore assessment!
-                </p>
-                
-                ${scoreDisplay}
-                
-                <div style="text-align: center; margin: 30px 0;">
-                    <a href="${dashboardUrl}" style="display: inline-block; background: #E87A42; color: white; padding: 14px 30px; text-decoration: none; border-radius: 8px; font-weight: bold; font-size: 16px;">View Dashboard</a>
-                </div>
-                
-                <p style="font-size: 14px; color: #666;">
-                    ${
-                      isPending
-                        ? "You can track the review status from your dashboard."
-                        : "You can view your detailed results and download your report from your dashboard."
-                    }
-                </p>
-                
-                <div style="background: white; padding: 20px; border-radius: 8px; margin: 30px 0; border-left: 4px solid #0A9396;">
-                    <p style="margin: 0; font-size: 14px; color: #555;">
-                        <strong>💡 Next Steps:</strong> ${
-                          isPending
-                            ? "Your answers are being carefully reviewed. Check back soon for your detailed feedback!"
-                            : `Continue your journey by exploring Level ${
-                                level + 1
-                              } or review your progress on the dashboard.`
-                        }
-                    </p>
-                </div>
-                
-                <div style="margin-top: 30px; padding-top: 20px; border-top: 1px solid #ddd;">
-                    <p style="font-size: 12px; color: #999; margin: 0;">
-                        © ${new Date().getFullYear()} ${APP_NAME}. All rights reserved.
-                    </p>
-                </div>
-            </div>
-        </body>
-        </html>
+            <p style="margin:0; color:#9D9D9D; font-family:'Source Sans Pro', Arial, Helvetica, sans-serif; font-size:18px; line-height:1.5;">
+              Total questions solved: ${totalQuestions}
+            </p>
+          </td>
+        </tr>
+      </table>
     `;
+
+  const html = renderEmailLayout({
+    previewText: isPending
+      ? `Level ${level} submission received`
+      : `Level ${level} test completed`,
+    recipientEmail: email,
+    emailType: "transactional",
+    bodyHtml: `
+      ${
+        isPending
+          ? `
+            <h1 style="margin:0 0 42px 0; color:#B34700; font-family:'Source Sans Pro', Arial, Helvetica, sans-serif; font-size:24px; line-height:1.35; font-weight:400;">
+              Test Submitted Successfully!
+            </h1>
+            <p style="margin:0 0 42px 0; color:#111111; font-family:'Source Sans Pro', Arial, Helvetica, sans-serif; font-size:18px; line-height:1.55;">
+              Congratulations on completing Level ${level} of the ${APP_NAME} assessment!
+            </p>
+            <p style="margin:0 0 40px 0; color:#111111; font-family:'Source Sans Pro', Arial, Helvetica, sans-serif; font-size:18px; line-height:1.55; font-weight:700;">
+              Current Status: Under Review
+            </p>
+            <div style="margin:0 0 48px 0; text-align:left;">
+              <a
+                href="${dashboardUrl}"
+                style="
+                  display:inline-block;
+                  padding:18px 36px;
+                  background:#0C677A;
+                  color:#FFFFFF;
+                  text-decoration:none;
+                  border-radius:16px;
+                  font-family:'Source Sans Pro', Arial, Helvetica, sans-serif;
+                  font-size:18px;
+                  line-height:1.2;
+                  font-weight:400;
+                "
+              >
+                See your progress
+              </a>
+            </div>
+            <p style="margin:0; color:#9D9D9D; font-family:'Source Sans Pro', Arial, Helvetica, sans-serif; font-size:18px; line-height:1.55;">
+              You&apos;ll receive another email once your score is ready.
+            </p>
+          `
+          : `
+            <div style="margin:0 0 22px 0; text-align:center;">
+              <img
+                src="${cupImageSrc}"
+                alt="Achievement cup"
+                width="160"
+                style="display:inline-block; width:100%; max-width:160px; height:auto; border:0;"
+              />
+            </div>
+            <p style="margin:0 0 34px 0; color:#111111; font-family:'Source Sans Pro', Arial, Helvetica, sans-serif; font-size:18px; line-height:1.55; text-align:center;">
+              Congratulations ${safeUsername}, you&apos;re on a roll.
+            </p>
+            ${renderLevelProgress(level, isPending)}
+            ${scoreDisplay}
+            <div style="margin:0; text-align:center;">
+              <a
+                href="${dashboardUrl}"
+                style="
+                  display:inline-block;
+                  padding:18px 36px;
+                  background:#0C677A;
+                  color:#FFFFFF;
+                  text-decoration:none;
+                  border-radius:16px;
+                  font-family:'Source Sans Pro', Arial, Helvetica, sans-serif;
+                  font-size:18px;
+                  line-height:1.2;
+                  font-weight:400;
+                "
+              >
+                See your progress
+              </a>
+            </div>
+          `
+      }
+    `,
+  });
 
   return await sendEmail({
     to: email,
@@ -413,6 +835,16 @@ export const sendTestCompletionEmailToUser = async (data: {
       ? `Level ${level} Test Submitted - Under Review`
       : `Level ${level} Test Completed - Score: ${score}`,
     html,
+    attachments: !isPending && cupImagePath
+      ? [
+          {
+            filename: "cup.png",
+            content: fs.readFileSync(cupImagePath),
+            contentType: "image/png",
+            contentId: "cup-image",
+          },
+        ]
+      : undefined,
   });
 };
 
@@ -448,79 +880,66 @@ export const sendTestCompletionEmailToAdmin = async (data: {
     level === 4
       ? `${CLIENT_URL}/admin/level4-submissions`
       : `${CLIENT_URL}/admin/users/${userId}`;
+  const safeUsername = escapeHtml(username);
+  const safeEmail = escapeHtml(email);
 
-  const statusBadge = isPending
-    ? `<span style="background: #FFA500; color: white; padding: 4px 12px; border-radius: 4px; font-size: 12px; font-weight: bold;">PENDING REVIEW</span>`
-    : `<span style="background: #4CAF50; color: white; padding: 4px 12px; border-radius: 4px; font-size: 12px; font-weight: bold;">COMPLETED</span>`;
-
-  const html = `
-        <!DOCTYPE html>
-        <html>
-        <head>
-            <meta charset="utf-8">
-            <meta name="viewport" content="width=device-width, initial-scale=1.0">
-            <title>User Completed Test - Level ${level}</title>
-        </head>
-        <body style="font-family: Arial, sans-serif; line-height: 1.6; color: #333; max-width: 600px; margin: 0 auto; padding: 20px;">
-            <div style="background: linear-gradient(135deg, #005F73 0%, #0A9396 100%); padding: 30px; text-align: center; border-radius: 10px 10px 0 0;">
-                <h1 style="color: white; margin: 0; font-size: 28px;">${APP_NAME} - Admin</h1>
-            </div>
-            
-            <div style="background: #f9f9f9; padding: 30px; border-radius: 0 0 10px 10px;">
-                <h2 style="color: #005F73; margin-top: 0;">📝 User Completed Level ${level} Test</h2>
-                
-                <p style="font-size: 16px; color: #555;">
-                    A user has ${
-                      isPending ? "submitted" : "completed"
-                    } a Level ${level} test on the platform.
-                </p>
-                
-                <div style="background: white; padding: 20px; border-radius: 8px; margin: 20px 0; border-left: 4px solid #E87A42;">
-                    <p style="margin: 5px 0;"><strong>User Name:</strong> ${username}</p>
-                    <p style="margin: 5px 0;"><strong>Email:</strong> <a href="mailto:${email}" style="color: #0A9396;">${email}</a></p>
-                    <p style="margin: 5px 0;"><strong>User ID:</strong> ${userId}</p>
-                    <p style="margin: 5px 0;"><strong>Test Level:</strong> Level ${level}</p>
-                    <p style="margin: 5px 0;"><strong>Status:</strong> ${statusBadge}</p>
-                </div>
-                
-                <div style="background: white; padding: 20px; border-radius: 8px; margin: 20px 0;">
-                    <p style="margin: 0 0 10px 0;"><strong>Test Results:</strong></p>
-                    ${
-                      isPending
-                        ? `<p style="margin: 0; color: #FFA500; font-weight: bold;">⏳ Awaiting Admin Review</p>
-                           <p style="margin: 10px 0 0 0; color: #555; font-size: 14px;">This Level 4 submission requires manual review and scoring.</p>`
-                        : `<p style="margin: 0;"><strong>Score:</strong> ${score} / ${totalQuestions}</p>
-                           <p style="margin: 5px 0;"><strong>Total Questions:</strong> ${totalQuestions}</p>`
-                    }
-                </div>
-                
-                ${
-                  isPending
-                    ? `
-                <div style="background: #FFF3CD; padding: 15px; border-radius: 8px; margin: 20px 0; border-left: 4px solid #FFA500;">
-                    <p style="margin: 0; font-size: 14px; color: #856404;">
-                        <strong>⚠️ Action Required:</strong> Please review this Level 4 submission and provide scores and feedback for each question.
-                    </p>
-                </div>
-                `
-                    : ""
-                }
-                
-                <div style="text-align: center; margin: 30px 0;">
-                    <a href="${adminDashboardUrl}" style="display: inline-block; background: #E87A42; color: white; padding: 14px 30px; text-decoration: none; border-radius: 8px; font-weight: bold; font-size: 16px;">${
-    isPending ? "Review Submission" : "View User Details"
-  }</a>
-                </div>
-                
-                <div style="margin-top: 30px; padding-top: 20px; border-top: 1px solid #ddd;">
-                    <p style="font-size: 12px; color: #999; margin: 0;">
-                        © ${new Date().getFullYear()} ${APP_NAME}. All rights reserved.
-                    </p>
-                </div>
-            </div>
-        </body>
-        </html>
-    `;
+  const html = renderEmailLayout({
+    previewText: `User completed Level ${level} test`,
+    audience: "user",
+    emailType: "transactional",
+    showUnsubscribe: false,
+    bodyHtml: `
+      <h1 style="margin:0 0 34px 0; color:#111111; font-family:'Source Sans Pro', Arial, Helvetica, sans-serif; font-size:24px; line-height:1.35; font-weight:700;">
+        ${
+          isPending
+            ? `Level ${level} test submitted for review`
+            : `Level ${level} test completed`
+        }
+      </h1>
+      <p style="margin:0 0 14px 0; color:#111111; font-family:'Source Sans Pro', Arial, Helvetica, sans-serif; font-size:18px; line-height:1.55;">
+        <strong>Name:</strong> ${safeUsername}
+      </p>
+      <p style="margin:0 0 14px 0; color:#111111; font-family:'Source Sans Pro', Arial, Helvetica, sans-serif; font-size:18px; line-height:1.55;">
+        <strong>Email:</strong> <a href="mailto:${safeEmail}" style="color:#111111; text-decoration:underline;">${safeEmail}</a>
+      </p>
+      <p style="margin:0 0 14px 0; color:#111111; font-family:'Source Sans Pro', Arial, Helvetica, sans-serif; font-size:18px; line-height:1.55;">
+        <strong>Level:</strong> Level ${level}
+      </p>
+      <p style="margin:0 0 34px 0; color:#111111; font-family:'Source Sans Pro', Arial, Helvetica, sans-serif; font-size:18px; line-height:1.55;">
+        <strong>User ID:</strong> ${userId}
+      </p>
+      ${
+        isPending
+          ? `
+            <p style="margin:0 0 36px 0; color:#B34700; font-family:'Source Sans Pro', Arial, Helvetica, sans-serif; font-size:18px; line-height:1.55;">
+              This Level 4 submission is awaiting admin review.
+            </p>
+          `
+          : `
+            <table role="presentation" cellpadding="0" cellspacing="0" border="0" width="100%" style="margin:0 0 36px 0; border:2px solid #B34700; border-radius:20px;">
+              <tr>
+                <td style="padding:18px 18px 12px 18px; text-align:center;">
+                  <p style="margin:0 0 20px 0; color:#111111; font-family:'Source Sans Pro', Arial, Helvetica, sans-serif; font-size:18px; line-height:1.4; font-weight:700;">
+                    Submitted score
+                  </p>
+                  <div style="margin:0 0 22px 0; color:#B34700; font-family:'Source Sans Pro', Arial, Helvetica, sans-serif; font-size:64px; line-height:1; font-weight:400;">
+                    ${score}
+                  </div>
+                  <p style="margin:0; color:#9D9D9D; font-family:'Source Sans Pro', Arial, Helvetica, sans-serif; font-size:18px; line-height:1.5;">
+                    Total questions solved: ${totalQuestions}
+                  </p>
+                </td>
+              </tr>
+            </table>
+          `
+      }
+      <div style="text-align:left;">
+        <a href="${adminDashboardUrl}" style="display:inline-block; padding:18px 36px; background:#0C677A; color:#FFFFFF; text-decoration:none; border-radius:16px; font-family:'Source Sans Pro', Arial, Helvetica, sans-serif; font-size:18px; line-height:1.2; font-weight:400;">
+          ${isPending ? "Review Submission" : "View User Details"}
+        </a>
+      </div>
+    `,
+  });
 
   return await sendEmail({
     to: adminEmail,
@@ -538,69 +957,67 @@ export const sendLevel4ReviewCompleteEmail = async (
   totalScore: number
 ): Promise<boolean> => {
   const dashboardUrl = `${CLIENT_URL}/user/dashboard`;
+  const giftImagePath = resolveLocalAssetPath("client/public/images/emails/Gift.png");
+  const giftImageSrc = giftImagePath ? "cid:gift-image" : GIFT_IMAGE_URL;
 
-  const html = `
-        <!DOCTYPE html>
-        <html>
-        <head>
-            <meta charset="utf-8">
-            <meta name="viewport" content="width=device-width, initial-scale=1.0">
-            <title>Your Level 4 Report is Ready</title>
-        </head>
-        <body style="font-family: Arial, sans-serif; line-height: 1.6; color: #333; max-width: 600px; margin: 0 auto; padding: 20px;">
-            <div style="background: linear-gradient(135deg, #005F73 0%, #0A9396 100%); padding: 30px; text-align: center; border-radius: 10px 10px 0 0;">
-                <h1 style="color: white; margin: 0; font-size: 28px;">${APP_NAME}</h1>
-            </div>
-            
-            <div style="background: #f9f9f9; padding: 30px; border-radius: 0 0 10px 10px;">
-                <h2 style="color: #005F73; margin-top: 0;">🎉 Your Level 4 Report is Ready!</h2>
-                
-                <p style="font-size: 16px; color: #555;">
-                    Hi ${username},
-                </p>
-                
-                <p style="font-size: 16px; color: #555;">
-                    Great news! Our team has completed the review of your Level 4 Mastery Test submission.
-                </p>
-                
-                <div style="background: white; padding: 25px; text-align: center; border-radius: 8px; margin: 30px 0; border: 2px solid #E87A42;">
-                    <p style="margin: 0; font-size: 14px; color: #666; text-transform: uppercase; letter-spacing: 1px;">Your Total Score</p>
-                    <h1 style="margin: 10px 0; font-size: 48px; color: #E87A42; font-weight: bold;">${totalScore}</h1>
-                    <p style="margin: 0; font-size: 12px; color: #999;">Score Range: 350 - 900</p>
-                </div>
-                
-                <p style="font-size: 16px; color: #555;">
-                    Your detailed report with individual question scores and expert remarks is now available on your dashboard.
-                </p>
-                
-                <div style="text-align: center; margin: 30px 0;">
-                    <a href="${dashboardUrl}" style="display: inline-block; background: #E87A42; color: white; padding: 14px 30px; text-decoration: none; border-radius: 8px; font-weight: bold; font-size: 16px;">View Your Report</a>
-                </div>
-                
-                <p style="font-size: 14px; color: #666;">
-                    You can also download your complete report as a PDF from your dashboard.
-                </p>
-                
-                <div style="background: white; padding: 20px; border-radius: 8px; margin: 30px 0; border-left: 4px solid #0A9396;">
-                    <p style="margin: 0; font-size: 14px; color: #555;">
-                        <strong>💡 Tip:</strong> Review the expert remarks carefully to understand your strengths and areas for improvement in life management and emotional intelligence.
-                    </p>
-                </div>
-                
-                <div style="margin-top: 30px; padding-top: 20px; border-top: 1px solid #ddd;">
-                    <p style="font-size: 12px; color: #999; margin: 0;">
-                        © ${new Date().getFullYear()} ${APP_NAME}. All rights reserved.
-                    </p>
-                </div>
-            </div>
-        </body>
-        </html>
-    `;
+  const html = renderEmailLayout({
+    previewText: "Your Level 4 report is ready",
+    recipientEmail: email,
+    emailType: "transactional",
+    bodyHtml: `
+      <div style="margin:0 0 26px 0; text-align:center;">
+        <img
+          src="${giftImageSrc}"
+          alt="Level 4 review complete"
+          width="150"
+          style="display:inline-block; width:100%; max-width:150px; height:auto; border:0;"
+        />
+      </div>
+      <p style="margin:0 0 42px 0; color:#111111; font-family:'Source Sans Pro', Arial, Helvetica, sans-serif; font-size:18px; line-height:1.55;">
+        Your Level 4 Review Is Complete
+      </p>
+      <p style="margin:0 0 40px 0; color:#111111; font-family:'Source Sans Pro', Arial, Helvetica, sans-serif; font-size:18px; line-height:1.55;">
+        You now have access to AI-Assisted Consultation.
+      </p>
+      <div style="margin:0 0 44px 0; text-align:left;">
+        <a
+          href="${dashboardUrl}"
+          style="
+            display:inline-block;
+            padding:18px 36px;
+            background:#0C677A;
+            color:#FFFFFF;
+            text-decoration:none;
+            border-radius:16px;
+            font-family:'Source Sans Pro', Arial, Helvetica, sans-serif;
+            font-size:18px;
+            line-height:1.2;
+            font-weight:400;
+          "
+        >
+          View your full report
+        </a>
+      </div>
+      <p style="margin:0; color:#111111; font-family:'Source Sans Pro', Arial, Helvetica, sans-serif; font-size:18px; line-height:1.3;">
+        This report provides deeper insights into your strengths and areas for growth, helping you take the next step in your wellbeing journey.
+      </p>
+    `,
+  });
 
   return await sendEmail({
     to: email,
     subject: `Your Level 4 Report is Ready - Score: ${totalScore}`,
     html,
+    attachments: giftImagePath
+      ? [
+          {
+            filename: "gift.png",
+            content: fs.readFileSync(giftImagePath),
+            contentType: "image/png",
+            contentId: "gift-image",
+          },
+        ]
+      : undefined,
   });
 };
 
@@ -620,69 +1037,55 @@ export const sendLevel5ReviewCompleteEmail = async (
     }
 
     const dashboardUrl = `${CLIENT_URL}/user/dashboard`;
+    const giftImagePath = resolveLocalAssetPath(
+      "client/public/images/emails/Gift.png"
+    );
+    const giftImageSrc = giftImagePath ? "cid:gift-image" : GIFT_IMAGE_URL;
 
-    const html = `
-        <!DOCTYPE html>
-        <html>
-        <head>
-            <meta charset="utf-8">
-            <meta name="viewport" content="width=device-width, initial-scale=1.0">
-            <title>Your Level 5 Report is Ready</title>
-        </head>
-        <body style="font-family: Arial, sans-serif; line-height: 1.6; color: #333; max-width: 600px; margin: 0 auto; padding: 20px;">
-            <div style="background: linear-gradient(135deg, #005F73 0%, #0A9396 100%); padding: 30px; text-align: center; border-radius: 10px 10px 0 0;">
-                <h1 style="color: white; margin: 0; font-size: 28px;">${APP_NAME}</h1>
-            </div>
-            
-            <div style="background: #f9f9f9; padding: 30px; border-radius: 0 0 10px 10px;">
-                <h2 style="color: #005F73; margin-top: 0;">🎉 Your Level 5 AI Interview Report is Ready!</h2>
-                
-                <p style="font-size: 16px; color: #555;">
-                    Hi ${user.username},
-                </p>
-                
-                <p style="font-size: 16px; color: #555;">
-                    Excellent news! Our expert team has completed the comprehensive review of your Level 5 Real-Time AI Voice Interview.
-                </p>
-                
-                <div style="background: white; padding: 25px; text-align: center; border-radius: 8px; margin: 30px 0; border: 2px solid #E87A42;">
-                    <p style="margin: 0; font-size: 14px; color: #666; text-transform: uppercase; letter-spacing: 1px;">Your Total Score</p>
-                    <h1 style="margin: 10px 0; font-size: 48px; color: #E87A42; font-weight: bold;">${totalScore}</h1>
-                    <p style="margin: 0; font-size: 12px; color: #999;">Score Range: 350 - 900</p>
-                </div>
-                
-                <p style="font-size: 16px; color: #555;">
-                    Your detailed report includes individual scores for all 25 questions, expert remarks on your voice responses, and personalized feedback on your communication and emotional intelligence.
-                </p>
-                
-                <div style="text-align: center; margin: 30px 0;">
-                    <a href="${dashboardUrl}" style="display: inline-block; background: #E87A42; color: white; padding: 14px 30px; text-decoration: none; border-radius: 8px; font-weight: bold; font-size: 16px;">View Your Report</a>
-                </div>
-                
-                <p style="font-size: 14px; color: #666;">
-                    You can also download your complete report as a PDF from your dashboard.
-                </p>
-                
-                <div style="background: white; padding: 20px; border-radius: 8px; margin: 30px 0; border-left: 4px solid #0A9396;">
-                    <p style="margin: 0; font-size: 14px; color: #555;">
-                        <strong>💡 Tip:</strong> Review the expert remarks carefully to understand how your voice communication reflects your emotional intelligence, decision-making abilities, and life management skills.
-                    </p>
-                </div>
-                
-                <div style="margin-top: 30px; padding-top: 20px; border-top: 1px solid #ddd;">
-                    <p style="font-size: 12px; color: #999; margin: 0;">
-                        © ${new Date().getFullYear()} ${APP_NAME}. All rights reserved.
-                    </p>
-                </div>
-            </div>
-        </body>
-        </html>
-    `;
+    const html = renderEmailLayout({
+      previewText: "Your Level 5 report is ready",
+      recipientEmail: user.email,
+      emailType: "transactional",
+      bodyHtml: `
+        <div style="margin:0 0 26px 0; text-align:center;">
+          <img
+            src="${giftImageSrc}"
+            alt="Level 5 review complete"
+            width="150"
+            style="display:inline-block; width:100%; max-width:150px; height:auto; border:0;"
+          />
+        </div>
+        <p style="margin:0 0 42px 0; color:#111111; font-family:'Source Sans Pro', Arial, Helvetica, sans-serif; font-size:18px; line-height:1.55;">
+          Your Level 5 Review Is Complete
+        </p>
+        <p style="margin:0 0 40px 0; color:#111111; font-family:'Source Sans Pro', Arial, Helvetica, sans-serif; font-size:18px; line-height:1.55;">
+          Your full AI interview report is now ready to review.
+        </p>
+        <div style="margin:0 0 44px 0; text-align:left;">
+          <a href="${dashboardUrl}" style="display:inline-block; padding:18px 36px; background:#0C677A; color:#FFFFFF; text-decoration:none; border-radius:16px; font-family:'Source Sans Pro', Arial, Helvetica, sans-serif; font-size:18px; line-height:1.2; font-weight:400;">
+            View your full report
+          </a>
+        </div>
+        <p style="margin:0; color:#111111; font-family:'Source Sans Pro', Arial, Helvetica, sans-serif; font-size:18px; line-height:1.3;">
+          This report provides deeper insights into your communication style, strengths, and areas for growth so you can keep building with clarity and confidence.
+        </p>
+      `,
+    });
 
     return await sendEmail({
       to: user.email,
       subject: `Your Level 5 AI Interview Report is Ready - Score: ${totalScore}`,
       html,
+      attachments: giftImagePath
+        ? [
+            {
+              filename: "gift.png",
+              content: fs.readFileSync(giftImagePath),
+              contentType: "image/png",
+              contentId: "gift-image",
+            },
+          ]
+        : undefined,
     });
   } catch (error) {
     console.error("Error sending Level 5 review email:", error);
@@ -695,64 +1098,44 @@ export const sendConsultantApprovalEmail = async (
   email: string,
   firstName: string
 ): Promise<boolean> => {
-  const html = `
-        <!DOCTYPE html>
-        <html>
-        <head>
-            <meta charset="utf-8">
-            <meta name="viewport" content="width=device-width, initial-scale=1.0">
-            <title>Application Approved!</title>
-        </head>
-        <body style="font-family: Arial, sans-serif; line-height: 1.6; color: #333; max-width: 600px; margin: 0 auto; padding: 20px;">
-            <div style="background: linear-gradient(135deg, #4CAF50 0%, #45a049 100%); padding: 30px; text-align: center; border-radius: 10px 10px 0 0;">
-                <h1 style="color: white; margin: 0; font-size: 28px;">🎉 Congratulations!</h1>
-            </div>
-            
-            <div style="background: #f9f9f9; padding: 30px; border-radius: 0 0 10px 10px;">
-                <h2 style="color: #4CAF50; margin-top: 0;">Welcome to ${APP_NAME}, ${firstName}!</h2>
-                
-                <p style="font-size: 16px; color: #555;">
-                    We're excited to inform you that your wellness coach application has been <strong>approved</strong>! 🎊
-                </p>
-                
-                <div style="background: #E8F5E9; padding: 20px; border-radius: 8px; margin: 25px 0; border-left: 4px solid #4CAF50;">
-                    <p style="margin: 0; font-size: 15px; color: #2E7D32;">
-                        <strong>✅ Your Profile is Now Active</strong><br/>
-                        You can now start accepting clients and offering your coaching services through our platform.
-                    </p>
-                </div>
-                
-                <h3 style="color: #005F73; margin-top: 30px;">Next Steps:</h3>
-                <ul style="font-size: 15px; color: #555; line-height: 1.8;">
-                    <li>Log in to your consultant dashboard to manage your profile</li>
-                    <li>Set up your availability and session preferences</li>
-                    <li>Start connecting with clients who need your expertise</li>
-                    <li>Review our coaching guidelines and best practices</li>
-                </ul>
-                
-                <div style="text-align: center; margin: 35px 0;">
-                    <a href="${CLIENT_URL}/consultant/login" style="display: inline-block; padding: 15px 35px; background-color: #005F73; color: white; text-decoration: none; border-radius: 8px; font-weight: bold; font-size: 16px;">
-                        Access Your Dashboard
-                    </a>
-                </div>
-                
-                <p style="font-size: 14px; color: #666; margin-top: 25px;">
-                    We're thrilled to have you as part of our wellness community. Together, we'll help individuals transform their lives and achieve their goals.
-                </p>
-                
-                <p style="font-size: 14px; color: #666;">
-                    If you have any questions, please don't hesitate to reach out to our support team.
-                </p>
-                
-                <div style="margin-top: 30px; padding-top: 20px; border-top: 1px solid #ddd;">
-                    <p style="font-size: 12px; color: #999; margin: 0;">
-                        © ${new Date().getFullYear()} ${APP_NAME}. All rights reserved.
-                    </p>
-                </div>
-            </div>
-        </body>
-        </html>
-    `;
+  const safeFirstName = escapeHtml(firstName);
+
+  const html = renderEmailLayout({
+    previewText: "Your consultant application has been approved",
+    audience: "user",
+    emailType: "transactional",
+    showUnsubscribe: false,
+    bodyHtml: `
+      <h1 style="margin:0 0 14px 0; color:#111111; font-family:'Source Sans Pro', Arial, Helvetica, sans-serif; font-size:24px; line-height:1.35; font-weight:700;">
+        Your Consultant Application Is Approved
+      </h1>
+      <p style="margin:0 0 38px 0; color:#111111; font-family:'Source Sans Pro', Arial, Helvetica, sans-serif; font-size:18px; line-height:1.55;">
+        Welcome to ${APP_NAME}, ${safeFirstName}. Your profile is now active.
+      </p>
+      <div style="margin:0 0 42px 0; text-align:left;">
+        <a
+          href="${CLIENT_URL}/consultant/login"
+          style="
+            display:inline-block;
+            padding:18px 36px;
+            background:#0C677A;
+            color:#FFFFFF;
+            text-decoration:none;
+            border-radius:16px;
+            font-family:'Source Sans Pro', Arial, Helvetica, sans-serif;
+            font-size:18px;
+            line-height:1.2;
+            font-weight:400;
+          "
+        >
+          Access your consultant portal
+        </a>
+      </div>
+      <p style="margin:0; color:#111111; font-family:'Source Sans Pro', Arial, Helvetica, sans-serif; font-size:18px; line-height:1.55;">
+        You can now manage sessions, update availability, and access client insights.
+      </p>
+    `,
+  });
 
   return await sendEmail({
     to: email,
@@ -767,56 +1150,46 @@ export const sendConsultantRejectionEmail = async (
   firstName: string,
   rejectionReason: string
 ): Promise<boolean> => {
-  const html = `
-        <!DOCTYPE html>
-        <html>
-        <head>
-            <meta charset="utf-8">
-            <meta name="viewport" content="width=device-width, initial-scale=1.0">
-            <title>Application Update</title>
-        </head>
-        <body style="font-family: Arial, sans-serif; line-height: 1.6; color: #333; max-width: 600px; margin: 0 auto; padding: 20px;">
-            <div style="background: linear-gradient(135deg, #005F73 0%, #0A9396 100%); padding: 30px; text-align: center; border-radius: 10px 10px 0 0;">
-                <h1 style="color: white; margin: 0; font-size: 28px;">${APP_NAME}</h1>
-            </div>
-            
-            <div style="background: #f9f9f9; padding: 30px; border-radius: 0 0 10px 10px;">
-                <h2 style="color: #005F73; margin-top: 0;">Dear ${firstName},</h2>
-                
-                <p style="font-size: 16px; color: #555;">
-                    Thank you for your interest in becoming a wellness coach with ${APP_NAME}. After careful review of your application, we regret to inform you that we are unable to approve your application at this time.
-                </p>
-                
-                <div style="background: #FFF3E0; padding: 20px; border-radius: 8px; margin: 25px 0; border-left: 4px solid #FF9800;">
-                    <p style="margin: 0 0 10px 0; font-size: 14px; color: #E65100; font-weight: bold;">
-                        Feedback from Review Team:
-                    </p>
-                    <p style="margin: 0; font-size: 15px; color: #555; white-space: pre-wrap;">
-                        ${rejectionReason}
-                    </p>
-                </div>
-                
-                <p style="font-size: 15px; color: #555; margin-top: 25px;">
-                    We appreciate the time and effort you put into your application. Please note that this decision is based on our current requirements and platform standards.
-                </p>
-                
-                <p style="font-size: 14px; color: #666;">
-                    We encourage you to continue developing your coaching practice and expertise. We wish you all the best in your professional journey.
-                </p>
-                
-                <p style="font-size: 14px; color: #666;">
-                    If you have any questions about this decision, please feel free to contact our support team.
-                </p>
-                
-                <div style="margin-top: 30px; padding-top: 20px; border-top: 1px solid #ddd;">
-                    <p style="font-size: 12px; color: #999; margin: 0;">
-                        © ${new Date().getFullYear()} ${APP_NAME}. All rights reserved.
-                    </p>
-                </div>
-            </div>
-        </body>
-        </html>
-    `;
+  const formattedFeedback = escapeHtml(rejectionReason)
+    .split(/\r?\n+/)
+    .filter(Boolean)
+    .map(
+      (line) => `
+        <p style="margin:0 0 12px 0; color:#7A7A7A; font-family:'Source Sans Pro', Arial, Helvetica, sans-serif; font-size:18px; line-height:1.55;">
+          &#8727; ${line.trim()}
+        </p>
+      `
+    )
+    .join("");
+
+  const html = renderEmailLayout({
+    previewText: "Update on your consultant application",
+    audience: "user",
+    emailType: "transactional",
+    showUnsubscribe: false,
+    bodyHtml: `
+      <h1 style="margin:0 0 40px 0; color:#111111; font-family:'Source Sans Pro', Arial, Helvetica, sans-serif; font-size:24px; line-height:1.35; font-weight:700;">
+        Your Consultant Application Update
+      </h1>
+      <p style="margin:0 0 40px 0; color:#111111; font-family:'Source Sans Pro', Arial, Helvetica, sans-serif; font-size:18px; line-height:1.55;">
+        After careful review, we&apos;re unable to approve your consultant application at this time.
+      </p>
+      <p style="margin:0 0 18px 0; color:#B34700; font-family:'Source Sans Pro', Arial, Helvetica, sans-serif; font-size:18px; line-height:1.55;">
+        Feedback from the team:
+      </p>
+      <div style="margin:0 0 34px 0;">
+        ${
+          formattedFeedback ||
+          `<p style="margin:0; color:#7A7A7A; font-family:'Source Sans Pro', Arial, Helvetica, sans-serif; font-size:18px; line-height:1.55;">
+            &#8727; We need a bit more information before we can move your application forward.
+          </p>`
+        }
+      </div>
+      <p style="margin:0; color:#9D9D9D; font-family:'Source Sans Pro', Arial, Helvetica, sans-serif; font-size:18px; line-height:1.55;">
+        You&apos;re welcome to update your information and reapply once the above points have been addressed.
+      </p>
+    `,
+  });
 
   return await sendEmail({
     to: email,
@@ -846,6 +1219,8 @@ export const sendBookingConfirmationEmail = async (data: {
     meetingLink,
     timezone,
   } = data;
+  const safeUserName = escapeHtml(userName);
+  const joinSessionUrl = meetingLink || `${PUBLIC_SITE_URL}/user/bookings`;
 
   const endTime = new Date(startTime.getTime() + duration * 60000);
 
@@ -857,67 +1232,56 @@ export const sendBookingConfirmationEmail = async (data: {
   );
 
   // Email to user
-  const userHtml = `
-        <!DOCTYPE html>
-        <html>
-        <head>
-            <meta charset="utf-8">
-            <meta name="viewport" content="width=device-width, initial-scale=1.0">
-            <title>Booking Confirmed</title>
-        </head>
-        <body style="font-family: Arial, sans-serif; line-height: 1.6; color: #333; max-width: 600px; margin: 0 auto; padding: 20px;">
-            <div style="background: linear-gradient(135deg, #005F73 0%, #0A9396 100%); padding: 30px; text-align: center; border-radius: 10px 10px 0 0;">
-                <h1 style="color: white; margin: 0; font-size: 28px;">${APP_NAME}</h1>
-            </div>
-            
-            <div style="background: #f9f9f9; padding: 30px; border-radius: 0 0 10px 10px;">
-                <h2 style="color: #005F73; margin-top: 0;">✅ Booking Confirmed!</h2>
-                
-                <p style="font-size: 16px; color: #555;">
-                    Hi ${userName},
-                </p>
-                
-                <p style="font-size: 16px; color: #555;">
-                    Your consultation with <strong>${consultantName}</strong> has been confirmed.
-                </p>
-                
-                <div style="background: white; padding: 25px; border-radius: 8px; margin: 25px 0; border-left: 4px solid #E87A42;">
-                    <h3 style="margin-top: 0; color: #005F73;">📅 Appointment Details</h3>
-                    <p style="margin: 10px 0;"><strong>Session:</strong> ${sessionType}</p>
-                    <p style="margin: 10px 0;"><strong>Consultant:</strong> ${consultantName}</p>
-                    <p style="margin: 10px 0;"><strong>Duration:</strong> ${duration} minutes</p>
-                    <p style="margin: 10px 0;"><strong>Date:</strong> ${date}</p>
-                    <p style="margin: 10px 0;"><strong>Time:</strong> ${timeRange}</p>
-                    ${
-                      meetingLink
-                        ? `<p style="margin: 10px 0;"><strong>Meeting Link:</strong> <a href="${meetingLink}" style="color: #0A9396;">${meetingLink}</a></p>`
-                        : ""
-                    }
-                </div>
-                
-                <div style="background: #E8F4F8; padding: 20px; border-radius: 8px; margin: 25px 0;">
-                    <p style="margin: 0; font-size: 14px; color: #005F73;">
-                        <strong>📝 Before your session:</strong><br>
-                        • Please arrive 5 minutes early<br>
-                        • Ensure you have a stable internet connection<br>
-                        • Prepare any questions you'd like to discuss<br>
-                        • Check your audio and video settings
-                    </p>
-                </div>
-                
-                <p style="font-size: 14px; color: #666;">
-                    If you need to cancel, please do so through your dashboard.
-                </p>
-                
-                <div style="margin-top: 30px; padding-top: 20px; border-top: 1px solid #ddd;">
-                    <p style="font-size: 12px; color: #999; margin: 0;">
-                        © ${new Date().getFullYear()} ${APP_NAME}. All rights reserved.
-                    </p>
-                </div>
-            </div>
-        </body>
-        </html>
-    `;
+  const userHtml = renderEmailLayout({
+    previewText: `Booking confirmed with ${consultantName}`,
+    recipientEmail: userEmail,
+    emailType: "transactional",
+    bodyHtml: `
+      <p style="margin:0 0 12px 0; color:#111111; font-family:'Source Sans Pro', Arial, Helvetica, sans-serif; font-size:18px; line-height:1.55;">
+        Thanks ${safeUserName},
+      </p>
+      <p style="margin:0 0 34px 0; color:#111111; font-family:'Source Sans Pro', Arial, Helvetica, sans-serif; font-size:18px; line-height:1.55;">
+        Your session is confirmed
+      </p>
+      <table role="presentation" cellpadding="0" cellspacing="0" border="0" width="100%" style="margin:0 0 44px 0; background:#F7EFE8; border-radius:20px;">
+        <tr>
+          <td style="padding:24px 26px;">
+            <p style="margin:0 0 16px 0; color:#111111; font-family:'Source Sans Pro', Arial, Helvetica, sans-serif; font-size:18px; line-height:1.5;">
+              <span style="color:#6F6F6F;">&#128197;</span> Date: <strong>${date}</strong>
+            </p>
+            <p style="margin:0 0 16px 0; color:#111111; font-family:'Source Sans Pro', Arial, Helvetica, sans-serif; font-size:18px; line-height:1.5;">
+              <span style="color:#6F6F6F;">&#128339;</span> Time: <strong>${timeRange}</strong>
+            </p>
+            <p style="margin:0; color:#111111; font-family:'Source Sans Pro', Arial, Helvetica, sans-serif; font-size:18px; line-height:1.5;">
+              <span style="color:#6F6F6F;">&#10003;</span> Duration: ${duration} Minutes
+            </p>
+          </td>
+        </tr>
+      </table>
+      <p style="margin:0 0 38px 0; color:#9D9D9D; font-family:'Source Sans Pro', Arial, Helvetica, sans-serif; font-size:18px; line-height:1.55; text-align:center;">
+        &#128161; Feel free to bring any notes or questions you&apos;d like to discuss.
+      </p>
+      <div style="margin:0; text-align:center;">
+        <a
+          href="${joinSessionUrl}"
+          style="
+            display:inline-block;
+            padding:18px 36px;
+            background:#0C677A;
+            color:#FFFFFF;
+            text-decoration:none;
+            border-radius:16px;
+            font-family:'Source Sans Pro', Arial, Helvetica, sans-serif;
+            font-size:18px;
+            line-height:1.2;
+            font-weight:400;
+          "
+        >
+          Join your session
+        </a>
+      </div>
+    `,
+  });
 
   // Send email
   return await sendEmail({
@@ -950,6 +1314,10 @@ export const sendBookingCancellationEmail = async (data: {
     timezone,
     cancellationReason,
   } = data;
+  const safeUserName = escapeHtml(userName);
+  const safeConsultantName = escapeHtml(consultantName);
+  const bookNewSessionUrl = `${PUBLIC_SITE_URL}/consultations`;
+  const consultantBookingsUrl = `${PUBLIC_SITE_URL}/consultant/bookings`;
 
   // Use timezone helper to format dates
   const endTime = new Date(startTime.getTime() + duration * 60000);
@@ -961,102 +1329,85 @@ export const sendBookingCancellationEmail = async (data: {
   const formattedDateTime = `${date} at ${time}`;
 
   // Email to user
-  const userHtml = `
-        <!DOCTYPE html>
-        <html>
-        <head>
-            <meta charset="utf-8">
-            <meta name="viewport" content="width=device-width, initial-scale=1.0">
-            <title>Booking Cancelled</title>
-        </head>
-        <body style="font-family: Arial, sans-serif; line-height: 1.6; color: #333; max-width: 600px; margin: 0 auto; padding: 20px;">
-            <div style="background: linear-gradient(135deg, #005F73 0%, #0A9396 100%); padding: 30px; text-align: center; border-radius: 10px 10px 0 0;">
-                <h1 style="color: white; margin: 0; font-size: 28px;">${APP_NAME}</h1>
-            </div>
-            
-            <div style="background: #f9f9f9; padding: 30px; border-radius: 0 0 10px 10px;">
-                <h2 style="color: #F44336; margin-top: 0;">❌ Booking Cancelled</h2>
-                
-                <p style="font-size: 16px; color: #555;">
-                    Hi ${userName},
-                </p>
-                
-                <p style="font-size: 16px; color: #555;">
-                    Your consultation booking has been cancelled.
-                </p>
-                
-                <div style="background: white; padding: 25px; border-radius: 8px; margin: 25px 0; border-left: 4px solid #F44336;">
-                    <h3 style="margin-top: 0; color: #F44336;">📅 Cancelled Booking</h3>
-                    <p style="margin: 10px 0;"><strong>Session:</strong> ${sessionType}</p>
-                    <p style="margin: 10px 0;"><strong>Consultant:</strong> ${consultantName}</p>
-                    <p style="margin: 10px 0;"><strong>Scheduled Time:</strong> ${formattedDateTime}</p>
-                    ${
-                      cancellationReason
-                        ? `<p style="margin: 10px 0;"><strong>Reason:</strong> ${cancellationReason}</p>`
-                        : ""
-                    }
-                </div>
-                
-                <p style="font-size: 14px; color: #666;">
-                    You can book a new session at any time through our platform.
-                </p>
-                
-                <div style="margin-top: 30px; padding-top: 20px; border-top: 1px solid #ddd;">
-                    <p style="font-size: 12px; color: #999; margin: 0;">
-                        © ${new Date().getFullYear()} ${APP_NAME}. All rights reserved.
-                    </p>
-                </div>
-            </div>
-        </body>
-        </html>
-    `;
+  const userHtml = renderEmailLayout({
+    previewText: `Booking cancelled for ${sessionType}`,
+    recipientEmail: userEmail,
+    emailType: "transactional",
+    bodyHtml: `
+      <p style="margin:0 0 12px 0; color:#111111; font-family:'Source Sans Pro', Arial, Helvetica, sans-serif; font-size:18px; line-height:1.55;">
+        Hi ${safeUserName},
+      </p>
+      <p style="margin:0 0 10px 0; color:#111111; font-family:'Source Sans Pro', Arial, Helvetica, sans-serif; font-size:18px; line-height:1.55;">
+        Your session scheduled for <span style="text-decoration:underline;">${formattedDateTime}</span> has been <strong>cancelled.</strong>
+      </p>
+      <p style="margin:0 0 40px 0; color:#111111; font-family:'Source Sans Pro', Arial, Helvetica, sans-serif; font-size:18px; line-height:1.55;">
+        If this was unintentional or you&apos;d like to book another time, you can schedule a new session below.
+      </p>
+      <div style="margin:0 0 42px 0; text-align:left;">
+        <a
+          href="${bookNewSessionUrl}"
+          style="
+            display:inline-block;
+            padding:18px 36px;
+            background:#0C677A;
+            color:#FFFFFF;
+            text-decoration:none;
+            border-radius:16px;
+            font-family:'Source Sans Pro', Arial, Helvetica, sans-serif;
+            font-size:18px;
+            line-height:1.2;
+            font-weight:400;
+          "
+        >
+          Book a new session
+        </a>
+      </div>
+      <p style="margin:0; color:#111111; font-family:'Source Sans Pro', Arial, Helvetica, sans-serif; font-size:18px; line-height:1.55;">
+        If you have any questions, feel free to contact us we&apos;re here to help.
+      </p>
+    `,
+  });
 
   // Email to consultant
-  const consultantHtml = `
-        <!DOCTYPE html>
-        <html>
-        <head>
-            <meta charset="utf-8">
-            <meta name="viewport" content="width=device-width, initial-scale=1.0">
-            <title>Booking Cancelled</title>
-        </head>
-        <body style="font-family: Arial, sans-serif; line-height: 1.6; color: #333; max-width: 600px; margin: 0 auto; padding: 20px;">
-            <div style="background: linear-gradient(135deg, #005F73 0%, #0A9396 100%); padding: 30px; text-align: center; border-radius: 10px 10px 0 0;">
-                <h1 style="color: white; margin: 0; font-size: 28px;">${APP_NAME}</h1>
-            </div>
-            
-            <div style="background: #f9f9f9; padding: 30px; border-radius: 0 0 10px 10px;">
-                <h2 style="color: #F44336; margin-top: 0;">❌ Booking Cancelled</h2>
-                
-                <p style="font-size: 16px; color: #555;">
-                    Hi ${consultantName},
-                </p>
-                
-                <p style="font-size: 16px; color: #555;">
-                    A consultation booking has been cancelled.
-                </p>
-                
-                <div style="background: white; padding: 25px; border-radius: 8px; margin: 25px 0; border-left: 4px solid #F44336;">
-                    <h3 style="margin-top: 0; color: #F44336;">📅 Cancelled Booking</h3>
-                    <p style="margin: 10px 0;"><strong>Client:</strong> ${userName}</p>
-                    <p style="margin: 10px 0;"><strong>Session:</strong> ${sessionType}</p>
-                    <p style="margin: 10px 0;"><strong>Scheduled Time:</strong> ${formattedDateTime}</p>
-                    ${
-                      cancellationReason
-                        ? `<p style="margin: 10px 0;"><strong>Reason:</strong> ${cancellationReason}</p>`
-                        : ""
-                    }
-                </div>
-                
-                <div style="margin-top: 30px; padding-top: 20px; border-top: 1px solid #ddd;">
-                    <p style="font-size: 12px; color: #999; margin: 0;">
-                        © ${new Date().getFullYear()} ${APP_NAME}. All rights reserved.
-                    </p>
-                </div>
-            </div>
-        </body>
-        </html>
-    `;
+  const consultantHtml = renderEmailLayout({
+    previewText: `Booking cancelled by ${userName}`,
+    audience: "user",
+    emailType: "transactional",
+    showUnsubscribe: false,
+    bodyHtml: `
+      <p style="margin:0 0 12px 0; color:#111111; font-family:'Source Sans Pro', Arial, Helvetica, sans-serif; font-size:18px; line-height:1.55;">
+        Hi ${safeConsultantName},
+      </p>
+      <p style="margin:0 0 10px 0; color:#111111; font-family:'Source Sans Pro', Arial, Helvetica, sans-serif; font-size:18px; line-height:1.55;">
+        ${safeUserName}&apos;s session scheduled for <span style="text-decoration:underline;">${formattedDateTime}</span> has been <strong>cancelled.</strong>
+      </p>
+      <p style="margin:0 0 40px 0; color:#111111; font-family:'Source Sans Pro', Arial, Helvetica, sans-serif; font-size:18px; line-height:1.55;">
+        You can review your upcoming availability and bookings below.
+      </p>
+      <div style="margin:0 0 42px 0; text-align:left;">
+        <a
+          href="${consultantBookingsUrl}"
+          style="
+            display:inline-block;
+            padding:18px 36px;
+            background:#0C677A;
+            color:#FFFFFF;
+            text-decoration:none;
+            border-radius:16px;
+            font-family:'Source Sans Pro', Arial, Helvetica, sans-serif;
+            font-size:18px;
+            line-height:1.2;
+            font-weight:400;
+          "
+        >
+          View your bookings
+        </a>
+      </div>
+      <p style="margin:0; color:#111111; font-family:'Source Sans Pro', Arial, Helvetica, sans-serif; font-size:18px; line-height:1.55;">
+        If you have any questions, feel free to contact us we&apos;re here to help.
+      </p>
+    `,
+  });
 
   // Send both emails
   const userEmailSent = await sendEmail({

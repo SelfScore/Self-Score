@@ -48,6 +48,10 @@ export interface User extends Document {
   scores?: {
     level5?: number;
   };
+  emailPreferences?: {
+    promotional: boolean;
+    unsubscribedAt?: Date;
+  };
 }
 
 const UserSchema: Schema<User> = new Schema(
@@ -178,6 +182,16 @@ const UserSchema: Schema<User> = new Schema(
     },
     scores: {
       level5: { type: Number, required: false },
+    },
+    emailPreferences: {
+      promotional: {
+        type: Boolean,
+        default: true,
+      },
+      unsubscribedAt: {
+        type: Date,
+        required: false,
+      },
     },
   },
   {

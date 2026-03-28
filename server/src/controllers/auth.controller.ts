@@ -18,10 +18,56 @@ import {
   sendVerificationEmail,
   sendPasswordResetEmail,
   sendWelcomeEmail,
+  verifyPromotionalUnsubscribeToken,
 } from "../lib/email";
 import { ApiResponse, UserResponse } from "../types/api";
 
 export class AuthController {
+  private static renderUnsubscribeResponsePage(options: {
+    title: string;
+    message: string;
+    success?: boolean;
+  }): string {
+    const { title, message, success = true } = options;
+    const accent = success ? "#005F73" : "#C04A3A";
+    const publicSiteUrl =
+      process.env.PUBLIC_SITE_URL ||
+      process.env.NEXT_PUBLIC_CLIENT_URL ||
+      "https://www.selfscore.net";
+
+    return `
+      <!DOCTYPE html>
+      <html>
+        <head>
+          <meta charset="utf-8">
+          <meta name="viewport" content="width=device-width, initial-scale=1.0">
+          <title>${title}</title>
+        </head>
+        <body style="margin:0; padding:0; background:#ECE9E2; color:#2B2B2B; font-family:'Source Sans Pro', Arial, Helvetica, sans-serif;">
+          <table role="presentation" cellpadding="0" cellspacing="0" border="0" width="100%">
+            <tr>
+              <td align="center" style="padding:48px 16px;">
+                <table role="presentation" cellpadding="0" cellspacing="0" border="0" width="100%" style="max-width:640px;">
+                  <tr>
+                    <td style="padding:0 0 18px 0;">
+                      <img src="${publicSiteUrl}/images/logos/LogoWithText.png" alt="SelfScore" width="257" style="display:block; width:257px; max-width:100%; height:auto; border:0;">
+                    </td>
+                  </tr>
+                  <tr>
+                    <td style="background:#FFFFFF; border:1px solid #D8D2C8; border-radius:24px; padding:36px 32px;">
+                      <h1 style="margin:0 0 14px 0; color:${accent}; font-family:'Faustina', Georgia, 'Times New Roman', serif; font-size:34px; line-height:1.2;">${title}</h1>
+                      <p style="margin:0; color:#6F6F6F; font-size:18px; line-height:1.7;">${message}</p>
+                    </td>
+                  </tr>
+                </table>
+              </td>
+            </tr>
+          </table>
+        </body>
+      </html>
+    `;
+  }
+
   static async signUp(req: Request, res: Response): Promise<void> {
     if (!checkDatabaseConnection()) {
       const response: ApiResponse = {
@@ -853,6 +899,77 @@ export class AuthController {
         message: "Internal Server Error",
       };
       res.status(500).json(response);
+    }
+  }
+
+  static async unsubscribePromotional(
+    req: Request,
+    res: Response
+  ): Promise<void> {
+    try {
+      const token =
+        typeof req.query.token === "string" ? req.query.token : undefined;
+
+      if (!token) {
+        res
+          .status(400)
+          .send(
+            AuthController.renderUnsubscribeResponsePage({
+              title: "Invalid Link",
+              message:
+                "This unsubscribe link is missing required information. Please try again from a valid email.",
+              success: false,
+            })
+          );
+        return;
+      }
+
+      const { email } = verifyPromotionalUnsubscribeToken(token);
+      const user = await UserModel.findOne({ email });
+
+      if (!user) {
+        res
+          .status(404)
+          .send(
+            AuthController.renderUnsubscribeResponsePage({
+              title: "Subscription Not Found",
+              message:
+                "We could not find a matching account for this unsubscribe request.",
+              success: false,
+            })
+          );
+        return;
+      }
+
+      if (!user.emailPreferences) {
+        user.emailPreferences = {
+          promotional: true,
+        };
+      }
+
+      user.emailPreferences.promotional = false;
+      user.emailPreferences.unsubscribedAt = new Date();
+      await user.save();
+
+      res.status(200).send(
+        AuthController.renderUnsubscribeResponsePage({
+          title: "You're Unsubscribed",
+          message:
+            "You will no longer receive promotional emails from SelfScore. Important transactional emails like password resets, booking updates, and assessment notifications will still be sent when needed.",
+        })
+      );
+    } catch (error) {
+      console.error("Error unsubscribing promotional emails:", error);
+      res
+        .status(400)
+        .send(
+          AuthController.renderUnsubscribeResponsePage({
+            title: "Link Expired",
+            message:
+              "This unsubscribe link is invalid or has expired. Please use the latest link from one of our emails.",
+            success: false,
+          })
+        );
     }
   }
 
