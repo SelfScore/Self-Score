@@ -12,7 +12,7 @@ import {
 // Save a user's question response
 export const createQuestionsResponse = async (
   req: Request,
-  res: Response
+  res: Response,
 ): Promise<Response> => {
   try {
     const { userId, level, questionId, selectedOptionIndex } = req.body;
@@ -56,12 +56,12 @@ export const createQuestionsResponse = async (
 // Save a user's question response for Level 1 specifically
 export const createLevel1Response = async (
   req: Request,
-  res: Response
+  res: Response,
 ): Promise<Response> => {
   try {
     console.log(
       "Received Level 1 submission request:",
-      JSON.stringify(req.body, null, 2)
+      JSON.stringify(req.body, null, 2),
     ); // Debug incoming data
 
     const { userId, responses } = req.body;
@@ -227,7 +227,7 @@ export const createLevel1Response = async (
           // Unlock Level 2 (set highest unlocked level to 2)
           user.progress.highestUnlockedLevel = Math.max(
             user.progress.highestUnlockedLevel,
-            2
+            2,
           );
 
           // Save the Level 1 test score (latest score)
@@ -236,7 +236,7 @@ export const createLevel1Response = async (
           await user.save();
 
           console.log(
-            `User ${userId} completed Level 1 with score ${cappedScore}. Level 2 unlocked.`
+            `User ${userId} completed Level 1 with score ${cappedScore}. Level 2 unlocked.`,
           );
 
           // Send email notifications to user and admin
@@ -263,12 +263,12 @@ export const createLevel1Response = async (
             });
 
             console.log(
-              `✅ Email notifications sent for Level 1 completion (User: ${user.email})`
+              `✅ Email notifications sent for Level 1 completion (User: ${user.email})`,
             );
           } catch (emailError) {
             console.error(
               "⚠️  Failed to send email notifications for Level 1:",
-              emailError
+              emailError,
             );
             // Don't fail the response if email fails
           }
@@ -324,12 +324,12 @@ export const createLevel1Response = async (
 // Generic function to submit responses for any level (2, 3, 4)
 export const submitLevelResponses = async (
   req: Request,
-  res: Response
+  res: Response,
 ): Promise<Response> => {
   try {
     console.log(
       "Received level submission request:",
-      JSON.stringify(req.body, null, 2)
+      JSON.stringify(req.body, null, 2),
     );
 
     const { userId, level, responses } = req.body;
@@ -370,20 +370,11 @@ export const submitLevelResponses = async (
       });
     }
 
-    // Check if level is purchased (for levels 2-4)
+    // Levels 2 and 3 are free; Level 4 still requires remaining attempts.
     if (level > 1) {
       if (level === 4) {
         // Level 4 uses remainingAttempts instead of purchased
         if ((user.purchasedLevels.level4.remainingAttempts || 0) <= 0) {
-          return res.status(403).json({
-            success: false,
-            message: `Please purchase Level ${level} to submit responses`,
-          });
-        }
-      } else {
-        // Levels 2-3 use purchased boolean
-        const levelKey = `level${level}` as "level2" | "level3";
-        if (!user.purchasedLevels[levelKey].purchased) {
           return res.status(403).json({
             success: false,
             message: `Please purchase Level ${level} to submit responses`,
@@ -465,7 +456,7 @@ export const submitLevelResponses = async (
 
         // Create a map for quick lookup
         const questionMap = new Map(
-          questions.map((q) => [(q._id as any).toString(), q])
+          questions.map((q) => [(q._id as any).toString(), q]),
         );
 
         // Calculate score based on level-specific logic
@@ -543,7 +534,7 @@ export const submitLevelResponses = async (
         if (nextLevel <= 4) {
           user.progress.highestUnlockedLevel = Math.max(
             user.progress.highestUnlockedLevel,
-            nextLevel
+            nextLevel,
           );
         }
 
@@ -558,7 +549,7 @@ export const submitLevelResponses = async (
         await user.save();
 
         console.log(
-          `User ${userId} completed Level ${level} with score ${cappedScore} (calculated: ${calculatedScore})`
+          `User ${userId} completed Level ${level} with score ${cappedScore} (calculated: ${calculatedScore})`,
         );
 
         // Send email notifications to user and admin
@@ -585,12 +576,12 @@ export const submitLevelResponses = async (
           });
 
           console.log(
-            `✅ Email notifications sent for Level ${level} completion (User: ${user.email})`
+            `✅ Email notifications sent for Level ${level} completion (User: ${user.email})`,
           );
         } catch (emailError) {
           console.error(
             `⚠️  Failed to send email notifications for Level ${level}:`,
-            emailError
+            emailError,
           );
           // Don't fail the response if email fails
         }
@@ -644,14 +635,14 @@ export const submitLevelResponses = async (
 // Get all responses of a user
 export const getUserResponses = async (
   req: Request,
-  res: Response
+  res: Response,
 ): Promise<Response> => {
   try {
     const { userId } = req.params;
 
     const responses = await QuestionsResponseModel.find({ userId }).populate(
       "questionId",
-      "questionText options correctOptionIndex level scoringType questionType"
+      "questionText options correctOptionIndex level scoringType questionType",
     );
 
     return res.status(200).json({
@@ -671,7 +662,7 @@ export const getUserResponses = async (
 // Get user's test history with scores and dates (all attempts)
 export const getUserTestHistory = async (
   req: Request,
-  res: Response
+  res: Response,
 ): Promise<Response> => {
   try {
     const { userId } = req.params;
@@ -719,7 +710,7 @@ export const getUserTestHistory = async (
 
     // Get reviews for Level 4 interviews
     const level4InterviewIds = level4Interviews.map(
-      (interview) => interview._id
+      (interview) => interview._id,
     );
     const level4Reviews = await Level4ReviewModel.find({
       interviewId: { $in: level4InterviewIds },
@@ -738,9 +729,16 @@ export const getUserTestHistory = async (
 
       // Calculate time spent in seconds if we have both timestamps
       let timeSpent = null;
-      if (interview.startedAt && (interview.completedAt || interview.submittedAt)) {
+      if (
+        interview.startedAt &&
+        (interview.completedAt || interview.submittedAt)
+      ) {
         const endTime = interview.completedAt || interview.submittedAt;
-        timeSpent = Math.floor((new Date(endTime).getTime() - new Date(interview.startedAt).getTime()) / 1000);
+        timeSpent = Math.floor(
+          (new Date(endTime).getTime() -
+            new Date(interview.startedAt).getTime()) /
+            1000,
+        );
       }
 
       return {
@@ -770,7 +768,7 @@ export const getUserTestHistory = async (
 
     // Get reviews for Level 5 interviews
     const level5InterviewIds = level5Interviews.map(
-      (interview) => interview._id
+      (interview) => interview._id,
     );
     const level5Reviews = await Level5ReviewModel.find({
       interviewId: { $in: level5InterviewIds },
@@ -792,9 +790,16 @@ export const getUserTestHistory = async (
       let timeSpent = null;
       if (interview.interviewMetadata?.totalDuration) {
         timeSpent = interview.interviewMetadata.totalDuration;
-      } else if (interview.startedAt && (interview.completedAt || interview.submittedAt)) {
+      } else if (
+        interview.startedAt &&
+        (interview.completedAt || interview.submittedAt)
+      ) {
         const endTime = interview.completedAt || interview.submittedAt;
-        timeSpent = Math.floor((new Date(endTime).getTime() - new Date(interview.startedAt).getTime()) / 1000);
+        timeSpent = Math.floor(
+          (new Date(endTime).getTime() -
+            new Date(interview.startedAt).getTime()) /
+            1000,
+        );
       }
 
       return {
@@ -839,7 +844,7 @@ export const getUserTestHistory = async (
 // Generate a shareable link for a test submission
 export const generateShareLink = async (
   req: Request,
-  res: Response
+  res: Response,
 ): Promise<Response> => {
   try {
     const { submissionId } = req.body;
@@ -907,7 +912,7 @@ export const generateShareLink = async (
 // Get shared report data (public endpoint)
 export const getSharedReport = async (
   req: Request,
-  res: Response
+  res: Response,
 ): Promise<Response> => {
   try {
     const { shareId } = req.params;

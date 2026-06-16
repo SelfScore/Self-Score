@@ -5,7 +5,7 @@ const stripeSecretKey = process.env.STRIPE_SECRET_KEY;
 
 if (!stripeSecretKey) {
   console.warn(
-    "⚠️  STRIPE_SECRET_KEY not found in environment variables. Payment features will not work."
+    "⚠️  STRIPE_SECRET_KEY not found in environment variables. Payment features will not work.",
   );
 }
 
@@ -15,10 +15,8 @@ export const stripe = new Stripe(stripeSecretKey || "sk_test_dummy", {
 });
 
 // Level pricing configuration (in cents)
-// Bundle pricing: Level 2 = $5, Level 3 = $10 (includes L2), Level 4 = $25 (includes L2+L3)
+// Only Level 4 remains a paid bundle; Levels 2 and 3 are free.
 export const LEVEL_PRICES = {
-  2: 500, // $5.00 USD - Level 2 only
-  3: 1000, // $10.00 USD - Levels 2 + 3 bundle
   4: 2500, // $25.00 USD - Levels 2 + 3 + 4 bundle
 } as const;
 
@@ -35,7 +33,7 @@ export const getLevelPrice = (level: number): number | null => {
 // Helper to format price for display
 export const formatPrice = (
   amountInCents: number,
-  currency: string = CURRENCY
+  currency: string = CURRENCY,
 ): string => {
   const amount = amountInCents / 100;
   return new Intl.NumberFormat("en-US", {

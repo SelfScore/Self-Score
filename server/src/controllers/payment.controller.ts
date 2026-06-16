@@ -10,7 +10,7 @@ export class PaymentController {
   // Create Stripe Checkout Session for a specific level
   static async createCheckoutSession(
     req: Request,
-    res: Response
+    res: Response,
   ): Promise<void> {
     try {
       const userId = req.user?.userId;
@@ -26,10 +26,10 @@ export class PaymentController {
       }
 
       // Validate level
-      if (!level || ![2, 3, 4].includes(level)) {
+      if (!level || level !== 4) {
         const response: ApiResponse = {
           success: false,
-          message: "Invalid level. Only levels 2, 3, and 4 require payment.",
+          message: "Invalid level. Only Level 4 requires payment.",
         };
         res.status(400).json(response);
         return;
@@ -46,22 +46,6 @@ export class PaymentController {
         return;
       }
 
-      // Check if user already purchased this level (for levels 2 and 3 only)
-      // Level 4 can be repurchased to add more attempts
-      if (level !== 4) {
-        const levelKey = `level${level}` as "level2" | "level3";
-        if (user.purchasedLevels[levelKey].purchased) {
-          const response: ApiResponse = {
-            success: false,
-            message: `You have already purchased Level ${level}`,
-          };
-          res.status(400).json(response);
-          return;
-        }
-      }
-
-      // NOTE: Removed previous level completion check - users can purchase any level anytime
-
       // Get price for the level
       const priceInCents = getLevelPrice(level);
       if (!priceInCents) {
@@ -73,18 +57,9 @@ export class PaymentController {
         return;
       }
 
-      // Create Stripe Checkout Session with bundle description
-      let productName = `LifeScore Level ${level} Access`;
-      let productDescription = `One-time purchase to unlock Level ${level} assessment`;
-
-      // Add bundle description for Level 3 and 4
-      if (level === 3) {
-        productName = `LifeScore Levels 2 & 3 Bundle`;
-        productDescription = `Unlock both Level 2 and Level 3 assessments`;
-      } else if (level === 4) {
-        productName = `LifeScore Complete Bundle (Levels 2, 3 & 4)`;
-        productDescription = `Unlock all premium assessments: Levels 2, 3, and 4`;
-      }
+      // Create Stripe Checkout Session for the Level 4 bundle
+      const productName = `SelfScore Bundle (Levels 4 & 5)`;
+      const productDescription = `Unlock all premium assessments: Levels 4 and 5`;
 
       const session = await stripe.checkout.sessions.create({
         payment_method_types: ["card"],
@@ -211,44 +186,69 @@ export class PaymentController {
             if (!user.purchasedLevels.level2.purchased) {
               user.purchasedLevels.level2.purchased = true;
               user.purchasedLevels.level2.purchaseDate = new Date();
-              user.purchasedLevels.level2.paymentId = (payment._id as string).toString();
+              user.purchasedLevels.level2.paymentId = (
+                payment._id as string
+              ).toString();
             }
-            user.progress.highestUnlockedLevel = Math.max(user.progress.highestUnlockedLevel, 2);
+            user.progress.highestUnlockedLevel = Math.max(
+              user.progress.highestUnlockedLevel,
+              2,
+            );
           } else if (payment.level === 3) {
             // Level 3 bundle - unlock Levels 2 and 3
             if (!user.purchasedLevels.level2.purchased) {
               user.purchasedLevels.level2.purchased = true;
               user.purchasedLevels.level2.purchaseDate = new Date();
-              user.purchasedLevels.level2.paymentId = (payment._id as string).toString();
+              user.purchasedLevels.level2.paymentId = (
+                payment._id as string
+              ).toString();
             }
             if (!user.purchasedLevels.level3.purchased) {
               user.purchasedLevels.level3.purchased = true;
               user.purchasedLevels.level3.purchaseDate = new Date();
-              user.purchasedLevels.level3.paymentId = (payment._id as string).toString();
+              user.purchasedLevels.level3.paymentId = (
+                payment._id as string
+              ).toString();
             }
-            user.progress.highestUnlockedLevel = Math.max(user.progress.highestUnlockedLevel, 3);
+            user.progress.highestUnlockedLevel = Math.max(
+              user.progress.highestUnlockedLevel,
+              3,
+            );
           } else if (payment.level === 4) {
             // Level 4 bundle - unlock Levels 2, 3 and add 1 attempt each for L4 and L5
             if (!user.purchasedLevels.level2.purchased) {
               user.purchasedLevels.level2.purchased = true;
               user.purchasedLevels.level2.purchaseDate = new Date();
-              user.purchasedLevels.level2.paymentId = (payment._id as string).toString();
+              user.purchasedLevels.level2.paymentId = (
+                payment._id as string
+              ).toString();
             }
             if (!user.purchasedLevels.level3.purchased) {
               user.purchasedLevels.level3.purchased = true;
               user.purchasedLevels.level3.purchaseDate = new Date();
-              user.purchasedLevels.level3.paymentId = (payment._id as string).toString();
+              user.purchasedLevels.level3.paymentId = (
+                payment._id as string
+              ).toString();
             }
             // Add 1 attempt credit for Level 4 (pay-per-use)
-            user.purchasedLevels.level4.remainingAttempts = (user.purchasedLevels.level4.remainingAttempts || 0) + 1;
+            user.purchasedLevels.level4.remainingAttempts =
+              (user.purchasedLevels.level4.remainingAttempts || 0) + 1;
             user.purchasedLevels.level4.purchaseDate = new Date();
-            user.purchasedLevels.level4.paymentId = (payment._id as string).toString();
+            user.purchasedLevels.level4.paymentId = (
+              payment._id as string
+            ).toString();
             // Add 1 attempt credit for Level 5 (pay-per-use)
-            user.purchasedLevels.level5.remainingAttempts = (user.purchasedLevels.level5.remainingAttempts || 0) + 1;
+            user.purchasedLevels.level5.remainingAttempts =
+              (user.purchasedLevels.level5.remainingAttempts || 0) + 1;
             user.purchasedLevels.level5.purchaseDate = new Date();
-            user.purchasedLevels.level5.paymentId = (payment._id as string).toString();
+            user.purchasedLevels.level5.paymentId = (
+              payment._id as string
+            ).toString();
 
-            user.progress.highestUnlockedLevel = Math.max(user.progress.highestUnlockedLevel, 5);
+            user.progress.highestUnlockedLevel = Math.max(
+              user.progress.highestUnlockedLevel,
+              5,
+            );
           }
 
           await user.save();
@@ -337,7 +337,7 @@ export class PaymentController {
 
   // Helper: Handle checkout completion
   private static async handleCheckoutComplete(
-    session: Stripe.Checkout.Session
+    session: Stripe.Checkout.Session,
   ): Promise<void> {
     const payment = await PaymentModel.findOne({ stripeSessionId: session.id });
 
@@ -365,54 +365,81 @@ export class PaymentController {
         if (!user.purchasedLevels.level2.purchased) {
           user.purchasedLevels.level2.purchased = true;
           user.purchasedLevels.level2.purchaseDate = new Date();
-          user.purchasedLevels.level2.paymentId = (payment._id as string).toString();
+          user.purchasedLevels.level2.paymentId = (
+            payment._id as string
+          ).toString();
         }
-        user.progress.highestUnlockedLevel = Math.max(user.progress.highestUnlockedLevel, 2);
+        user.progress.highestUnlockedLevel = Math.max(
+          user.progress.highestUnlockedLevel,
+          2,
+        );
       } else if (payment.level === 3) {
         // Level 3 bundle - unlock Levels 2 and 3
         if (!user.purchasedLevels.level2.purchased) {
           user.purchasedLevels.level2.purchased = true;
           user.purchasedLevels.level2.purchaseDate = new Date();
-          user.purchasedLevels.level2.paymentId = (payment._id as string).toString();
+          user.purchasedLevels.level2.paymentId = (
+            payment._id as string
+          ).toString();
         }
         if (!user.purchasedLevels.level3.purchased) {
           user.purchasedLevels.level3.purchased = true;
           user.purchasedLevels.level3.purchaseDate = new Date();
-          user.purchasedLevels.level3.paymentId = (payment._id as string).toString();
+          user.purchasedLevels.level3.paymentId = (
+            payment._id as string
+          ).toString();
         }
-        user.progress.highestUnlockedLevel = Math.max(user.progress.highestUnlockedLevel, 3);
+        user.progress.highestUnlockedLevel = Math.max(
+          user.progress.highestUnlockedLevel,
+          3,
+        );
       } else if (payment.level === 4) {
         // Level 4 bundle - unlock Levels 2, 3 and add 1 attempt each for L4 and L5
         if (!user.purchasedLevels.level2.purchased) {
           user.purchasedLevels.level2.purchased = true;
           user.purchasedLevels.level2.purchaseDate = new Date();
-          user.purchasedLevels.level2.paymentId = (payment._id as string).toString();
+          user.purchasedLevels.level2.paymentId = (
+            payment._id as string
+          ).toString();
         }
         if (!user.purchasedLevels.level3.purchased) {
           user.purchasedLevels.level3.purchased = true;
           user.purchasedLevels.level3.purchaseDate = new Date();
-          user.purchasedLevels.level3.paymentId = (payment._id as string).toString();
+          user.purchasedLevels.level3.paymentId = (
+            payment._id as string
+          ).toString();
         }
         // Add 1 attempt credit for Level 4 (pay-per-use)
-        user.purchasedLevels.level4.remainingAttempts = (user.purchasedLevels.level4.remainingAttempts || 0) + 1;
+        user.purchasedLevels.level4.remainingAttempts =
+          (user.purchasedLevels.level4.remainingAttempts || 0) + 1;
         user.purchasedLevels.level4.purchaseDate = new Date();
-        user.purchasedLevels.level4.paymentId = (payment._id as string).toString();
+        user.purchasedLevels.level4.paymentId = (
+          payment._id as string
+        ).toString();
         // Add 1 attempt credit for Level 5 (pay-per-use)
-        user.purchasedLevels.level5.remainingAttempts = (user.purchasedLevels.level5.remainingAttempts || 0) + 1;
+        user.purchasedLevels.level5.remainingAttempts =
+          (user.purchasedLevels.level5.remainingAttempts || 0) + 1;
         user.purchasedLevels.level5.purchaseDate = new Date();
-        user.purchasedLevels.level5.paymentId = (payment._id as string).toString();
+        user.purchasedLevels.level5.paymentId = (
+          payment._id as string
+        ).toString();
 
-        user.progress.highestUnlockedLevel = Math.max(user.progress.highestUnlockedLevel, 5);
+        user.progress.highestUnlockedLevel = Math.max(
+          user.progress.highestUnlockedLevel,
+          5,
+        );
       }
 
       await user.save();
-      console.log(`Payment level ${payment.level} processed for user ${user._id}`);
+      console.log(
+        `Payment level ${payment.level} processed for user ${user._id}`,
+      );
     }
   }
 
   // Helper: Handle payment failure
   private static async handlePaymentFailed(
-    paymentIntent: Stripe.PaymentIntent
+    paymentIntent: Stripe.PaymentIntent,
   ): Promise<void> {
     const payment = await PaymentModel.findOne({
       stripePaymentIntentId: paymentIntent.id,
@@ -452,13 +479,13 @@ export class PaymentController {
           if (payment.status === "completed" && payment.stripePaymentIntentId) {
             try {
               const paymentIntent = await stripe.paymentIntents.retrieve(
-                payment.stripePaymentIntentId
+                payment.stripePaymentIntentId,
               );
 
               // Get the charge to access receipt URL
               if (paymentIntent.latest_charge) {
                 const charge = await stripe.charges.retrieve(
-                  paymentIntent.latest_charge as string
+                  paymentIntent.latest_charge as string,
                 );
                 (paymentObj as any).receiptUrl = charge.receipt_url;
               }
@@ -469,7 +496,7 @@ export class PaymentController {
           }
 
           return paymentObj;
-        })
+        }),
       );
 
       const response: ApiResponse = {
@@ -537,11 +564,11 @@ export class PaymentController {
           month: "short",
           day: "numeric",
           year: "numeric",
-        }
+        },
       );
 
       const invoiceNumber = `INV-${payment.createdAt.getFullYear()}-${String(
-        payment.createdAt.getMonth() + 1
+        payment.createdAt.getMonth() + 1,
       ).padStart(2, "0")}-${sessionId.slice(-8).toUpperCase()}`;
 
       let productName = `LifeScore Level ${payment.level} Access`;
@@ -551,8 +578,8 @@ export class PaymentController {
         productName = `LifeScore Levels 2 & 3 Bundle`;
         productDescription = `Unlock both Level 2 and Level 3 assessments`;
       } else if (payment.level === 4) {
-        productName = `LifeScore Complete Bundle (Levels 2, 3 & 4)`;
-        productDescription = `Unlock all premium assessments: Levels 2, 3, and 4`;
+        productName = `SelfScore Test Bundle (Levels 4 & 5)`;
+        productDescription = `Unlock all premium assessments: Levels 4 and 5`;
       }
 
       const amount = (payment.amount / 100).toFixed(2);
@@ -564,7 +591,7 @@ export class PaymentController {
       res.setHeader("Content-Type", "application/pdf");
       res.setHeader(
         "Content-Disposition",
-        `attachment; filename="invoice-${invoiceNumber}.pdf"`
+        `attachment; filename="invoice-${invoiceNumber}.pdf"`,
       );
 
       // Pipe PDF to response
@@ -795,7 +822,7 @@ export class PaymentController {
           "For questions about this invoice, please contact support@lifescore.com",
           50,
           yPosition,
-          { align: "center", width: 495 }
+          { align: "center", width: 495 },
         );
 
       yPosition += 30;
@@ -806,7 +833,7 @@ export class PaymentController {
           `LifeScore © ${new Date().getFullYear()}. All rights reserved.`,
           50,
           yPosition,
-          { align: "center", width: 495 }
+          { align: "center", width: 495 },
         );
 
       // Finalize PDF

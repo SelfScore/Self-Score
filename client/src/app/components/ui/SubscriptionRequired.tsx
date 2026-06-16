@@ -27,6 +27,7 @@ export default function SubscriptionRequired({
   level,
 }: SubscriptionRequiredProps) {
   const router = useRouter();
+  const isFreeLevel = level <= 3;
 
   const handleGoToLevel1 = () => {
     router.push("/user/test?level=1");
@@ -81,7 +82,7 @@ export default function SubscriptionRequired({
               fontFamily: "Faustina",
             }}
           >
-            Premium Access Required
+            {isFreeLevel ? "Sign In Required" : "Premium Access Required"}
           </Typography>
 
           {/* Message */}
@@ -95,11 +96,11 @@ export default function SubscriptionRequired({
               fontFamily: "Source Sans Pro",
             }}
           >
-            {level === 4
-              ? `Get access to all premium assessments (Levels 2, 3 & 4) with our complete bundle.`
-              : level === 3
-              ? `Get access to Levels 2 & 3 with this bundle purchase.`
-              : `Unlock ${bundleDescription} to access advanced insights and personalized recommendations.`}
+            {isFreeLevel
+              ? "Levels 2 and 3 are free, but you need to sign in to save progress and continue."
+              : level === 4
+                ? `Get access to all premium assessments (Levels 2, 3 & 4) with our complete bundle.`
+                : `Unlock ${bundleDescription} to access advanced insights and personalized recommendations.`}
           </Typography>
 
           {/* Features List */}
@@ -113,21 +114,28 @@ export default function SubscriptionRequired({
                 textAlign: "center",
               }}
             >
-              {level === 4
-                ? "Complete Bundle Includes:"
-                : level === 3
-                ? "Bundle Includes:"
-                : "Premium Features:"}
+              {isFreeLevel
+                ? "What you get:"
+                : level === 4
+                  ? "Complete Bundle Includes:"
+                  : "Premium Features:"}
             </Typography>
-            {[
-              level >= 3
-                ? "Multiple level assessments"
-                : "Advanced level assessment",
-              "Detailed progress analytics",
-              "Personalized improvement plans",
-              "Priority support",
-              "Unlimited retakes",
-            ].map((feature, index) => (
+            {(isFreeLevel
+              ? [
+                  "Free access to Levels 2 and 3",
+                  "Sign in to save your progress",
+                  "Continue your journey from the dashboard",
+                ]
+              : [
+                  level >= 3
+                    ? "Multiple level assessments"
+                    : "Advanced level assessment",
+                  "Detailed progress analytics",
+                  "Personalized improvement plans",
+                  "Priority support",
+                  "Unlimited retakes",
+                ]
+            ).map((feature, index) => (
               <Box
                 key={index}
                 sx={{
@@ -155,7 +163,7 @@ export default function SubscriptionRequired({
             }}
           >
             {/* Integrated Buy Level Button for Stripe Payment */}
-            <BuyLevelButton level={level} />
+            {!isFreeLevel && <BuyLevelButton level={level} />}
 
             <Button
               onClick={handleGoToLevel1}

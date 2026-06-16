@@ -35,7 +35,7 @@ export default function AboutLevels() {
       id: 2,
       title: "Level 2",
       name: "Exploration",
-      price: "$5",
+      price: "FREE",
       description:
         "Level 2 helps you become aware of habits, impulses, and inner tendencies that quietly affect your peace and clarity. This is not about guilt or judgment, but about honest self-observation. Awareness is the first step toward inner freedom.",
     },
@@ -43,7 +43,7 @@ export default function AboutLevels() {
       id: 3,
       title: "Level 3",
       name: "Action",
-      price: " $15",
+      price: "FREE",
       description:
         "Level 3 explores your deepest beliefs about life, self, God, happiness, and truth. It helps you observe who you think you are, why you live, and what guides your choices. This level is not about right or wrong answers, but about honest inner clarity.",
     },
@@ -176,7 +176,7 @@ export default function AboutLevels() {
             fontSize: { xs: "1rem", sm: "1.1rem", md: "18px" },
           }}
         >
-          Our life scoring system comprises four progressive levels,
+          Our life scoring system comprises four core levels plus a bonus,
           <br />
           each corresponding to a distinct stage of personal development.
         </Typography>

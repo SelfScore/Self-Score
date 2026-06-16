@@ -223,8 +223,9 @@ const TestCard: React.FC<TestCardProps> = ({
               height: "100px",
               borderRadius: "50%",
               backgroundColor: "transparent",
-              border: `8px solid ${status === "locked" ? "#E1D3CE" : "#A8FFC8"
-                }`,
+              border: `8px solid ${
+                status === "locked" ? "#E1D3CE" : "#A8FFC8"
+              }`,
               display: "flex",
               justifyContent: "center",
               alignItems: "center",
@@ -259,19 +260,22 @@ const TestCard: React.FC<TestCardProps> = ({
       {/* Action Button */}
       <Box sx={{ mt: 0, mb: 1 }}>
         {/* Pay-per-use Level 4: Show Buy Again when attempts are used (but NOT completed) */}
-        {isPayPerUse && hasUsedAttempts && remainingAttempts === 0 && status !== "completed" && (
-          <ButtonSelfScore
-            text="Buy Again"
-            fullWidth
-            fontSize={"14px"}
-            onClick={onUnlock}
-          />
-        )}
+        {isPayPerUse &&
+          hasUsedAttempts &&
+          remainingAttempts === 0 &&
+          status !== "completed" && (
+            <ButtonSelfScore
+              text="Buy Again"
+              fullWidth
+              fontSize={"14px"}
+              onClick={onUnlock}
+            />
+          )}
 
         {/* Pay-per-use Level 4: Show Start Test with attempts count when has attempts */}
         {isPayPerUse && remainingAttempts > 0 && status !== "completed" && (
           <ButtonSelfScore
-            text={`Start Test (${remainingAttempts} attempt${remainingAttempts !== 1 ? 's' : ''} left)`}
+            text={`Start Test (${remainingAttempts} attempt${remainingAttempts !== 1 ? "s" : ""} left)`}
             fullWidth
             fontSize={"14px"}
             onClick={onStartTest}
@@ -289,14 +293,30 @@ const TestCard: React.FC<TestCardProps> = ({
         )}
 
         {/* Standard locked button (only for non pay-per-use or first purchase) */}
-        {status === "locked" && (!isPayPerUse || (!hasUsedAttempts && remainingAttempts === 0)) && (
+        {status === "locked" && isFree && (
           <ButtonSelfScore
-            text="Unlock with Premium"
+            text={`Complete Level ${Math.max(level - 1, 1)} First`}
             fullWidth
             fontSize={"14px"}
-            onClick={onUnlock}
+            disabled
+            style={{
+              backgroundColor: "#FF4F00",
+              cursor: "not-allowed",
+              opacity: 0.7,
+            }}
           />
         )}
+
+        {status === "locked" &&
+          !isFree &&
+          (!isPayPerUse || (!hasUsedAttempts && remainingAttempts === 0)) && (
+            <ButtonSelfScore
+              text="Unlock with Premium"
+              fullWidth
+              fontSize={"14px"}
+              onClick={onUnlock}
+            />
+          )}
 
         {/* Completed status: Show retake for non pay-per-use, or start if pay-per-use has attempts */}
         {status === "completed" && !isPayPerUse && (

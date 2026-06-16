@@ -361,7 +361,7 @@ export default function JourneyProgress() {
                 level={level.id}
                 levelName={level.name}
                 status={status}
-                isFree={level.id === 1}
+                isFree={level.id <= 3}
                 score={score}
                 maxScore={900}
                 onStartTest={() => handleStartTest(level.id)}
@@ -735,7 +735,7 @@ export default function JourneyProgress() {
                   text={
                     <>
                       {" "}
-                      Unlock Level {Math.min(highestUnlockedLevel + 1, 4)} Test
+                      Start Level {Math.min(highestUnlockedLevel + 1, 4)} Test
                     </>
                   }
                   onClick={() =>

@@ -81,14 +81,6 @@ export const submitLevel3Responses = async (
       });
     }
 
-    // Check if Level 3 is purchased
-    if (!user.purchasedLevels.level3.purchased) {
-      return res.status(403).json({
-        success: false,
-        message: "Please purchase Level 3 to submit responses",
-      });
-    }
-
     // Validate responses
     if (!Array.isArray(responses) || responses.length === 0) {
       return res.status(400).json({

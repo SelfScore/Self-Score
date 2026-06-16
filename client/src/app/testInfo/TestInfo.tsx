@@ -49,13 +49,15 @@ export default function TestInfo({ initialLevel }: TestInfoProps) {
 
       // Level 4 not completed - check if it's been submitted (pending review)
       try {
-        const { aiInterviewService } = await import("../../services/aiInterviewService");
+        const { aiInterviewService } =
+          await import("../../services/aiInterviewService");
         const historyResponse = await aiInterviewService.getInterviewHistory();
 
         const hasSubmittedLevel4 = historyResponse.data?.some(
           (interview: any) =>
             interview.level === 4 &&
-            (interview.status === "PENDING_REVIEW" || interview.status === "REVIEWED")
+            (interview.status === "PENDING_REVIEW" ||
+              interview.status === "REVIEWED"),
         );
 
         setIsLevel4PendingReview(hasSubmittedLevel4);
@@ -68,7 +70,6 @@ export default function TestInfo({ initialLevel }: TestInfoProps) {
     checkLevel4Status();
   }, [user?.userId, progress]);
 
-
   // Check if current active level is purchased
   const isCurrentLevelPurchased = isLevelPurchased(activeLevel + 1);
   const bundleInfo = getBundleInfo(activeLevel + 1);
@@ -76,7 +77,9 @@ export default function TestInfo({ initialLevel }: TestInfoProps) {
   // For Level 4 and 5, get remaining attempts
   const currentLevelNumber = activeLevel + 1;
   const remainingAttempts = getRemainingAttempts(currentLevelNumber);
-  const showRemainingAttempts = (currentLevelNumber === 4 || currentLevelNumber === 5) && isCurrentLevelPurchased;
+  const showRemainingAttempts =
+    (currentLevelNumber === 4 || currentLevelNumber === 5) &&
+    isCurrentLevelPurchased;
 
   const levels = [
     {
@@ -104,7 +107,7 @@ export default function TestInfo({ initialLevel }: TestInfoProps) {
       description: "Still quick enough to fit in your schedule",
       questionsDetail:
         "Deeper exploration of life satisfaction, relationships, career, and personal growth",
-      isFree: false,
+      isFree: true,
       features: [
         "9 comprehensive questions",
         "Detailed category analysis",
@@ -118,9 +121,11 @@ export default function TestInfo({ initialLevel }: TestInfoProps) {
       name: "Action",
       duration: "10-15 minutes",
       questions: "60",
-      description: "This reflection usually takes 10-15 minutes. It is meant to be unhurried and thoughtful",
-      questionsDetail: "You may return to this assessment anytime as your understanding grows",
-      isFree: false,
+      description:
+        "This reflection usually takes 10-15 minutes. It is meant to be unhurried and thoughtful",
+      questionsDetail:
+        "You may return to this assessment anytime as your understanding grows",
+      isFree: true,
       features: [
         "60 in-depth questions",
         "Advanced analytics",
@@ -135,7 +140,8 @@ export default function TestInfo({ initialLevel }: TestInfoProps) {
       duration: "35-40 Minutes",
       questions: 25,
       description: "It will take time to complete the assessment",
-      questionsDetail: "It will provide sustained growth, inner stability, and conscious leadership",
+      questionsDetail:
+        "It will provide sustained growth, inner stability, and conscious leadership",
       isFree: false,
       features: [
         "25 comprehensive questions",
@@ -244,11 +250,15 @@ export default function TestInfo({ initialLevel }: TestInfoProps) {
         }}
       >
         <Chip
-          label={`${currentLevel.title} - ${currentLevel.isFree ? "Free Assessment" : currentLevel.name
-            }`}
+          label={`${currentLevel.title} - ${
+            currentLevel.isFree ? "Free Assessment" : currentLevel.name
+          }`}
           icon={
             <EmojiEventsIcon
-              sx={{ fontSize: { xs: "16px", md: "20px" }, color: "#fff !important" }}
+              sx={{
+                fontSize: { xs: "16px", md: "20px" },
+                color: "#fff !important",
+              }}
             />
           }
           sx={{
@@ -279,7 +289,13 @@ export default function TestInfo({ initialLevel }: TestInfoProps) {
         }}
       >
         {/* Connected Progress Bar (Level Selector) */}
-        <Box sx={{ pt: { xs: 3, md: 5 }, pb: { xs: 2, md: 2 }, px: { xs: 2, md: 0 } }}>
+        <Box
+          sx={{
+            pt: { xs: 3, md: 5 },
+            pb: { xs: 2, md: 2 },
+            px: { xs: 2, md: 0 },
+          }}
+        >
           <Box
             sx={{
               display: "flex",
@@ -317,8 +333,8 @@ export default function TestInfo({ initialLevel }: TestInfoProps) {
                     justifyContent: "center",
                     color:
                       activeLevel === index ||
-                        isLevelPurchased(index + 1) ||
-                        index === 0
+                      isLevelPurchased(index + 1) ||
+                      index === 0
                         ? "#fff"
                         : "#999",
                     transition: "all 0.3s ease",
@@ -479,8 +495,9 @@ export default function TestInfo({ initialLevel }: TestInfoProps) {
                 >
                   {activeLevel === 1
                     ? "Level 1 (Free)"
-                    : `${levels[activeLevel - 1].title} (${levels[activeLevel - 1].isFree ? "Free" : "Previous"
-                    })`}
+                    : `${levels[activeLevel - 1].title} (${
+                        levels[activeLevel - 1].isFree ? "Free" : "Previous"
+                      })`}
                 </Typography>
                 {activeLevel > 0 &&
                   levels[activeLevel - 1].features.map((feature, idx) => (
@@ -519,7 +536,8 @@ export default function TestInfo({ initialLevel }: TestInfoProps) {
                     mb: 0.5,
                   }}
                 >
-                  {currentLevel.title} (Premium)
+                  {currentLevel.title}{" "}
+                  {currentLevel.isFree ? "(Free)" : "(Premium)"}
                 </Typography>
                 {/* Bundle inclusion text */}
                 <Typography
@@ -532,11 +550,11 @@ export default function TestInfo({ initialLevel }: TestInfoProps) {
                   }}
                 >
                   {activeLevel === 1
-                    ? "Includes access to Level 2"
+                    ? "Level 2 is free to start next"
                     : activeLevel === 2
-                      ? "Includes access to Levels 2 & 3"
+                      ? "Level 3 is free to start next"
                       : activeLevel === 3 || activeLevel === 4
-                        ? "Includes access to Levels 2, 3, 4 & 5"
+                        ? "Includes access to Levels 4 & 5"
                         : ""}
                 </Typography>
                 {currentLevel.features.map((feature, idx) => (
@@ -573,7 +591,14 @@ export default function TestInfo({ initialLevel }: TestInfoProps) {
             </Typography>
 
             {/* Duration */}
-            <Box sx={{ display: "flex", alignItems: "center", gap: { xs: 1.5, md: 2 }, mb: 2 }}>
+            <Box
+              sx={{
+                display: "flex",
+                alignItems: "center",
+                gap: { xs: 1.5, md: 2 },
+                mb: 2,
+              }}
+            >
               <Box
                 sx={{
                   width: { xs: "32px", md: "40px" },
@@ -586,7 +611,9 @@ export default function TestInfo({ initialLevel }: TestInfoProps) {
                   flexShrink: 0,
                 }}
               >
-                <AccessTimeIcon sx={{ fontSize: { xs: "16px", md: "20px" }, color: "#fff" }} />
+                <AccessTimeIcon
+                  sx={{ fontSize: { xs: "16px", md: "20px" }, color: "#fff" }}
+                />
               </Box>
               <Box>
                 <Typography
@@ -612,7 +639,14 @@ export default function TestInfo({ initialLevel }: TestInfoProps) {
             </Box>
 
             {/* Questions */}
-            <Box sx={{ display: "flex", alignItems: "center", gap: { xs: 1.5, md: 2 }, mb: 2 }}>
+            <Box
+              sx={{
+                display: "flex",
+                alignItems: "center",
+                gap: { xs: 1.5, md: 2 },
+                mb: 2,
+              }}
+            >
               <Box
                 sx={{
                   width: { xs: "32px", md: "40px" },
@@ -653,7 +687,14 @@ export default function TestInfo({ initialLevel }: TestInfoProps) {
             </Box>
 
             {/* Personalized Recommendations */}
-            <Box sx={{ display: "flex", alignItems: "center", gap: { xs: 1.5, md: 2 }, mb: 2 }}>
+            <Box
+              sx={{
+                display: "flex",
+                alignItems: "center",
+                gap: { xs: 1.5, md: 2 },
+                mb: 2,
+              }}
+            >
               <Box
                 sx={{
                   width: { xs: "32px", md: "40px" },
@@ -666,7 +707,9 @@ export default function TestInfo({ initialLevel }: TestInfoProps) {
                   flexShrink: 0,
                 }}
               >
-                <FlareIcon sx={{ fontSize: { xs: "16px", md: "20px" }, color: "#fff" }} />
+                <FlareIcon
+                  sx={{ fontSize: { xs: "16px", md: "20px" }, color: "#fff" }}
+                />
               </Box>
               <Box>
                 <Typography
@@ -692,7 +735,14 @@ export default function TestInfo({ initialLevel }: TestInfoProps) {
             </Box>
 
             {/* Detailed Score Breakdown */}
-            <Box sx={{ display: "flex", alignItems: "center", gap: { xs: 1.5, md: 2 }, mb: { xs: 3, md: 4 } }}>
+            <Box
+              sx={{
+                display: "flex",
+                alignItems: "center",
+                gap: { xs: 1.5, md: 2 },
+                mb: { xs: 3, md: 4 },
+              }}
+            >
               <Box
                 sx={{
                   width: { xs: "32px", md: "40px" },
@@ -705,7 +755,9 @@ export default function TestInfo({ initialLevel }: TestInfoProps) {
                   flexShrink: 0,
                 }}
               >
-                <LibraryBooksIcon sx={{ fontSize: { xs: "16px", md: "20px" }, color: "#fff" }} />
+                <LibraryBooksIcon
+                  sx={{ fontSize: { xs: "16px", md: "20px" }, color: "#fff" }}
+                />
               </Box>
               <Box>
                 <Typography
@@ -733,10 +785,7 @@ export default function TestInfo({ initialLevel }: TestInfoProps) {
             {/* Unlock Button - Hide for Level 5, show message instead */}
             {activeLevel !== 4 ? (
               <Box sx={{ display: "flex", justifyContent: "center", mt: 4 }}>
-                <BuyLevelButton
-                  level={activeLevel + 1}
-                  fullWidth
-                />
+                <BuyLevelButton level={activeLevel + 1} fullWidth />
               </Box>
             ) : (
               <Box sx={{ textAlign: "center", mt: 4 }}>
@@ -758,7 +807,8 @@ export default function TestInfo({ initialLevel }: TestInfoProps) {
                     color: "#6B7280",
                   }}
                 >
-                  The AI-Assisted Consultation is included free with Level 4 purchase
+                  The AI-Assisted Consultation is included free with Level 4
+                  purchase
                 </Typography>
               </Box>
             )}
@@ -820,7 +870,9 @@ export default function TestInfo({ initialLevel }: TestInfoProps) {
                   flexShrink: 0,
                 }}
               >
-                <AccessTimeIcon sx={{ fontSize: { xs: "20px", md: "24px" }, color: "#fff" }} />
+                <AccessTimeIcon
+                  sx={{ fontSize: { xs: "20px", md: "24px" }, color: "#fff" }}
+                />
               </Box>
               <Box>
                 <Typography
@@ -922,7 +974,9 @@ export default function TestInfo({ initialLevel }: TestInfoProps) {
                   flexShrink: 0,
                 }}
               >
-                <EmojiEventsIcon sx={{ fontSize: { xs: "20px", md: "24px" }, color: "#fff" }} />
+                <EmojiEventsIcon
+                  sx={{ fontSize: { xs: "20px", md: "24px" }, color: "#fff" }}
+                />
               </Box>
               <Box>
                 <Typography
@@ -960,9 +1014,11 @@ export default function TestInfo({ initialLevel }: TestInfoProps) {
               }}
             >
               <ButtonSelfScore
-                text={showRemainingAttempts
-                  ? `Start Assessment (${remainingAttempts} attempt${remainingAttempts !== 1 ? 's' : ''} left)`
-                  : "Start Assessment"}
+                text={
+                  showRemainingAttempts
+                    ? `Start Assessment (${remainingAttempts} attempt${remainingAttempts !== 1 ? "s" : ""} left)`
+                    : "Start Assessment"
+                }
                 endIcon={<ArrowForwardIcon sx={{ color: "#FFF" }} />}
                 onClick={handleStartAssessment}
                 maxWidth="565px"
@@ -972,9 +1028,16 @@ export default function TestInfo({ initialLevel }: TestInfoProps) {
                 fullWidth={true}
                 disabled={!checkTestAttemptAccess(activeLevel + 1).canAttempt}
                 style={{
-                  backgroundColor: checkTestAttemptAccess(activeLevel + 1).canAttempt ? "#FF5722" : "#CACACA",
-                  cursor: checkTestAttemptAccess(activeLevel + 1).canAttempt ? "pointer" : "not-allowed",
-                  opacity: checkTestAttemptAccess(activeLevel + 1).canAttempt ? 1 : 0.6,
+                  backgroundColor: checkTestAttemptAccess(activeLevel + 1)
+                    .canAttempt
+                    ? "#FF5722"
+                    : "#CACACA",
+                  cursor: checkTestAttemptAccess(activeLevel + 1).canAttempt
+                    ? "pointer"
+                    : "not-allowed",
+                  opacity: checkTestAttemptAccess(activeLevel + 1).canAttempt
+                    ? 1
+                    : 0.6,
                 }}
                 textStyle={{
                   fontWeight: 400,
@@ -993,7 +1056,8 @@ export default function TestInfo({ initialLevel }: TestInfoProps) {
                 >
                   {activeLevel === 4 && isLevel4PendingReview
                     ? "⚠️ Level 4 review is pending. You can attempt Level 5 after admin reviews your Level 4 submission."
-                    : checkTestAttemptAccess(activeLevel + 1).reason === 'PREVIOUS_LEVEL_NOT_COMPLETED'
+                    : checkTestAttemptAccess(activeLevel + 1).reason ===
+                        "PREVIOUS_LEVEL_NOT_COMPLETED"
                       ? `⚠️ Please complete Level ${checkTestAttemptAccess(activeLevel + 1).missingLevel || activeLevel} first`
                       : `⚠️ Please purchase this level to continue`}
                 </Typography>

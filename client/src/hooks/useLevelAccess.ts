@@ -20,13 +20,8 @@ export const useLevelAccess = () => {
   const checkLevelAccess = (level: number): LevelAccess => {
     // All levels are accessible for viewing info
     // Level 1 is always fully accessible
-    if (level === 1) {
+    if (level <= 3) {
       return { canAccess: true, reason: null };
-    }
-
-    // For levels 2-3, check if purchased (boolean)
-    if (!user) {
-      return { canAccess: false, reason: "SUBSCRIPTION_REQUIRED" };
     }
 
     // Level 4 and 5 use remainingAttempts instead of purchased boolean
@@ -43,12 +38,6 @@ export const useLevelAccess = () => {
         return { canAccess: false, reason: "SUBSCRIPTION_REQUIRED" };
       }
       return { canAccess: true, reason: null };
-    }
-
-    // For levels 2-3, use the boolean purchased flag
-    const levelKey = `level${level}` as "level2" | "level3";
-    if (!purchasedLevels || !purchasedLevels[levelKey].purchased) {
-      return { canAccess: false, reason: "SUBSCRIPTION_REQUIRED" };
     }
 
     return { canAccess: true, reason: null };
@@ -77,7 +66,12 @@ export const useLevelAccess = () => {
       }
     }
 
-    // Check if level is purchased/has attempts
+    // Levels 2 and 3 are free once the previous level is completed
+    if (level <= 3) {
+      return { canAttempt: true, reason: null };
+    }
+
+    // Check if level has attempts
     if (level === 4 || level === 5) {
       // Levels 4 & 5 use remainingAttempts (pay-per-use)
       const levelKey = `level${level}` as "level4" | "level5";
@@ -100,6 +94,10 @@ export const useLevelAccess = () => {
   const canPurchaseLevel = (level: number): boolean => {
     if (level === 1) return false; // Level 1 is free
     if (!user) return false; // Must be authenticated
+
+    if (level === 2 || level === 3) {
+      return false;
+    }
 
     // Level 4 can always be repurchased to add more attempts
     if (level === 4 || level === 5) {
@@ -132,7 +130,7 @@ export const useLevelAccess = () => {
 
   // Check if level is purchased (has access)
   const isLevelPurchased = (level: number): boolean => {
-    if (level === 1) return true; // Level 1 is free
+    if (level <= 3) return true; // Levels 1-3 are free
     if (!purchasedLevels) return false;
 
     // Level 4 and 5 use remainingAttempts
@@ -201,10 +199,12 @@ export const useLevelAccess = () => {
     level: number,
   ): { levels: number[]; price: number } | null => {
     switch (level) {
+      case 1:
+        return null;
       case 2:
-        return { levels: [2], price: 5 };
+        return { levels: [2], price: 0 };
       case 3:
-        return { levels: [2, 3], price: 10 };
+        return { levels: [2, 3], price: 0 };
       case 4:
         return { levels: [2, 3, 4, 5], price: 25 }; // Level 4 includes Level 5
       case 5:
