@@ -5,6 +5,7 @@ import { ReduxProvider } from "../store/ReduxProvider";
 import MainLayout from "./components/layout/MainLayout";
 // import MuiProvider from "./MuiProvider";
 import { AppRouterCacheProvider } from "@mui/material-nextjs/v15-appRouter";
+import Script from "next/script";
 
 const geistSans = Geist({
   variable: "--font-geist-sans",
@@ -154,6 +155,20 @@ export default function RootLayout({
           type="application/ld+json"
           dangerouslySetInnerHTML={{ __html: JSON.stringify(structuredData) }}
         />
+        {/* Google tag (gtag.js) */}
+        <Script
+          strategy="afterInteractive"
+          src="https://www.googletagmanager.com/gtag/js?id=G-GP74MBQCJ8"
+        />
+        <Script id="google-analytics" strategy="afterInteractive">
+          {`
+            window.dataLayer = window.dataLayer || [];
+            function gtag(){dataLayer.push(arguments);}
+            gtag('js', new Date());
+
+            gtag('config', 'G-GP74MBQCJ8');
+          `}
+        </Script>
       </head>
       <body
         className={`${geistSans.variable} ${geistMono.variable} ${faustina.variable} ${spaceGrotesk.variable}`}
