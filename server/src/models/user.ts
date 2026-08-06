@@ -4,8 +4,9 @@ export interface User extends Document {
   username: string;
   email: string;
   password: string;
-  countryCode: string;
-  phoneNumber: string;
+  countryCode?: string;
+  phoneNumber?: string;
+  country?: string;
   verifyCode: string;
   isVerified: boolean;
   verifyCodeExpiry: Date;
@@ -86,11 +87,16 @@ const UserSchema: Schema<User> = new Schema(
     },
     countryCode: {
       type: String,
-      required: [true, "Country code is required"],
+      required: false,
     },
     phoneNumber: {
       type: String,
-      required: [true, "Phone number is required"],
+      required: false,
+    },
+    country: {
+      type: String,
+      required: false, // Optional to not break existing users missing this field
+      trim: true,
     },
     resetPasswordToken: {
       type: String,

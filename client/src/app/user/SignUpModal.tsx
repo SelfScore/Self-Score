@@ -12,18 +12,19 @@ import {
   Checkbox,
   FormControlLabel,
   InputAdornment,
+  MenuItem,
 } from "@mui/material";
 import { Close as CloseIcon } from "@mui/icons-material";
 import EmailIcon from "@mui/icons-material/Email";
 import LockIcon from "@mui/icons-material/Lock";
 import Visibility from "@mui/icons-material/Visibility";
 import VisibilityOff from "@mui/icons-material/VisibilityOff";
+import PublicIcon from "@mui/icons-material/Public";
 import { useState } from "react";
 import { authService, UserData } from "../../services/authService";
 import NextLink from "next/link";
 import ButtonSelfScore from "../components/ui/ButtonSelfScore";
-import PhoneInput from "react-phone-input-2";
-import "react-phone-input-2/lib/style.css";
+import { getNames } from "country-list";
 import {
   getUserFriendlyError,
   getSuccessMessage,
@@ -51,7 +52,7 @@ export default function SignUpModal({
   const [formData, setFormData] = useState({
     username: "",
     email: "",
-    phoneNumber: "",
+    country: "",
     verifyCode: "",
     password: "",
     confirmPassword: "",
@@ -82,34 +83,7 @@ export default function SignUpModal({
     return password.length >= 6; // Minimum 6 characters
   };
 
-  // Extract country code and phone number separately from react-phone-input-2 format
-  // Input: "+911234567890" (from library)
-  // Output: { countryCode: "91", phoneNumber: "1234567890" }
-  const extractPhoneData = (
-    phone: string
-  ): { countryCode: string; phoneNumber: string } => {
-    // The phone already has + from our onChange handler
-    if (!phone.startsWith("+")) {
-      return { countryCode: "", phoneNumber: phone };
-    }
 
-    const withoutPlus = phone.substring(1); // Remove the +
-
-    // Try to extract country code intelligently
-    // Priority: Try 4, then 3, then 2, then 1 digit country codes
-    for (let codeLength = 4; codeLength >= 1; codeLength--) {
-      const potentialCode = withoutPlus.substring(0, codeLength);
-      const potentialNumber = withoutPlus.substring(codeLength);
-
-      // Phone number should be at least 7 digits
-      if (potentialNumber.length >= 7) {
-        return { countryCode: potentialCode, phoneNumber: potentialNumber };
-      }
-    }
-
-    // Fallback: treat everything as phone number
-    return { countryCode: "", phoneNumber: withoutPlus };
-  };
 
   const handleSignUp = async () => {
     try {
@@ -133,8 +107,8 @@ export default function SignUpModal({
         setError("Please enter a valid email address (e.g., name@example.com)");
         return;
       }
-      if (!formData.phoneNumber.trim()) {
-        setError("Please enter your phone number");
+       if (!formData.country.trim()) {
+        setError("Please select your country");
         return;
       }
       if (!validatePassword(formData.password)) {
@@ -154,16 +128,10 @@ export default function SignUpModal({
         return;
       }
 
-      // Extract country code and phone number separately
-      const { countryCode, phoneNumber } = extractPhoneData(
-        formData.phoneNumber
-      );
-
       const response = await authService.signUp({
         username: formData.username.trim(),
         email: formData.email.trim().toLowerCase(),
-        countryCode,
-        phoneNumber,
+        country: formData.country.trim(),
         password: formData.password,
         confirmPassword: formData.confirmPassword,
       });
@@ -355,7 +323,7 @@ export default function SignUpModal({
     setFormData({
       username: "",
       email: "",
-      phoneNumber: "",
+      country: "",
       verifyCode: "",
       password: "",
       confirmPassword: "",
@@ -509,6 +477,7 @@ export default function SignUpModal({
           }}
         />
 
+
         <Typography
           sx={{
             mb: 0.5,
@@ -518,47 +487,52 @@ export default function SignUpModal({
             fontSize: { xs: "14px", sm: "15px" },
           }}
         >
-          Phone Number<span style={{ color: "#FF5722" }}>*</span>
+          Country<span style={{ color: "#FF5722" }}>*</span>
         </Typography>
-        <PhoneInput
-          country={"us"}
-          value={formData.phoneNumber}
-          onChange={(phone) => handleInputChange("phoneNumber", `+${phone}`)}
+        <TextField
+          select
+          value={formData.country}
+          onChange={(e) => handleInputChange("country", e.target.value)}
+          fullWidth
+          required
           disabled={loading}
-          containerStyle={{
-            width: "100%",
-            marginBottom: "12px",
+          SelectProps={{
+            MenuProps: {
+              PaperProps: {
+                style: {
+                  maxHeight: 300,
+                },
+              },
+            },
           }}
-          inputStyle={{
-            width: "100%",
-            height: "48px",
-            borderRadius: "8px",
-            border: "1px solid #3A3A3A4D",
-            fontSize: "15px",
-            paddingLeft: "48px",
-            color: "#000000",
-            backgroundColor: "#FFFFFF",
+          InputProps={{
+            startAdornment: (
+              <InputAdornment position="start">
+                <PublicIcon
+                  sx={{ color: "#999", fontSize: { xs: 20, sm: 24 } }}
+                />
+              </InputAdornment>
+            ),
           }}
-          buttonStyle={{
-            borderRadius: "8px 0 0 8px",
-            border: "1px solid #3A3A3A4D",
-            backgroundColor: "#FFFFFF",
+          sx={{
+            mb: { xs: 1.5, sm: 2 },
+            "& .MuiOutlinedInput-root": {
+              height: { xs: "44px", sm: "48px" },
+              borderRadius: "8px",
+              bgcolor: "#FFFFFF",
+              fontSize: { xs: "14px", sm: "15px" },
+              "& fieldset": { border: "1px solid #3A3A3A4D" },
+              "&:hover fieldset": { border: "1px solid #3A3A3A4D" },
+              "&.Mui-focused fieldset": { border: "1px solid #FF5722" },
+            },
           }}
-          dropdownStyle={{
-            borderRadius: "8px",
-            backgroundColor: "#FFFFFF",
-            color: "#000000",
-          }}
-          searchStyle={{
-            width: "90%",
-            margin: "8px auto",
-            padding: "8px",
-            border: "1px solid #3A3A3A4D",
-            borderRadius: "4px",
-            color: "#000000",
-            backgroundColor: "#FFFFFF",
-          }}
-        />
+        >
+          {getNames().map((name) => (
+            <MenuItem key={name} value={name}>
+              {name}
+            </MenuItem>
+          ))}
+        </TextField>
 
         <Typography
           sx={{

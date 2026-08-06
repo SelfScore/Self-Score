@@ -236,7 +236,7 @@ export default function ConsultationsPage() {
                 fontSize: { xs: "2rem", sm: "2.5rem", md: "40px" },
               }}
             >
-              Consultations
+              Talk to Us
             </Typography>
             <Typography
               sx={{

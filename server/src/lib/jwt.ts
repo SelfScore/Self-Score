@@ -10,6 +10,7 @@ export interface TokenPayload {
     userId: string;
     email: string;
     username: string;
+    country?: string;
     countryCode?: string;
     phoneNumber?: string;
     purchasedLevels?: {
@@ -46,6 +47,7 @@ export const generateToken = (userData: UserResponse): string => {
         userId: userData.userId,
         email: userData.email,
         username: userData.username,
+        country: userData.country,
         countryCode: userData.countryCode,
         phoneNumber: userData.phoneNumber,
         purchasedLevels: userData.purchasedLevels,

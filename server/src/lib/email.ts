@@ -1424,3 +1424,93 @@ export const sendBookingCancellationEmail = async (data: {
 
   return userEmailSent && consultantEmailSent;
 };
+
+// ─── Subscriber Welcome Email ────────────────────────────────────────────────
+
+export const sendSubscriberWelcomeEmail = async (data: {
+  name: string;
+  email: string;
+}): Promise<boolean> => {
+  const { name, email } = data;
+  const safeName = escapeHtml(name);
+  const testUrl = `${PUBLIC_SITE_URL}/testInfo`;
+
+  const bodyHtml = `
+    <tr>
+      <td class="email-body" style="padding: 40px 48px; background-color: ${BRAND_COLORS.panel}; border-radius: 0;">
+
+        <!-- Greeting -->
+        <p style="margin: 0 0 20px 0; font-family: 'Source Sans Pro', Arial, Helvetica, sans-serif; font-size: 22px; font-weight: 700; color: ${BRAND_COLORS.teal}; line-height: 1.3;">
+          Hi ${safeName},
+        </p>
+
+        <!-- Message -->
+        <p style="margin: 0 0 16px 0; font-family: 'Source Sans Pro', Arial, Helvetica, sans-serif; font-size: 17px; color: ${BRAND_COLORS.text}; line-height: 1.6;">
+          Welcome to the SelfScore community!
+        </p>
+        <p style="margin: 0 0 16px 0; font-family: 'Source Sans Pro', Arial, Helvetica, sans-serif; font-size: 17px; color: ${BRAND_COLORS.text}; line-height: 1.6;">
+          We're happy to have you with us.
+        </p>
+        <p style="margin: 0 0 16px 0; font-family: 'Source Sans Pro', Arial, Helvetica, sans-serif; font-size: 17px; color: ${BRAND_COLORS.text}; line-height: 1.6;">
+          By subscribing, you've taken a small but meaningful step toward understanding yourself better. From time to time, we'll share practical tips, self-growth insights, new assessments, and thoughtful content to help you reflect, learn, and grow.
+        </p>
+        <p style="margin: 0 0 24px 0; font-family: 'Source Sans Pro', Arial, Helvetica, sans-serif; font-size: 17px; color: ${BRAND_COLORS.text}; line-height: 1.6;">
+          No spam. Just useful ideas that you can apply in your everyday life.
+        </p>
+
+        <p style="margin: 0 0 24px 0; font-family: 'Source Sans Pro', Arial, Helvetica, sans-serif; font-size: 17px; color: ${BRAND_COLORS.text}; line-height: 1.6;">
+          Thanks for joining us. We're excited to be part of your journey.<br />
+          See you in your inbox!
+        </p>
+
+        <!-- Divider -->
+        <hr style="border: none; border-top: 1px solid ${BRAND_COLORS.panelBorder}; margin: 28px 0;" />
+
+        <table role="presentation" cellspacing="0" cellpadding="0" border="0" style="margin: 0 auto;">
+          <tr>
+            <td style="border-radius: 8px; background-color: #FF4F00;">
+              <a
+                href="${testUrl}"
+                style="
+                  display: inline-block;
+                  padding: 14px 36px;
+                  font-family: 'Source Sans Pro', Arial, Helvetica, sans-serif;
+                  font-size: 16px;
+                  font-weight: 700;
+                  color: #ffffff;
+                  text-decoration: none;
+                  border-radius: 8px;
+                  letter-spacing: 0.3px;
+                "
+              >
+                Discover Your Self Score →
+              </a>
+            </td>
+          </tr>
+        </table>
+
+        <!-- Signoff -->
+        <p style="margin: 32px 0 0 0; font-family: 'Source Sans Pro', Arial, Helvetica, sans-serif; font-size: 16px; font-weight: 700; color: ${BRAND_COLORS.text}; line-height: 1.5; text-align: center;">
+          The SelfScore Team
+        </p>
+
+      </td>
+    </tr>
+  `;
+
+  const html = renderEmailLayout({
+    previewText: "Welcome to SelfScore! We're excited to be part of your journey.",
+    bodyHtml,
+    recipientEmail: email,
+    audience: "user",
+    emailType: "promotional",
+    showUnsubscribe: false,
+  });
+
+  return sendEmail({
+    to: email,
+    subject: "Welcome to SelfScore!",
+    html,
+  });
+};
+

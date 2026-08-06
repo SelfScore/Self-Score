@@ -82,6 +82,7 @@ export class AuthController {
       const {
         username,
         email,
+        country,
         countryCode,
         phoneNumber,
         password,
@@ -91,6 +92,7 @@ export class AuthController {
       const validationResult = signUpSchema.safeParse({
         username,
         email,
+        country,
         countryCode,
         phoneNumber,
         password,
@@ -128,6 +130,7 @@ export class AuthController {
       const newUser = new UserModel({
         username,
         email,
+        country,
         countryCode,
         phoneNumber,
         password: hashedPassword,
@@ -166,6 +169,7 @@ export class AuthController {
         userId: (newUser._id as string).toString(),
         email: newUser.email,
         username: newUser.username,
+        country: newUser.country,
         countryCode: newUser.countryCode,
         phoneNumber: newUser.phoneNumber,
         purchasedLevels: newUser.purchasedLevels,
@@ -246,6 +250,7 @@ export class AuthController {
         userId: (user._id as string).toString(),
         email: user.email,
         username: user.username,
+        country: user.country,
         countryCode: user.countryCode,
         phoneNumber: user.phoneNumber,
         purchasedLevels: user.purchasedLevels,
@@ -349,6 +354,7 @@ export class AuthController {
         userId: (user._id as string).toString(),
         email: user.email,
         username: user.username,
+        country: user.country,
         countryCode: user.countryCode,
         phoneNumber: user.phoneNumber,
         purchasedLevels: user.purchasedLevels,
@@ -482,6 +488,7 @@ export class AuthController {
         userId: (user._id as string).toString(),
         email: user.email,
         username: user.username,
+        country: user.country,
         countryCode: user.countryCode,
         phoneNumber: user.phoneNumber,
         purchasedLevels: user.purchasedLevels,
@@ -693,7 +700,7 @@ export class AuthController {
         return;
       }
 
-      const { username, countryCode, phoneNumber, email } =
+      const { username, countryCode, phoneNumber, email, country } =
         validationResult.data;
 
       const user = await UserModel.findById(userId);
@@ -763,6 +770,7 @@ export class AuthController {
       if (username) user.username = username;
       if (countryCode) user.countryCode = countryCode;
       if (phoneNumber) user.phoneNumber = phoneNumber;
+      if (country) user.country = country;
 
       await user.save();
 
@@ -770,6 +778,7 @@ export class AuthController {
         userId: (user._id as string).toString(),
         email: user.email,
         username: user.username,
+        country: user.country,
         countryCode: user.countryCode,
         phoneNumber: user.phoneNumber,
         purchasedLevels: user.purchasedLevels,
@@ -874,6 +883,7 @@ export class AuthController {
         userId: (user._id as string).toString(),
         email: user.email,
         username: user.username,
+        country: user.country,
         countryCode: user.countryCode,
         phoneNumber: user.phoneNumber,
         purchasedLevels: user.purchasedLevels,

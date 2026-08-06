@@ -15,9 +15,8 @@ import {
   Stack,
   Snackbar,
   CircularProgress,
+  MenuItem,
 } from "@mui/material";
-import PhoneInput from "react-phone-input-2";
-import "react-phone-input-2/lib/style.css";
 import { useAuth } from "../../../hooks/useAuth";
 import { useRouter } from "next/navigation";
 import { useEffect, useState } from "react";
@@ -29,8 +28,10 @@ import {
   Logout,
   Email,
   AccountCircle,
+  Public as PublicIcon,
   // ArrowBack,
 } from "@mui/icons-material";
+import { getNames } from "country-list";
 import ButtonSelfScore from "@/app/components/ui/ButtonSelfScore";
 import OutLineButton from "@/app/components/ui/OutLineButton";
 import EmailVerificationModal from "@/app/components/ui/EmailVerificationModal";
@@ -55,15 +56,13 @@ export default function ProfilePage() {
   const [formData, setFormData] = useState({
     username: "",
     email: "",
-    countryCode: "",
-    phoneNumber: "",
+    country: "",
   });
 
   const [originalData, setOriginalData] = useState({
     username: "",
     email: "",
-    countryCode: "",
-    phoneNumber: "",
+    country: "",
   });
 
   useEffect(() => {
@@ -74,8 +73,7 @@ export default function ProfilePage() {
       const userData = {
         username: user.username || "",
         email: user.email || "",
-        countryCode: user.countryCode || "+1",
-        phoneNumber: user.phoneNumber || "",
+        country: user.country || "",
       };
       setFormData(userData);
       setOriginalData(userData);
@@ -105,9 +103,9 @@ export default function ProfilePage() {
         return;
       }
 
-      // Validate phone number
-      if (formData.phoneNumber && formData.phoneNumber.trim().length < 7) {
-        setError("Phone number must be at least 7 digits long");
+      // Validate country
+      if (!formData.country.trim()) {
+        setError("Country is required");
         setLoading(false);
         return;
       }
@@ -117,11 +115,8 @@ export default function ProfilePage() {
       if (formData.username !== originalData.username) {
         updates.username = formData.username;
       }
-      if (formData.countryCode !== originalData.countryCode) {
-        updates.countryCode = formData.countryCode;
-      }
-      if (formData.phoneNumber !== originalData.phoneNumber) {
-        updates.phoneNumber = formData.phoneNumber;
+      if (formData.country !== originalData.country) {
+        updates.country = formData.country;
       }
       if (formData.email !== originalData.email) {
         updates.email = formData.email;
@@ -184,14 +179,7 @@ export default function ProfilePage() {
       setError("");
     };
 
-  const handlePhoneChange = (phone: string, country: any) => {
-    setFormData((prev) => ({
-      ...prev,
-      phoneNumber: phone.slice(country.dialCode.length),
-      countryCode: `+${country.dialCode}`,
-    }));
-    setError("");
-  };
+
 
   // Show loading while auth is initializing
   if (!isInitialized) {
@@ -701,47 +689,60 @@ export default function ProfilePage() {
                         letterSpacing: "0.5px",
                       }}
                     >
-                      Phone Number
+                      Country
                     </Typography>
-                    <PhoneInput
-                      country={"us"}
-                      value={formData.countryCode + formData.phoneNumber}
-                      onChange={handlePhoneChange}
+                    <TextField
+                      select
+                      fullWidth
+                      value={formData.country}
+                      onChange={handleInputChange("country")}
                       disabled={!isEditing}
-                      containerStyle={{
-                        width: "100%",
+                      SelectProps={{
+                        MenuProps: {
+                          PaperProps: {
+                            style: {
+                              maxHeight: 300,
+                            },
+                          },
+                        },
                       }}
-                      inputStyle={{
-                        width: "100%",
-                        height: "48px",
-                        borderRadius: "12px",
-                        border: "1px solid rgba(0, 95, 115, 0.2)",
-                        fontSize: "16px",
-                        paddingLeft: "48px",
-                        fontFamily: "Source Sans Pro",
-                        backgroundColor: isEditing ? "#fff" : "#F8FAFB",
-                        color: "#000000",
+                      InputProps={{
+                        startAdornment: (
+                          <PublicIcon
+                            sx={{ mr: 1, color: "#005F73", opacity: 0.7 }}
+                          />
+                        ),
                       }}
-                      buttonStyle={{
-                        borderRadius: "12px 0 0 12px",
-                        border: "1px solid rgba(0, 95, 115, 0.2)",
-                        backgroundColor: isEditing ? "#fff" : "#F8FAFB",
+                      sx={{
+                        "& .MuiOutlinedInput-root": {
+                          borderRadius: "12px",
+                          fontFamily: "Source Sans Pro",
+                          backgroundColor: isEditing ? "#fff" : "#F8FAFB",
+                          "& fieldset": {
+                            borderColor: "rgba(0, 95, 115, 0.2)",
+                          },
+                          "&:hover fieldset": {
+                            borderColor: "rgba(0, 95, 115, 0.4)",
+                          },
+                          "&.Mui-focused fieldset": {
+                            borderColor: "#FF4F00",
+                            borderWidth: "2px",
+                          },
+                        },
+                        "& .MuiInputLabel-root": {
+                          fontFamily: "Source Sans Pro",
+                        },
+                        "& .MuiInputLabel-root.Mui-focused": {
+                          color: "#FF4F00",
+                        },
                       }}
-                      dropdownStyle={{
-                        borderRadius: "8px",
-                        backgroundColor: "#FFFFFF",
-                        color: "#000000",
-                      }}
-                      searchStyle={{
-                        width: "90%",
-                        margin: "8px auto",
-                        padding: "8px",
-                        border: "1px solid rgba(0, 95, 115, 0.2)",
-                        borderRadius: "4px",
-                        color: "#000000",
-                        backgroundColor: "#FFFFFF",
-                      }}
-                    />
+                    >
+                      {getNames().map((name) => (
+                        <MenuItem key={name} value={name}>
+                          {name}
+                        </MenuItem>
+                      ))}
+                    </TextField>
                   </Grid>
                 </Grid>
 

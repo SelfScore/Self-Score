@@ -19,6 +19,7 @@ export interface UserData {
   userId: string;
   email: string;
   username: string;
+  country?: string;
   countryCode?: string;
   phoneNumber?: string;
   purchasedLevels?: {
@@ -59,8 +60,9 @@ export interface UserData {
 export interface SignUpData {
   username: string;
   email: string;
-  countryCode: string;
-  phoneNumber: string;
+  country: string;
+  countryCode?: string;
+  phoneNumber?: string;
   password: string;
   confirmPassword: string;
 }
@@ -110,6 +112,7 @@ export const authService = {
               userId: result.data.userId,
               email: result.data.email,
               username: result.data.username,
+              country: result.data.country,
               countryCode: result.data.countryCode,
               phoneNumber: result.data.phoneNumber,
             },
@@ -147,6 +150,7 @@ export const authService = {
               userId: result.data.userId,
               email: result.data.email,
               username: result.data.username,
+              country: result.data.country,
               countryCode: result.data.countryCode,
               phoneNumber: result.data.phoneNumber,
             },
@@ -199,6 +203,7 @@ export const authService = {
               userId: result.data.userId,
               email: result.data.email,
               username: result.data.username,
+              country: result.data.country,
               countryCode: result.data.countryCode,
               phoneNumber: result.data.phoneNumber,
             },
@@ -255,8 +260,7 @@ export const authService = {
   updateProfile: async (data: {
     username?: string;
     email?: string;
-    countryCode?: string;
-    phoneNumber?: string;
+    country?: string;
   }): Promise<ApiResponse<UserData>> => {
     store.dispatch(setLoading(true));
 
@@ -275,6 +279,7 @@ export const authService = {
                 userId: response.data.userId,
                 email: response.data.email,
                 username: response.data.username,
+                country: response.data.country,
                 countryCode: response.data.countryCode,
                 phoneNumber: response.data.phoneNumber,
               },
@@ -316,6 +321,7 @@ export const authService = {
               userId: response.data.userId,
               email: response.data.email,
               username: response.data.username,
+              country: response.data.country,
               countryCode: response.data.countryCode,
               phoneNumber: response.data.phoneNumber,
             },

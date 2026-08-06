@@ -12,6 +12,7 @@ import {
   InputAdornment,
   IconButton,
   FormHelperText,
+  MenuItem,
 } from "@mui/material";
 import { useState, useEffect } from "react";
 import { useRouter } from "next/navigation";
@@ -22,9 +23,9 @@ import EmailIcon from "@mui/icons-material/Email";
 import LockIcon from "@mui/icons-material/Lock";
 import Visibility from "@mui/icons-material/Visibility";
 import VisibilityOff from "@mui/icons-material/VisibilityOff";
+import PublicIcon from "@mui/icons-material/Public";
 import ButtonSelfScore from "../../components/ui/ButtonSelfScore";
-import PhoneInput from "react-phone-input-2";
-import "react-phone-input-2/lib/style.css";
+import { getNames } from "country-list";
 import {
   getUserFriendlyError,
   getSuccessMessage,
@@ -37,8 +38,7 @@ export default function SignUpPage() {
   const [formData, setFormData] = useState({
     username: "",
     email: "",
-    countryCode: "1",
-    phoneNumber: "",
+    country: "",
     password: "",
     confirmPassword: "",
   });
@@ -51,7 +51,7 @@ export default function SignUpPage() {
   // Field-specific errors for inline display
   const [fieldErrors, setFieldErrors] = useState({
     email: "",
-    phoneNumber: "",
+    country: "",
     password: "",
     confirmPassword: "",
   });
@@ -74,7 +74,7 @@ export default function SignUpPage() {
     if (
       formData.username ||
       formData.email ||
-      formData.phoneNumber ||
+      formData.country ||
       formData.password ||
       formData.confirmPassword
     ) {
@@ -92,15 +92,7 @@ export default function SignUpPage() {
     return "";
   };
 
-  const validatePhoneNumber = (phoneNumber: string): string => {
-    if (!phoneNumber.trim()) {
-      return "";
-    }
-    if (phoneNumber.length < 7) {
-      return "Please enter a valid phone number";
-    }
-    return "";
-  };
+
 
   const validatePassword = (password: string): string => {
     if (!password) {
@@ -137,9 +129,9 @@ export default function SignUpPage() {
     if (field === "email") {
       const error = validateEmail(value);
       setFieldErrors((prev) => ({ ...prev, email: error }));
-    } else if (field === "phoneNumber") {
-      const error = validatePhoneNumber(value);
-      setFieldErrors((prev) => ({ ...prev, phoneNumber: error }));
+    } else if (field === "country") {
+      const error = !value ? "Country is required" : "";
+      setFieldErrors((prev) => ({ ...prev, country: error }));
     } else if (field === "password") {
       const error = validatePassword(value);
       setFieldErrors((prev) => ({ ...prev, password: error }));
@@ -155,21 +147,6 @@ export default function SignUpPage() {
       const error = validateConfirmPassword(formData.password, value);
       setFieldErrors((prev) => ({ ...prev, confirmPassword: error }));
     }
-  };
-
-  const handlePhoneChange = (phone: string, country: any) => {
-    const phoneWithoutCode = phone.slice(country.dialCode.length);
-    setFormData((prev) => ({
-      ...prev,
-      phoneNumber: phoneWithoutCode,
-      countryCode: country.dialCode,
-    }));
-    setLocalError("");
-    clearError();
-
-    // Real-time validation for phone number
-    const error = validatePhoneNumber(phoneWithoutCode);
-    setFieldErrors((prev) => ({ ...prev, phoneNumber: error }));
   };
 
   const validateForm = () => {
@@ -199,9 +176,9 @@ export default function SignUpPage() {
       return false;
     }
 
-    // Phone number validation
-    if (!formData.phoneNumber.trim()) {
-      setLocalError("Please enter your phone number");
+    // Country validation
+    if (!formData.country.trim()) {
+      setLocalError("Please select your country");
       return false;
     }
 
@@ -236,8 +213,7 @@ export default function SignUpPage() {
       const response = await signUp({
         username: formData.username.trim(),
         email: formData.email.trim().toLowerCase(),
-        countryCode: formData.countryCode,
-        phoneNumber: formData.phoneNumber,
+        country: formData.country.trim(),
         password: formData.password,
         confirmPassword: formData.confirmPassword,
       });
@@ -500,54 +476,67 @@ export default function SignUpPage() {
                 fontSize: "16px",
               }}
             >
-              Phone Number<span style={{ color: "#FF5722" }}>*</span>
+            Country<span style={{ color: "#FF5722" }}>*</span>
             </Typography>
-            <PhoneInput
-              country={"us"}
-              value={`+${formData.countryCode}${formData.phoneNumber}`}
-              onChange={handlePhoneChange}
+            <TextField
+              select
+              value={formData.country}
+              onChange={(e) => handleInputChange("country", e.target.value)}
+              fullWidth
+              required
               disabled={isLoading}
-              containerStyle={{
-                width: "100%",
-                marginBottom: fieldErrors.phoneNumber ? "4px" : "16px",
+              SelectProps={{
+                MenuProps: {
+                  PaperProps: {
+                    style: {
+                      maxHeight: 300,
+                    },
+                  },
+                },
               }}
-              inputStyle={{
-                width: "100%",
-                height: "48px",
-                borderRadius: "8px",
-                border: fieldErrors.phoneNumber
-                  ? "1px solid #d32f2f"
-                  : "1px solid #3A3A3A4D",
-                fontSize: "16px",
-                paddingLeft: "48px",
-                color: "#000000",
-                backgroundColor: "#FFFFFF",
+              InputProps={{
+                startAdornment: (
+                  <InputAdornment position="start">
+                    <PublicIcon
+                      sx={{ color: "#999", fontSize: { xs: 20, sm: 24 } }}
+                    />
+                  </InputAdornment>
+                ),
               }}
-              buttonStyle={{
-                borderRadius: "8px 0 0 8px",
-                border: fieldErrors.phoneNumber
-                  ? "1px solid #d32f2f"
-                  : "1px solid #3A3A3A4D",
-                backgroundColor: "#FFFFFF",
+              sx={{
+                mb: fieldErrors.country ? "4px" : "16px",
+                "& .MuiOutlinedInput-root": {
+                  height: "48px",
+                  borderRadius: "8px",
+                  bgcolor: "#FFFFFF",
+                  fontSize: "16px",
+                  "& fieldset": {
+                    border: fieldErrors.country
+                      ? "1px solid #d32f2f"
+                      : "1px solid #3A3A3A4D",
+                  },
+                  "&:hover fieldset": {
+                    border: fieldErrors.country
+                      ? "1px solid #d32f2f"
+                      : "1px solid #3A3A3A4D",
+                  },
+                  "&.Mui-focused fieldset": {
+                    border: fieldErrors.country
+                      ? "2px solid #d32f2f"
+                      : "2px solid #FF5722",
+                  },
+                },
               }}
-              dropdownStyle={{
-                borderRadius: "8px",
-                backgroundColor: "#FFFFFF",
-                color: "#000000",
-              }}
-              searchStyle={{
-                width: "90%",
-                margin: "8px auto",
-                padding: "8px",
-                border: "1px solid #3A3A3A4D",
-                borderRadius: "4px",
-                color: "#000000",
-                backgroundColor: "#FFFFFF",
-              }}
-            />
-            {fieldErrors.phoneNumber && (
+            >
+              {getNames().map((name) => (
+                <MenuItem key={name} value={name}>
+                  {name}
+                </MenuItem>
+              ))}
+            </TextField>
+            {fieldErrors.country && (
               <FormHelperText sx={{ color: "#d32f2f", mb: 2, mt: 0, ml: 0 }}>
-                {fieldErrors.phoneNumber}
+                {fieldErrors.country}
               </FormHelperText>
             )}
 

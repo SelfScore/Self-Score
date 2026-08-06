@@ -24,6 +24,12 @@ export const updateProfileSchema = z
       .regex(/^\d+$/, "Phone number must contain only digits")
       .optional(),
 
+    country: z
+      .string()
+      .min(1, "Country must be at least 1 character")
+      .max(50, "Country must not exceed 50 characters")
+      .optional(),
+
     email: z.string().email("Invalid email format").optional(),
   })
   .refine((data) => Object.keys(data).length > 0, {

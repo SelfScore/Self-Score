@@ -12,10 +12,15 @@ export const signUpSchema = z
         .email({ message: "Invalid email address" }),
     countryCode: z
         .string()
-        .regex(/^\d{1,4}$/, { message: "Country code must be 1-4 digits" }),
+        .regex(/^\d{1,4}$/, { message: "Country code must be 1-4 digits" })
+        .optional(),
     phoneNumber: z
         .string()
-        .regex(/^\d{7,15}$/, { message: "Phone number must be 7-15 digits" }),
+        .regex(/^\d{7,15}$/, { message: "Phone number must be 7-15 digits" })
+        .optional(),
+    country: z
+        .string()
+        .min(1, { message: "Country is required" }),
     password: z
         .string()
         .min(6, { message: "Password must be at least 6 characters long" }),

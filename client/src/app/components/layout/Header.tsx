@@ -132,7 +132,7 @@ export default function Header() {
       variant: "contained",
       FreeChip: true,
     },
-    { label: "Consultations", href: "/consultations" },
+    { label: "Talk to Us", href: "/consultations" },
     { label: "Blogs", href: "/blogs" },
      { label: "Contact Us", href: "/contact" },
   ];

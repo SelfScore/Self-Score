@@ -17,6 +17,7 @@ import bookingRoutes from "./booking";
 import realtimeInterviewRoutes from "./realtimeInterview";
 import level3Routes from "./level3";
 import placesRoutes from "./places";
+import newsletterRoutes from "./newsletter";
 // import calcomRoutes from './calcom';
 
 const router = Router();
@@ -40,6 +41,7 @@ router.use("/google-calendar", googleCalendarRoutes);
 router.use("/booking", bookingRoutes);
 router.use("/level3", level3Routes);
 router.use("/places", placesRoutes); // NEW: Google Places autocomplete proxy
+router.use("/newsletter", newsletterRoutes); // NEW: Newsletter subscription
 // router.use('/calcom', calcomRoutes);
 
 // Health check route

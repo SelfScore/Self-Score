@@ -9,6 +9,7 @@ export interface UserResponse {
     userId: string;
     email: string;
     username: string;
+    country?: string;
     countryCode?: string;
     phoneNumber?: string;
     isVerified?: boolean;
@@ -50,8 +51,9 @@ export interface UserResponse {
 export interface SignUpRequest {
     username: string;
     email: string;
-    countryCode: string;
-    phoneNumber: string;
+    country: string;
+    countryCode?: string;
+    phoneNumber?: string;
     password: string;
     confirmPassword: string;
 }
