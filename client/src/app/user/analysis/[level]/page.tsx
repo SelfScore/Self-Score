@@ -135,11 +135,23 @@ export default function LevelAnalysisPage() {
 
           const latestSubmission = level3Submissions[0];
 
+          // Fetch user responses for Level 3
+          const responsesResult = await questionsApi.getUserResponses(
+            user.userId,
+          );
+
+          let levelResponses = [];
+          if (responsesResult.success) {
+            levelResponses = responsesResult.data.filter(
+              (response: any) => response.level === 3,
+            );
+          }
+
           setAnalysisData({
             level: 3,
             score: latestSubmission.score,
-            totalQuestions: latestSubmission.totalQuestions || 60,
-            responses: [],
+            totalQuestions: latestSubmission.totalQuestions || levelResponses.length || 60,
+            responses: levelResponses,
             completedAt: latestSubmission.date || latestSubmission.submittedAt,
             submissionId: latestSubmission._id,
           });
@@ -698,6 +710,7 @@ export default function LevelAnalysisPage() {
                   level: levelNumber,
                   score: analysisData.score,
                   maxScore: 900,
+                  responses: analysisData.responses,
                 }}
                 variant="contained"
                 size="large"

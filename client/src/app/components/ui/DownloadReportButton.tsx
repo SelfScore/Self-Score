@@ -9,6 +9,8 @@ import {
   generatePDFFromHTML,
   generateReportFilename,
 } from "../../user/report/utils/pdfGenerator";
+import { authService } from "../../../services/authService";
+import { questionsApi } from "../../../services/questionsService";
 
 interface DownloadReportButtonProps {
   userData: UserReportData;
@@ -33,11 +35,38 @@ export default function DownloadReportButton({
       setIsGenerating(true);
       setProgress(0);
 
+      // Create a mutable copy of user data
+      const finalUserData = { ...userData };
+
+      // Dynamically fetch responses if not passed and level is 1, 2, or 3
+      if (
+        (!finalUserData.responses || finalUserData.responses.length === 0) &&
+        [1, 2, 3].includes(finalUserData.level)
+      ) {
+        try {
+          const currentUser = authService.getCurrentUserFromStore();
+          const userId = currentUser?.userId;
+          if (userId) {
+            const responsesResult = await questionsApi.getUserResponses(userId);
+            if (responsesResult.success) {
+              finalUserData.responses = responsesResult.data.filter(
+                (response: any) => response.level === finalUserData.level
+              );
+            }
+          }
+        } catch (fetchErr) {
+          console.error(
+            "Failed to fetch responses dynamically inside DownloadReportButton:",
+            fetchErr
+          );
+        }
+      }
+
       // Generate HTML
-      const htmlContent = generateReportHTML(userData);
+      const htmlContent = generateReportHTML(finalUserData);
 
       // Generate filename
-      const filename = generateReportFilename(userData);
+      const filename = generateReportFilename(finalUserData);
 
       // Generate and download PDF
       await generatePDFFromHTML(htmlContent, filename, (progressValue) => {

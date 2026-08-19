@@ -54,7 +54,7 @@ class SessionRegistry {
     };
 
     this.sessions.set(finalSessionId, session);
-    console.log(`✅ Session created: ${finalSessionId} for user: ${userId}`);
+    // console.log(`✅ Session created: ${finalSessionId} for user: ${userId}`);
 
     return finalSessionId;
   }
@@ -106,7 +106,7 @@ class SessionRegistry {
       return false;
     }
 
-    console.log(`🧹 Cleaning up session: ${sessionId}`);
+    // console.log(`🧹 Cleaning up session: ${sessionId}`);
 
     // Cleanup connections
     try {
@@ -139,7 +139,7 @@ class SessionRegistry {
     const deleted = this.sessions.delete(sessionId);
 
     if (deleted) {
-      console.log(`✅ Session deleted: ${sessionId}`);
+      // console.log(`✅ Session deleted: ${sessionId}`);
     }
 
     return deleted;
@@ -183,7 +183,7 @@ class SessionRegistry {
     const userId = interview.userId.toString();
     const interviewId = interview._id.toString();
 
-    console.log(`🔄 Restoring session from DB: ${sessionId}`);
+    // console.log(`🔄 Restoring session from DB: ${sessionId}`);
 
     // Rebuild questions array
     const questions = interview.questions.map((q: any) => ({
@@ -243,11 +243,11 @@ class SessionRegistry {
     session.currentQuestionIndex =
       firstUnansweredIndex !== -1 ? firstUnansweredIndex : questions.length;
 
-    console.log(
-      `✅ Session restored - Current question: ${
-        session.currentQuestionIndex + 1
-      }/${questions.length}, Answers: ${session.answers.size}`
-    );
+    // console.log(
+    //   `✅ Session restored - Current question: ${
+    //     session.currentQuestionIndex + 1
+    //   }/${questions.length}, Answers: ${session.answers.size}`
+    // );
 
     // Store in registry
     this.sessions.set(sessionId, session);
@@ -280,7 +280,7 @@ class SessionRegistry {
     }
 
     if (expiredSessions.length > 0) {
-      console.log(`🧹 Cleaning up ${expiredSessions.length} expired sessions`);
+      // console.log(`🧹 Cleaning up ${expiredSessions.length} expired sessions`);
 
       for (const sessionId of expiredSessions) {
         await this.deleteSession(sessionId);
@@ -292,9 +292,9 @@ class SessionRegistry {
    * Gracefully shutdown all sessions
    */
   async shutdown(): Promise<void> {
-    console.log(
-      `🛑 Shutting down SessionRegistry - ${this.sessions.size} active sessions`
-    );
+    // console.log(
+    //   `🛑 Shutting down SessionRegistry - ${this.sessions.size} active sessions`
+    // );
 
     const sessionIds = Array.from(this.sessions.keys());
 
@@ -302,7 +302,7 @@ class SessionRegistry {
       await this.deleteSession(sessionId);
     }
 
-    console.log(`✅ All sessions cleaned up`);
+    // console.log(`✅ All sessions cleaned up`);
   }
 }
 

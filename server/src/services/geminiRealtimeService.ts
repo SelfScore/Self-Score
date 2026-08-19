@@ -23,7 +23,7 @@ export class GeminiRealtimeService {
     }
 
     this.genAI = new GoogleGenerativeAI(this.apiKey);
-    console.log("✅ Gemini Realtime service initialized");
+    // console.log("✅ Gemini Realtime service initialized");
   }
 
   /**
@@ -101,7 +101,7 @@ export class GeminiRealtimeService {
 
           // Handle setup complete
           if (message.setupComplete) {
-            console.log("✅ Gemini setup complete");
+            // console.log("✅ Gemini setup complete");
           }
 
           // Handle errors from Gemini
@@ -178,7 +178,7 @@ export class GeminiRealtimeService {
 
         // Handle text responses (for debugging)
         if (part.text) {
-          console.log(`💬 AI text: ${part.text.substring(0, 100)}...`);
+          // console.log(`💬 AI text: ${part.text.substring(0, 100)}...`);
         }
       }
     }
@@ -190,13 +190,13 @@ export class GeminiRealtimeService {
       // 1. AI was actually speaking (isAISpeaking = true)
       // 2. OR this turn contained audio
       if (session.isAISpeaking || hasAudioInTurn) {
-        console.log("🎤 AI turn complete - waiting for audio to finish...");
+        // console.log("🎤 AI turn complete - waiting for audio to finish...");
 
         // Add a small delay to ensure all audio chunks are delivered and played
         // This prevents the "AI stopped" message from cutting off the last words
         setTimeout(() => {
           session.isAISpeaking = false;
-          console.log("🎤 AI finished speaking - ready for user input");
+          // console.log("🎤 AI finished speaking - ready for user input");
 
           // Notify client that AI finished speaking
           if (session.wsConnection && session.wsConnection.readyState === 1) {
@@ -260,9 +260,9 @@ When asked to speak a question, say it naturally and warmly, as if you're having
     };
 
     ws.send(JSON.stringify(config));
-    console.log(
-      "⚙️  Gemini configuration sent (Audio mode, Puck voice, with system instruction)"
-    );
+    // console.log(
+    //   "⚙️  Gemini configuration sent (Audio mode, Puck voice, with system instruction)"
+    // );
   }
 
   /**
@@ -273,9 +273,9 @@ When asked to speak a question, say it naturally and warmly, as if you're having
   async sendSystemPrompt(ws: WebSocket): Promise<void> {
     // System instruction is now sent in the configuration setup
     // This method is no longer called but kept for reference
-    console.log(
-      "⚠️  sendSystemPrompt called but system instruction already in config"
-    );
+    // console.log(
+    //   "⚠️  sendSystemPrompt called but system instruction already in config"
+    // );
   }
 
   /**
@@ -285,9 +285,9 @@ When asked to speak a question, say it naturally and warmly, as if you're having
     ws: WebSocket,
     instruction: GeminiInstruction
   ): Promise<void> {
-    console.log(
-      `🎯 Sending instruction (${instruction.type}): ${instruction.content}`
-    );
+    // console.log(
+    //   `🎯 Sending instruction (${instruction.type}): ${instruction.content}`
+    // );
 
     let instructionText = "";
 
@@ -343,13 +343,13 @@ When asked to speak a question, say it naturally and warmly, as if you're having
       [WebSocket.CLOSED]: "CLOSED",
     };
 
-    console.log(
-      `🔍 WebSocket State: ${stateMap[ws.readyState]} (${ws.readyState})`
-    );
+    // console.log(
+    //   `🔍 WebSocket State: ${stateMap[ws.readyState]} (${ws.readyState})`
+    // );
 
     if (ws.readyState === WebSocket.OPEN) {
       ws.send(JSON.stringify(message));
-      console.log(`✅ Instruction sent to Gemini: ${instruction.type}`);
+      // console.log(`✅ Instruction sent to Gemini: ${instruction.type}`);
     } else {
       console.error(
         `⚠️  Cannot send instruction - WebSocket state: ${stateMap[ws.readyState]
@@ -402,7 +402,7 @@ When asked to speak a question, say it naturally and warmly, as if you're having
     try {
       if (ws && ws.readyState === WebSocket.OPEN) {
         ws.close();
-        console.log("✅ Gemini connection closed gracefully");
+        // console.log("✅ Gemini connection closed gracefully");
       }
     } catch (error) {
       console.error("❌ Error closing Gemini connection:", error);
@@ -426,7 +426,7 @@ When asked to speak a question, say it naturally and warmly, as if you're having
         },
       };
       ws.send(JSON.stringify(message));
-      console.log("🛑 Sent interrupt signal to Gemini");
+      // console.log("🛑 Sent interrupt signal to Gemini");
     } catch (error) {
       console.error("❌ Error sending interrupt signal:", error);
     }
@@ -449,7 +449,7 @@ When asked to speak a question, say it naturally and warmly, as if you're having
         },
       };
       ws.send(JSON.stringify(message));
-      console.log("🔥 Pre-warmed Gemini connection for upcoming response");
+      // console.log("🔥 Pre-warmed Gemini connection for upcoming response");
     } catch (error) {
       // Non-critical error, just log it
       console.warn("⚠️ Failed to pre-warm Gemini:", error);
@@ -490,7 +490,7 @@ Keep it short, natural, and encouraging. Just the follow-up sentence:`;
         .trim()
         .replace(/^["']|["']$/g, "");
 
-      console.log(`💭 Generated follow-up: ${followUp}`);
+      // console.log(`... Generated follow-up: ${followUp}`);
       return followUp;
     } catch (error) {
       console.error("❌ Error generating follow-up:", error);
@@ -530,7 +530,7 @@ Just the redirect text:`;
         .trim()
         .replace(/^["']|["']$/g, "");
 
-      console.log(`🔄 Generated redirect: ${redirect}`);
+      // console.log(`... Generated redirect: ${redirect}`);
       return redirect;
     } catch (error) {
       console.error("❌ Error generating redirect:", error);

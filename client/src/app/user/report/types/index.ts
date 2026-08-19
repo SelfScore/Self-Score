@@ -8,6 +8,7 @@ export interface UserReportData {
   level: number;
   score: number;
   maxScore: number;
+  responses?: any[];
 }
 
 export interface ScoreRange {

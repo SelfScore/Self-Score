@@ -6,7 +6,7 @@ import { verifyToken } from "./jwt";
 
 // Environment check for logging
 const isDev = process.env.NODE_ENV !== "production";
-const log = isDev ? console.log.bind(console) : () => { };
+const log = (...args: any[]) => { };
 const logError = console.error.bind(console); // Always log errors
 
 /**

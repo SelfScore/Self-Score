@@ -7,3 +7,4 @@ export { generateDetailedReportPage } from './detailedReportPage';
 export { generateScoreMeaningPage } from './scoreMeaningPage';
 export { generateRecommendationsPage } from './recommendationsPage';
 export { generateUpgradePage, generateKeyOutcomesPage, generateThankYouPage } from './otherPages';
+export { generateUserResponsesPages } from './userResponsesPage';

@@ -47,4 +47,14 @@ router.patch('/consultants/:id/approve', adminAuthMiddleware, AdminController.ap
 // PATCH /api/admin/consultants/:id/reject - Reject consultant with reason
 router.patch('/consultants/:id/reject', adminAuthMiddleware, AdminController.rejectConsultant);
 
+// Newsletter Subscriber Routes
+// GET /api/admin/newsletter - Get all newsletter subscribers
+router.get('/newsletter', adminAuthMiddleware, AdminController.getNewsletterSubscribers);
+
+// PATCH /api/admin/newsletter/:id/toggle - Toggle subscription status
+router.patch('/newsletter/:id/toggle', adminAuthMiddleware, AdminController.toggleSubscriberStatus);
+
+// DELETE /api/admin/newsletter/:id - Delete subscriber
+router.delete('/newsletter/:id', adminAuthMiddleware, AdminController.deleteSubscriber);
+
 export default router;

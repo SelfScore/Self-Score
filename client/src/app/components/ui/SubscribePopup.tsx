@@ -14,6 +14,7 @@ import CloseIcon from "@mui/icons-material/Close";
 import AutoAwesomeIcon from "@mui/icons-material/AutoAwesome";
 import ButtonSelfScore from "./ButtonSelfScore";
 import api from "../../../lib/api";
+import { trackGoogleAdsConversion } from "@/utils/googleAds";
 
 const POPUP_SESSION_KEY = "selfscore_subscribe_popup_dismissed";
 const DELAY_MS = 15000; // 15 seconds
@@ -63,6 +64,8 @@ export default function SubscribePopup() {
 
       if (response.success) {
         setSuccess(true);
+        // Fire Google Ads Conversion
+        trackGoogleAdsConversion("POPUP_SUBSCRIBED");
         // Auto-close after 3s
         setTimeout(() => {
           handleClose();

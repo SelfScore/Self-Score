@@ -6,7 +6,7 @@ export const requestLogger = (req: Request, res: Response, next: NextFunction): 
     const url = req.originalUrl;
     const ip = req.ip || req.connection.remoteAddress;
 
-    console.log(`[${timestamp}] ${method} ${url} - ${ip}`);
+    // console.log(`[${timestamp}] ${method} ${url} - ${ip}`);
     
     next();
 };

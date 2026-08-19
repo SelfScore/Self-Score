@@ -6,6 +6,7 @@ import ContactMessageModel from "../models/contactMessage";
 import AIInterviewModel from "../models/aiInterview";
 import RealtimeInterviewModel from "../models/realtimeInterview";
 import ConsultantModel from "../models/consultant";
+import { SubscriberModel } from "../models/subscriber";
 import { ApiResponse } from "../types/api";
 import {
   sendConsultantApprovalEmail,
@@ -158,40 +159,45 @@ export class AdminController {
       const skip = (page - 1) * limit;
 
       // Build search query
-      let searchQuery: any = search
-        ? {
-            $or: [
-              { email: { $regex: search, $options: "i" } },
-              { username: { $regex: search, $options: "i" } },
-            ],
-          }
-        : {};
+      const queryConditions: any[] = [];
 
-      // Add filter query
-      if (filter === "purchased") {
-        searchQuery.$or = searchQuery.$or || [];
-        searchQuery.$and = [
-          searchQuery.$or.length > 0 ? { $or: searchQuery.$or } : {},
-          {
-            $or: [
-              { "purchasedLevels.level2.purchased": true },
-              { "purchasedLevels.level3.purchased": true },
-              { "purchasedLevels.level4.purchased": true },
-            ],
-          },
-        ];
-        delete searchQuery.$or;
-      } else if (filter === "unpurchased") {
-        searchQuery.$and = searchQuery.$and || [];
-        const baseQuery = searchQuery.$or ? { $or: searchQuery.$or } : {};
-        searchQuery.$and = [
-          baseQuery,
-          { "purchasedLevels.level2.purchased": { $ne: true } },
-          { "purchasedLevels.level3.purchased": { $ne: true } },
-          { "purchasedLevels.level4.purchased": { $ne: true } },
-        ];
-        delete searchQuery.$or;
+      // Search match
+      if (search) {
+        queryConditions.push({
+          $or: [
+            { email: { $regex: search, $options: "i" } },
+            { username: { $regex: search, $options: "i" } },
+          ],
+        });
       }
+
+      // Purchased/Unpurchased filter
+      if (filter === "purchased") {
+        queryConditions.push({
+          $or: [
+            { "purchasedLevels.level2.purchased": true },
+            { "purchasedLevels.level3.purchased": true },
+            { "purchasedLevels.level4.purchased": true },
+          ],
+        });
+      } else if (filter === "unpurchased") {
+        queryConditions.push({
+          "purchasedLevels.level2.purchased": { $ne: true },
+          "purchasedLevels.level3.purchased": { $ne: true },
+          "purchasedLevels.level4.purchased": { $ne: true },
+        });
+      }
+
+      // Verification status filter (active/pending)
+      const status = (req.query.status as string) || "all";
+      if (status === "active") {
+        queryConditions.push({ isVerified: true });
+      } else if (status === "pending") {
+        queryConditions.push({ isVerified: false });
+      }
+
+      // Combine conditions into searchQuery
+      const searchQuery = queryConditions.length > 0 ? { $and: queryConditions } : {};
 
       // Determine sort order
       const sortOrder = sortBy === "oldest" ? 1 : -1;
@@ -945,6 +951,142 @@ export class AdminController {
       const response: ApiResponse = {
         success: false,
         message: "Failed to reject consultant",
+      };
+      res.status(500).json(response);
+    }
+  }
+
+  // Get all newsletter subscribers with pagination and filters
+  static async getNewsletterSubscribers(req: Request, res: Response): Promise<void> {
+    try {
+      const page = parseInt(req.query.page as string) || 1;
+      const limit = parseInt(req.query.limit as string) || 10;
+      const filter = req.query.filter as string; // 'all', 'subscribed', or 'unsubscribed'
+      const sortBy = (req.query.sortBy as string) || "latest"; // 'latest' or 'oldest'
+      const search = (req.query.search as string) || "";
+
+      const skip = (page - 1) * limit;
+      let query: any = {};
+
+      // Status filter
+      if (filter === "subscribed") {
+        query.isSubscribed = true;
+      } else if (filter === "unsubscribed") {
+        query.isSubscribed = false;
+      }
+
+      // Search filter
+      if (search) {
+        query.$or = [
+          { name: { $regex: search, $options: "i" } },
+          { email: { $regex: search, $options: "i" } },
+        ];
+      }
+
+      // Sorting
+      const sortOrder = sortBy === "oldest" ? 1 : -1;
+
+      const totalSubscribers = await SubscriberModel.countDocuments(query);
+      const subscribers = await SubscriberModel.find(query)
+        .sort({ subscribedAt: sortOrder })
+        .skip(skip)
+        .limit(limit)
+        .lean();
+
+      const response: ApiResponse = {
+        success: true,
+        message: "Newsletter subscribers retrieved successfully",
+        data: {
+          subscribers,
+          pagination: {
+            page,
+            limit,
+            total: totalSubscribers,
+            totalPages: Math.ceil(totalSubscribers / limit),
+          },
+        },
+      };
+
+      res.status(200).json(response);
+    } catch (error) {
+      console.error("Error fetching newsletter subscribers:", error);
+      const response: ApiResponse = {
+        success: false,
+        message: "Failed to fetch newsletter subscribers",
+      };
+      res.status(500).json(response);
+    }
+  }
+
+  // Toggle subscriber status
+  static async toggleSubscriberStatus(req: Request, res: Response): Promise<void> {
+    try {
+      const { id } = req.params;
+
+      const subscriber = await SubscriberModel.findById(id);
+      if (!subscriber) {
+        const response: ApiResponse = {
+          success: false,
+          message: "Subscriber not found",
+        };
+        res.status(404).json(response);
+        return;
+      }
+
+      // Toggle status
+      subscriber.isSubscribed = !subscriber.isSubscribed;
+      if (subscriber.isSubscribed) {
+        subscriber.subscribedAt = new Date();
+        subscriber.unsubscribedAt = undefined;
+      } else {
+        subscriber.unsubscribedAt = new Date();
+      }
+
+      await subscriber.save();
+
+      const response: ApiResponse = {
+        success: true,
+        message: `Subscriber status updated to ${subscriber.isSubscribed ? "subscribed" : "unsubscribed"}`,
+        data: subscriber,
+      };
+
+      res.status(200).json(response);
+    } catch (error) {
+      console.error("Error toggling subscriber status:", error);
+      const response: ApiResponse = {
+        success: false,
+        message: "Failed to toggle subscriber status",
+      };
+      res.status(500).json(response);
+    }
+  }
+
+  // Delete subscriber
+  static async deleteSubscriber(req: Request, res: Response): Promise<void> {
+    try {
+      const { id } = req.params;
+
+      const subscriber = await SubscriberModel.findByIdAndDelete(id);
+      if (!subscriber) {
+        const response: ApiResponse = {
+          success: false,
+          message: "Subscriber not found",
+        };
+        res.status(404).json(response);
+        return;
+      }
+
+      const response: ApiResponse = {
+        success: true,
+        message: "Subscriber deleted successfully",
+      };
+
+      res.status(200).json(response);
+    } catch (error) {
+      console.error("Error deleting subscriber:", error);
+      const response: ApiResponse = {
+        success: false,
+        message: "Failed to delete subscriber",
       };
       res.status(500).json(response);
     }

@@ -17,7 +17,7 @@ export class AnswerAnalyzer {
     }
 
     this.genAI = new GoogleGenerativeAI(this.apiKey);
-    console.log("✅ Answer Analyzer initialized");
+    // console.log("✅ Answer Analyzer initialized");
   }
 
   /**
@@ -87,14 +87,14 @@ Return ONLY valid JSON with this EXACT structure (no markdown, no extra text):
   "suggestedFollowUp": "Can you share a specific moment when you experienced that feeling?"
 }`;
 
-      console.log(`🔍 Sending analysis request to Gemini Flash...`);
+      // console.log(`🔍 Sending analysis request to Gemini Flash...`);
       const startTime = Date.now();
 
       const result = await model.generateContent(prompt);
       const responseText = result.response.text();
 
       const analysisTime = Date.now() - startTime;
-      console.log(`✅ Analysis completed in ${analysisTime}ms`);
+      // console.log(`✅ Analysis completed in ${analysisTime}ms`);
 
       // Parse JSON response
       let analysis: AnalysisResult;
@@ -118,13 +118,13 @@ Return ONLY valid JSON with this EXACT structure (no markdown, no extra text):
           throw new Error("Invalid analysis structure");
         }
 
-        console.log(`📊 Analysis result:`, {
-          confidence: analysis.confidence,
-          isComplete: analysis.isComplete,
-          isOffTopic: analysis.isOffTopic,
-          missingAspectsCount: analysis.missingAspects.length,
-          hasFollowUp: analysis.suggestedFollowUp.length > 0,
-        });
+        // console.log(`📊 Analysis result:`, {
+        //   confidence: analysis.confidence,
+        //   isComplete: analysis.isComplete,
+        //   isOffTopic: analysis.isOffTopic,
+        //   missingAspectsCount: analysis.missingAspects.length,
+        //   hasFollowUp: analysis.suggestedFollowUp.length > 0,
+        // });
 
         return analysis;
       } catch (parseError) {

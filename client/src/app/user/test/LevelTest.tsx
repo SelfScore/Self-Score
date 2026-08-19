@@ -18,6 +18,7 @@ import ButtonSelfScore from "@/app/components/ui/ButtonSelfScore";
 import OutLineButton from "@/app/components/ui/OutLineButton";
 import { useAppDispatch } from "../../../store/hooks";
 import { updateProgress } from "../../../store/slices/authSlice";
+import { trackGoogleAdsConversion } from "@/utils/googleAds";
 import ArrowBackIosIcon from "@mui/icons-material/ArrowBackIos";
 import ArrowForwardIosIcon from "@mui/icons-material/ArrowForwardIos";
 
@@ -263,6 +264,9 @@ export default function LevelTest({ level }: LevelTestProps) {
       }
 
       if (response.success) {
+        if (level === 1) {
+          trackGoogleAdsConversion("LEVEL_1_SUBMITTED");
+        }
         // Update Redux store with new progress
         const nextLevel = level + 1;
         dispatch(

@@ -507,9 +507,9 @@ export const submitFinalReview = async (
 
         await user.save();
 
-        console.log(
-          `User ${interview.userId} Level 4 review completed with score ${clampedTotalScore}`,
-        );
+        // console.log(
+        //   `User ${interview.userId} Level 4 review completed with score ${clampedTotalScore}`,
+        // );
       }
     } catch (error: any) {
       console.error("Error updating user progress:", error);
@@ -526,9 +526,9 @@ export const submitFinalReview = async (
           userName,
           clampedTotalScore,
         );
-        console.log(
-          `Email sent to ${userEmail} about Level 4 review completion`,
-        );
+        // console.log(
+        //   `Email sent to ${userEmail} about Level 4 review completion`,
+        // );
       }
     } catch (error: any) {
       console.error("Error sending email notification:", error);

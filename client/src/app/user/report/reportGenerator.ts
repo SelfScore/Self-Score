@@ -1,5 +1,3 @@
-// Main Report Generator
-
 import { UserReportData } from './types';
 import { getContentByLevel } from './utils/contentData';
 import { generateCoverPage } from './pageGenerators/coverPage';
@@ -8,12 +6,27 @@ import { generateScoreSummaryPage } from './pageGenerators/scoreSummaryPage';
 import { generateDetailedReportPage } from './pageGenerators/detailedReportPage';
 import { generateScoreMeaningPage } from './pageGenerators/scoreMeaningPage';
 import { generateRecommendationsPage } from './pageGenerators/recommendationsPage';
-import { generateUpgradePage, generateKeyOutcomesPage, generateThankYouPage } from './pageGenerators/otherPages';
+import { generateUpgradePage, generateKeyOutcomesPage, generateThankYouPage, generateUserResponsesPages } from './pageGenerators';
 
 export const generateReportHTML = (userData: UserReportData): string => {
   const content = getContentByLevel(userData.level);
 
-  return `
+  const responses = userData.responses || [];
+  const isQuestionnaireLevel = [1, 2, 3].includes(userData.level);
+  const itemsPerPage = 8;
+  const responsePageCount = isQuestionnaireLevel && responses.length > 0
+    ? Math.ceil(responses.length / itemsPerPage)
+    : 0;
+
+  const totalPages = 9 + responsePageCount;
+
+  // Generate user responses HTML if applicable
+  let responsesHTML = '';
+  if (isQuestionnaireLevel && responses.length > 0) {
+    responsesHTML = generateUserResponsesPages(responses, userData.level, 9, totalPages);
+  }
+
+  const html = `
     <!DOCTYPE html>
     <html>
     <head>
@@ -115,6 +128,9 @@ export const generateReportHTML = (userData: UserReportData): string => {
         ${generateKeyOutcomesPage(content, userData.level)}
       </div>
 
+      <!-- User Responses Pages (Dynamic) -->
+      ${responsesHTML}
+
       <!-- Page 9: Thank You -->
       <div class="report-page">
         ${generateThankYouPage()}
@@ -122,4 +138,7 @@ export const generateReportHTML = (userData: UserReportData): string => {
     </body>
     </html>
   `;
+
+  // Dynamically replace hardcoded " / 9" totals with the correct dynamic total
+  return html.replace(/ \/ 9/g, ` / ${totalPages}`);
 };

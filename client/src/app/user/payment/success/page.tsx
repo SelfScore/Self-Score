@@ -16,6 +16,7 @@ import DownloadIcon from "@mui/icons-material/Download";
 import ArrowForwardIcon from "@mui/icons-material/ArrowForward";
 import ButtonSelfScore from "../../../components/ui/ButtonSelfScore";
 import OutLineButton from "../../../components/ui/OutLineButton";
+import { trackGoogleAdsConversion } from "@/utils/googleAds";
 
 function PaymentSuccessContent() {
   const [verifying, setVerifying] = useState(true);
@@ -50,6 +51,11 @@ function PaymentSuccessContent() {
           setSuccess(true);
           setLevel(response.data?.level || null);
           setSessionId(sessionId); // Store session ID for invoice download
+
+          // Fire Google Ads Conversion for Level 4 ($25) purchase
+          if (response.data?.level === 4) {
+            trackGoogleAdsConversion("SUBSCRIPTION_TAKEN", 25.00);
+          }
 
           // Mock payment data (replace with actual data from response if available)
           setPaymentData({

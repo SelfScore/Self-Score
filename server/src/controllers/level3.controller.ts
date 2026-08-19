@@ -135,6 +135,27 @@ export const submitLevel3Responses = async (
     console.log(`  - Raw Score: ${rawScore}`);
     console.log(`  - Final Score (capped 350-900): ${finalScore}`);
 
+    // Save responses to QuestionsResponseModel
+    const QuestionsResponseModel = (await import("../models/questionsResponse")).default;
+    for (const response of responses as Level3Response[]) {
+      const question = questionMap.get(response.questionId);
+      if (question) {
+        await QuestionsResponseModel.findOneAndUpdate(
+          {
+            userId: userObjectId,
+            questionId: question._id,
+          },
+          {
+            userId: userObjectId,
+            level: 3,
+            questionId: question._id,
+            selectedOptionIndex: response.selectedOptionIndex,
+          },
+          { upsert: true, new: true }
+        );
+      }
+    }
+
     // Create test submission record
     await TestSubmissionModel.create({
       userId: userObjectId,

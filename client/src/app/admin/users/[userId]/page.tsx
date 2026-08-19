@@ -9,7 +9,7 @@ import {
   Button,
   CircularProgress,
 } from "@mui/material";
-import { useParams } from "next/navigation";
+import { useParams, useRouter } from "next/navigation";
 import { useEffect, useState } from "react";
 import {
   CheckCircle,
@@ -54,6 +54,7 @@ interface TestHistoryItem {
 
 export default function AdminUserDetail() {
   const params = useParams();
+  const router = useRouter();
   const userId = params.userId as string;
 
   const [userDetail, setUserDetail] = useState<UserDetailResponse | null>(null);
@@ -367,6 +368,29 @@ export default function AdminUserDetail() {
                   }}
                 >
                   +{user.countryCode} {user.phoneNumber}
+                </Typography>
+              </Box>
+            </Grid>
+            <Grid size={{ xs: 12, md: 6, lg: 3 }}>
+              <Box sx={{ mb: { xs: 2, lg: 0 } }}>
+                <Typography
+                  sx={{
+                    fontSize: { xs: "13px", md: "14px" },
+                    color: "#6B7280",
+                    mb: 0.5,
+                    fontWeight: 500,
+                  }}
+                >
+                  Country
+                </Typography>
+                <Typography
+                  sx={{
+                    fontSize: { xs: "15px", md: "16px" },
+                    fontWeight: 600,
+                    color: "#2B2B2B",
+                  }}
+                >
+                  {user.country || "N/A"}
                 </Typography>
               </Box>
             </Grid>
@@ -841,153 +865,133 @@ export default function AdminUserDetail() {
                   (test.score / 900) * 100,
                 );
                 return (
-                  <Box
+                  <Grid
+                    container
                     key={test._id}
+                    alignItems="center"
+                    spacing={2}
                     sx={{
-                      display: "flex",
-                      flexDirection: { xs: "column", lg: "row" },
-                      borderBottom: "1px solid #E0E0E0",
-                      alignItems: { xs: "flex-start", lg: "center" },
-                      justifyContent: "space-between",
-                      p: { xs: 2, md: 3 },
+                      borderBottom: "1px solid #E5E7EB",
+                      py: 2.5,
+                      px: { xs: 2, md: 3 },
                       backgroundColor: "#FFF",
-                      gap: { xs: 2, lg: 0 },
                       "&:hover": {
                         backgroundColor: "#F9FAFB",
                       },
                     }}
                   >
-                    <Box
-                      sx={{
-                        display: "flex",
-                        alignItems: "center",
-                        gap: { xs: 2, md: 3 },
-                        flex: { xs: "0 0 auto", lg: 1 },
-                        width: { xs: "100%", lg: "auto" },
-                      }}
-                    >
-                      <Box
-                        sx={{
-                          width: { xs: 44, md: 50 },
-                          height: { xs: 44, md: 50 },
-                          borderRadius: 2,
-                          backgroundColor: "#005F73",
-                          display: "flex",
-                          alignItems: "center",
-                          justifyContent: "center",
-                          flexShrink: 0,
-                        }}
-                      >
-                        <TrendingUp
-                          sx={{ fontSize: { xs: 24, md: 28 }, color: "white" }}
-                        />
-                      </Box>
-                      <Box sx={{ flex: 1, minWidth: 0 }}>
-                        <Typography
-                          sx={{
-                            fontWeight: 500,
-                            fontSize: { xs: "16px", md: "18px", lg: "20px" },
-                            fontFamily: "Source Sans Pro",
-                            color: "#3B3B3B",
-                          }}
-                        >
-                          Level {test.level} Assessment
-                        </Typography>
-                        <Typography
-                          variant="body2"
-                          sx={{
-                            color: "#3B3B3B99",
-                            fontWeight: 400,
-                            fontSize: { xs: "13px", md: "14px" },
-                            fontFamily: "source Sans Pro",
-                          }}
-                        >
-                          {test.date}
-                        </Typography>
-                      </Box>
-                    </Box>
-
-                    <Box
-                      sx={{
-                        display: { xs: "none", lg: "block" },
-                        width: "1px",
-                        height: "40px",
-                        backgroundColor: "#3B3B3B4D",
-                        mx: { lg: 4, xl: 6 },
-                      }}
-                    />
-
-                    <Box
-                      sx={{
-                        display: "flex",
-                        alignItems: { xs: "flex-start", lg: "center" },
-                        gap: { xs: 2, md: 3, lg: 4 },
-                        flexWrap: { xs: "wrap", lg: "nowrap" },
-                        width: { xs: "100%", lg: "auto" },
-                      }}
-                    >
-                      <Box
-                        sx={{ minWidth: { xs: "100%", sm: "auto", lg: 200 } }}
-                      >
-                        <Typography
-                          sx={{
-                            color: "#FF4F00",
-                            fontWeight: 500,
-                            mb: 0.5,
-                            fontSize: { xs: "16px", md: "18px", lg: "20px" },
-                            fontFamily: "Source Sans Pro",
-                          }}
-                        >
-                          Score: {test.score}/900 ({testScorePercentage}%)
-                        </Typography>
-                        <Typography
-                          variant="body2"
-                          sx={{
-                            color: "#3B3B3B99",
-                            fontWeight: 400,
-                            fontSize: { xs: "13px", md: "14px" },
-                            fontFamily: "Source Sans Pro",
-                          }}
-                        >
-                          Time: {test.timeSpent}
-                        </Typography>
-                      </Box>
-
-                      <Box
-                        sx={{
-                          display: { xs: "none", lg: "block" },
-                          width: "1px",
-                          height: "40px",
-                          backgroundColor: "#3B3B3B4D",
-                          mx: 1,
-                        }}
-                      />
-
-                      <Box
-                        sx={{
-                          display: { xs: "none", md: "block" },
-                          width: { md: 80, lg: 100 },
-                          height: 8,
-                          backgroundColor: "#e2e8f0",
-                          borderRadius: 4,
-                        }}
-                      >
+                    {/* Column 1: Icon and Test Name */}
+                    <Grid size={{ xs: 12, md: 3, lg: 3 }}>
+                      <Box sx={{ display: "flex", alignItems: "center", gap: 2 }}>
                         <Box
                           sx={{
-                            width: `${testScorePercentage}%`,
-                            height: "100%",
-                            backgroundColor: "#FF4F00",
-                            borderRadius: 4,
+                            width: 44,
+                            height: 44,
+                            borderRadius: 2,
+                            backgroundColor: "#005F73",
+                            display: "flex",
+                            alignItems: "center",
+                            justifyContent: "center",
+                            flexShrink: 0,
+                          }}
+                        >
+                          <TrendingUp sx={{ fontSize: 24, color: "white" }} />
+                        </Box>
+                        <Box>
+                          <Typography
+                            sx={{
+                              fontWeight: 600,
+                              fontSize: "16px",
+                              fontFamily: "Source Sans Pro",
+                              color: "#3B3B3B",
+                            }}
+                          >
+                            Level {test.level} Assessment
+                          </Typography>
+                          <Typography
+                            variant="body2"
+                            sx={{
+                              color: "#3B3B3B99",
+                              fontWeight: 400,
+                              fontSize: "13px",
+                              fontFamily: "Source Sans Pro",
+                              mt: 0.5,
+                            }}
+                          >
+                            {test.date}
+                          </Typography>
+                        </Box>
+                      </Box>
+                    </Grid>
+
+                    {/* Column 2: Score, Time & Progress Bar */}
+                    <Grid size={{ xs: 12, sm: 4, md: 3, lg: 3 }}>
+                      <Box sx={{ display: "flex", alignItems: "center", gap: 2, flexWrap: "wrap" }}>
+                        <Box sx={{ minWidth: 140 }}>
+                          <Typography
+                            sx={{
+                              color: "#FF4F00",
+                              fontWeight: 600,
+                              fontSize: "16px",
+                              fontFamily: "Source Sans Pro",
+                            }}
+                          >
+                            Score: {test.score}/900 ({testScorePercentage}%)
+                          </Typography>
+                          <Typography
+                            variant="body2"
+                            sx={{
+                              color: "#3B3B3B99",
+                              fontWeight: 400,
+                              fontSize: "13px",
+                              fontFamily: "Source Sans Pro",
+                              mt: 0.2,
+                            }}
+                          >
+                            Time: {test.timeSpent || "N/A"}
+                          </Typography>
+                        </Box>
+                        
+                        <Box
+                          sx={{
+                            display: { xs: "none", lg: "block" },
+                            width: "1px",
+                            height: "24px",
+                            backgroundColor: "#E5E7EB",
                           }}
                         />
-                      </Box>
 
+                        {/* Progress Bar */}
+                        <Box
+                          sx={{
+                            display: { xs: "none", xl: "block" },
+                            width: 80,
+                            height: 6,
+                            backgroundColor: "#e2e8f0",
+                            borderRadius: 3,
+                          }}
+                        >
+                          <Box
+                            sx={{
+                              width: `${testScorePercentage}%`,
+                              height: "100%",
+                              backgroundColor: "#FF4F00",
+                              borderRadius: 3,
+                            }}
+                          />
+                        </Box>
+                      </Box>
+                    </Grid>
+
+                    {/* Column 3: Actions Buttons */}
+                    <Grid size={{ xs: 12, sm: 8, md: 6, lg: 6 }}>
                       <Box
                         sx={{
                           display: "flex",
-                          gap: { xs: 1.5, md: 2 },
-                          flexDirection: { xs: "column", sm: "row" },
-                          width: { xs: "100%", sm: "auto" },
+                          gap: 1.5,
+                          justifyContent: { xs: "flex-start", md: "flex-end" },
+                          flexWrap: "nowrap",
+                          width: "100%",
                         }}
                       >
                         {test.level === 4 ? (
@@ -1010,11 +1014,12 @@ export default function AdminUserDetail() {
                               background: "#005F73",
                               color: "white",
                               borderRadius: "16px",
-                              padding: "12px 12px",
-                              fontSize: "16px",
+                              padding: "6px 12px",
+                              fontSize: "15px",
                               fontWeight: "400",
                               height: "40px",
                               textTransform: "none",
+                              whiteSpace: "nowrap",
                               "&:hover": {
                                 background: "#004A5C",
                               },
@@ -1024,9 +1029,7 @@ export default function AdminUserDetail() {
                               },
                             }}
                           >
-                            {generatingPDF === test._id
-                              ? "Generating..."
-                              : "Download"}
+                            {generatingPDF === test._id ? "Generating..." : "Download"}
                           </Button>
                         ) : test.level === 5 ? (
                           <Button
@@ -1048,11 +1051,12 @@ export default function AdminUserDetail() {
                               background: "#005F73",
                               color: "white",
                               borderRadius: "16px",
-                              padding: "12px 12px",
-                              fontSize: "16px",
+                              padding: "6px 12px",
+                              fontSize: "15px",
                               fontWeight: "400",
                               height: "40px",
                               textTransform: "none",
+                              whiteSpace: "nowrap",
                               "&:hover": {
                                 background: "#004A5C",
                               },
@@ -1062,9 +1066,7 @@ export default function AdminUserDetail() {
                               },
                             }}
                           >
-                            {generatingPDF === test._id
-                              ? "Generating..."
-                              : "Download"}
+                            {generatingPDF === test._id ? "Generating..." : "Download"}
                           </Button>
                         ) : (
                           <DownloadReportButton
@@ -1089,18 +1091,40 @@ export default function AdminUserDetail() {
                             color: "#FF4F00",
                             border: "1px solid #FF4F00",
                             borderRadius: "16px",
-                            padding: "3.5px 14px",
+                            padding: "3.5px 12px",
                             fontWeight: 400,
-                            fontSize: "18px",
+                            fontSize: "16px",
                             cursor: "pointer",
                             transition: "all 0.2s",
+                            whiteSpace: "nowrap",
                           }}
                         >
                           Share
                         </OutLineButton>
+                        <OutLineButton
+                          onClick={() =>
+                            router.push(
+                              `/admin/users/${userId}/responses?level=${test.level}&submissionId=${test._id}`
+                            )
+                          }
+                          style={{
+                            background: "transparent",
+                            color: "#FF4F00",
+                            border: "1px solid #FF4F00",
+                            borderRadius: "16px",
+                            padding: "3.5px 12px",
+                            fontWeight: 400,
+                            fontSize: "16px",
+                            cursor: "pointer",
+                            transition: "all 0.2s",
+                            whiteSpace: "nowrap",
+                          }}
+                        >
+                          View Responses
+                        </OutLineButton>
                       </Box>
-                    </Box>
-                  </Box>
+                    </Grid>
+                  </Grid>
                 );
               })}
             </Box>

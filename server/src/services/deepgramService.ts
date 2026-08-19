@@ -16,7 +16,7 @@ export class DeepgramService {
     }
 
     this.deepgramClient = createClient(this.apiKey);
-    console.log("✅ Deepgram service initialized");
+    // console.log("✅ Deepgram service initialized");
   }
 
   /**
@@ -43,11 +43,11 @@ export class DeepgramService {
 
       // Handle connection open
       connection.on(LiveTranscriptionEvents.Open, () => {
-        console.log(
-          `🎤 Deepgram connection opened for session: ${session.sessionId}`
-        );
-        console.log(`📡 Deepgram ready state: ${connection.getReadyState()}`);
-        console.log(`✅ Deepgram is ready to receive audio`);
+        // console.log(
+        //   `🎤 Deepgram connection opened for session: ${session.sessionId}`
+        // );
+        // console.log(`📡 Deepgram ready state: ${connection.getReadyState()}`);
+        // console.log(`✅ Deepgram is ready to receive audio`);
       });
 
       // Handle transcription results
@@ -57,22 +57,22 @@ export class DeepgramService {
         if (transcript && transcript.length > 0) {
           const isFinal = data.is_final;
 
-          console.log(
-            `📝 Transcript ${isFinal ? "(final)" : "(interim)"}: ${transcript}`
-          );
+          // console.log(
+          //   `📝 Transcript ${isFinal ? "(final)" : "(interim)"}: ${transcript}`
+          // );
           onTranscript(transcript, isFinal);
         }
       });
 
       // Handle utterance end (user stopped speaking)
       connection.on(LiveTranscriptionEvents.UtteranceEnd, () => {
-        console.log("🔇 Utterance ended (silence detected)");
+        // console.log("🔇 Utterance ended (silence detected)");
         onTranscript("", true); // Signal utterance end
       });
 
       // Handle metadata
       connection.on(LiveTranscriptionEvents.Metadata, (data: any) => {
-        console.log("📊 Deepgram metadata:", data);
+        // console.log("📊 Deepgram metadata:", data);
       });
 
       // Handle errors
@@ -86,15 +86,15 @@ export class DeepgramService {
         console.log(
           `🔌 Deepgram connection closed for session: ${session.sessionId}`
         );
-        console.log(`   Close code: ${closeEvent?.code || "unknown"}`);
-        console.log(
-          `   Close reason: ${closeEvent?.reason || "No reason provided"}`
-        );
+        // console.log(`   Close code: ${closeEvent?.code || "unknown"}`);
+        // console.log(
+        //   `   Close reason: ${closeEvent?.reason || "No reason provided"}`
+        // );
       });
 
       // Handle unhandled events
       connection.on(LiveTranscriptionEvents.Unhandled, (data: any) => {
-        console.log(`🔄 Deepgram unhandled event:`, data);
+        // console.log(`🔄 Deepgram unhandled event:`, data);
       });
 
       return connection;
@@ -114,9 +114,9 @@ export class DeepgramService {
         connection.send(audioData);
         // Log first few sends to confirm audio is flowing
         if (!connection._audioSent) {
-          console.log(
-            `🎙️ First audio chunk sent to Deepgram: ${audioData.length} bytes`
-          );
+          // console.log(
+          //   `🎙️ First audio chunk sent to Deepgram: ${audioData.length} bytes`
+          // );
           connection._audioSent = true;
         }
       } else {
@@ -136,7 +136,7 @@ export class DeepgramService {
     try {
       if (connection) {
         connection.finish();
-        console.log("✅ Deepgram connection closed gracefully");
+        // console.log("✅ Deepgram connection closed gracefully");
       }
     } catch (error) {
       console.error("❌ Error closing Deepgram connection:", error);

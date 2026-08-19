@@ -52,11 +52,11 @@ export class InterviewStateMachine {
     }
 
     const nextQuestion = this.currentQuestion();
-    console.log(
-      `➡️  Moving to question ${this.session.currentQuestionIndex + 1}/${
-        this.session.questions.length
-      }`,
-    );
+    // console.log(
+    //   `➡️  Moving to question ${this.session.currentQuestionIndex + 1}/${
+    //     this.session.questions.length
+    //   }`,
+    // );
 
     // Initialize answer state for new question
     if (nextQuestion) {
@@ -86,7 +86,7 @@ export class InterviewStateMachine {
         audioStartTime: Date.now(),
       };
       this.session.answers.set(questionId, answerState);
-      console.log(`✅ Initialized answer state for question: ${questionId}`);
+      // console.log(`✅ Initialized answer state for question: ${questionId}`);
     }
   }
 
@@ -104,9 +104,9 @@ export class InterviewStateMachine {
         ? `${answerState.transcript} ${transcript}`.trim()
         : transcript.trim();
 
-      console.log(
-        `📝 Transcript updated for question ${currentQ.order}: ${answerState.transcript.length} chars`,
-      );
+      // console.log(
+      //   `📝 Transcript updated for question ${currentQ.order}: ${answerState.transcript.length} chars`,
+      // );
     }
   }
 
@@ -129,7 +129,7 @@ export class InterviewStateMachine {
         existingMainAnswer.content = answer;
         existingMainAnswer.confidence = confidence;
         existingMainAnswer.timestamp = Date.now();
-        console.log(`✅ Updated main answer in conversation history`);
+        // console.log(`✅ Updated main answer in conversation history`);
       } else {
         // Add new turn
         const turn: ConversationTurn = {
@@ -139,7 +139,7 @@ export class InterviewStateMachine {
           confidence,
         };
         answerState.conversationHistory.push(turn);
-        console.log(`✅ Added main answer to conversation history`);
+        // console.log(`✅ Added main answer to conversation history`);
       }
     }
   }
@@ -159,7 +159,7 @@ export class InterviewStateMachine {
         timestamp: Date.now(),
       };
       answerState.conversationHistory.push(turn);
-      console.log(`✅ Added follow-up question to conversation history`);
+      // console.log(`✅ Added follow-up question to conversation history`);
     }
   }
 
@@ -188,7 +188,7 @@ export class InterviewStateMachine {
           existingAnswer.content = answer;
           existingAnswer.confidence = confidence;
           existingAnswer.timestamp = Date.now();
-          console.log(`✅ Updated follow-up answer in conversation history`);
+          // console.log(`✅ Updated follow-up answer in conversation history`);
         } else {
           // Add new follow-up answer after the question
           const turn: ConversationTurn = {
@@ -198,7 +198,7 @@ export class InterviewStateMachine {
             confidence,
           };
           answerState.conversationHistory.push(turn);
-          console.log(`✅ Added follow-up answer to conversation history`);
+          // console.log(`✅ Added follow-up answer to conversation history`);
         }
       }
     }
@@ -219,7 +219,7 @@ export class InterviewStateMachine {
         timestamp: Date.now(),
       };
       answerState.conversationHistory.push(turn);
-      console.log(`✅ Added redirect to conversation history`);
+      // console.log(`✅ Added redirect to conversation history`);
     }
   }
 
@@ -238,13 +238,13 @@ export class InterviewStateMachine {
       answerState.missingAspects = analysis.missingAspects;
       answerState.suggestedFollowUp = analysis.suggestedFollowUp;
 
-      console.log(
-        `📊 Answer analysis updated - Confidence: ${
-          analysis.confidence
-        }%, Complete: ${analysis.isComplete}, Has follow-up: ${
-          analysis.suggestedFollowUp.length > 0
-        }`,
-      );
+      // console.log(
+      //   `📊 Answer analysis updated - Confidence: ${
+      //     analysis.confidence
+      //   }%, Complete: ${analysis.isComplete}, Has follow-up: ${
+      //     analysis.suggestedFollowUp.length > 0
+      //   }`,
+      // );
     }
   }
 
@@ -259,9 +259,9 @@ export class InterviewStateMachine {
     if (answerState) {
       answerState.followUpCount++;
       answerState.followUpAsked = true; // Keep for compatibility
-      console.log(`\n🔄 MARKING FOLLOW-UP ASKED:`);
-      console.log(`   Question: ${currentQ.order}`);
-      console.log(`   Follow-up count: ${answerState.followUpCount}/3`);
+      // console.log(`\n🔄 MARKING FOLLOW-UP ASKED:`);
+      // console.log(`   Question: ${currentQ.order}`);
+      // console.log(`   Follow-up count: ${answerState.followUpCount}/3`);
     } else {
       console.log(
         `⚠️  WARNING: No answer state found for question ${currentQ.order}`,
@@ -279,9 +279,9 @@ export class InterviewStateMachine {
     const answerState = this.session.answers.get(currentQ.questionId);
     if (answerState) {
       answerState.redirectCount = (answerState.redirectCount || 0) + 1;
-      console.log(`\n🔀 MARKING REDIRECT GIVEN:`);
-      console.log(`   Question: ${currentQ.order}`);
-      console.log(`   Redirect count: ${answerState.redirectCount}/2`);
+      // console.log(`\n🔀 MARKING REDIRECT GIVEN:`);
+      // console.log(`   Question: ${currentQ.order}`);
+      // console.log(`   Redirect count: ${answerState.redirectCount}/2`);
     }
   }
 
@@ -295,7 +295,7 @@ export class InterviewStateMachine {
     const answerState = this.session.answers.get(currentQ.questionId);
     if (answerState) {
       answerState.isComplete = true;
-      console.log(`✅ Question ${currentQ.order} marked complete`);
+      // console.log(`✅ Question ${currentQ.order} marked complete`);
     }
   }
 
@@ -407,104 +407,104 @@ export class InterviewStateMachine {
   decideNextAction(): InterviewAction {
     const answerState = this.getCurrentAnswerState();
 
-    console.log("\n" + "=".repeat(70));
-    console.log("🎯 DECISION ENGINE - Evaluating State");
-    console.log("=".repeat(70));
+    // console.log("\n" + "=".repeat(70));
+    // console.log("🎯 DECISION ENGINE - Evaluating State");
+    // console.log("=".repeat(70));
 
     if (!answerState) {
-      console.log("❌ No answer state found - END_INTERVIEW");
+      // console.log("❌ No answer state found - END_INTERVIEW");
       return InterviewAction.END_INTERVIEW;
     }
 
-    console.log(`📊 Current State:`);
-    console.log(`   Confidence: ${answerState.confidence}%`);
-    console.log(`   Follow-up Count: ${answerState.followUpCount}/3`);
-    console.log(`   Redirect Count: ${answerState.redirectCount || 0}/2`);
-    console.log(`   Is Complete: ${answerState.isComplete}`);
-    console.log(`   Is Off-Topic: ${answerState.isOffTopic}`);
-    console.log(`   Transcript Length: ${answerState.transcript.length} chars`);
+    // console.log(`📊 Current State:`);
+    // console.log(`   Confidence: ${answerState.confidence}%`);
+    // console.log(`   Follow-up Count: ${answerState.followUpCount}/3`);
+    // console.log(`   Redirect Count: ${answerState.redirectCount || 0}/2`);
+    // console.log(`   Is Complete: ${answerState.isComplete}`);
+    // console.log(`   Is Off-Topic: ${answerState.isOffTopic}`);
+    // console.log(`   Transcript Length: ${answerState.transcript.length} chars`);
 
     // Check if we've reached the end
     if (this.isInterviewComplete()) {
-      console.log("✅ Interview complete - END_INTERVIEW");
+      // console.log("✅ Interview complete - END_INTERVIEW");
       return InterviewAction.END_INTERVIEW;
     }
 
-    console.log("\n🔍 Checking conditions:");
+    // console.log("\n🔍 Checking conditions:");
 
     // Check if off-topic (priority: redirect before anything else) - but limit redirects
     const MAX_REDIRECTS = 2;
     const redirectCount = answerState.redirectCount || 0;
     if (answerState.isOffTopic && redirectCount < MAX_REDIRECTS) {
-      console.log(
-        `   1. Needs Redirect? true (${redirectCount}/${MAX_REDIRECTS})`,
-      );
-      console.log("   → Decision: REDIRECT");
-      console.log("=".repeat(70) + "\n");
+      // console.log(
+      //   `   1. Needs Redirect? true (${redirectCount}/${MAX_REDIRECTS})`,
+      // );
+      // console.log("   → Decision: REDIRECT");
+      // console.log("=".repeat(70) + "\n");
       return InterviewAction.REDIRECT;
     } else if (answerState.isOffTopic && redirectCount >= MAX_REDIRECTS) {
-      console.log(
-        `   1. User is off-topic but max redirects reached (${redirectCount}/${MAX_REDIRECTS})`,
-      );
-      console.log("   → Decision: NEXT_QUESTION (moving on despite off-topic)");
-      console.log("=".repeat(70) + "\n");
+      // console.log(
+      //   `   1. User is off-topic but max redirects reached (${redirectCount}/${MAX_REDIRECTS})`,
+      // );
+      // console.log("   → Decision: NEXT_QUESTION (moving on despite off-topic)");
+      // console.log("=".repeat(70) + "\n");
       return InterviewAction.NEXT_QUESTION;
     }
-    console.log(`   1. Needs Redirect? false`);
+    // console.log(`   1. Needs Redirect? false`);
 
     // Check if answer is good enough to move on (confidence >= 60)
-    console.log(
-      `   2. Confidence >= 60? ${answerState.confidence >= 60} (${
-        answerState.confidence
-      }% vs 60%)`,
-    );
+    // console.log(
+    //   `   2. Confidence >= 60? ${answerState.confidence >= 60} (${
+    //     answerState.confidence
+    //   }% vs 60%)`,
+    // );
     if (answerState.confidence >= 60) {
-      console.log("   → Decision: NEXT_QUESTION (confidence sufficient)");
-      console.log("=".repeat(70) + "\n");
+      // console.log("   → Decision: NEXT_QUESTION (confidence sufficient)");
+      // console.log("=".repeat(70) + "\n");
       return InterviewAction.NEXT_QUESTION;
     }
 
     // Check if needs follow-up (confidence < 60 and haven't exhausted 3 attempts)
     const needsFollowUp = this.needsFollowUp();
-    console.log(`   3. Needs Follow-up? ${needsFollowUp}`);
-    console.log(`      - followUpCount: ${answerState.followUpCount}/3`);
-    console.log(`      - confidence < 60: ${answerState.confidence < 60}`);
-    console.log(
-      `      - transcript length > 20: ${answerState.transcript.length > 20}`,
-    );
+    // console.log(`   3. Needs Follow-up? ${needsFollowUp}`);
+    // console.log(`      - followUpCount: ${answerState.followUpCount}/3`);
+    // console.log(`      - confidence < 60: ${answerState.confidence < 60}`);
+    // console.log(
+    //   `      - transcript length > 20: ${answerState.transcript.length > 20}`,
+    // );
     if (needsFollowUp) {
-      console.log(
-        `   → Decision: FOLLOW_UP (attempt ${answerState.followUpCount + 1}/3)`,
-      );
-      console.log("=".repeat(70) + "\n");
+      // console.log(
+      //   `   → Decision: FOLLOW_UP (attempt ${answerState.followUpCount + 1}/3)`,
+      // );
+      // console.log("=".repeat(70) + "\n");
       return InterviewAction.FOLLOW_UP;
     }
 
     // If exhausted all 3 follow-ups, move on regardless of confidence
-    console.log(`   4. Exhausted follow-ups (${answerState.followUpCount}/3)?`);
+    // console.log(`   4. Exhausted follow-ups (${answerState.followUpCount}/3)?`);
     if (answerState.followUpCount >= 3) {
-      console.log(
-        "   → Decision: NEXT_QUESTION (max follow-ups reached, moving on)",
-      );
-      console.log("=".repeat(70) + "\n");
+      // console.log(
+      //   "   → Decision: NEXT_QUESTION (max follow-ups reached, moving on)",
+      // );
+      // console.log("=".repeat(70) + "\n");
       return InterviewAction.NEXT_QUESTION;
     }
 
     // If transcript is very short (< 20 chars), continue listening
     if (answerState.transcript.length < 20) {
-      console.log(
-        `   5. Transcript too short (${answerState.transcript.length} < 20 chars)`,
-      );
-      console.log(
-        "   → Decision: CONTINUE (waiting for more substantial answer)",
-      );
-      console.log("=".repeat(70) + "\n");
+      // console.log(
+      //   `   5. Transcript too short (${answerState.transcript.length} < 20 chars)`,
+      // );
+      // console.log(
+      //   "   → Decision: CONTINUE (waiting for more substantial answer)",
+      // );
+      // console.log("=".repeat(70) + "\n");
       return InterviewAction.CONTINUE;
     }
 
     // Default: continue listening
-    console.log("   → Decision: CONTINUE (default - keep listening)");
-    console.log("=".repeat(70) + "\n");
+    // console.log("   → Decision: CONTINUE (default - keep listening)");
+    // console.log("=".repeat(70) + "\n");
     return InterviewAction.CONTINUE;
   }
 

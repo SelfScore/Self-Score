@@ -388,7 +388,7 @@ export const completeInterview = async (req: Request, res: Response): Promise<vo
 
         const totalAnsweredQuestions = answeredQuestionIds.size;
 
-        console.log(`Text answers: ${textAnsweredQuestions}, Voice answers: ${voiceAnsweredQuestions}, Total unique: ${totalAnsweredQuestions}`);
+        // console.log(`Text answers: ${textAnsweredQuestions}, Voice answers: ${voiceAnsweredQuestions}, Total unique: ${totalAnsweredQuestions}`);
 
         // Check if all questions have been answered (either via text or voice)
         if (totalAnsweredQuestions < totalQuestions) {
@@ -405,7 +405,7 @@ export const completeInterview = async (req: Request, res: Response): Promise<vo
         interview.submittedAt = new Date();
         await interview.save();
 
-        console.log(`User ${userId} submitted Level 4 interview ${interviewId} (Attempt #${interview.attemptNumber}). Status: PENDING_REVIEW`);
+        // console.log(`User ${userId} submitted Level 4 interview ${interviewId} (Attempt #${interview.attemptNumber}). Status: PENDING_REVIEW`);
 
         // Send email notifications to user and admin
         try {
@@ -416,7 +416,7 @@ export const completeInterview = async (req: Request, res: Response): Promise<vo
                 if (user.purchasedLevels?.level4?.remainingAttempts > 0) {
                     user.purchasedLevels.level4.remainingAttempts -= 1;
                     await user.save();
-                    console.log(`✅ Level 4 attempt consumed. Remaining attempts: ${user.purchasedLevels.level4.remainingAttempts}`);
+                    // console.log(`✅ Level 4 attempt consumed. Remaining attempts: ${user.purchasedLevels.level4.remainingAttempts}`);
                 }
 
                 // Send to user (pending review - no score yet)
@@ -440,7 +440,7 @@ export const completeInterview = async (req: Request, res: Response): Promise<vo
                     isPending: true
                 });
 
-                console.log(`✅ Email notifications sent for Level 4 submission (User: ${user.email})`);
+                // console.log(`✅ Email notifications sent for Level 4 submission (User: ${user.email})`);
             }
         } catch (emailError) {
             console.error("⚠️  Failed to send email notifications for Level 4:", emailError);
@@ -475,7 +475,7 @@ export const completeInterview = async (req: Request, res: Response): Promise<vo
  */
 async function generateFeedback(interview: any) {
     try {
-        console.log("Starting feedback generation...");
+        // console.log("Starting feedback generation...");
         // Use gemini-2.5-flash - the latest model
         const model = genAI.getGenerativeModel({ model: "gemini-2.5-flash" });
 
@@ -495,7 +495,7 @@ async function generateFeedback(interview: any) {
             ).join('\n') || '';
         }
 
-        console.log(`Content length: ${contentToAnalyze.length} characters`);
+        // console.log(`Content length: ${contentToAnalyze.length} characters`);
 
         const prompt = `You are an expert life coach and psychologist evaluating a Level 4 "Mastery Test" for life management and emotional intelligence. 
         
@@ -529,10 +529,10 @@ Provide your response in the following JSON format:
 
 Be thorough, honest, and constructive in your evaluation.`;
 
-        console.log("Sending request to Gemini AI...");
+        // console.log("Sending request to Gemini AI...");
         const result = await model.generateContent(prompt);
         const response = result.response.text();
-        console.log("Received response from Gemini AI");
+        // console.log("Received response from Gemini AI");
 
         // Parse JSON from response
         const jsonMatch = response.match(/\{[\s\S]*\}/);
@@ -541,12 +541,12 @@ Be thorough, honest, and constructive in your evaluation.`;
             throw new Error("Failed to parse AI response - no JSON found");
         }
 
-        console.log("Parsing JSON response...");
+        // console.log("Parsing JSON response...");
         const feedbackData = JSON.parse(jsonMatch[0]);
-        console.log("Feedback data parsed successfully");
+        // console.log("Feedback data parsed successfully");
 
         // Save feedback to database
-        console.log("Saving feedback to database...");
+        // console.log("Saving feedback to database...");
         const feedback = await AIFeedbackModel.create({
             userId: interview.userId,
             interviewId: interview._id,
@@ -559,7 +559,7 @@ Be thorough, honest, and constructive in your evaluation.`;
             recommendations: feedbackData.recommendations
         });
 
-        console.log("Feedback saved successfully, ID:", feedback._id);
+        // console.log("Feedback saved successfully, ID:", feedback._id);
 
         // Update interview with feedback reference
         interview.feedbackId = feedback._id;

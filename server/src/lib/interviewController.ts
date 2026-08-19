@@ -25,19 +25,19 @@ export class InterviewController {
    * Handle silence detected - main decision point
    */
   async handleSilence(): Promise<void> {
-    console.log("\n" + "=".repeat(70));
-    console.log("🔇 SILENCE DETECTED - Starting analysis...");
-    console.log("=".repeat(70));
+    // console.log("\n" + "=".repeat(70));
+    // console.log("🔇 SILENCE DETECTED - Starting analysis...");
+    // console.log("=".repeat(70));
 
     // Wait for any pending analysis to complete
     if (this.session.pendingAnalysis) {
-      console.log("⏳ Waiting for pending analysis to complete...");
+      // console.log("⏳ Waiting for pending analysis to complete...");
       await this.session.pendingAnalysis;
     }
 
     const currentQuestion = this.stateMachine.currentQuestion();
     if (!currentQuestion) {
-      console.log("✅ No current question - interview complete");
+      // console.log("✅ No current question - interview complete");
       return;
     }
 
@@ -51,17 +51,17 @@ export class InterviewController {
 
     // Check if we have any content
     if (currentTranscript.length < 10) {
-      console.log(
-        "⏳ Transcript too short (<10 chars), waiting for more input...",
-      );
+      // console.log(
+      //   "⏳ Transcript too short (<10 chars), waiting for more input...",
+      // );
       return;
     }
 
-    console.log(
-      `📝 Analyzing transcript (${
-        currentTranscript.length
-      } chars): "${currentTranscript.substring(0, 100)}..."`,
-    );
+    // console.log(
+    //   `📝 Analyzing transcript (${
+    //     currentTranscript.length
+    //   } chars): "${currentTranscript.substring(0, 100)}..."`,
+    // );
 
     // Send "processing" indicator to frontend immediately
     this.sendProcessingIndicator();
@@ -72,7 +72,7 @@ export class InterviewController {
     }
 
     // Run answer analysis
-    console.log("\n🔍 Running Gemini Flash analysis...");
+    // console.log("\n🔍 Running Gemini Flash analysis...");
     const analysisPromise = answerAnalyzer.analyzeAnswer(
       currentQuestion.questionText,
       currentTranscript,
@@ -82,12 +82,12 @@ export class InterviewController {
 
     try {
       const analysis = await analysisPromise;
-      console.log(`\n📊 Analysis complete:`, {
-        confidence: analysis.confidence,
-        isComplete: analysis.isComplete,
-        isOffTopic: analysis.isOffTopic,
-        hasFollowUp: analysis.suggestedFollowUp.length > 0,
-      });
+      // console.log(`\n📊 Analysis complete:`, {
+      //   confidence: analysis.confidence,
+      //   isComplete: analysis.isComplete,
+      //   isOffTopic: analysis.isOffTopic,
+      //   hasFollowUp: analysis.suggestedFollowUp.length > 0,
+      // });
 
       // Update state with analysis
       this.stateMachine.updateAnswerAnalysis(analysis);
@@ -136,12 +136,12 @@ export class InterviewController {
       }
 
       // Decide next action
-      console.log("\n🎯 CALLING DECISION ENGINE...");
+      // console.log("\n🎯 CALLING DECISION ENGINE...");
       const action = this.stateMachine.decideNextAction();
 
-      console.log("\n" + "-".repeat(60));
-      console.log(`🎯 DECISION: ${action}`);
-      console.log("-".repeat(60) + "\n");
+      // console.log("\n" + "-".repeat(60));
+      // console.log(`🎯 DECISION: ${action}`);
+      // console.log("-".repeat(60) + "\n");
 
       await this.executeAction(action);
     } catch (error) {
@@ -179,7 +179,7 @@ export class InterviewController {
         break;
 
       case InterviewAction.CONTINUE:
-        console.log("⏳ Continue listening...");
+        // console.log("⏳ Continue listening...");
         break;
     }
   }
@@ -188,7 +188,7 @@ export class InterviewController {
    * Move to next question
    */
   private async moveToNextQuestion(): Promise<void> {
-    console.log("➡️  Moving to next question...");
+    // console.log("➡️  Moving to next question...");
 
     // Mark current question complete
     this.stateMachine.completeCurrentQuestion();
@@ -200,7 +200,7 @@ export class InterviewController {
     const nextQuestion = this.stateMachine.nextQuestion();
 
     if (!nextQuestion) {
-      console.log("✅ All questions complete!");
+      // console.log("✅ All questions complete!");
       await this.endInterview();
 
       // Notify client that interview is complete
@@ -213,11 +213,11 @@ export class InterviewController {
       return;
     }
 
-    console.log(
-      `📋 Next question (${this.session.currentQuestionIndex + 1}/${
-        this.session.questions.length
-      }): ${nextQuestion.questionText}`,
-    );
+    // console.log(
+    //   `📋 Next question (${this.session.currentQuestionIndex + 1}/${
+    //     this.session.questions.length
+    //   }): ${nextQuestion.questionText}`,
+    // );
 
     // Send instruction to Gemini to ask next question FIRST
     const instruction: GeminiInstruction = {
@@ -242,11 +242,11 @@ export class InterviewController {
       });
     }
 
-    console.log(
-      `🎙️ Sending instruction to Gemini to ask question ${
-        this.session.currentQuestionIndex + 1
-      }`,
-    );
+    // console.log(
+    //   `🎙️ Sending instruction to Gemini to ask question ${
+    //     this.session.currentQuestionIndex + 1
+    //   }`,
+    // );
     await this.sendInstructionToGemini(instruction);
   }
 
@@ -254,7 +254,7 @@ export class InterviewController {
    * Ask follow-up question
    */
   private async askFollowUp(): Promise<void> {
-    console.log("🔄 Asking follow-up question...");
+    // console.log("🔄 Asking follow-up question...");
 
     const currentQuestion = this.stateMachine.currentQuestion();
     const answerState = this.stateMachine.getCurrentAnswerState();
@@ -269,9 +269,9 @@ export class InterviewController {
       answerState.suggestedFollowUp ||
       `Could you elaborate more on ${answerState.missingAspects.join(", ")}?`;
 
-    console.log(
-      `🔄 Asking follow-up ${answerState.followUpCount}/3: ${followUpQuestion}`,
-    );
+    // console.log(
+    //   `🔄 Asking follow-up ${answerState.followUpCount}/3: ${followUpQuestion}`,
+    // );
 
     // Add follow-up question to conversation history
     this.stateMachine.addFollowUpQuestion(followUpQuestion);
@@ -300,7 +300,7 @@ export class InterviewController {
    * Redirect user back to topic
    */
   private async redirectUser(): Promise<void> {
-    console.log("🔀 Redirecting user back to topic...");
+    // console.log("🔀 Redirecting user back to topic...");
 
     const currentQuestion = this.stateMachine.currentQuestion();
     const answerState = this.stateMachine.getCurrentAnswerState();
@@ -331,7 +331,7 @@ export class InterviewController {
    * End interview
    */
   private async endInterview(): Promise<void> {
-    console.log("🏁 Ending interview...");
+    // console.log("🏁 Ending interview...");
 
     const instruction: GeminiInstruction = {
       type: "close_interview",
@@ -353,7 +353,7 @@ export class InterviewController {
         type: "ai_processing",
         message: "Analyzing your response...",
       });
-      console.log("💭 Sent processing indicator to frontend");
+      // console.log("💭 Sent processing indicator to frontend");
     }
   }
 
@@ -382,13 +382,13 @@ export class InterviewController {
     }
 
     const ws = this.session.geminiConnection;
-    console.log(
-      `🔍 Checking Gemini connection before sending ${instruction.type}...`,
-    );
-    console.log(`   Connection exists: ${!!ws}`);
-    console.log(
-      `   ReadyState: ${ws.readyState} (1=OPEN, 0=CONNECTING, 2=CLOSING, 3=CLOSED)`,
-    );
+    // console.log(
+    //   `🔍 Checking Gemini connection before sending ${instruction.type}...`,
+    // );
+    // console.log(`   Connection exists: ${!!ws}`);
+    // console.log(
+    //   `   ReadyState: ${ws.readyState} (1=OPEN, 0=CONNECTING, 2=CLOSING, 3=CLOSED)`,
+    // );
 
     // If connection is closed or closing, attempt to reconnect
     if (ws.readyState !== 1) {
@@ -418,7 +418,7 @@ export class InterviewController {
         // Wait for connection to establish
         await new Promise((resolve) => setTimeout(resolve, 2000));
 
-        console.log(`✅ Gemini reconnected successfully`);
+        // console.log(`✅ Gemini reconnected successfully`);
       } catch (error) {
         console.error("❌ Failed to reconnect to Gemini:", error);
         return;
@@ -452,14 +452,14 @@ export class InterviewController {
    */
   handleTranscript(transcript: string, isFinal: boolean): void {
     if (isFinal && transcript.length > 0) {
-      console.log(`📝 Final transcript received: ${transcript}`);
+      // console.log(`📝 Final transcript received: ${transcript}`);
       this.stateMachine.appendTranscript(transcript);
 
       // Clear the buffer
       this.stateMachine.clearCurrentTranscript();
     } else if (transcript.length > 0) {
       // Interim result - just log
-      console.log(`📝 Interim: ${transcript.substring(0, 50)}...`);
+      // console.log(`📝 Interim: ${transcript.substring(0, 50)}...`);
     }
   }
 
@@ -498,23 +498,23 @@ export class InterviewController {
       const statistics = this.stateMachine.getStatistics();
 
       // Debug: Log what we're getting from state machine
-      console.log(
-        `📊 DEBUG: allAnswers from state machine: ${allAnswers.length} answers`,
-      );
-      allAnswers.forEach((a, i) => {
-        console.log(
-          `   Answer ${i + 1}: questionId=${a.questionId}, transcript="${a.transcript.substring(0, 50)}...", isComplete=${a.isComplete}`,
-        );
-      });
+      // console.log(
+      //   `📊 DEBUG: allAnswers from state machine: ${allAnswers.length} answers`,
+      // );
+      // allAnswers.forEach((a, i) => {
+      //   console.log(
+      //     `   Answer ${i + 1}: questionId=${a.questionId}, transcript="${a.transcript.substring(0, 50)}...", isComplete=${a.isComplete}`,
+      //   );
+      // });
 
       // Filter out empty transcripts and update database
       const filteredAnswers = allAnswers.filter(
         (answer) => answer.transcript && answer.transcript.trim().length > 0,
       );
 
-      console.log(
-        `📊 DEBUG: After filtering empty transcripts: ${filteredAnswers.length} answers`,
-      );
+      // console.log(
+      //   `📊 DEBUG: After filtering empty transcripts: ${filteredAnswers.length} answers`,
+      // );
 
       interview.answers = filteredAnswers.map((answer) => ({
         questionId: answer.questionId,
@@ -534,9 +534,9 @@ export class InterviewController {
       interview.interviewMetadata = statistics;
       await interview.save();
 
-      console.log(
-        `💾 Saved answer to DB - Interview: ${this.session.interviewId} - Total answers: ${interview.answers.length}/${this.session.questions.length}`,
-      );
+      // console.log(
+      //   `💾 Saved answer to DB - Interview: ${this.session.interviewId} - Total answers: ${interview.answers.length}/${this.session.questions.length}`,
+      // );
     } catch (error) {
       console.error("❌ Error saving answer to database:", error);
       // Don't throw - we don't want to interrupt the interview

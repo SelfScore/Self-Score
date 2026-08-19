@@ -640,15 +640,35 @@ export const getUserResponses = async (
   try {
     const { userId } = req.params;
 
-    const responses = await QuestionsResponseModel.find({ userId }).populate(
-      "questionId",
-      "questionText options correctOptionIndex level scoringType questionType",
+    const rawResponses = await QuestionsResponseModel.find({ userId }).lean();
+
+    const QuestionModel = (await import("../models/questions")).default;
+    const Level3QuestionModel = (await import("../models/level3Question")).default;
+
+    const populatedResponses = await Promise.all(
+      rawResponses.map(async (resp: any) => {
+        let questionData = null;
+        if (resp.level === 3) {
+          questionData = await Level3QuestionModel.findById(resp.questionId)
+            .select("questionText options order questionType")
+            .lean();
+        } else {
+          questionData = await QuestionModel.findById(resp.questionId)
+            .select("questionText options correctOptionIndex level scoringType questionType")
+            .lean();
+        }
+
+        return {
+          ...resp,
+          questionId: questionData,
+        };
+      })
     );
 
     return res.status(200).json({
       success: true,
-      count: responses.length,
-      data: responses,
+      count: populatedResponses.length,
+      data: populatedResponses,
     });
   } catch (error) {
     return res.status(500).json({

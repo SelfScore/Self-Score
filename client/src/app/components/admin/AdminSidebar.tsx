@@ -18,6 +18,7 @@ import EmailIcon from "@mui/icons-material/Email";
 import AssignmentIcon from "@mui/icons-material/Assignment";
 import SupervisorAccountIcon from "@mui/icons-material/SupervisorAccount";
 import LogoutIcon from "@mui/icons-material/Logout";
+import MailOutlineIcon from "@mui/icons-material/MailOutline";
 import { logoutAdmin } from "@/services/adminAuthService";
 import { adminService } from "@/services/adminService";
 import LogoutConfirmationModal from "@/app/components/ui/LogoutConfirmationModal";
@@ -52,6 +53,11 @@ const menuItems = [
     title: "Inbox",
     icon: <EmailIcon />,
     path: "/admin/messages",
+  },
+  {
+    title: "Newsletter",
+    icon: <MailOutlineIcon />,
+    path: "/admin/newsletter",
   },
 ];
 

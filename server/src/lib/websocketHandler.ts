@@ -28,7 +28,7 @@ export function setupWebSocketServer(httpServer: HTTPServer): WebSocketServer {
   console.log("✅ WebSocket server initialized on /ws/interview");
 
   wss.on("connection", async (ws: WebSocket, req) => {
-    console.log("🔌 New WebSocket connection attempt");
+    // console.log("🔌 New WebSocket connection attempt");
 
     // Extract sessionId from URL
     const url = new URL(req.url || "", `http://${req.headers.host}`);
@@ -49,20 +49,20 @@ export function setupWebSocketServer(httpServer: HTTPServer): WebSocketServer {
       return;
     }
 
-    console.log(`✅ WebSocket connected for session: ${sessionId}`);
+    // console.log(`✅ WebSocket connected for session: ${sessionId}`);
 
     // Store WebSocket connection in session
     session.wsConnection = ws;
 
     // Initialize Deepgram and Gemini connections
     try {
-      console.log(`🔄 Initializing Deepgram for session: ${sessionId}`);
+      // console.log(`🔄 Initializing Deepgram for session: ${sessionId}`);
       await initializeDeepgram(session, ws);
-      console.log(`✅ Deepgram initialized successfully`);
+      // console.log(`✅ Deepgram initialized successfully`);
 
-      console.log(`🔄 Initializing Gemini for session: ${sessionId}`);
+      // console.log(`🔄 Initializing Gemini for session: ${sessionId}`);
       await initializeGemini(session, ws);
-      console.log(`✅ Gemini initialized successfully`);
+      // console.log(`✅ Gemini initialized successfully`);
     } catch (error) {
       console.error("❌ Failed to initialize services:", error);
       sendControlMessage(ws, {
@@ -109,7 +109,7 @@ After asking this, stop speaking and wait for the user to respond.`,
         };
 
         session.geminiConnection.send(JSON.stringify(welcomeWithQuestion));
-        console.log("👋 Sent welcome message + first question to Gemini");
+        // console.log("👋 Sent welcome message + first question to Gemini");
       } else if (isResuming) {
         // Resuming interview - welcome back + current question
         const currentQuestion = session.questions[session.currentQuestionIndex];
@@ -136,9 +136,9 @@ After asking this, stop speaking and wait for the user to respond.`,
         };
 
         session.geminiConnection.send(JSON.stringify(resumeMessage));
-        console.log(
-          "🔄 Sent welcome back message + current question to Gemini"
-        );
+        // console.log(
+        //   "🔄 Sent welcome back message + current question to Gemini"
+        // );
       }
     }
 
@@ -166,12 +166,12 @@ After asking this, stop speaking and wait for the user to respond.`,
           deepgramService.sendAudio(session.deepgramConnection, silentAudio);
         } else if (readyState === 3) {
           // Connection closed - attempt to reconnect
-          console.log(
-            "🔄 Deepgram keepalive detected closed connection - reconnecting..."
-          );
+          // console.log(
+          //   "🔄 Deepgram keepalive detected closed connection - reconnecting..."
+          // );
           initializeDeepgram(session, ws)
             .then(() => {
-              console.log("✅ Deepgram reconnected via keepalive");
+              // console.log("✅ Deepgram reconnected via keepalive");
             })
             .catch((error) => {
               console.error(
@@ -221,7 +221,7 @@ After asking this, stop speaking and wait for the user to respond.`,
             userSpeechDetectionTimer = setTimeout(() => {
               // User has been speaking for 500ms - this is a real interruption
               if (session.isAISpeaking) {
-                console.log("🛑 USER INTERRUPTION DETECTED - Stopping AI");
+                // console.log("🛑 USER INTERRUPTION DETECTED - Stopping AI");
 
                 // Stop AI speaking immediately
                 session.isAISpeaking = false;
@@ -250,9 +250,9 @@ After asking this, stop speaking and wait for the user to respond.`,
 
           // Log first audio chunk to confirm audio is being received
           if (!audioReceived) {
-            console.log(
-              `🎤 First audio chunk received from frontend: ${data.length} bytes`
-            );
+            // console.log(
+            //   `🎤 First audio chunk received from frontend: ${data.length} bytes`
+            // );
             audioReceived = true;
           }
 
@@ -264,12 +264,12 @@ After asking this, stop speaking and wait for the user to respond.`,
 
             // Check if Deepgram connection is closed (state 3) - reconnect if needed
             if (readyState === 3) {
-              console.log("🔄 Deepgram connection closed - reconnecting...");
+              // console.log("🔄 Deepgram connection closed - reconnecting...");
 
               // Reinitialize Deepgram connection
               initializeDeepgram(session, ws)
                 .then(() => {
-                  console.log("✅ Deepgram reconnected successfully");
+                  // console.log("✅ Deepgram reconnected successfully");
                   // Send the current audio chunk to the new connection
                   if (session.deepgramConnection) {
                     deepgramService.sendAudio(session.deepgramConnection, data);
@@ -297,10 +297,10 @@ After asking this, stop speaking and wait for the user to respond.`,
             );
 
             // Attempt to initialize if connection doesn't exist
-            console.log("🔄 Initializing new Deepgram connection...");
+            // console.log("🔄 Initializing new Deepgram connection...");
             initializeDeepgram(session, ws)
               .then(() => {
-                console.log("✅ Deepgram initialized successfully");
+                // console.log("✅ Deepgram initialized successfully");
                 if (session.deepgramConnection) {
                   deepgramService.sendAudio(session.deepgramConnection, data);
                 }
@@ -321,7 +321,7 @@ After asking this, stop speaking and wait for the user to respond.`,
 
     // Handle WebSocket close
     ws.on("close", async () => {
-      console.log(`🔌 WebSocket closed for session: ${sessionId}`);
+      // console.log(`🔌 WebSocket closed for session: ${sessionId}`);
 
       // Stop Deepgram keepalive
       clearInterval(deepgramKeepalive);
@@ -367,9 +367,9 @@ After asking this, stop speaking and wait for the user to respond.`,
         followUpCount: 0,
         audioStartTime: Date.now(),
       });
-      console.log(
-        `✅ Initialized answer state for first question: ${firstQuestion.questionId}`
-      );
+      // console.log(
+      //   `✅ Initialized answer state for first question: ${firstQuestion.questionId}`
+      // );
       // Question will be displayed after Gemini speaks it (handled by initializeGemini)
     }
   });
@@ -393,9 +393,9 @@ async function initializeDeepgram(
         lowerTranscript.includes("that"));
 
     if (isFinal && isRepeatRequest) {
-      console.log(
-        "🔄 User asked to repeat the question - re-asking current question"
-      );
+      // console.log(
+      //   "🔄 User asked to repeat the question - re-asking current question"
+      // );
 
       // Send special message to frontend
       sendControlMessage(ws, {
@@ -426,7 +426,7 @@ async function initializeDeepgram(
 
     // If this is an utterance end (empty transcript + final), trigger analysis
     if (isFinal && transcript.trim().length === 0) {
-      console.log("🔇 Utterance end detected - triggering silence handler...");
+      // console.log("🔇 Utterance end detected - triggering silence handler...");
 
       // Mark that user stopped speaking
       session.isUserSpeaking = false;
@@ -467,9 +467,9 @@ async function initializeGemini(
       ws.send(audioData);
       // console.log(`🔊 Sending AI audio to frontend: ${audioData.length} bytes`);
     } else if (!session.isAISpeaking) {
-      console.log(
-        `⏭️  Skipping AI audio chunk (interrupted): ${audioData.length} bytes`
-      );
+      // console.log(
+      //   `⏭️  Skipping AI audio chunk (interrupted): ${audioData.length} bytes`
+      // );
     }
   };
 
@@ -506,7 +506,7 @@ function handleControlMessage(
   controller: InterviewController,
   ws: WebSocket
 ): void {
-  console.log(`📨 Control message received:`, message.type);
+  // console.log(`📨 Control message received:`, message.type);
 
   switch (message.type) {
     case "get_progress":
@@ -520,27 +520,27 @@ function handleControlMessage(
     case "skip_question":
       // Allow user to skip (mark as incomplete and move on)
       // Implementation depends on requirements
-      console.log("⏭️  Skip request received");
+      // console.log("⏭️  Skip request received");
       break;
 
     case "pause":
       session.isUserSpeaking = false;
-      console.log("⏸️  Interview paused");
+      // console.log("⏸️  Interview paused");
       // Note: Deepgram keepalive will continue running to prevent timeout
       break;
 
     case "resume":
-      console.log("▶️  Interview resumed");
+      // console.log("▶️  Interview resumed");
 
       // Check if Deepgram connection is still alive after resume
       if (session.deepgramConnection) {
         const readyState = session.deepgramConnection.getReadyState?.();
         if (readyState === 3) {
-          console.log(
-            "🔄 Deepgram connection closed during pause - will reconnect on next audio"
-          );
+          // console.log(
+          //   "🔄 Deepgram connection closed during pause - will reconnect on next audio"
+          // );
         } else if (readyState === 1) {
-          console.log("✅ Deepgram connection still active after resume");
+          // console.log("✅ Deepgram connection still active after resume");
         }
       }
       break;

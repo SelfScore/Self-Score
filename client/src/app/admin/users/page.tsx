@@ -20,8 +20,10 @@ import {
   FormControl,
   Select,
   SelectChangeEvent,
+  CircularProgress,
+  Button,
 } from "@mui/material";
-import { useState, useEffect } from "react";
+import { useState, useEffect, Suspense } from "react";
 import {
   adminService,
   AdminUser,
@@ -29,51 +31,90 @@ import {
 } from "../../../services/adminService";
 import SearchIcon from "@mui/icons-material/Search";
 import MoreVertIcon from "@mui/icons-material/MoreVert";
-import { useRouter } from "next/navigation";
+import { useRouter, useSearchParams } from "next/navigation";
 import CheckCircleIcon from "@mui/icons-material/CheckCircle";
 import CancelIcon from "@mui/icons-material/Cancel";
+import FileDownloadIcon from "@mui/icons-material/FileDownload";
 
-export default function AdminUsers() {
+function UsersListContent() {
   const router = useRouter();
+  const searchParams = useSearchParams();
+
+  // Read initial states from URL query params
+  const initialPage = parseInt(searchParams.get("page") || "1") || 1;
+  const initialLimit = parseInt(searchParams.get("limit") || "10") || 10;
+  const initialSearch = searchParams.get("search") || "";
+  const initialSortBy = (searchParams.get("sortBy") as "latest" | "oldest") || "latest";
+  const initialFilter = (searchParams.get("filter") as "all" | "purchased" | "unpurchased") || "all";
+  const initialStatus = (searchParams.get("status") as "all" | "active" | "pending") || "all";
+
   const [users, setUsers] = useState<AdminUser[]>([]);
   const [pagination, setPagination] = useState({
-    currentPage: 1,
+    currentPage: initialPage,
     totalPages: 1,
     totalUsers: 0,
-    limit: 10,
+    limit: initialLimit,
   });
-  const [search, setSearch] = useState("");
-  const [sortBy, setSortBy] = useState<"latest" | "oldest">("latest");
-  const [filter, setFilter] = useState<"all" | "purchased" | "unpurchased">(
-    "all"
-  );
+  const [search, setSearch] = useState(initialSearch);
+  const [sortBy, setSortBy] = useState<"latest" | "oldest">(initialSortBy);
+  const [filter, setFilter] = useState<"all" | "purchased" | "unpurchased">(initialFilter);
+  const [status, setStatus] = useState<"all" | "active" | "pending">(initialStatus);
   const [loading, setLoading] = useState(true);
   const [anchorEl, setAnchorEl] = useState<null | HTMLElement>(null);
   const [selectedUser, setSelectedUser] = useState<AdminUser | null>(null);
+  const [exporting, setExporting] = useState(false);
 
-  useEffect(() => {
-    fetchUsers();
-    // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, [pagination.currentPage, search, sortBy, filter]);
+  // Update URL search parameters when state changes
+  const updateUrlParams = (
+    page: number,
+    limit: number,
+    searchVal: string,
+    sortVal: string,
+    filterVal: string,
+    statusVal: string
+  ) => {
+    const params = new URLSearchParams();
+    if (page > 1) params.set("page", page.toString());
+    if (limit !== 10) params.set("limit", limit.toString());
+    if (searchVal) params.set("search", searchVal);
+    if (sortVal !== "latest") params.set("sortBy", sortVal);
+    if (filterVal !== "all") params.set("filter", filterVal);
+    if (statusVal !== "all") params.set("status", statusVal);
+
+    const queryString = params.toString();
+    const newUrl = `/admin/users${queryString ? `?${queryString}` : ""}`;
+    window.history.pushState({ path: newUrl }, "", newUrl);
+  };
 
   const fetchUsers = async () => {
     setLoading(true);
     try {
       const response: UsersResponse = await adminService.getUsers(
         pagination.currentPage,
-        10,
+        pagination.limit,
         search,
         sortBy,
-        filter
+        filter,
+        status
       );
       setUsers(response.users);
-      setPagination(response.pagination);
+      setPagination((prev) => ({
+        ...prev,
+        totalPages: response.pagination.totalPages,
+        totalUsers: response.pagination.totalUsers,
+      }));
     } catch (error) {
       console.error("Error fetching users:", error);
     } finally {
       setLoading(false);
     }
   };
+
+  useEffect(() => {
+    updateUrlParams(pagination.currentPage, pagination.limit, search, sortBy, filter, status);
+    fetchUsers();
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [pagination.currentPage, pagination.limit, search, sortBy, filter, status]);
 
   const handleSearchChange = (event: React.ChangeEvent<HTMLInputElement>) => {
     setSearch(event.target.value);
@@ -138,6 +179,77 @@ export default function AdminUsers() {
     if (user.purchasedLevels?.level3?.purchased) levels.push("3");
     if (user.purchasedLevels?.level4?.purchased) levels.push("4");
     return levels.length > 0 ? levels.join(", ") : "None";
+  };
+
+  const handleExport = async () => {
+    try {
+      setExporting(true);
+      // Fetch all users that match search and filters by setting the limit to totalUsers
+      const response: UsersResponse = await adminService.getUsers(
+        1,
+        pagination.totalUsers || 10000,
+        search,
+        sortBy,
+        filter,
+        status
+      );
+
+      const allUsers = response.users || [];
+
+      // CSV Headers
+      const headers = [
+        "Username",
+        "Email",
+        "Phone Number",
+        "Country",
+        "Registration Date",
+        "Levels Completed",
+        "Purchased Levels",
+        "Last Active",
+        "Status",
+      ];
+
+      // Format Rows
+      const rows = allUsers.map((user) => [
+        user.username,
+        user.email,
+        user.phoneNumber ? `+${user.countryCode || ""}${user.phoneNumber}` : "N/A",
+        user.country || "N/A",
+        formatDate(user.createdAt),
+        user.progress?.completedLevels?.length > 0
+          ? user.progress.completedLevels.join(", ")
+          : "None",
+        getPurchasedLevels(user),
+        formatDate(user.lastActive),
+        user.isVerified ? "Active" : "Pending",
+      ]);
+
+      // Convert to CSV string
+      const csvContent = [
+        headers.join(","),
+        ...rows.map((row) =>
+          row
+            .map((val) => `"${String(val ?? "").replace(/"/g, '""')}"`)
+            .join(",")
+        ),
+      ].join("\n");
+
+      // Trigger file download
+      const blob = new Blob([csvContent], { type: "text/csv;charset=utf-8;" });
+      const url = URL.createObjectURL(blob);
+      const link = document.createElement("a");
+      link.setAttribute("href", url);
+      link.setAttribute("download", `users_export_${new Date().toISOString().slice(0, 10)}.csv`);
+      document.body.appendChild(link);
+      link.click();
+      document.body.removeChild(link);
+      URL.revokeObjectURL(url);
+    } catch (error) {
+      console.error("Error exporting users:", error);
+      alert("Failed to export users list");
+    } finally {
+      setExporting(false);
+    }
   };
 
   return (
@@ -224,11 +336,56 @@ export default function AdminUsers() {
               },
             }}
           >
-            <MenuItem value="all">All Users</MenuItem>
+            <MenuItem value="all">All Purchases</MenuItem>
             <MenuItem value="purchased">Purchased</MenuItem>
             <MenuItem value="unpurchased">Unpurchased</MenuItem>
           </Select>
         </FormControl>
+
+        <FormControl sx={{ minWidth: 170 }}>
+          <Select
+            value={status}
+            onChange={(e: SelectChangeEvent) => {
+              setStatus(e.target.value as "all" | "active" | "pending");
+              setPagination((prev) => ({ ...prev, currentPage: 1 }));
+            }}
+            sx={{
+              borderRadius: "12px",
+              backgroundColor: "#FFF",
+              "& .MuiOutlinedInput-notchedOutline": {
+                borderColor: "#E0E0E0",
+              },
+            }}
+          >
+            <MenuItem value="all">All Status</MenuItem>
+            <MenuItem value="active">Active</MenuItem>
+            <MenuItem value="pending">Pending</MenuItem>
+          </Select>
+        </FormControl>
+
+        <Button
+          variant="contained"
+          startIcon={<FileDownloadIcon />}
+          onClick={handleExport}
+          disabled={exporting}
+          sx={{
+            borderRadius: "12px",
+            height: "40px", // matching the standard MUI Select/TextField outlined heights in theme
+            px: 3,
+            backgroundColor: "#005F73",
+            color: "#FFF",
+            fontFamily: "Source Sans Pro",
+            fontWeight: 600,
+            textTransform: "none",
+            boxShadow: "none",
+            "&:hover": {
+              backgroundColor: "#004d5e",
+              boxShadow: "none",
+            },
+          }}
+        >
+          {exporting ? "Exporting..." : "Export to Excel"}
+        </Button>
       </Box>
 
       {/* Users Table */}
@@ -262,6 +419,16 @@ export default function AdminUsers() {
                 }}
               >
                 Email
+              </TableCell>
+              <TableCell
+                sx={{
+                  fontFamily: "Source Sans Pro",
+                  fontWeight: 600,
+                  color: "#6B7280",
+                  fontSize: "14px",
+                }}
+              >
+                Country
               </TableCell>
               <TableCell
                 sx={{
@@ -319,7 +486,7 @@ export default function AdminUsers() {
           <TableBody>
             {loading ? (
               <TableRow>
-                <TableCell colSpan={8} align="center" sx={{ py: 4 }}>
+                <TableCell colSpan={9} align="center" sx={{ py: 4 }}>
                   <Typography sx={{ color: "#6B7280" }}>
                     Loading users...
                   </Typography>
@@ -327,7 +494,7 @@ export default function AdminUsers() {
               </TableRow>
             ) : users.length === 0 ? (
               <TableRow>
-                <TableCell colSpan={8} align="center" sx={{ py: 4 }}>
+                <TableCell colSpan={9} align="center" sx={{ py: 4 }}>
                   <Typography sx={{ color: "#6B7280" }}>
                     No users found
                   </Typography>
@@ -366,6 +533,17 @@ export default function AdminUsers() {
                       }}
                     >
                       {user.email}
+                    </Typography>
+                  </TableCell>
+                  <TableCell>
+                    <Typography
+                      sx={{
+                        fontFamily: "Source Sans Pro",
+                        color: "#6B7280",
+                        fontSize: "14px",
+                      }}
+                    >
+                      {user.country || "N/A"}
                     </Typography>
                   </TableCell>
                   <TableCell>
@@ -457,23 +635,110 @@ export default function AdminUsers() {
         </Table>
       </TableContainer>
 
-      {/* Pagination */}
-      <Box sx={{ display: "flex", justifyContent: "center", mt: 4 }}>
-        <Pagination
-          count={pagination.totalPages}
-          page={pagination.currentPage}
-          onChange={handlePageChange}
-          color="primary"
-          sx={{
-            "& .MuiPaginationItem-root": {
+      {/* Pagination & Limits */}
+      <Box
+        sx={{
+          display: "flex",
+          flexDirection: { xs: "column", sm: "row" },
+          justifyContent: "space-between",
+          alignItems: "center",
+          gap: 2,
+          mt: 4,
+        }}
+      >
+        {/* Entries per page */}
+        <Box sx={{ display: "flex", alignItems: "center", gap: 1 }}>
+          <Typography
+            sx={{
               fontFamily: "Source Sans Pro",
-            },
-            "& .Mui-selected": {
-              backgroundColor: "#FF4F00 !important",
-              color: "#FFF",
-            },
-          }}
-        />
+              fontSize: "14px",
+              color: "#6B7280",
+            }}
+          >
+            Entries per page:
+          </Typography>
+          <FormControl size="small">
+            <Select
+              value={pagination.limit.toString()}
+              onChange={(e) => {
+                const newLimit = parseInt(e.target.value);
+                setPagination((prev) => ({
+                  ...prev,
+                  limit: newLimit,
+                  currentPage: 1,
+                }));
+              }}
+              sx={{
+                borderRadius: "8px",
+                backgroundColor: "#FFF",
+                height: "32px",
+                fontSize: "14px",
+                "& .MuiOutlinedInput-notchedOutline": {
+                  borderColor: "#E0E0E0",
+                },
+              }}
+            >
+              <MenuItem value="5">5</MenuItem>
+              <MenuItem value="10">10</MenuItem>
+              <MenuItem value="20">20</MenuItem>
+              <MenuItem value="50">50</MenuItem>
+              <MenuItem value="100">100</MenuItem>
+            </Select>
+          </FormControl>
+        </Box>
+
+        {/* Pagination Controls */}
+        <Box sx={{ display: "flex", alignItems: "center" }}>
+          <Pagination
+            count={pagination.totalPages}
+            page={pagination.currentPage}
+            onChange={handlePageChange}
+            color="primary"
+            sx={{
+              "& .MuiPaginationItem-root": {
+                fontFamily: "Source Sans Pro",
+              },
+              "& .Mui-selected": {
+                backgroundColor: "#FF4F00 !important",
+                color: "#FFF",
+              },
+            }}
+          />
+        </Box>
+
+        {/* Go to page input */}
+        <Box sx={{ display: "flex", alignItems: "center", gap: 1 }}>
+          <Typography
+            sx={{
+              fontFamily: "Source Sans Pro",
+              fontSize: "14px",
+              color: "#6B7280",
+            }}
+          >
+            Go to page:
+          </Typography>
+          <TextField
+            size="small"
+            type="number"
+            inputProps={{ min: 1, max: pagination.totalPages }}
+            onKeyDown={(e) => {
+              if (e.key === "Enter") {
+                const val = parseInt((e.target as HTMLInputElement).value);
+                if (val >= 1 && val <= pagination.totalPages) {
+                  setPagination((prev) => ({ ...prev, currentPage: val }));
+                }
+              }
+            }}
+            sx={{
+              width: "70px",
+              "& .MuiInputBase-root": {
+                height: "32px",
+                borderRadius: "8px",
+                backgroundColor: "#FFF",
+              },
+            }}
+          />
+        </Box>
       </Box>
 
       {/* Action Menu */}
@@ -510,5 +775,17 @@ export default function AdminUsers() {
         </MenuItem>
       </Menu>
     </Box>
+  );
+}
+
+export default function AdminUsers() {
+  return (
+    <Suspense fallback={
+      <Box sx={{ display: "flex", justifyContent: "center", py: 8 }}>
+        <CircularProgress sx={{ color: "#FF4F00" }} />
+      </Box>
+    }>
+      <UsersListContent />
+    </Suspense>
   );
 }

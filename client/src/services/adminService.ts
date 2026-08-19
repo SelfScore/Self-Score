@@ -28,6 +28,7 @@ export interface AdminUser {
   email: string;
   countryCode: string;
   phoneNumber: string;
+  country?: string;
   isVerified: boolean;
   purchasedLevels: {
     level2: { purchased: boolean; purchaseDate?: Date; paymentId?: string };
@@ -42,6 +43,7 @@ export interface AdminUser {
       level2?: number;
       level3?: number;
       level4?: number;
+      level5?: number;
     };
   };
   lastActive: Date;
@@ -89,10 +91,11 @@ export const adminService = {
     search: string = "",
     sortBy: "latest" | "oldest" = "latest",
     filter: "all" | "purchased" | "unpurchased" = "all",
+    status: "all" | "active" | "pending" = "all",
   ): Promise<UsersResponse> => {
     try {
       const response = await api.get(
-        `/api/admin/users?page=${page}&limit=${limit}&search=${search}&sortBy=${sortBy}&filter=${filter}`,
+        `/api/admin/users?page=${page}&limit=${limit}&search=${search}&sortBy=${sortBy}&filter=${filter}&status=${status}`,
       );
       return response.data;
     } catch (error) {
@@ -212,6 +215,46 @@ export const adminService = {
       return response.data;
     } catch (error) {
       console.error("Failed to reject consultant:", error);
+      throw error;
+    }
+  },
+
+  // Get newsletter list with pagination and search
+  getNewsletterSubscribers: async (
+    page: number = 1,
+    limit: number = 10,
+    search: string = "",
+    sortBy: "latest" | "oldest" = "latest",
+    filter: "all" | "subscribed" | "unsubscribed" = "all"
+  ): Promise<any> => {
+    try {
+      const response = await api.get(
+        `/api/admin/newsletter?page=${page}&limit=${limit}&search=${search}&sortBy=${sortBy}&filter=${filter}`
+      );
+      return response.data;
+    } catch (error) {
+      console.error("Failed to fetch newsletter subscribers:", error);
+      throw error;
+    }
+  },
+
+  // Toggle subscriber status
+  toggleSubscriberStatus: async (subscriberId: string): Promise<any> => {
+    try {
+      const response = await api.patch(`/api/admin/newsletter/${subscriberId}/toggle`);
+      return response.data;
+    } catch (error) {
+      console.error("Failed to toggle subscriber status:", error);
+      throw error;
+    }
+  },
+
+  // Delete subscriber
+  deleteSubscriber: async (subscriberId: string): Promise<void> => {
+    try {
+      await api.delete(`/api/admin/newsletter/${subscriberId}`);
+    } catch (error) {
+      console.error("Failed to delete subscriber:", error);
       throw error;
     }
   },
