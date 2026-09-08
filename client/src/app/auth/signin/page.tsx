@@ -11,7 +11,6 @@ import {
   Checkbox,
   FormControlLabel,
   InputAdornment,
-  IconButton,
   Chip,
 } from "@mui/material";
 import { useState, useEffect } from "react";
@@ -20,9 +19,6 @@ import { useAuth } from "../../../hooks/useAuth";
 import NextLink from "next/link";
 import Image from "next/image";
 import EmailIcon from "@mui/icons-material/Email";
-import LockIcon from "@mui/icons-material/Lock";
-import Visibility from "@mui/icons-material/Visibility";
-import VisibilityOff from "@mui/icons-material/VisibilityOff";
 import { getUserFriendlyError } from "../../../utils/errorMessages";
 
 export default function SignInPage() {
@@ -31,11 +27,9 @@ export default function SignInPage() {
 
   const [formData, setFormData] = useState({
     email: "",
-    password: "",
   });
   const [localError, setLocalError] = useState("");
   const [rememberMe, setRememberMe] = useState(false);
-  const [showPassword, setShowPassword] = useState(false);
 
   // Redirect if already authenticated
   useEffect(() => {
@@ -64,10 +58,6 @@ export default function SignInPage() {
       );
       return false;
     }
-    if (!formData.password.trim()) {
-      setLocalError("Please enter your password");
-      return false;
-    }
     return true;
   };
 
@@ -77,41 +67,27 @@ export default function SignInPage() {
     if (!validateForm()) return;
 
     try {
+      const email = formData.email.trim().toLowerCase();
       const response = await login({
-        email: formData.email.trim().toLowerCase(),
-        password: formData.password,
-        rememberMe: rememberMe,
+        email,
+        rememberMe,
       });
 
       if (response.success) {
-        // Redirect to dashboard or previous page
-        const redirectTo =
-          new URLSearchParams(window.location.search).get("redirect") ||
-          "/user/dashboard";
-        router.push(redirectTo);
+        // Redirect to verify-email with login mode
+        router.push(
+          `/auth/verify-email?email=${encodeURIComponent(email)}&mode=login&rememberMe=${rememberMe}`
+        );
       }
     } catch (err: any) {
       const errorMessage = getUserFriendlyError(err, "signin");
       setLocalError(errorMessage);
-
-      // Handle email verification redirect
-      if (
-        err.response?.data?.message?.includes("verify your email") ||
-        err.response?.data?.message?.includes("not verified")
-      ) {
-        setTimeout(() => {
-          router.push(
-            `/auth/verify-email?email=${encodeURIComponent(formData.email)}`
-          );
-        }, 2500);
-      }
     }
   };
 
   return (
     <Box
       sx={{
-        // minHeight: "100vh",
         display: "flex",
         alignItems: "center",
         justifyContent: "center",
@@ -135,7 +111,6 @@ export default function SignInPage() {
             position: "relative",
             display: { xs: "none", md: "block" },
             width: { md: "48%", lg: "50%" },
-            // minHeight: "798px",
             flexShrink: 0,
           }}
         >
@@ -172,7 +147,7 @@ export default function SignInPage() {
             flexShrink: 0,
           }}
         >
-          <Box sx={{ textAlign: { xs: "center", md: "centre" }, mb: 4 }}>
+          <Box sx={{ textAlign: { xs: "center", md: "left" }, mb: 4 }}>
             <Typography
               sx={{
                 fontWeight: "700",
@@ -192,7 +167,7 @@ export default function SignInPage() {
                 fontFamily: "Source Sans Pro",
               }}
             >
-              Sign in to continue your self-discovery journey
+              Enter your email to receive a secure login code
             </Typography>
           </Box>
 
@@ -201,13 +176,14 @@ export default function SignInPage() {
               {error || localError}
             </Alert>
           )}
+
           {/* Login Type Chips */}
           <Box
             sx={{
               display: "flex",
               gap: 2,
               mb: 3,
-              justifyContent: "center",
+              justifyContent: "flex-start",
             }}
           >
             <Chip
@@ -314,67 +290,6 @@ export default function SignInPage() {
               }}
             />
 
-            <Typography
-              sx={{
-                mb: 1,
-                color: "#2C3E50",
-                fontWeight: 400,
-                fontFamily: "Source Sans Pro",
-                fontSize: "16px",
-              }}
-            >
-              Password<span style={{ color: "#FF5722" }}>*</span>
-            </Typography>
-            <TextField
-              placeholder="Enter your password"
-              type={showPassword ? "text" : "password"}
-              value={formData.password}
-              onChange={(e) => handleInputChange("password", e.target.value)}
-              fullWidth
-              required
-              disabled={isLoading}
-              InputProps={{
-                startAdornment: (
-                  <InputAdornment position="start">
-                    <LockIcon sx={{ color: "#999" }} />
-                  </InputAdornment>
-                ),
-                endAdornment: (
-                  <InputAdornment position="end">
-                    <IconButton
-                      onClick={() => setShowPassword(!showPassword)}
-                      edge="end"
-                    >
-                      {showPassword ? <VisibilityOff /> : <Visibility />}
-                    </IconButton>
-                  </InputAdornment>
-                ),
-              }}
-              sx={{
-                mb: 2,
-                "& .MuiOutlinedInput-root": {
-                  height: "48px",
-                  borderRadius: "8px",
-                  bgcolor: "#FFFFFF",
-                  "& fieldset": { border: "1px solid #3A3A3A4D" },
-                  "&:hover fieldset": { border: "1px solid #3A3A3A4D" },
-                  "&.Mui-focused fieldset": { border: "1px solid #FF5722" },
-                },
-                "& input:-webkit-autofill": {
-                  WebkitBoxShadow: "0 0 0 100px #FFFFFF inset",
-                  WebkitTextFillColor: "#000000",
-                },
-                "& input:-webkit-autofill:hover": {
-                  WebkitBoxShadow: "0 0 0 100px #FFFFFF inset",
-                  WebkitTextFillColor: "#000000",
-                },
-                "& input:-webkit-autofill:focus": {
-                  WebkitBoxShadow: "0 0 0 100px #FFFFFF inset",
-                  WebkitTextFillColor: "#000000",
-                },
-              }}
-            />
-
             <Box
               sx={{
                 display: "flex",
@@ -396,22 +311,10 @@ export default function SignInPage() {
                 }
                 label={
                   <Typography variant="body2" sx={{ color: "#666" }}>
-                    Remember me
+                    Remember me (30 days)
                   </Typography>
                 }
               />
-              <Link
-                component={NextLink}
-                href="/auth/forgot-password"
-                sx={{
-                  color: "#005F73",
-                  textDecoration: "none",
-                  fontSize: "0.9rem",
-                  "&:hover": { textDecoration: "underline" },
-                }}
-              >
-                Forgot Password?
-              </Link>
             </Box>
 
             <Button
@@ -426,7 +329,7 @@ export default function SignInPage() {
                 fontSize: "1.1rem",
                 borderRadius: "12px",
                 textTransform: "none",
-                height: "40px",
+                height: "44px",
                 fontFamily: "Source Sans Pro",
                 "&:hover": { background: "#E64A19" },
                 "&:disabled": { background: "#ccc", opacity: 0.7 },
@@ -436,7 +339,7 @@ export default function SignInPage() {
               {isLoading ? (
                 <CircularProgress size={24} sx={{ color: "#fff" }} />
               ) : (
-                "Login"
+                "Get Login Code"
               )}
             </Button>
 
@@ -445,7 +348,7 @@ export default function SignInPage() {
                 Don't have an account?{" "}
                 <Link
                   component={NextLink}
-                  href="/auth/signup"
+                  href={`/auth/signup${formData.email ? `?email=${encodeURIComponent(formData.email)}` : ""}`}
                   sx={{
                     color: "#005F73",
                     fontWeight: "600",

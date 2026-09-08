@@ -16,6 +16,7 @@ import { checkDatabaseConnection } from "../lib/dbUtils";
 import { generateToken, getCookieOptions } from "../lib/jwt";
 import {
   sendVerificationEmail,
+  sendLoginOtpEmail,
   sendPasswordResetEmail,
   sendWelcomeEmail,
   verifyPromotionalUnsubscribeToken,
@@ -83,20 +84,20 @@ export class AuthController {
         username,
         email,
         country,
+        gender,
+        ageGroup,
         countryCode,
         phoneNumber,
-        password,
-        confirmPassword,
       } = req.body;
 
       const validationResult = signUpSchema.safeParse({
         username,
         email,
         country,
+        gender,
+        ageGroup,
         countryCode,
         phoneNumber,
-        password,
-        confirmPassword,
       });
 
       if (!validationResult.success) {
@@ -121,9 +122,8 @@ export class AuthController {
       }
 
       const verifyCode = Math.floor(100000 + Math.random() * 900000).toString();
-      const hashedPassword = await bcrypt.hash(password, 10);
       const expiryDate = new Date();
-      expiryDate.setHours(expiryDate.getHours() + 1);
+      expiryDate.setMinutes(expiryDate.getMinutes() + 10); // 10 minutes expiry
 
       await UserModel.deleteMany({ email, isVerified: false });
 
@@ -131,9 +131,10 @@ export class AuthController {
         username,
         email,
         country,
+        gender,
+        ageGroup,
         countryCode,
         phoneNumber,
-        password: hashedPassword,
         verifyCode,
         verifyCodeExpiry: expiryDate,
         isVerified: false,
@@ -170,6 +171,8 @@ export class AuthController {
         email: newUser.email,
         username: newUser.username,
         country: newUser.country,
+        gender: newUser.gender,
+        ageGroup: newUser.ageGroup,
         countryCode: newUser.countryCode,
         phoneNumber: newUser.phoneNumber,
         purchasedLevels: newUser.purchasedLevels,
@@ -197,11 +200,10 @@ export class AuthController {
 
   static async login(req: Request, res: Response): Promise<void> {
     try {
-      const { email, password, rememberMe } = req.body;
+      const { email, rememberMe } = req.body;
 
       const validationResult = loginSchema.safeParse({
         email,
-        password,
         rememberMe,
       });
 
@@ -220,51 +222,40 @@ export class AuthController {
       if (!user) {
         const response: ApiResponse = {
           success: false,
-          message: "User with this email does not exist",
+          message: "No account found with this email. Please sign up.",
         };
         res.status(404).json(response);
         return;
       }
 
-      if (!user.isVerified) {
-        const response: ApiResponse = {
-          success: false,
-          message: "Please verify your email before logging in",
-        };
-        res.status(401).json(response);
-        return;
+      // Generate a fresh 6-digit OTP
+      const verifyCode = Math.floor(100000 + Math.random() * 900000).toString();
+      const expiryDate = new Date();
+      expiryDate.setMinutes(expiryDate.getMinutes() + 10); // 10 minutes expiry
+
+      user.verifyCode = verifyCode;
+      user.verifyCodeExpiry = expiryDate;
+      await user.save();
+
+      // Send login OTP email
+      const emailSent = await sendLoginOtpEmail(
+        user.email,
+        user.username,
+        verifyCode
+      );
+
+      if (!emailSent) {
+        console.warn("⚠️ Failed to send login OTP email to:", user.email);
       }
 
-      const isPasswordCorrect = await bcrypt.compare(password, user.password);
-
-      if (!isPasswordCorrect) {
-        const response: ApiResponse = {
-          success: false,
-          message: "Incorrect password",
-        };
-        res.status(401).json(response);
-        return;
-      }
-
-      const userData: UserResponse = {
-        userId: (user._id as string).toString(),
-        email: user.email,
-        username: user.username,
-        country: user.country,
-        countryCode: user.countryCode,
-        phoneNumber: user.phoneNumber,
-        purchasedLevels: user.purchasedLevels,
-        progress: user.progress,
-      };
-
-      const token = generateToken(userData);
-      const cookieOptions = getCookieOptions(rememberMe === true);
-      res.cookie("authToken", token, cookieOptions);
-
-      const response: ApiResponse<UserResponse> = {
+      const response: ApiResponse = {
         success: true,
-        message: "Login successful",
-        data: userData,
+        message: emailSent
+          ? "Login code sent to your email."
+          : "Login code generated. Please check your email.",
+        data: {
+          email: user.email,
+        },
       };
 
       res.status(200).json(response);
@@ -280,7 +271,7 @@ export class AuthController {
 
   static async verifyEmail(req: Request, res: Response): Promise<void> {
     try {
-      const { email, verifyCode } = req.body;
+      const { email, verifyCode, rememberMe } = req.body;
 
       const validationResult = verifyEmailSchema.safeParse({
         email,
@@ -308,10 +299,10 @@ export class AuthController {
         return;
       }
 
-      if (user.isVerified) {
+      if (!user.verifyCode || user.verifyCode === "VERIFIED") {
         const response: ApiResponse = {
           success: false,
-          message: "User is already verified",
+          message: "No active verification code found. Please request a new code.",
         };
         res.status(400).json(response);
         return;
@@ -337,17 +328,19 @@ export class AuthController {
         return;
       }
 
+      const wasUnverified = !user.isVerified;
       user.isVerified = true;
       user.verifyCode = "VERIFIED";
       user.verifyCodeExpiry = new Date(0);
       await user.save();
 
-      // Send welcome email after successful verification
-      try {
-        await sendWelcomeEmail(user.email, user.username);
-      } catch (emailError) {
-        console.error("Failed to send welcome email:", emailError);
-        // Don't fail the verification if email fails
+      // If user was previously unverified (new sign-up), send welcome email
+      if (wasUnverified) {
+        try {
+          await sendWelcomeEmail(user.email, user.username);
+        } catch (emailError) {
+          console.error("Failed to send welcome email:", emailError);
+        }
       }
 
       const userData: UserResponse = {
@@ -355,6 +348,8 @@ export class AuthController {
         email: user.email,
         username: user.username,
         country: user.country,
+        gender: user.gender,
+        ageGroup: user.ageGroup,
         countryCode: user.countryCode,
         phoneNumber: user.phoneNumber,
         purchasedLevels: user.purchasedLevels,
@@ -362,12 +357,14 @@ export class AuthController {
       };
 
       const token = generateToken(userData);
-      const cookieOptions = getCookieOptions();
+      const cookieOptions = getCookieOptions(rememberMe === true);
       res.cookie("authToken", token, cookieOptions);
 
       const response: ApiResponse<UserResponse> = {
         success: true,
-        message: "Email verified successfully. You are now logged in.",
+        message: wasUnverified
+          ? "Email verified successfully. You are now logged in."
+          : "Logged in successfully.",
         data: userData,
       };
 
@@ -409,29 +406,19 @@ export class AuthController {
         return;
       }
 
-      if (user.isVerified) {
-        const response: ApiResponse = {
-          success: false,
-          message: "User is already verified",
-        };
-        res.status(400).json(response);
-        return;
-      }
-
       const verifyCode = Math.floor(100000 + Math.random() * 900000).toString();
       const expiryDate = new Date();
-      expiryDate.setHours(expiryDate.getHours() + 1);
+      expiryDate.setMinutes(expiryDate.getMinutes() + 10); // 10 minutes expiry
 
       user.verifyCode = verifyCode;
       user.verifyCodeExpiry = expiryDate;
       await user.save();
 
-      // Send verification email using Resend
-      const emailSent = await sendVerificationEmail(
-        user.email,
-        user.username,
-        verifyCode
-      );
+      // If user is already verified, this is a login code resend
+      // Otherwise, it's a signup verification code resend
+      const emailSent = user.isVerified
+        ? await sendLoginOtpEmail(user.email, user.username, verifyCode)
+        : await sendVerificationEmail(user.email, user.username, verifyCode);
 
       const response: ApiResponse = {
         success: true,
@@ -489,6 +476,8 @@ export class AuthController {
         email: user.email,
         username: user.username,
         country: user.country,
+        gender: user.gender,
+        ageGroup: user.ageGroup,
         countryCode: user.countryCode,
         phoneNumber: user.phoneNumber,
         purchasedLevels: user.purchasedLevels,

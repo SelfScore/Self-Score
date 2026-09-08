@@ -20,6 +20,8 @@ export interface UserData {
   email: string;
   username: string;
   country?: string;
+  gender?: string;
+  ageGroup?: string;
   countryCode?: string;
   phoneNumber?: string;
   purchasedLevels?: {
@@ -61,21 +63,21 @@ export interface SignUpData {
   username: string;
   email: string;
   country: string;
+  gender?: string;
+  ageGroup?: string;
   countryCode?: string;
   phoneNumber?: string;
-  password: string;
-  confirmPassword: string;
 }
 
 export interface LoginData {
   email: string;
-  password: string;
   rememberMe?: boolean;
 }
 
 export interface VerifyEmailData {
   email: string;
   verifyCode: string;
+  rememberMe?: boolean;
 }
 
 export const authService = {
@@ -95,34 +97,14 @@ export const authService = {
     }
   },
 
-  // Login user
-  login: async (data: LoginData): Promise<ApiResponse<UserData>> => {
+  // Request login code (passwordless OTP)
+  login: async (data: LoginData): Promise<ApiResponse<{ email: string }>> => {
     store.dispatch(setLoading(true));
     store.dispatch(setError(null));
 
     try {
       const response = await api.post("/api/auth/login", data);
-      const result = response as unknown as ApiResponse<UserData>;
-
-      if (result.success && result.data) {
-        // Save to Redux store only (cookies handle persistence now)
-        store.dispatch(
-          loginSuccess({
-            user: {
-              userId: result.data.userId,
-              email: result.data.email,
-              username: result.data.username,
-              country: result.data.country,
-              countryCode: result.data.countryCode,
-              phoneNumber: result.data.phoneNumber,
-            },
-            purchasedLevels: result.data.purchasedLevels,
-            progress: result.data.progress,
-          })
-        );
-      }
-
-      return result;
+      return response as unknown as ApiResponse<{ email: string }>;
     } catch (error) {
       // Don't set generic error - let the specific backend error pass through
       throw error;
@@ -131,7 +113,7 @@ export const authService = {
     }
   },
 
-  // Verify email
+  // Verify email / login OTP
   verifyEmail: async (
     data: VerifyEmailData
   ): Promise<ApiResponse<UserData>> => {
@@ -151,6 +133,8 @@ export const authService = {
               email: result.data.email,
               username: result.data.username,
               country: result.data.country,
+              gender: result.data.gender,
+              ageGroup: result.data.ageGroup,
               countryCode: result.data.countryCode,
               phoneNumber: result.data.phoneNumber,
             },
@@ -204,6 +188,8 @@ export const authService = {
               email: result.data.email,
               username: result.data.username,
               country: result.data.country,
+              gender: result.data.gender,
+              ageGroup: result.data.ageGroup,
               countryCode: result.data.countryCode,
               phoneNumber: result.data.phoneNumber,
             },

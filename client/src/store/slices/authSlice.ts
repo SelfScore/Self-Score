@@ -5,6 +5,8 @@ export interface UserData {
   email: string;
   username: string;
   country?: string;
+  gender?: string;
+  ageGroup?: string;
   phoneNumber?: string;
   countryCode?: string;
 }

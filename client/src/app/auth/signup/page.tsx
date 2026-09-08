@@ -10,7 +10,6 @@ import {
   Checkbox,
   FormControlLabel,
   InputAdornment,
-  IconButton,
   FormHelperText,
   MenuItem,
 } from "@mui/material";
@@ -20,16 +19,26 @@ import { useAuth } from "../../../hooks/useAuth";
 import NextLink from "next/link";
 import Image from "next/image";
 import EmailIcon from "@mui/icons-material/Email";
-import LockIcon from "@mui/icons-material/Lock";
-import Visibility from "@mui/icons-material/Visibility";
-import VisibilityOff from "@mui/icons-material/VisibilityOff";
 import PublicIcon from "@mui/icons-material/Public";
+import PersonIcon from "@mui/icons-material/Person";
+import WcIcon from "@mui/icons-material/Wc";
+import CakeIcon from "@mui/icons-material/Cake";
 import ButtonSelfScore from "../../components/ui/ButtonSelfScore";
 import { getNames } from "country-list";
 import {
   getUserFriendlyError,
   getSuccessMessage,
 } from "../../../utils/errorMessages";
+
+const GENDER_OPTIONS = ["Male", "Female", "Non-binary", "Prefer not to say"] as const;
+const AGE_GROUP_OPTIONS = [
+  "Under 18",
+  "18-24",
+  "25-34",
+  "35-44",
+  "45-54",
+  "55+",
+] as const;
 
 export default function SignUpPage() {
   const router = useRouter();
@@ -39,21 +48,20 @@ export default function SignUpPage() {
     username: "",
     email: "",
     country: "",
-    password: "",
-    confirmPassword: "",
+    gender: "",
+    ageGroup: "",
   });
   const [localError, setLocalError] = useState("");
   const [success, setSuccess] = useState("");
   const [agreedToTerms, setAgreedToTerms] = useState(false);
-  const [showPassword, setShowPassword] = useState(false);
-  const [showConfirmPassword, setShowConfirmPassword] = useState(false);
 
   // Field-specific errors for inline display
   const [fieldErrors, setFieldErrors] = useState({
+    username: "",
     email: "",
     country: "",
-    password: "",
-    confirmPassword: "",
+    gender: "",
+    ageGroup: "",
   });
 
   // Load form data from localStorage on mount
@@ -62,7 +70,7 @@ export default function SignUpPage() {
     if (savedFormData) {
       try {
         const parsed = JSON.parse(savedFormData);
-        setFormData(parsed);
+        setFormData((prev) => ({ ...prev, ...parsed }));
       } catch (error) {
         console.error("Failed to parse saved form data:", error);
       }
@@ -75,8 +83,8 @@ export default function SignUpPage() {
       formData.username ||
       formData.email ||
       formData.country ||
-      formData.password ||
-      formData.confirmPassword
+      formData.gender ||
+      formData.ageGroup
     ) {
       localStorage.setItem("signupFormData", JSON.stringify(formData));
     }
@@ -88,31 +96,6 @@ export default function SignUpPage() {
     }
     if (!/^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(email)) {
       return "Please enter a valid email address";
-    }
-    return "";
-  };
-
-
-
-  const validatePassword = (password: string): string => {
-    if (!password) {
-      return "";
-    }
-    if (password.length < 6) {
-      return "Password must be at least 6 characters";
-    }
-    return "";
-  };
-
-  const validateConfirmPassword = (
-    password: string,
-    confirmPassword: string
-  ): string => {
-    if (!confirmPassword) {
-      return "";
-    }
-    if (password !== confirmPassword) {
-      return "Passwords do not match";
     }
     return "";
   };
@@ -132,20 +115,10 @@ export default function SignUpPage() {
     } else if (field === "country") {
       const error = !value ? "Country is required" : "";
       setFieldErrors((prev) => ({ ...prev, country: error }));
-    } else if (field === "password") {
-      const error = validatePassword(value);
-      setFieldErrors((prev) => ({ ...prev, password: error }));
-      // Also revalidate confirm password if it's filled
-      if (formData.confirmPassword) {
-        const confirmError = validateConfirmPassword(
-          value,
-          formData.confirmPassword
-        );
-        setFieldErrors((prev) => ({ ...prev, confirmPassword: confirmError }));
-      }
-    } else if (field === "confirmPassword") {
-      const error = validateConfirmPassword(formData.password, value);
-      setFieldErrors((prev) => ({ ...prev, confirmPassword: error }));
+    } else if (field === "gender") {
+      setFieldErrors((prev) => ({ ...prev, gender: "" }));
+    } else if (field === "ageGroup") {
+      setFieldErrors((prev) => ({ ...prev, ageGroup: "" }));
     }
   };
 
@@ -159,8 +132,8 @@ export default function SignUpPage() {
       setLocalError("Name must be at least 2 characters long");
       return false;
     }
-    if (formData.username.trim().length > 20) {
-      setLocalError("Name must not exceed 20 characters");
+    if (formData.username.trim().length > 50) {
+      setLocalError("Name must not exceed 50 characters");
       return false;
     }
 
@@ -182,15 +155,15 @@ export default function SignUpPage() {
       return false;
     }
 
-    // Password validation
-    if (formData.password.length < 6) {
-      setLocalError("Password must be at least 6 characters long");
+    // Gender validation
+    if (!formData.gender) {
+      setLocalError("Please select your gender");
       return false;
     }
-    if (formData.password !== formData.confirmPassword) {
-      setLocalError(
-        "Passwords do not match. Please enter the same password in both fields"
-      );
+
+    // Age Group validation
+    if (!formData.ageGroup) {
+      setLocalError("Please select your age group");
       return false;
     }
 
@@ -214,20 +187,20 @@ export default function SignUpPage() {
         username: formData.username.trim(),
         email: formData.email.trim().toLowerCase(),
         country: formData.country.trim(),
-        password: formData.password,
-        confirmPassword: formData.confirmPassword,
+        gender: formData.gender,
+        ageGroup: formData.ageGroup,
       });
 
       if (response.success) {
         setSuccess(getSuccessMessage("signup"));
         // Clear localStorage after successful signup
         localStorage.removeItem("signupFormData");
-        // Redirect to verification page with email
+        // Redirect to verification page with email & mode=signup
         setTimeout(() => {
           router.push(
-            `/auth/verify-email?email=${encodeURIComponent(formData.email)}`
+            `/auth/verify-email?email=${encodeURIComponent(formData.email.trim().toLowerCase())}&mode=signup`
           );
-        }, 2000);
+        }, 1500);
       } else {
         setLocalError(
           getUserFriendlyError(
@@ -258,7 +231,6 @@ export default function SignUpPage() {
           display: "flex",
           flexDirection: { xs: "column", md: "row" },
           width: "100%",
-          // maxWidth: "1400px",
           alignItems: { xs: "center", md: "flex-start" },
           gap: { xs: 3, md: 3 },
           marginTop: { xs: 8, md: 12 },
@@ -307,7 +279,7 @@ export default function SignUpPage() {
             flexShrink: 0,
           }}
         >
-          <Box sx={{ textAlign: { xs: "center", md: "centre" }, mb: 4 }}>
+          <Box sx={{ textAlign: { xs: "center", md: "left" }, mb: 4 }}>
             <Typography
               sx={{
                 fontWeight: "700",
@@ -355,6 +327,7 @@ export default function SignUpPage() {
             component="form"
             onSubmit={handleSubmit}
           >
+            {/* Full Name */}
             <Typography
               sx={{
                 mb: 1,
@@ -373,6 +346,13 @@ export default function SignUpPage() {
               fullWidth
               required
               disabled={isLoading}
+              InputProps={{
+                startAdornment: (
+                  <InputAdornment position="start">
+                    <PersonIcon sx={{ color: "#999" }} />
+                  </InputAdornment>
+                ),
+              }}
               sx={{
                 mb: 2,
                 "& .MuiOutlinedInput-root": {
@@ -383,21 +363,10 @@ export default function SignUpPage() {
                   "&:hover fieldset": { border: "1px solid #3A3A3A4D" },
                   "&.Mui-focused fieldset": { border: "1px solid #FF5722" },
                 },
-                "& input:-webkit-autofill": {
-                  WebkitBoxShadow: "0 0 0 100px #FFFFFF inset",
-                  WebkitTextFillColor: "#000000",
-                },
-                "& input:-webkit-autofill:hover": {
-                  WebkitBoxShadow: "0 0 0 100px #FFFFFF inset",
-                  WebkitTextFillColor: "#000000",
-                },
-                "& input:-webkit-autofill:focus": {
-                  WebkitBoxShadow: "0 0 0 100px #FFFFFF inset",
-                  WebkitTextFillColor: "#000000",
-                },
               }}
             />
 
+            {/* Email Address */}
             <Typography
               sx={{
                 mb: 1,
@@ -447,18 +416,6 @@ export default function SignUpPage() {
                       : "1px solid #FF5722",
                   },
                 },
-                "& input:-webkit-autofill": {
-                  WebkitBoxShadow: "0 0 0 100px #FFFFFF inset",
-                  WebkitTextFillColor: "#000000",
-                },
-                "& input:-webkit-autofill:hover": {
-                  WebkitBoxShadow: "0 0 0 100px #FFFFFF inset",
-                  WebkitTextFillColor: "#000000",
-                },
-                "& input:-webkit-autofill:focus": {
-                  WebkitBoxShadow: "0 0 0 100px #FFFFFF inset",
-                  WebkitTextFillColor: "#000000",
-                },
               }}
             />
             {fieldErrors.email && (
@@ -467,6 +424,7 @@ export default function SignUpPage() {
               </FormHelperText>
             )}
 
+            {/* Country */}
             <Typography
               sx={{
                 mb: 1,
@@ -476,7 +434,7 @@ export default function SignUpPage() {
                 fontSize: "16px",
               }}
             >
-            Country<span style={{ color: "#FF5722" }}>*</span>
+              Country<span style={{ color: "#FF5722" }}>*</span>
             </Typography>
             <TextField
               select
@@ -540,6 +498,7 @@ export default function SignUpPage() {
               </FormHelperText>
             )}
 
+            {/* Gender */}
             <Typography
               sx={{
                 mb: 1,
@@ -549,76 +508,45 @@ export default function SignUpPage() {
                 fontSize: "16px",
               }}
             >
-              Password<span style={{ color: "#FF5722" }}>*</span>
+              Gender<span style={{ color: "#FF5722" }}>*</span>
             </Typography>
             <TextField
-              placeholder="Create a password"
-              type={showPassword ? "text" : "password"}
-              value={formData.password}
-              onChange={(e) => handleInputChange("password", e.target.value)}
+              select
+              value={formData.gender}
+              onChange={(e) => handleInputChange("gender", e.target.value)}
               fullWidth
               required
               disabled={isLoading}
-              error={!!fieldErrors.password}
               InputProps={{
                 startAdornment: (
                   <InputAdornment position="start">
-                    <LockIcon sx={{ color: "#999" }} />
-                  </InputAdornment>
-                ),
-                endAdornment: (
-                  <InputAdornment position="end">
-                    <IconButton
-                      onClick={() => setShowPassword(!showPassword)}
-                      edge="end"
-                    >
-                      {showPassword ? <VisibilityOff /> : <Visibility />}
-                    </IconButton>
+                    <WcIcon
+                      sx={{ color: "#999", fontSize: { xs: 20, sm: 24 } }}
+                    />
                   </InputAdornment>
                 ),
               }}
               sx={{
-                mb: fieldErrors.password ? 0.5 : 2,
+                mb: "16px",
                 "& .MuiOutlinedInput-root": {
                   height: "48px",
                   borderRadius: "8px",
                   bgcolor: "#FFFFFF",
-                  "& fieldset": {
-                    border: fieldErrors.password
-                      ? "1px solid #d32f2f"
-                      : "1px solid #3A3A3A4D",
-                  },
-                  "&:hover fieldset": {
-                    border: fieldErrors.password
-                      ? "1px solid #d32f2f"
-                      : "1px solid #3A3A3A4D",
-                  },
-                  "&.Mui-focused fieldset": {
-                    border: fieldErrors.password
-                      ? "1px solid #d32f2f"
-                      : "1px solid #FF5722",
-                  },
-                },
-                "& input:-webkit-autofill": {
-                  WebkitBoxShadow: "0 0 0 100px #FFFFFF inset",
-                  WebkitTextFillColor: "#000000",
-                },
-                "& input:-webkit-autofill:hover": {
-                  WebkitBoxShadow: "0 0 0 100px #FFFFFF inset",
-                  WebkitTextFillColor: "#000000",
-                },
-                "& input:-webkit-autofill:focus": {
-                  WebkitBoxShadow: "0 0 0 100px #FFFFFF inset",
-                  WebkitTextFillColor: "#000000",
+                  fontSize: "16px",
+                  "& fieldset": { border: "1px solid #3A3A3A4D" },
+                  "&:hover fieldset": { border: "1px solid #3A3A3A4D" },
+                  "&.Mui-focused fieldset": { border: "2px solid #FF5722" },
                 },
               }}
-            />
-            {fieldErrors.password && (
-              <FormHelperText sx={{ color: "#d32f2f", mb: 2, mt: 0.5, ml: 0 }}>
-                {fieldErrors.password}
-              </FormHelperText>
-            )}
+            >
+              {GENDER_OPTIONS.map((option) => (
+                <MenuItem key={option} value={option}>
+                  {option}
+                </MenuItem>
+              ))}
+            </TextField>
 
+            {/* Age Group */}
             <Typography
               sx={{
                 mb: 1,
@@ -628,79 +556,43 @@ export default function SignUpPage() {
                 fontSize: "16px",
               }}
             >
-              Confirm Password<span style={{ color: "#FF5722" }}>*</span>
+              Age Group<span style={{ color: "#FF5722" }}>*</span>
             </Typography>
             <TextField
-              placeholder="Confirm your password"
-              type={showConfirmPassword ? "text" : "password"}
-              value={formData.confirmPassword}
-              onChange={(e) =>
-                handleInputChange("confirmPassword", e.target.value)
-              }
+              select
+              value={formData.ageGroup}
+              onChange={(e) => handleInputChange("ageGroup", e.target.value)}
               fullWidth
               required
               disabled={isLoading}
-              error={!!fieldErrors.confirmPassword}
               InputProps={{
                 startAdornment: (
                   <InputAdornment position="start">
-                    <LockIcon sx={{ color: "#999" }} />
-                  </InputAdornment>
-                ),
-                endAdornment: (
-                  <InputAdornment position="end">
-                    <IconButton
-                      onClick={() =>
-                        setShowConfirmPassword(!showConfirmPassword)
-                      }
-                      edge="end"
-                    >
-                      {showConfirmPassword ? <VisibilityOff /> : <Visibility />}
-                    </IconButton>
+                    <CakeIcon
+                      sx={{ color: "#999", fontSize: { xs: 20, sm: 24 } }}
+                    />
                   </InputAdornment>
                 ),
               }}
               sx={{
-                mb: fieldErrors.confirmPassword ? 0.5 : 2,
+                mb: "16px",
                 "& .MuiOutlinedInput-root": {
                   height: "48px",
                   borderRadius: "8px",
                   bgcolor: "#FFFFFF",
-                  "& fieldset": {
-                    border: fieldErrors.confirmPassword
-                      ? "1px solid #d32f2f"
-                      : "1px solid #3A3A3A4D",
-                  },
-                  "&:hover fieldset": {
-                    border: fieldErrors.confirmPassword
-                      ? "1px solid #d32f2f"
-                      : "1px solid #3A3A3A4D",
-                  },
-                  "&.Mui-focused fieldset": {
-                    border: fieldErrors.confirmPassword
-                      ? "1px solid #d32f2f"
-                      : "1px solid #FF5722",
-                  },
-                },
-                "& input:-webkit-autofill": {
-                  WebkitBoxShadow: "0 0 0 100px #FFFFFF inset",
-                  WebkitTextFillColor: "#000000",
-                },
-                "& input:-webkit-autofill:hover": {
-                  WebkitBoxShadow: "0 0 0 100px #FFFFFF inset",
-                  WebkitTextFillColor: "#000000",
-                },
-                "& input:-webkit-autofill:focus": {
-                  WebkitBoxShadow: "0 0 0 100px #FFFFFF inset",
-                  WebkitTextFillColor: "#000000",
+                  fontSize: "16px",
+                  "& fieldset": { border: "1px solid #3A3A3A4D" },
+                  "&:hover fieldset": { border: "1px solid #3A3A3A4D" },
+                  "&.Mui-focused fieldset": { border: "2px solid #FF5722" },
                 },
               }}
-            />
-            {fieldErrors.confirmPassword && (
-              <FormHelperText sx={{ color: "#d32f2f", mb: 2, mt: 0.5, ml: 0 }}>
-                {fieldErrors.confirmPassword}
-              </FormHelperText>
-            )}
+            >
+              {AGE_GROUP_OPTIONS.map((option) => (
+                <MenuItem key={option} value={option}>
+                  {option}
+                </MenuItem>
+              ))}
+            </TextField>
 
             <FormControlLabel
               control={
@@ -733,7 +625,7 @@ export default function SignUpPage() {
                   </Link>
                 </Typography>
               }
-              sx={{ mb: 1 }}
+              sx={{ mb: 2 }}
             />
 
             <ButtonSelfScore
@@ -744,10 +636,10 @@ export default function SignUpPage() {
                 isLoading ? (
                   <CircularProgress size={24} sx={{ color: "#fff" }} />
                 ) : (
-                  "Sign Up"
+                  "Create Account & Get Code"
                 )
               }
-              height="40px"
+              height="44px"
               borderRadius="12px"
               background="#FF5722"
               fontSize="1.1rem"

@@ -508,6 +508,49 @@ export const sendVerificationEmail = async (
   });
 };
 
+// Send login OTP email
+export const sendLoginOtpEmail = async (
+  email: string,
+  username: string,
+  verifyCode: string
+): Promise<boolean> => {
+  const safeUsername = escapeHtml(username);
+
+  const html = renderEmailLayout({
+    previewText: `Your ${APP_NAME} login code`,
+    recipientEmail: email,
+    emailType: "transactional",
+    bodyHtml: `
+      <h1 style="margin:0 0 22px 0; color:#111111; font-family:'Source Sans Pro', Arial, Helvetica, sans-serif; font-size:24px; line-height:1.3; font-weight:700;">
+        Your Login Verification Code
+      </h1>
+      <p style="margin:0 0 40px 0; color:#111111; font-family:'Source Sans Pro', Arial, Helvetica, sans-serif; font-size:18px; line-height:1.6;">
+        Hi ${safeUsername}, use the 6-digit login code below to securely access your account.
+      </p>
+      <div style="margin:0 0 34px 0;">
+        <p style="margin:0 0 14px 0; color:#9D9D9D; font-family:'Source Sans Pro', Arial, Helvetica, sans-serif; font-size:18px; line-height:1.4;">
+          Your login code
+        </p>
+        <div style="margin:0; color:#B34700; font-family:'Source Sans Pro', Arial, Helvetica, sans-serif; font-size:48px; line-height:1; font-weight:400; letter-spacing:6px;">
+          ${verifyCode}
+        </div>
+      </div>
+      <p style="margin:0 0 42px 0; color:#9D9D9D; font-family:'Source Sans Pro', Arial, Helvetica, sans-serif; font-size:18px; line-height:1.5; font-weight:700;">
+        This code will expire in 10 minutes.
+      </p>
+      <p style="margin:0; color:#111111; font-family:'Source Sans Pro', Arial, Helvetica, sans-serif; font-size:18px; line-height:1.6;">
+        If you did not request this login code, you can safely ignore this email.
+      </p>
+    `,
+  });
+
+  return await sendEmail({
+    to: email,
+    subject: `Your ${APP_NAME} login code`,
+    html,
+  });
+};
+
 // Send password reset email
 export const sendPasswordResetEmail = async (
   email: string,

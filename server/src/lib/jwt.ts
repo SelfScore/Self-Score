@@ -13,6 +13,8 @@ export interface TokenPayload {
     country?: string;
     countryCode?: string;
     phoneNumber?: string;
+    gender?: string;
+    ageGroup?: string;
     purchasedLevels?: {
         level2: {
             purchased: boolean;
@@ -50,6 +52,8 @@ export const generateToken = (userData: UserResponse): string => {
         country: userData.country,
         countryCode: userData.countryCode,
         phoneNumber: userData.phoneNumber,
+        gender: userData.gender,
+        ageGroup: userData.ageGroup,
         purchasedLevels: userData.purchasedLevels,
         progress: userData.progress
     };

@@ -29,14 +29,27 @@ function VerifyEmailContent() {
 
   const [verifyCode, setVerifyCode] = useState(["", "", "", "", "", ""]);
   const [email, setEmail] = useState("");
+  const [mode, setMode] = useState<"login" | "signup">("signup");
+  const [rememberMe, setRememberMe] = useState(false);
   const [localError, setLocalError] = useState("");
   const [success, setSuccess] = useState("");
   const [resendLoading, setResendLoading] = useState(false);
 
   useEffect(() => {
     const emailParam = searchParams.get("email");
+    const modeParam = searchParams.get("mode");
+    const rememberMeParam = searchParams.get("rememberMe");
+
     if (emailParam) {
       setEmail(emailParam);
+    }
+    if (modeParam === "login") {
+      setMode("login");
+    } else {
+      setMode("signup");
+    }
+    if (rememberMeParam === "true") {
+      setRememberMe(true);
     }
   }, [searchParams]);
 
@@ -59,13 +72,18 @@ function VerifyEmailContent() {
       const response = await verifyEmail({
         email: email.trim().toLowerCase(),
         verifyCode: code,
+        rememberMe,
       });
 
       if (response.success) {
-        setSuccess(getSuccessMessage("verify"));
+        setSuccess(
+          mode === "login"
+            ? "Login successful! Redirecting to dashboard..."
+            : getSuccessMessage("verify")
+        );
         setTimeout(() => {
           router.push("/user/dashboard");
-        }, 2000);
+        }, 1500);
       } else {
         setLocalError(
           getUserFriendlyError(
@@ -155,6 +173,8 @@ function VerifyEmailContent() {
     }
   };
 
+  const isLoginMode = mode === "login";
+
   return (
     <Box
       sx={{
@@ -219,7 +239,7 @@ function VerifyEmailContent() {
             flexShrink: 0,
           }}
         >
-          <Box sx={{ textAlign: { xs: "center", md: "centre" }, mb: 4 }}>
+          <Box sx={{ textAlign: { xs: "center", md: "left" }, mb: 4 }}>
             <Typography
               sx={{
                 fontWeight: "700",
@@ -229,7 +249,7 @@ function VerifyEmailContent() {
                 fontFamily: "Faustina",
               }}
             >
-              Verify Your Email
+              {isLoginMode ? "Enter Login Code" : "Verify Your Email"}
             </Typography>
             <Typography
               sx={{
@@ -239,14 +259,17 @@ function VerifyEmailContent() {
                 fontFamily: "Source Sans Pro",
               }}
             >
-              We've sent a 6-digit verification code to your email address
+              {isLoginMode
+                ? "We've sent a 6-digit login code to your email address"
+                : "We've sent a 6-digit verification code to your email address"}
             </Typography>
             <Typography
               sx={{
                 fontWeight: "700",
-                color: "#6B7280",
+                color: "#005F73",
                 fontSize: { xs: "16px", md: "18px" },
                 fontFamily: "Source Sans Pro",
+                mt: 0.5,
               }}
             >
               {email || "your email address"}
@@ -332,7 +355,7 @@ function VerifyEmailContent() {
                 fontSize: "16px",
               }}
             >
-              Enter Verification Code
+              Enter 6-Digit Code
             </Typography>
 
             {/* 6-digit code input boxes */}
@@ -404,7 +427,7 @@ function VerifyEmailContent() {
                 disabled={resendLoading || !email}
                 sx={{
                   color: "#005F73",
-                  fontWeight: "400",
+                  fontWeight: "600",
                   fontFamily: "Source Sans Pro",
                   textDecoration: "none",
                   cursor: resendLoading || !email ? "not-allowed" : "pointer",
@@ -415,7 +438,7 @@ function VerifyEmailContent() {
                   },
                 }}
               >
-                Resend
+                {resendLoading ? "Sending..." : "Resend Code"}
               </Link>
             </Typography>
 
@@ -440,8 +463,10 @@ function VerifyEmailContent() {
             >
               {isLoading ? (
                 <CircularProgress size={24} sx={{ color: "#fff" }} />
+              ) : isLoginMode ? (
+                "Log In"
               ) : (
-                "Verify"
+                "Verify & Continue"
               )}
             </Button>
 
@@ -450,15 +475,15 @@ function VerifyEmailContent() {
                 Wrong Email? Back to{" "}
                 <Link
                   component={NextLink}
-                  href="/auth/signup"
+                  href={isLoginMode ? "/auth/signin" : "/auth/signup"}
                   sx={{
-                    color: "#6B7280",
-                    fontWeight: "400",
+                    color: "#005F73",
+                    fontWeight: "600",
                     textDecoration: "none",
                     "&:hover": { textDecoration: "underline" },
                   }}
                 >
-                  Sign Up
+                  {isLoginMode ? "Sign In" : "Sign Up"}
                 </Link>
               </Typography>
             </Box>

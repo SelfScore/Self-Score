@@ -16,10 +16,10 @@ import {
 } from "@mui/material";
 import { Close as CloseIcon } from "@mui/icons-material";
 import EmailIcon from "@mui/icons-material/Email";
-import LockIcon from "@mui/icons-material/Lock";
-import Visibility from "@mui/icons-material/Visibility";
-import VisibilityOff from "@mui/icons-material/VisibilityOff";
 import PublicIcon from "@mui/icons-material/Public";
+import PersonIcon from "@mui/icons-material/Person";
+import WcIcon from "@mui/icons-material/Wc";
+import CakeIcon from "@mui/icons-material/Cake";
 import { useState } from "react";
 import { authService, UserData } from "../../services/authService";
 import NextLink from "next/link";
@@ -36,7 +36,17 @@ interface SignUpModalProps {
   onSuccess?: (userData: any) => void;
 }
 
-type AuthStep = "login" | "signup" | "verify" | "password";
+type AuthStep = "login" | "signup" | "verify";
+
+const GENDER_OPTIONS = ["Male", "Female", "Non-binary", "Prefer not to say"] as const;
+const AGE_GROUP_OPTIONS = [
+  "Under 18",
+  "18-24",
+  "25-34",
+  "35-44",
+  "45-54",
+  "55+",
+] as const;
 
 export default function SignUpModal({
   open,
@@ -53,16 +63,12 @@ export default function SignUpModal({
     username: "",
     email: "",
     country: "",
-    verifyCode: "",
-    password: "",
-    confirmPassword: "",
+    gender: "",
+    ageGroup: "",
   });
 
   const [_tempUserData, setTempUserData] = useState<UserData | null>(null);
   const [agreedToTerms, setAgreedToTerms] = useState(false);
-  const [rememberMe, setRememberMe] = useState(false);
-  const [showPassword, setShowPassword] = useState(false);
-  const [showConfirmPassword, setShowConfirmPassword] = useState(false);
   const [verifyCode, setVerifyCode] = useState(["", "", "", "", "", ""]);
   const [resendLoading, setResendLoading] = useState(false);
 
@@ -71,19 +77,13 @@ export default function SignUpModal({
       ...prev,
       [field]: value,
     }));
-    setError(""); // Clear error when user types
+    setError("");
   };
 
   const validateEmail = (email: string) => {
     const emailRegex = /^[^\s@]+@[^\s@]+\.[^\s@]+$/;
     return emailRegex.test(email);
   };
-
-  const validatePassword = (password: string) => {
-    return password.length >= 6; // Minimum 6 characters
-  };
-
-
 
   const handleSignUp = async () => {
     try {
@@ -99,26 +99,24 @@ export default function SignUpModal({
         setError("Name must be at least 2 characters long");
         return;
       }
-      if (formData.username.trim().length > 20) {
-        setError("Name must not exceed 20 characters");
+      if (formData.username.trim().length > 50) {
+        setError("Name must not exceed 50 characters");
         return;
       }
       if (!validateEmail(formData.email)) {
         setError("Please enter a valid email address (e.g., name@example.com)");
         return;
       }
-       if (!formData.country.trim()) {
+      if (!formData.country.trim()) {
         setError("Please select your country");
         return;
       }
-      if (!validatePassword(formData.password)) {
-        setError("Password must be at least 6 characters long");
+      if (!formData.gender) {
+        setError("Please select your gender");
         return;
       }
-      if (formData.password !== formData.confirmPassword) {
-        setError(
-          "Passwords do not match. Please enter the same password in both fields"
-        );
+      if (!formData.ageGroup) {
+        setError("Please select your age group");
         return;
       }
       if (!agreedToTerms) {
@@ -132,8 +130,8 @@ export default function SignUpModal({
         username: formData.username.trim(),
         email: formData.email.trim().toLowerCase(),
         country: formData.country.trim(),
-        password: formData.password,
-        confirmPassword: formData.confirmPassword,
+        gender: formData.gender,
+        ageGroup: formData.ageGroup,
       });
 
       if (response.success) {
@@ -155,6 +153,38 @@ export default function SignUpModal({
     }
   };
 
+  const handleLogin = async () => {
+    try {
+      setLoading(true);
+      setError("");
+
+      if (!validateEmail(formData.email)) {
+        setError("Please enter a valid email address (e.g., name@example.com)");
+        return;
+      }
+
+      const response = await authService.login({
+        email: formData.email.trim().toLowerCase(),
+      });
+
+      if (response.success) {
+        setSuccess("Login code sent to your email!");
+        setCurrentStep("verify");
+      } else {
+        setError(
+          getUserFriendlyError(
+            { response: { data: { message: response.message } } },
+            "signin"
+          )
+        );
+      }
+    } catch (err: any) {
+      setError(getUserFriendlyError(err, "signin"));
+    } finally {
+      setLoading(false);
+    }
+  };
+
   const handleVerifyEmail = async () => {
     try {
       setLoading(true);
@@ -171,10 +201,15 @@ export default function SignUpModal({
         verifyCode: code,
       });
 
-      if (response.success) {
-        setSuccess(getSuccessMessage("verify"));
-        // Auto login after verification
-        await handleLogin(true);
+      if (response.success && response.data) {
+        setSuccess("Verification successful!");
+        if (onSuccess) {
+          onSuccess(response.data);
+        }
+        setTimeout(() => {
+          onClose();
+          resetForm();
+        }, 1000);
       } else {
         setError(
           getUserFriendlyError(
@@ -190,70 +225,10 @@ export default function SignUpModal({
     }
   };
 
-  const handleLogin = async (autoLogin = false) => {
-    try {
-      setLoading(true);
-      if (!autoLogin) setError("");
-
-      if (!validateEmail(formData.email)) {
-        setError("Please enter a valid email address (e.g., name@example.com)");
-        return;
-      }
-      if (!formData.password.trim()) {
-        setError("Please enter your password");
-        return;
-      }
-
-      const response = await authService.login({
-        email: formData.email.trim().toLowerCase(),
-        password: formData.password,
-      });
-
-      if (response.success && response.data) {
-        setSuccess(getSuccessMessage("signin"));
-
-        // Store user data in localStorage
-        // authService.saveUser(response.data);
-
-        // Call success callback
-        if (onSuccess) {
-          onSuccess(response.data);
-        }
-
-        // Close modal after a brief delay
-        setTimeout(() => {
-          onClose();
-          resetForm();
-        }, 1000);
-      } else {
-        setError(
-          getUserFriendlyError(
-            { response: { data: { message: response.message } } },
-            "signin"
-          )
-        );
-      }
-    } catch (err: any) {
-      const errorMessage = getUserFriendlyError(err, "signin");
-      setError(errorMessage);
-
-      // Handle email verification redirect
-      if (
-        err.response?.data?.message?.includes("verify your email") ||
-        err.response?.data?.message?.includes("not verified")
-      ) {
-        setCurrentStep("verify");
-      }
-    } finally {
-      setLoading(false);
-    }
-  };
-
   const handleResendVerification = async () => {
     try {
       setResendLoading(true);
       setError("");
-      setSuccess("");
 
       const response = await authService.resendVerification(
         formData.email.trim().toLowerCase()
@@ -277,7 +252,6 @@ export default function SignUpModal({
   };
 
   const handleCodeChange = (index: number, value: string) => {
-    // Only allow numbers
     if (value && !/^\d$/.test(value)) return;
 
     const newCode = [...verifyCode];
@@ -285,9 +259,8 @@ export default function SignUpModal({
     setVerifyCode(newCode);
     setError("");
 
-    // Auto-focus next input
     if (value && index < 5) {
-      const nextInput = document.getElementById(`code-input-${index + 1}`);
+      const nextInput = document.getElementById(`modal-code-input-${index + 1}`);
       nextInput?.focus();
     }
   };
@@ -297,7 +270,7 @@ export default function SignUpModal({
     e: React.KeyboardEvent<HTMLInputElement>
   ) => {
     if (e.key === "Backspace" && !verifyCode[index] && index > 0) {
-      const prevInput = document.getElementById(`code-input-${index - 1}`);
+      const prevInput = document.getElementById(`modal-code-input-${index - 1}`);
       prevInput?.focus();
     }
   };
@@ -311,10 +284,9 @@ export default function SignUpModal({
         .concat(Array(6).fill(""))
         .slice(0, 6);
       setVerifyCode(newCode);
-      // Focus the last filled input or the next empty one
       const nextEmptyIndex = newCode.findIndex((val) => !val);
       const focusIndex = nextEmptyIndex === -1 ? 5 : nextEmptyIndex;
-      const input = document.getElementById(`code-input-${focusIndex}`);
+      const input = document.getElementById(`modal-code-input-${focusIndex}`);
       input?.focus();
     }
   };
@@ -324,9 +296,8 @@ export default function SignUpModal({
       username: "",
       email: "",
       country: "",
-      verifyCode: "",
-      password: "",
-      confirmPassword: "",
+      gender: "",
+      ageGroup: "",
     });
     setVerifyCode(["", "", "", "", "", ""]);
     setCurrentStep("signup");
@@ -334,9 +305,6 @@ export default function SignUpModal({
     setSuccess("");
     setTempUserData(null);
     setAgreedToTerms(false);
-    setRememberMe(false);
-    setShowPassword(false);
-    setShowConfirmPassword(false);
   };
 
   const handleClose = () => {
@@ -391,6 +359,7 @@ export default function SignUpModal({
           handleSignUp();
         }}
       >
+        {/* Full Name */}
         <Typography
           sx={{
             mb: 0.5,
@@ -409,6 +378,13 @@ export default function SignUpModal({
           fullWidth
           required
           disabled={loading}
+          InputProps={{
+            startAdornment: (
+              <InputAdornment position="start">
+                <PersonIcon sx={{ color: "#999", fontSize: 20 }} />
+              </InputAdornment>
+            ),
+          }}
           sx={{
             mb: { xs: 1.5, sm: 2 },
             "& .MuiOutlinedInput-root": {
@@ -420,21 +396,10 @@ export default function SignUpModal({
               "&:hover fieldset": { border: "1px solid #3A3A3A4D" },
               "&.Mui-focused fieldset": { border: "1px solid #FF5722" },
             },
-            "& input:-webkit-autofill": {
-              WebkitBoxShadow: "0 0 0 100px #FFFFFF inset",
-              WebkitTextFillColor: "#000000",
-            },
-            "& input:-webkit-autofill:hover": {
-              WebkitBoxShadow: "0 0 0 100px #FFFFFF inset",
-              WebkitTextFillColor: "#000000",
-            },
-            "& input:-webkit-autofill:focus": {
-              WebkitBoxShadow: "0 0 0 100px #FFFFFF inset",
-              WebkitTextFillColor: "#000000",
-            },
           }}
         />
 
+        {/* Email Address */}
         <Typography
           sx={{
             mb: 0.5,
@@ -477,7 +442,7 @@ export default function SignUpModal({
           }}
         />
 
-
+        {/* Country */}
         <Typography
           sx={{
             mb: 0.5,
@@ -534,6 +499,7 @@ export default function SignUpModal({
           ))}
         </TextField>
 
+        {/* Gender */}
         <Typography
           sx={{
             mb: 0.5,
@@ -543,37 +509,19 @@ export default function SignUpModal({
             fontSize: { xs: "14px", sm: "15px" },
           }}
         >
-          Password<span style={{ color: "#FF5722" }}>*</span>
+          Gender<span style={{ color: "#FF5722" }}>*</span>
         </Typography>
         <TextField
-          placeholder="Create a password"
-          type={showPassword ? "text" : "password"}
-          value={formData.password}
-          onChange={(e) => handleInputChange("password", e.target.value)}
+          select
+          value={formData.gender}
+          onChange={(e) => handleInputChange("gender", e.target.value)}
           fullWidth
           required
           disabled={loading}
           InputProps={{
             startAdornment: (
               <InputAdornment position="start">
-                <LockIcon
-                  sx={{ color: "#999", fontSize: { xs: 20, sm: 24 } }}
-                />
-              </InputAdornment>
-            ),
-            endAdornment: (
-              <InputAdornment position="end">
-                <IconButton
-                  onClick={() => setShowPassword(!showPassword)}
-                  edge="end"
-                  sx={{ p: { xs: 0.5, sm: 1 } }}
-                >
-                  {showPassword ? (
-                    <VisibilityOff sx={{ fontSize: { xs: 20, sm: 24 } }} />
-                  ) : (
-                    <Visibility sx={{ fontSize: { xs: 20, sm: 24 } }} />
-                  )}
-                </IconButton>
+                <WcIcon sx={{ color: "#999", fontSize: { xs: 20, sm: 24 } }} />
               </InputAdornment>
             ),
           }}
@@ -588,21 +536,16 @@ export default function SignUpModal({
               "&:hover fieldset": { border: "1px solid #3A3A3A4D" },
               "&.Mui-focused fieldset": { border: "1px solid #FF5722" },
             },
-            "& input:-webkit-autofill": {
-              WebkitBoxShadow: "0 0 0 100px #FFFFFF inset",
-              WebkitTextFillColor: "#000000",
-            },
-            "& input:-webkit-autofill:hover": {
-              WebkitBoxShadow: "0 0 0 100px #FFFFFF inset",
-              WebkitTextFillColor: "#000000",
-            },
-            "& input:-webkit-autofill:focus": {
-              WebkitBoxShadow: "0 0 0 100px #FFFFFF inset",
-              WebkitTextFillColor: "#000000",
-            },
           }}
-        />
+        >
+          {GENDER_OPTIONS.map((option) => (
+            <MenuItem key={option} value={option}>
+              {option}
+            </MenuItem>
+          ))}
+        </TextField>
 
+        {/* Age Group */}
         <Typography
           sx={{
             mb: 0.5,
@@ -612,37 +555,21 @@ export default function SignUpModal({
             fontSize: { xs: "14px", sm: "15px" },
           }}
         >
-          Confirm Password<span style={{ color: "#FF5722" }}>*</span>
+          Age Group<span style={{ color: "#FF5722" }}>*</span>
         </Typography>
         <TextField
-          placeholder="Confirm your password"
-          type={showConfirmPassword ? "text" : "password"}
-          value={formData.confirmPassword}
-          onChange={(e) => handleInputChange("confirmPassword", e.target.value)}
+          select
+          value={formData.ageGroup}
+          onChange={(e) => handleInputChange("ageGroup", e.target.value)}
           fullWidth
           required
           disabled={loading}
           InputProps={{
             startAdornment: (
               <InputAdornment position="start">
-                <LockIcon
+                <CakeIcon
                   sx={{ color: "#999", fontSize: { xs: 20, sm: 24 } }}
                 />
-              </InputAdornment>
-            ),
-            endAdornment: (
-              <InputAdornment position="end">
-                <IconButton
-                  onClick={() => setShowConfirmPassword(!showConfirmPassword)}
-                  edge="end"
-                  sx={{ p: { xs: 0.5, sm: 1 } }}
-                >
-                  {showConfirmPassword ? (
-                    <VisibilityOff sx={{ fontSize: { xs: 20, sm: 24 } }} />
-                  ) : (
-                    <Visibility sx={{ fontSize: { xs: 20, sm: 24 } }} />
-                  )}
-                </IconButton>
               </InputAdornment>
             ),
           }}
@@ -657,20 +584,14 @@ export default function SignUpModal({
               "&:hover fieldset": { border: "1px solid #3A3A3A4D" },
               "&.Mui-focused fieldset": { border: "1px solid #FF5722" },
             },
-            "& input:-webkit-autofill": {
-              WebkitBoxShadow: "0 0 0 100px #FFFFFF inset",
-              WebkitTextFillColor: "#000000",
-            },
-            "& input:-webkit-autofill:hover": {
-              WebkitBoxShadow: "0 0 0 100px #FFFFFF inset",
-              WebkitTextFillColor: "#000000",
-            },
-            "& input:-webkit-autofill:focus": {
-              WebkitBoxShadow: "0 0 0 100px #FFFFFF inset",
-              WebkitTextFillColor: "#000000",
-            },
           }}
-        />
+        >
+          {AGE_GROUP_OPTIONS.map((option) => (
+            <MenuItem key={option} value={option}>
+              {option}
+            </MenuItem>
+          ))}
+        </TextField>
 
         <FormControlLabel
           control={
@@ -731,7 +652,7 @@ export default function SignUpModal({
             loading ? (
               <CircularProgress size={20} sx={{ color: "#fff" }} />
             ) : (
-              "Sign Up"
+              "Create Account & Get Code"
             )
           }
           height="42px"
@@ -799,7 +720,7 @@ export default function SignUpModal({
             fontFamily: "Source Sans Pro",
           }}
         >
-          Sign in to continue your journey
+          Enter your email to receive a secure login code
         </Typography>
       </Box>
 
@@ -846,150 +767,18 @@ export default function SignUpModal({
             ),
           }}
           sx={{
-            mb: { xs: 1.5, sm: 2 },
-            "& .MuiOutlinedInput-root": {
-              height: { xs: "44px", sm: "48px" },
-              borderRadius: "8px",
-              bgcolor: "#FFFFFF",
-              fontSize: { xs: "14px", sm: "15px" },
-              "& fieldset": { border: "1px solid #3A3A3A4D" },
-              "&:hover fieldset": { border: "1px solid #3A3A3A4D" },
-              "&.Mui-focused fieldset": { border: "1px solid #FF5722" },
-            },
-            "& input:-webkit-autofill": {
-              WebkitBoxShadow: "0 0 0 100px #FFFFFF inset",
-              WebkitTextFillColor: "#000000",
-            },
-            "& input:-webkit-autofill:hover": {
-              WebkitBoxShadow: "0 0 0 100px #FFFFFF inset",
-              WebkitTextFillColor: "#000000",
-            },
-            "& input:-webkit-autofill:focus": {
-              WebkitBoxShadow: "0 0 0 100px #FFFFFF inset",
-              WebkitTextFillColor: "#000000",
-            },
-          }}
-        />
-
-        <Typography
-          sx={{
-            mb: 0.5,
-            color: "#2C3E50",
-            fontWeight: 400,
-            fontFamily: "Source Sans Pro",
-            fontSize: { xs: "14px", sm: "15px" },
-          }}
-        >
-          Password<span style={{ color: "#FF5722" }}>*</span>
-        </Typography>
-        <TextField
-          placeholder="Enter your password"
-          type={showPassword ? "text" : "password"}
-          value={formData.password}
-          onChange={(e) => handleInputChange("password", e.target.value)}
-          fullWidth
-          required
-          disabled={loading}
-          InputProps={{
-            startAdornment: (
-              <InputAdornment position="start">
-                <LockIcon
-                  sx={{ color: "#999", fontSize: { xs: 20, sm: 24 } }}
-                />
-              </InputAdornment>
-            ),
-            endAdornment: (
-              <InputAdornment position="end">
-                <IconButton
-                  onClick={() => setShowPassword(!showPassword)}
-                  edge="end"
-                  sx={{ p: { xs: 0.5, sm: 1 } }}
-                >
-                  {showPassword ? (
-                    <VisibilityOff sx={{ fontSize: { xs: 20, sm: 24 } }} />
-                  ) : (
-                    <Visibility sx={{ fontSize: { xs: 20, sm: 24 } }} />
-                  )}
-                </IconButton>
-              </InputAdornment>
-            ),
-          }}
-          sx={{
-            mb: { xs: 1.5, sm: 2 },
-            "& .MuiOutlinedInput-root": {
-              height: { xs: "44px", sm: "48px" },
-              borderRadius: "8px",
-              bgcolor: "#FFFFFF",
-              fontSize: { xs: "14px", sm: "15px" },
-              "& fieldset": { border: "1px solid #3A3A3A4D" },
-              "&:hover fieldset": { border: "1px solid #3A3A3A4D" },
-              "&.Mui-focused fieldset": { border: "1px solid #FF5722" },
-            },
-            "& input:-webkit-autofill": {
-              WebkitBoxShadow: "0 0 0 100px #FFFFFF inset",
-              WebkitTextFillColor: "#000000",
-            },
-            "& input:-webkit-autofill:hover": {
-              WebkitBoxShadow: "0 0 0 100px #FFFFFF inset",
-              WebkitTextFillColor: "#000000",
-            },
-            "& input:-webkit-autofill:focus": {
-              WebkitBoxShadow: "0 0 0 100px #FFFFFF inset",
-              WebkitTextFillColor: "#000000",
-            },
-          }}
-        />
-
-        <Box
-          sx={{
-            display: "flex",
-            justifyContent: "space-between",
-            alignItems: "center",
             mb: { xs: 2, sm: 2.5 },
-            flexWrap: { xs: "wrap", sm: "nowrap" },
-            gap: { xs: 1, sm: 0 },
+            "& .MuiOutlinedInput-root": {
+              height: { xs: "44px", sm: "48px" },
+              borderRadius: "8px",
+              bgcolor: "#FFFFFF",
+              fontSize: { xs: "14px", sm: "15px" },
+              "& fieldset": { border: "1px solid #3A3A3A4D" },
+              "&:hover fieldset": { border: "1px solid #3A3A3A4D" },
+              "&.Mui-focused fieldset": { border: "1px solid #FF5722" },
+            },
           }}
-        >
-          <FormControlLabel
-            control={
-              <Checkbox
-                checked={rememberMe}
-                onChange={(e) => setRememberMe(e.target.checked)}
-                sx={{
-                  color: "#999",
-                  "&.Mui-checked": { color: "#FF5722" },
-                  padding: { xs: "6px", sm: "9px" },
-                }}
-              />
-            }
-            label={
-              <Typography
-                variant="body2"
-                sx={{
-                  color: "#666",
-                  fontSize: { xs: "12px", sm: "14px" },
-                }}
-              >
-                Remember me
-              </Typography>
-            }
-            sx={{ ml: -0.5 }}
-          />
-          <Link
-            component={NextLink}
-            href="/auth/forgot-password"
-            target="_blank"
-            sx={{
-              color: "#0066cc",
-              textDecoration: "none",
-              fontSize: { xs: "12px", sm: "14px" },
-              whiteSpace: "nowrap",
-              "&:hover": { textDecoration: "underline" },
-            }}
-          >
-            Forgot Password?
-          </Link>
-        </Box>
+        />
 
         <ButtonSelfScore
           type="submit"
@@ -999,7 +788,7 @@ export default function SignUpModal({
             loading ? (
               <CircularProgress size={20} sx={{ color: "#fff" }} />
             ) : (
-              "Login"
+              "Get Login Code"
             )
           }
           height="42px"
@@ -1057,7 +846,7 @@ export default function SignUpModal({
             lineHeight: 1.2,
           }}
         >
-          Verify Your Email
+          Enter Verification Code
         </Typography>
         <Typography
           sx={{
@@ -1073,7 +862,7 @@ export default function SignUpModal({
         <Typography
           sx={{
             fontWeight: "600",
-            color: "#6B7280",
+            color: "#005F73",
             fontSize: { xs: "13px", sm: "14px" },
             fontFamily: "Source Sans Pro",
           }}
@@ -1106,7 +895,7 @@ export default function SignUpModal({
             fontSize: { xs: "14px", sm: "15px" },
           }}
         >
-          Enter Verification Code
+          Enter 6-Digit Code
         </Typography>
 
         {/* 6-digit code input boxes */}
@@ -1121,7 +910,7 @@ export default function SignUpModal({
           {verifyCode.map((digit, index) => (
             <TextField
               key={index}
-              id={`code-input-${index}`}
+              id={`modal-code-input-${index}`}
               value={digit}
               onChange={(e) => handleCodeChange(index, e.target.value)}
               onKeyDown={(e) =>
@@ -1175,7 +964,7 @@ export default function SignUpModal({
             disabled={resendLoading}
             sx={{
               color: "#005F73",
-              fontWeight: "400",
+              fontWeight: "600",
               fontFamily: "Source Sans Pro",
               textDecoration: "none",
               fontSize: { xs: "12px", sm: "14px" },
@@ -1186,7 +975,7 @@ export default function SignUpModal({
               },
             }}
           >
-            Resend
+            {resendLoading ? "Sending..." : "Resend Code"}
           </Link>
         </Typography>
 
@@ -1198,7 +987,7 @@ export default function SignUpModal({
             loading ? (
               <CircularProgress size={20} sx={{ color: "#fff" }} />
             ) : (
-              "Verify"
+              "Verify & Continue"
             )
           }
           height="42px"
@@ -1229,7 +1018,7 @@ export default function SignUpModal({
               onClick={() => setCurrentStep("signup")}
               sx={{
                 color: "#6B7280",
-                fontWeight: "400",
+                fontWeight: "600",
                 textDecoration: "none",
                 fontSize: { xs: "12px", sm: "14px" },
                 "&:hover": { textDecoration: "underline" },

@@ -12,6 +12,8 @@ export interface UserResponse {
     country?: string;
     countryCode?: string;
     phoneNumber?: string;
+    gender?: string;
+    ageGroup?: string;
     isVerified?: boolean;
     purchasedLevels?: {
         level2: {
@@ -52,15 +54,15 @@ export interface SignUpRequest {
     username: string;
     email: string;
     country: string;
+    gender?: string;
+    ageGroup?: string;
     countryCode?: string;
     phoneNumber?: string;
-    password: string;
-    confirmPassword: string;
 }
 
 export interface LoginRequest {
     email: string;
-    password: string;
+    rememberMe?: boolean;
 }
 
 export interface VerifyEmailRequest {

@@ -29,7 +29,8 @@ import {
   Email,
   AccountCircle,
   Public as PublicIcon,
-  // ArrowBack,
+  Wc as WcIcon,
+  Cake as CakeIcon,
 } from "@mui/icons-material";
 import { getNames } from "country-list";
 import ButtonSelfScore from "@/app/components/ui/ButtonSelfScore";
@@ -743,6 +744,86 @@ export default function ProfilePage() {
                         </MenuItem>
                       ))}
                     </TextField>
+                  </Grid>
+
+                  {/* Gender (Read-only) */}
+                  <Grid size={{ xs: 12, sm: 6 }}>
+                    <Typography
+                      variant="caption"
+                      sx={{
+                        display: "block",
+                        mb: 1,
+                        color: "#666",
+                        fontFamily: "Source Sans Pro",
+                        fontWeight: 600,
+                        textTransform: "uppercase",
+                        letterSpacing: "0.5px",
+                      }}
+                    >
+                      Gender
+                    </Typography>
+                    <TextField
+                      fullWidth
+                      value={user?.gender || "Not specified"}
+                      disabled
+                      InputProps={{
+                        startAdornment: (
+                          <WcIcon
+                            sx={{ mr: 1, color: "#005F73", opacity: 0.7 }}
+                          />
+                        ),
+                      }}
+                      sx={{
+                        "& .MuiOutlinedInput-root": {
+                          borderRadius: "12px",
+                          fontFamily: "Source Sans Pro",
+                          backgroundColor: "#F8FAFB",
+                          "& fieldset": {
+                            borderColor: "rgba(0, 95, 115, 0.2)",
+                          },
+                        },
+                      }}
+                    />
+                  </Grid>
+
+                  {/* Age Group (Read-only) */}
+                  <Grid size={{ xs: 12, sm: 6 }}>
+                    <Typography
+                      variant="caption"
+                      sx={{
+                        display: "block",
+                        mb: 1,
+                        color: "#666",
+                        fontFamily: "Source Sans Pro",
+                        fontWeight: 600,
+                        textTransform: "uppercase",
+                        letterSpacing: "0.5px",
+                      }}
+                    >
+                      Age Group
+                    </Typography>
+                    <TextField
+                      fullWidth
+                      value={user?.ageGroup || "Not specified"}
+                      disabled
+                      InputProps={{
+                        startAdornment: (
+                          <CakeIcon
+                            sx={{ mr: 1, color: "#005F73", opacity: 0.7 }}
+                          />
+                        ),
+                      }}
+                      sx={{
+                        "& .MuiOutlinedInput-root": {
+                          borderRadius: "12px",
+                          fontFamily: "Source Sans Pro",
+                          backgroundColor: "#F8FAFB",
+                          "& fieldset": {
+                            borderColor: "rgba(0, 95, 115, 0.2)",
+                          },
+                        },
+                      }}
+                    />
                   </Grid>
                 </Grid>
 
