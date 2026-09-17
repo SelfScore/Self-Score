@@ -69,6 +69,20 @@ export default function Step1PersonalInfo({
   const [verificationLoading, setVerificationLoading] = useState(false);
   const [resendLoading, setResendLoading] = useState(false);
   const [consultantId, setConsultantId] = useState("");
+  const [countdown, setCountdown] = useState(60);
+
+  // Cooldown countdown interval
+  useEffect(() => {
+    let timer: NodeJS.Timeout;
+    if (verificationModal && countdown > 0) {
+      timer = setInterval(() => {
+        setCountdown((prev) => Math.max(0, prev - 1));
+      }, 1000);
+    }
+    return () => {
+      if (timer) clearInterval(timer);
+    };
+  }, [verificationModal, countdown]);
 
   // Photo upload modal state
   const [photoModalOpen, setPhotoModalOpen] = useState(false);
@@ -253,6 +267,7 @@ export default function Step1PersonalInfo({
 
       if (response.success && response.data) {
         setConsultantId(response.data.consultantId);
+        setCountdown(60);
         // Open verification modal
         setVerificationModal(true);
       } else {
@@ -323,8 +338,7 @@ export default function Step1PersonalInfo({
 
       if (response.success) {
         setVerificationError(""); // Clear any previous errors
-        // Show success message (you could add a success state)
-        alert("Verification code resent successfully!");
+        setCountdown(60);
       } else {
         setVerificationError(response.message || "Failed to resend code");
       }
@@ -935,15 +949,24 @@ export default function Step1PersonalInfo({
             >
               Didn't receive the code?{" "}
               <span
-                onClick={handleResendCode}
+                onClick={
+                  !resendLoading && countdown === 0 ? handleResendCode : undefined
+                }
                 style={{
                   color: "#005F73",
                   fontWeight: 600,
-                  cursor: resendLoading ? "not-allowed" : "pointer",
-                  textDecoration: "underline",
+                  cursor:
+                    resendLoading || countdown > 0 ? "not-allowed" : "pointer",
+                  opacity: resendLoading || countdown > 0 ? 0.6 : 1,
+                  textDecoration:
+                    !resendLoading && countdown === 0 ? "underline" : "none",
                 }}
               >
-                {resendLoading ? "Sending..." : "Resend"}
+                {resendLoading
+                  ? "Sending..."
+                  : countdown > 0
+                  ? `Resend in ${countdown}s`
+                  : "Resend"}
               </span>
             </Typography>
           </Box>

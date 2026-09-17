@@ -21,6 +21,11 @@ import {
   sendWelcomeEmail,
   verifyPromotionalUnsubscribeToken,
 } from "../lib/email";
+import {
+  OTP_CONFIG,
+  checkOtpCooldown,
+  checkAndUpdateOtpQuota,
+} from "../lib/otpSecurity";
 import { ApiResponse, UserResponse } from "../types/api";
 
 export class AuthController {
@@ -121,12 +126,31 @@ export class AuthController {
         return;
       }
 
+      // Check if unverified user exists and cooldown is active
+      const existingUnverified = await UserModel.findOne({
+        email,
+        isVerified: false,
+      });
+
+      if (existingUnverified) {
+        const cooldown = checkOtpCooldown(existingUnverified.lastOtpSentAt);
+        if (!cooldown.allowed) {
+          const response: ApiResponse = {
+            success: false,
+            message: `Please wait ${cooldown.remainingSeconds} seconds before requesting another code.`,
+          };
+          res.status(429).json(response);
+          return;
+        }
+      }
+
       const verifyCode = Math.floor(100000 + Math.random() * 900000).toString();
       const expiryDate = new Date();
-      expiryDate.setMinutes(expiryDate.getMinutes() + 10); // 10 minutes expiry
+      expiryDate.setMinutes(expiryDate.getMinutes() + OTP_CONFIG.EXPIRY_MINUTES_USER);
 
       await UserModel.deleteMany({ email, isVerified: false });
 
+      const now = new Date();
       const newUser = new UserModel({
         username,
         email,
@@ -138,6 +162,10 @@ export class AuthController {
         verifyCode,
         verifyCodeExpiry: expiryDate,
         isVerified: false,
+        lastOtpSentAt: now,
+        otpRequestCount: 1,
+        otpRequestCountResetAt: new Date(now.getTime() + 60 * 60 * 1000),
+        otpFailedAttempts: 0,
         purchasedLevels: {
           level2: { purchased: false },
           level3: { purchased: false },
@@ -228,10 +256,33 @@ export class AuthController {
         return;
       }
 
+      // Check 60-second cooldown
+      const cooldown = checkOtpCooldown(user.lastOtpSentAt);
+      if (!cooldown.allowed) {
+        const response: ApiResponse = {
+          success: false,
+          message: `Please wait ${cooldown.remainingSeconds} seconds before requesting another login code.`,
+        };
+        res.status(429).json(response);
+        return;
+      }
+
+      // Check hourly quota
+      const quota = checkAndUpdateOtpQuota(user);
+      if (!quota.allowed) {
+        const minutes = Math.ceil((quota.remainingSecondsInWindow || 60) / 60);
+        const response: ApiResponse = {
+          success: false,
+          message: `Too many login code requests for this account. Please try again in ${minutes} minutes.`,
+        };
+        res.status(429).json(response);
+        return;
+      }
+
       // Generate a fresh 6-digit OTP
       const verifyCode = Math.floor(100000 + Math.random() * 900000).toString();
       const expiryDate = new Date();
-      expiryDate.setMinutes(expiryDate.getMinutes() + 10); // 10 minutes expiry
+      expiryDate.setMinutes(expiryDate.getMinutes() + OTP_CONFIG.EXPIRY_MINUTES_USER);
 
       user.verifyCode = verifyCode;
       user.verifyCodeExpiry = expiryDate;
@@ -320,9 +371,31 @@ export class AuthController {
       const isValidCode = user.verifyCode === verifyCode;
 
       if (!isValidCode) {
+        user.otpFailedAttempts = (user.otpFailedAttempts || 0) + 1;
+
+        if (user.otpFailedAttempts >= OTP_CONFIG.MAX_FAILED_ATTEMPTS) {
+          // Invalidate code after max failed attempts
+          user.verifyCode = "";
+          user.verifyCodeExpiry = new Date(0);
+          user.otpFailedAttempts = 0;
+          await user.save();
+
+          const response: ApiResponse = {
+            success: false,
+            message:
+              "Too many incorrect attempts. This verification code has been invalidated for security. Please request a new code.",
+          };
+          res.status(400).json(response);
+          return;
+        }
+
+        await user.save();
+        const remainingAttempts =
+          OTP_CONFIG.MAX_FAILED_ATTEMPTS - user.otpFailedAttempts;
+
         const response: ApiResponse = {
           success: false,
-          message: "Invalid verification code",
+          message: `Invalid verification code. ${remainingAttempts} attempt(s) remaining.`,
         };
         res.status(400).json(response);
         return;
@@ -332,6 +405,8 @@ export class AuthController {
       user.isVerified = true;
       user.verifyCode = "VERIFIED";
       user.verifyCodeExpiry = new Date(0);
+      user.otpFailedAttempts = 0;
+      user.otpRequestCount = 0;
       await user.save();
 
       // If user was previously unverified (new sign-up), send welcome email
@@ -406,9 +481,32 @@ export class AuthController {
         return;
       }
 
+      // Check 60-second cooldown
+      const cooldown = checkOtpCooldown(user.lastOtpSentAt);
+      if (!cooldown.allowed) {
+        const response: ApiResponse = {
+          success: false,
+          message: `Please wait ${cooldown.remainingSeconds} seconds before requesting another code.`,
+        };
+        res.status(429).json(response);
+        return;
+      }
+
+      // Check hourly quota
+      const quota = checkAndUpdateOtpQuota(user);
+      if (!quota.allowed) {
+        const minutes = Math.ceil((quota.remainingSecondsInWindow || 60) / 60);
+        const response: ApiResponse = {
+          success: false,
+          message: `Too many code requests for this account. Please try again in ${minutes} minutes.`,
+        };
+        res.status(429).json(response);
+        return;
+      }
+
       const verifyCode = Math.floor(100000 + Math.random() * 900000).toString();
       const expiryDate = new Date();
-      expiryDate.setMinutes(expiryDate.getMinutes() + 10); // 10 minutes expiry
+      expiryDate.setMinutes(expiryDate.getMinutes() + OTP_CONFIG.EXPIRY_MINUTES_USER);
 
       user.verifyCode = verifyCode;
       user.verifyCodeExpiry = expiryDate;
@@ -540,13 +638,14 @@ export class AuthController {
 
       const user = await UserModel.findOne({ email });
 
-      // Return error if user doesn't exist
+      // Uniform response for non-existent users to prevent email enumeration
       if (!user) {
         const response: ApiResponse = {
-          success: false,
-          message: "User with this email does not exist",
+          success: true,
+          message:
+            "If an account exists with this email address, a password reset link has been sent.",
         };
-        res.status(404).json(response);
+        res.status(200).json(response);
         return;
       }
 
@@ -556,6 +655,29 @@ export class AuthController {
           message: "Please verify your email before resetting password",
         };
         res.status(400).json(response);
+        return;
+      }
+
+      // Check 60-second cooldown
+      const cooldown = checkOtpCooldown(user.lastOtpSentAt);
+      if (!cooldown.allowed) {
+        const response: ApiResponse = {
+          success: false,
+          message: `Please wait ${cooldown.remainingSeconds} seconds before requesting another password reset link.`,
+        };
+        res.status(429).json(response);
+        return;
+      }
+
+      // Check hourly quota
+      const quota = checkAndUpdateOtpQuota(user);
+      if (!quota.allowed) {
+        const minutes = Math.ceil((quota.remainingSecondsInWindow || 60) / 60);
+        const response: ApiResponse = {
+          success: false,
+          message: `Too many password reset requests for this account. Please try again in ${minutes} minutes.`,
+        };
+        res.status(429).json(response);
         return;
       }
 
@@ -719,6 +841,31 @@ export class AuthController {
           return;
         }
 
+        // Check 60-second cooldown
+        const cooldown = checkOtpCooldown(user.lastOtpSentAt);
+        if (!cooldown.allowed) {
+          const response: ApiResponse = {
+            success: false,
+            message: `Please wait ${cooldown.remainingSeconds} seconds before requesting another verification code.`,
+          };
+          res.status(429).json(response);
+          return;
+        }
+
+        // Check hourly quota
+        const quota = checkAndUpdateOtpQuota(user);
+        if (!quota.allowed) {
+          const minutes = Math.ceil(
+            (quota.remainingSecondsInWindow || 60) / 60
+          );
+          const response: ApiResponse = {
+            success: false,
+            message: `Too many code requests for this account. Please try again in ${minutes} minutes.`,
+          };
+          res.status(429).json(response);
+          return;
+        }
+
         // Generate verification code for new email
         const verifyCode = Math.floor(
           100000 + Math.random() * 900000
@@ -841,9 +988,31 @@ export class AuthController {
 
       // Verify code
       if (user.verifyCode !== verifyCode) {
+        user.otpFailedAttempts = (user.otpFailedAttempts || 0) + 1;
+
+        if (user.otpFailedAttempts >= OTP_CONFIG.MAX_FAILED_ATTEMPTS) {
+          user.verifyCode = "";
+          user.verifyCodeExpiry = new Date(0);
+          user.resetPasswordToken = undefined;
+          user.otpFailedAttempts = 0;
+          await user.save();
+
+          const response: ApiResponse = {
+            success: false,
+            message:
+              "Too many failed attempts. Email change request cancelled. Please try again.",
+          };
+          res.status(400).json(response);
+          return;
+        }
+
+        await user.save();
+        const remaining =
+          OTP_CONFIG.MAX_FAILED_ATTEMPTS - user.otpFailedAttempts;
+
         const response: ApiResponse = {
           success: false,
-          message: "Invalid verification code",
+          message: `Invalid verification code. ${remaining} attempt(s) remaining.`,
         };
         res.status(400).json(response);
         return;
@@ -863,8 +1032,9 @@ export class AuthController {
       user.email = newEmail;
       user.resetPasswordToken = undefined;
       user.verifyCode = "";
-      // Clear expiry by setting to past date (model requires Date type)
       user.verifyCodeExpiry = new Date(0);
+      user.otpFailedAttempts = 0;
+      user.otpRequestCount = 0;
 
       await user.save();
 

@@ -1,17 +1,31 @@
 import { Router } from "express";
 import { ConsultantAuthController } from "../controllers/consultantAuth.controller";
 import { consultantAuthMiddleware } from "../middleware/consultantAuth";
+import {
+  authLimiter,
+  otpResendLimiter,
+  otpVerifyLimiter,
+} from "../middleware/rateLimiter";
 
 const router = Router();
 
 // Public routes
-router.post("/register/step1", ConsultantAuthController.registerStep1);
-router.post("/verify-email", ConsultantAuthController.verifyEmail);
+router.post(
+  "/register/step1",
+  authLimiter,
+  ConsultantAuthController.registerStep1
+);
+router.post(
+  "/verify-email",
+  otpVerifyLimiter,
+  ConsultantAuthController.verifyEmail
+);
 router.post(
   "/resend-verification",
+  otpResendLimiter,
   ConsultantAuthController.resendVerification
 );
-router.post("/login", ConsultantAuthController.login);
+router.post("/login", authLimiter, ConsultantAuthController.login);
 
 // Protected routes (require authentication)
 router.post("/register/step2", ConsultantAuthController.updateProfessionalInfo);
@@ -37,6 +51,7 @@ router.put(
 router.post(
   "/verify-email-update",
   consultantAuthMiddleware,
+  otpVerifyLimiter,
   ConsultantAuthController.verifyEmailUpdate
 );
 router.put(

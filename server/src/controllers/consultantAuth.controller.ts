@@ -8,6 +8,11 @@ import {
   getCookieOptions,
 } from "../lib/jwt";
 import { sendVerificationEmail } from "../lib/email";
+import {
+  OTP_CONFIG,
+  checkOtpCooldown,
+  checkAndUpdateOtpQuota,
+} from "../lib/otpSecurity";
 import { ApiResponse } from "../types/api";
 import {
   uploadProfilePhoto,
@@ -84,6 +89,24 @@ export class ConsultantAuthController {
         return;
       }
 
+      // Check if unverified consultant exists and cooldown is active
+      const existingUnverified = await ConsultantModel.findOne({
+        email,
+        isVerified: false,
+      });
+
+      if (existingUnverified) {
+        const cooldown = checkOtpCooldown(existingUnverified.lastOtpSentAt);
+        if (!cooldown.allowed) {
+          const response: ApiResponse = {
+            success: false,
+            message: `Please wait ${cooldown.remainingSeconds} seconds before requesting another code.`,
+          };
+          res.status(429).json(response);
+          return;
+        }
+      }
+
       // Generate OTP
       const verifyCode = Math.floor(100000 + Math.random() * 900000).toString();
       const hashedPassword = await bcrypt.hash(password, 10);
@@ -110,6 +133,7 @@ export class ConsultantAuthController {
       }
 
       // Create new consultant
+      const now = new Date();
       const newConsultant = new ConsultantModel({
         firstName,
         lastName,
@@ -122,6 +146,10 @@ export class ConsultantAuthController {
         verifyCode,
         verifyCodeExpiry: expiryDate,
         isVerified: false,
+        lastOtpSentAt: now,
+        otpRequestCount: 1,
+        otpRequestCountResetAt: new Date(now.getTime() + 60 * 60 * 1000),
+        otpFailedAttempts: 0,
         registrationStep: 1,
         applicationStatus: "draft", // Changed to 'draft' until Step 4 is completed
       });
@@ -211,9 +239,31 @@ export class ConsultantAuthController {
 
       // Verify code
       if (consultant.verifyCode !== verifyCode) {
+        consultant.otpFailedAttempts =
+          (consultant.otpFailedAttempts || 0) + 1;
+
+        if (consultant.otpFailedAttempts >= OTP_CONFIG.MAX_FAILED_ATTEMPTS) {
+          consultant.verifyCode = "";
+          consultant.verifyCodeExpiry = new Date(0);
+          consultant.otpFailedAttempts = 0;
+          await consultant.save();
+
+          const response: ApiResponse = {
+            success: false,
+            message:
+              "Too many incorrect attempts. This verification code has been invalidated for security. Please request a new code.",
+          };
+          res.status(400).json(response);
+          return;
+        }
+
+        await consultant.save();
+        const remaining =
+          OTP_CONFIG.MAX_FAILED_ATTEMPTS - consultant.otpFailedAttempts;
+
         const response: ApiResponse = {
           success: false,
-          message: "Invalid verification code",
+          message: `Invalid verification code. ${remaining} attempt(s) remaining.`,
         };
         res.status(400).json(response);
         return;
@@ -222,6 +272,9 @@ export class ConsultantAuthController {
       // Mark as verified
       consultant.isVerified = true;
       consultant.verifyCode = ""; // Clear the code
+      consultant.verifyCodeExpiry = new Date(0);
+      consultant.otpFailedAttempts = 0;
+      consultant.otpRequestCount = 0;
       await consultant.save();
 
       const response: ApiResponse = {
@@ -278,6 +331,31 @@ export class ConsultantAuthController {
           message: "Email is already verified",
         };
         res.status(400).json(response);
+        return;
+      }
+
+      // Check 60-second cooldown
+      const cooldown = checkOtpCooldown(consultant.lastOtpSentAt);
+      if (!cooldown.allowed) {
+        const response: ApiResponse = {
+          success: false,
+          message: `Please wait ${cooldown.remainingSeconds} seconds before requesting another code.`,
+        };
+        res.status(429).json(response);
+        return;
+      }
+
+      // Check hourly quota
+      const quota = checkAndUpdateOtpQuota(consultant);
+      if (!quota.allowed) {
+        const minutes = Math.ceil(
+          (quota.remainingSecondsInWindow || 60) / 60
+        );
+        const response: ApiResponse = {
+          success: false,
+          message: `Too many code requests for this account. Please try again in ${minutes} minutes.`,
+        };
+        res.status(429).json(response);
         return;
       }
 
@@ -798,6 +876,31 @@ export class ConsultantAuthController {
           return;
         }
 
+        // Check 60-second cooldown
+        const cooldown = checkOtpCooldown(consultant.lastOtpSentAt);
+        if (!cooldown.allowed) {
+          const response: ApiResponse = {
+            success: false,
+            message: `Please wait ${cooldown.remainingSeconds} seconds before requesting another verification code.`,
+          };
+          res.status(429).json(response);
+          return;
+        }
+
+        // Check hourly quota
+        const quota = checkAndUpdateOtpQuota(consultant);
+        if (!quota.allowed) {
+          const minutes = Math.ceil(
+            (quota.remainingSecondsInWindow || 60) / 60
+          );
+          const response: ApiResponse = {
+            success: false,
+            message: `Too many code requests for this account. Please try again in ${minutes} minutes.`,
+          };
+          res.status(429).json(response);
+          return;
+        }
+
         // Generate verification code for new email
         const verifyCode = Math.floor(
           100000 + Math.random() * 900000,
@@ -928,9 +1031,32 @@ export class ConsultantAuthController {
 
       // Verify code
       if (consultant.verifyCode !== verifyCode) {
+        consultant.otpFailedAttempts =
+          (consultant.otpFailedAttempts || 0) + 1;
+
+        if (consultant.otpFailedAttempts >= OTP_CONFIG.MAX_FAILED_ATTEMPTS) {
+          consultant.verifyCode = "";
+          consultant.verifyCodeExpiry = new Date(0);
+          consultant.resetPasswordToken = undefined;
+          consultant.otpFailedAttempts = 0;
+          await consultant.save();
+
+          const response: ApiResponse = {
+            success: false,
+            message:
+              "Too many failed attempts. Email change request cancelled. Please try again.",
+          };
+          res.status(400).json(response);
+          return;
+        }
+
+        await consultant.save();
+        const remaining =
+          OTP_CONFIG.MAX_FAILED_ATTEMPTS - consultant.otpFailedAttempts;
+
         const response: ApiResponse = {
           success: false,
-          message: "Invalid verification code",
+          message: `Invalid verification code. ${remaining} attempt(s) remaining.`,
         };
         res.status(400).json(response);
         return;
@@ -954,6 +1080,8 @@ export class ConsultantAuthController {
       consultant.resetPasswordToken = undefined;
       consultant.verifyCode = "";
       consultant.verifyCodeExpiry = new Date(0);
+      consultant.otpFailedAttempts = 0;
+      consultant.otpRequestCount = 0;
 
       await consultant.save();
 

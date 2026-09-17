@@ -9,7 +9,7 @@ import {
   Alert,
   CircularProgress,
 } from "@mui/material";
-import { useState } from "react";
+import { useState, useEffect } from "react";
 import ButtonSelfScore from "./ButtonSelfScore";
 import OutLineButton from "./OutLineButton";
 import { Email, CheckCircle } from "@mui/icons-material";
@@ -19,6 +19,7 @@ interface EmailVerificationModalProps {
   newEmail: string;
   onClose: () => void;
   onVerify: (code: string) => Promise<void>;
+  onResend?: () => Promise<void>;
 }
 
 export default function EmailVerificationModal({
@@ -26,10 +27,26 @@ export default function EmailVerificationModal({
   newEmail,
   onClose,
   onVerify,
+  onResend,
 }: EmailVerificationModalProps) {
   const [verificationCode, setVerificationCode] = useState("");
   const [error, setError] = useState("");
   const [loading, setLoading] = useState(false);
+  const [resendLoading, setResendLoading] = useState(false);
+  const [resendCooldown, setResendCooldown] = useState(60);
+  const [resendSuccess, setResendSuccess] = useState(false);
+
+  useEffect(() => {
+    let timer: NodeJS.Timeout;
+    if (open && resendCooldown > 0) {
+      timer = setInterval(() => {
+        setResendCooldown((prev) => prev - 1);
+      }, 1000);
+    }
+    return () => {
+      if (timer) clearInterval(timer);
+    };
+  }, [open, resendCooldown]);
 
   const handleVerify = async () => {
     if (verificationCode.length !== 6) {
@@ -47,6 +64,23 @@ export default function EmailVerificationModal({
       setError(err.response?.data?.message || "Verification failed");
     } finally {
       setLoading(false);
+    }
+  };
+
+  const handleResend = async () => {
+    if (!onResend || resendCooldown > 0 || resendLoading) return;
+    setResendLoading(true);
+    setError("");
+    setResendSuccess(false);
+    try {
+      await onResend();
+      setResendSuccess(true);
+      setResendCooldown(60);
+      setTimeout(() => setResendSuccess(false), 5000);
+    } catch (err: any) {
+      setError(err.response?.data?.message || "Failed to resend verification code");
+    } finally {
+      setResendLoading(false);
     }
   };
 
@@ -185,6 +219,19 @@ export default function EmailVerificationModal({
           }}
         />
 
+        {resendSuccess && (
+          <Alert
+            severity="success"
+            sx={{
+              mt: 2,
+              borderRadius: "12px",
+              fontFamily: "Source Sans Pro",
+            }}
+          >
+            A new verification code has been sent to your email.
+          </Alert>
+        )}
+
         {error && (
           <Alert
             severity="error"
@@ -196,6 +243,40 @@ export default function EmailVerificationModal({
           >
             {error}
           </Alert>
+        )}
+
+        {onResend && (
+          <Box sx={{ mt: 2, textAlign: "center" }}>
+            <Typography
+              variant="body2"
+              sx={{
+                color: "#666",
+                fontFamily: "Source Sans Pro",
+                fontSize: "0.875rem",
+              }}
+            >
+              Didn't receive the code?{" "}
+              <Typography
+                component="span"
+                onClick={resendCooldown === 0 && !resendLoading ? handleResend : undefined}
+                sx={{
+                  color: resendCooldown > 0 || resendLoading ? "#999" : "#005F73",
+                  cursor: resendCooldown > 0 || resendLoading ? "default" : "pointer",
+                  fontWeight: 600,
+                  textDecoration: resendCooldown === 0 && !resendLoading ? "underline" : "none",
+                  "&:hover": {
+                    color: resendCooldown === 0 && !resendLoading ? "#0A7A8F" : "#999",
+                  },
+                }}
+              >
+                {resendLoading
+                  ? "Sending..."
+                  : resendCooldown > 0
+                  ? `Resend in ${resendCooldown}s`
+                  : "Resend Code"}
+              </Typography>
+            </Typography>
+          </Box>
         )}
       </DialogContent>
 

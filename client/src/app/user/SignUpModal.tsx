@@ -20,7 +20,7 @@ import PublicIcon from "@mui/icons-material/Public";
 import PersonIcon from "@mui/icons-material/Person";
 import WcIcon from "@mui/icons-material/Wc";
 import CakeIcon from "@mui/icons-material/Cake";
-import { useState } from "react";
+import { useState, useEffect } from "react";
 import { authService, UserData } from "../../services/authService";
 import NextLink from "next/link";
 import ButtonSelfScore from "../components/ui/ButtonSelfScore";
@@ -71,6 +71,20 @@ export default function SignUpModal({
   const [agreedToTerms, setAgreedToTerms] = useState(false);
   const [verifyCode, setVerifyCode] = useState(["", "", "", "", "", ""]);
   const [resendLoading, setResendLoading] = useState(false);
+  const [countdown, setCountdown] = useState(60);
+
+  // Cooldown countdown interval
+  useEffect(() => {
+    let timer: NodeJS.Timeout;
+    if (currentStep === "verify" && countdown > 0) {
+      timer = setInterval(() => {
+        setCountdown((prev) => Math.max(0, prev - 1));
+      }, 1000);
+    }
+    return () => {
+      if (timer) clearInterval(timer);
+    };
+  }, [currentStep, countdown]);
 
   const handleInputChange = (field: string, value: string) => {
     setFormData((prev) => ({
@@ -137,6 +151,7 @@ export default function SignUpModal({
       if (response.success) {
         setTempUserData(response.data || null);
         setSuccess(getSuccessMessage("signup"));
+        setCountdown(60);
         setCurrentStep("verify");
       } else {
         setError(
@@ -169,6 +184,7 @@ export default function SignUpModal({
 
       if (response.success) {
         setSuccess("Login code sent to your email!");
+        setCountdown(60);
         setCurrentStep("verify");
       } else {
         setError(
@@ -236,6 +252,7 @@ export default function SignUpModal({
 
       if (response.success) {
         setSuccess(getSuccessMessage("resend"));
+        setCountdown(60);
       } else {
         setError(
           getUserFriendlyError(
@@ -961,21 +978,27 @@ export default function SignUpModal({
             component="button"
             type="button"
             onClick={handleResendVerification}
-            disabled={resendLoading}
+            disabled={resendLoading || countdown > 0}
             sx={{
               color: "#005F73",
               fontWeight: "600",
               fontFamily: "Source Sans Pro",
               textDecoration: "none",
               fontSize: { xs: "12px", sm: "14px" },
-              cursor: resendLoading ? "not-allowed" : "pointer",
-              opacity: resendLoading ? 0.5 : 1,
+              cursor:
+                resendLoading || countdown > 0 ? "not-allowed" : "pointer",
+              opacity: resendLoading || countdown > 0 ? 0.6 : 1,
               "&:hover": {
-                textDecoration: !resendLoading ? "underline" : "none",
+                textDecoration:
+                  !resendLoading && countdown === 0 ? "underline" : "none",
               },
             }}
           >
-            {resendLoading ? "Sending..." : "Resend Code"}
+            {resendLoading
+              ? "Sending..."
+              : countdown > 0
+              ? `Resend Code in ${countdown}s`
+              : "Resend Code"}
           </Link>
         </Typography>
 

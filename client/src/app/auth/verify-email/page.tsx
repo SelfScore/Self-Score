@@ -34,6 +34,19 @@ function VerifyEmailContent() {
   const [localError, setLocalError] = useState("");
   const [success, setSuccess] = useState("");
   const [resendLoading, setResendLoading] = useState(false);
+  const [countdown, setCountdown] = useState(60);
+
+  useEffect(() => {
+    let timer: NodeJS.Timeout;
+    if (countdown > 0) {
+      timer = setInterval(() => {
+        setCountdown((prev) => Math.max(0, prev - 1));
+      }, 1000);
+    }
+    return () => {
+      if (timer) clearInterval(timer);
+    };
+  }, [countdown]);
 
   useEffect(() => {
     const emailParam = searchParams.get("email");
@@ -158,6 +171,7 @@ function VerifyEmailContent() {
 
       if (response.success) {
         setSuccess(getSuccessMessage("resend"));
+        setCountdown(60);
       } else {
         setLocalError(
           getUserFriendlyError(
@@ -424,21 +438,30 @@ function VerifyEmailContent() {
                 component="button"
                 type="button"
                 onClick={handleResendCode}
-                disabled={resendLoading || !email}
+                disabled={resendLoading || !email || countdown > 0}
                 sx={{
                   color: "#005F73",
                   fontWeight: "600",
                   fontFamily: "Source Sans Pro",
                   textDecoration: "none",
-                  cursor: resendLoading || !email ? "not-allowed" : "pointer",
-                  opacity: resendLoading || !email ? 0.5 : 1,
+                  cursor:
+                    resendLoading || !email || countdown > 0
+                      ? "not-allowed"
+                      : "pointer",
+                  opacity: resendLoading || !email || countdown > 0 ? 0.6 : 1,
                   "&:hover": {
                     textDecoration:
-                      !resendLoading && email ? "underline" : "none",
+                      !resendLoading && email && countdown === 0
+                        ? "underline"
+                        : "none",
                   },
                 }}
               >
-                {resendLoading ? "Sending..." : "Resend Code"}
+                {resendLoading
+                  ? "Sending..."
+                  : countdown > 0
+                  ? `Resend Code in ${countdown}s`
+                  : "Resend Code"}
               </Link>
             </Typography>
 

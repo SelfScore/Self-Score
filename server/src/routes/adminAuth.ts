@@ -1,11 +1,12 @@
 import { Router } from 'express';
 import { AdminAuthController } from '../controllers/adminAuth.controller';
 import { adminAuthMiddleware } from '../middleware/adminAuth';
+import { authLimiter } from '../middleware/rateLimiter';
 
 const router = Router();
 
-// Public routes
-router.post('/login', AdminAuthController.login);
+// Public routes (Protected by rate limit)
+router.post('/login', authLimiter, AdminAuthController.login);
 
 // Protected routes
 router.post('/logout', adminAuthMiddleware, AdminAuthController.logout);

@@ -171,6 +171,11 @@ export default function ProfilePage() {
     setShowSuccessMessage(true);
   };
 
+  const handleResendEmailOtp = async () => {
+    if (!pendingEmail) return;
+    await authService.updateProfile({ email: pendingEmail });
+  };
+
   const handleInputChange =
     (field: string) => (event: React.ChangeEvent<HTMLInputElement>) => {
       setFormData((prev) => ({
@@ -963,6 +968,7 @@ export default function ProfilePage() {
           newEmail={pendingEmail}
           onClose={() => setShowEmailVerification(false)}
           onVerify={handleVerifyEmail}
+          onResend={handleResendEmailOtp}
         />
 
         {/* Success Snackbar */}

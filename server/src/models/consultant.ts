@@ -58,6 +58,10 @@ export interface Consultant extends Document {
   verifyCode: string;
   isVerified: boolean;
   verifyCodeExpiry: Date;
+  lastOtpSentAt?: Date;
+  otpRequestCount?: number;
+  otpRequestCountResetAt?: Date;
+  otpFailedAttempts?: number;
 
   // Password Reset & Email Change
   resetPasswordToken?: string; // Used for pending email changes
@@ -244,6 +248,22 @@ const ConsultantSchema: Schema<Consultant> = new Schema(
     isVerified: {
       type: Boolean,
       default: false,
+    },
+    lastOtpSentAt: {
+      type: Date,
+      required: false,
+    },
+    otpRequestCount: {
+      type: Number,
+      default: 0,
+    },
+    otpRequestCountResetAt: {
+      type: Date,
+      required: false,
+    },
+    otpFailedAttempts: {
+      type: Number,
+      default: 0,
     },
 
     // Password Reset & Email Change

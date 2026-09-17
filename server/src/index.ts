@@ -19,6 +19,9 @@ import sessionRegistry from "./services/sessionManager";
 const app: Application = express();
 const PORT = process.env.PORT || 5001;
 
+// Trust reverse proxy (e.g. GCP, AWS, Cloudflare, Nginx) so req.ip and rate limiters work accurately
+app.set("trust proxy", 1);
+
 // Middleware
 app.use(
   cors({

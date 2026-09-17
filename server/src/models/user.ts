@@ -14,6 +14,10 @@ export interface User extends Document {
   verifyCodeExpiry: Date;
   resetPasswordToken?: string;
   resetPasswordExpiry?: Date;
+  lastOtpSentAt?: Date;
+  otpRequestCount?: number;
+  otpRequestCountResetAt?: Date;
+  otpFailedAttempts?: number;
   purchasedLevels: {
     level2: {
       purchased: boolean;
@@ -117,6 +121,22 @@ const UserSchema: Schema<User> = new Schema(
     resetPasswordExpiry: {
       type: Date,
       required: false,
+    },
+    lastOtpSentAt: {
+      type: Date,
+      required: false,
+    },
+    otpRequestCount: {
+      type: Number,
+      default: 0,
+    },
+    otpRequestCountResetAt: {
+      type: Date,
+      required: false,
+    },
+    otpFailedAttempts: {
+      type: Number,
+      default: 0,
     },
     purchasedLevels: {
       level2: {
