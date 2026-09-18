@@ -18,6 +18,7 @@ interface DownloadReportButtonProps {
   fullWidth?: boolean;
   size?: "small" | "medium" | "large";
   disabled?: boolean;
+  buttonText?: string;
 }
 
 export default function DownloadReportButton({
@@ -26,6 +27,7 @@ export default function DownloadReportButton({
   fullWidth = false,
   size = "medium",
   disabled = false,
+  buttonText = "Download Report",
 }: DownloadReportButtonProps) {
   const [isGenerating, setIsGenerating] = useState(false);
   const [progress, setProgress] = useState(0);
@@ -109,7 +111,7 @@ export default function DownloadReportButton({
         },
       }}
     >
-      {isGenerating ? `Generating... ${progress}%` : "Download"}
+      {isGenerating ? `Generating... ${progress}%` : buttonText}
     </Button>
   );
 }

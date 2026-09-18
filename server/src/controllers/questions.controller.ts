@@ -7,7 +7,6 @@ export const getAllQuestions = async (
   req: Request,
   res: Response
 ): Promise<Response> => {
-  console.log("Fetching all questions");
   try {
     const questions = await QuestionModel.find().sort({ order: 1 });
     return res.status(200).json({

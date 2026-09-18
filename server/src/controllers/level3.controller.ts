@@ -131,10 +131,6 @@ export const submitLevel3Responses = async (
     // Ensure score is within 350-900 range (same as Level 1 and Level 2)
     const finalScore = Math.max(350, Math.min(rawScore, 900));
 
-    console.log(`\nLevel 3 Score Calculation:`);
-    console.log(`  - Raw Score: ${rawScore}`);
-    console.log(`  - Final Score (capped 350-900): ${finalScore}`);
-
     // Save responses to QuestionsResponseModel
     const QuestionsResponseModel = (await import("../models/questionsResponse")).default;
     for (const response of responses as Level3Response[]) {
@@ -182,10 +178,6 @@ export const submitLevel3Responses = async (
 
     await user.save();
 
-    console.log(
-      `User ${userId} completed Level 3 with score ${finalScore}/${responses.length * 15}`,
-    );
-
     // Send email notifications
     try {
       await sendTestCompletionEmailToUser({
@@ -206,8 +198,6 @@ export const submitLevel3Responses = async (
         userId: userId,
         isPending: false,
       });
-
-      console.log(`✅ Email notifications sent for Level 3 completion`);
     } catch (emailError) {
       console.error("⚠️  Failed to send email notifications:", emailError);
     }

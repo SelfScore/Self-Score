@@ -59,11 +59,6 @@ export const createLevel1Response = async (
   res: Response,
 ): Promise<Response> => {
   try {
-    console.log(
-      "Received Level 1 submission request:",
-      JSON.stringify(req.body, null, 2),
-    ); // Debug incoming data
-
     const { userId, responses } = req.body;
 
     // Validate and convert userId to ObjectId
@@ -235,10 +230,6 @@ export const createLevel1Response = async (
 
           await user.save();
 
-          console.log(
-            `User ${userId} completed Level 1 with score ${cappedScore}. Level 2 unlocked.`,
-          );
-
           // Send email notifications to user and admin
           try {
             // Send to user
@@ -261,10 +252,6 @@ export const createLevel1Response = async (
               userId: userId,
               isPending: false,
             });
-
-            console.log(
-              `✅ Email notifications sent for Level 1 completion (User: ${user.email})`,
-            );
           } catch (emailError) {
             console.error(
               "⚠️  Failed to send email notifications for Level 1:",
@@ -327,11 +314,6 @@ export const submitLevelResponses = async (
   res: Response,
 ): Promise<Response> => {
   try {
-    console.log(
-      "Received level submission request:",
-      JSON.stringify(req.body, null, 2),
-    );
-
     const { userId, level, responses } = req.body;
 
     // Validate userId
@@ -548,10 +530,6 @@ export const submitLevelResponses = async (
 
         await user.save();
 
-        console.log(
-          `User ${userId} completed Level ${level} with score ${cappedScore} (calculated: ${calculatedScore})`,
-        );
-
         // Send email notifications to user and admin
         try {
           // Send to user
@@ -574,10 +552,6 @@ export const submitLevelResponses = async (
             userId: userId,
             isPending: false,
           });
-
-          console.log(
-            `✅ Email notifications sent for Level ${level} completion (User: ${user.email})`,
-          );
         } catch (emailError) {
           console.error(
             `⚠️  Failed to send email notifications for Level ${level}:`,
@@ -869,11 +843,6 @@ export const generateShareLink = async (
   try {
     const { submissionId } = req.body;
     const userId = (req as any).user?.userId;
-
-    console.log("Generate share link request:");
-    console.log("  - Submission ID:", submissionId);
-    console.log("  - User from token:", (req as any).user);
-    console.log("  - User ID:", userId);
 
     if (!userId) {
       return res.status(401).json({

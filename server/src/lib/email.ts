@@ -457,7 +457,6 @@ export const sendEmail = async (options: EmailOptions): Promise<boolean> => {
       return false;
     }
 
-    console.log("✅ Email sent successfully:", data);
     return true;
   } catch (error) {
     console.error("❌ Failed to send email:", error);

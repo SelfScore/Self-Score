@@ -1514,7 +1514,7 @@ export default function UserDashboard() {
                             >
                               {sharingReport === test._id
                                 ? "Sharing..."
-                                : "Share"}
+                                : "Share Report"}
                             </OutLineButton>
                           </>
                         )}

@@ -479,6 +479,26 @@ export default function SignUpModal({
           required
           disabled={loading}
           SelectProps={{
+            displayEmpty: true,
+            renderValue: (selected) => {
+              if (
+                !selected ||
+                (typeof selected === "string" && selected.length === 0)
+              ) {
+                return (
+                  <span
+                    style={{
+                      color: "#999",
+                      fontSize: "inherit",
+                      fontFamily: "Source Sans Pro",
+                    }}
+                  >
+                    Select your country
+                  </span>
+                );
+              }
+              return selected as string;
+            },
             MenuProps: {
               PaperProps: {
                 style: {
@@ -535,6 +555,28 @@ export default function SignUpModal({
           fullWidth
           required
           disabled={loading}
+          SelectProps={{
+            displayEmpty: true,
+            renderValue: (selected) => {
+              if (
+                !selected ||
+                (typeof selected === "string" && selected.length === 0)
+              ) {
+                return (
+                  <span
+                    style={{
+                      color: "#999",
+                      fontSize: "inherit",
+                      fontFamily: "Source Sans Pro",
+                    }}
+                  >
+                    Select your gender
+                  </span>
+                );
+              }
+              return selected as string;
+            },
+          }}
           InputProps={{
             startAdornment: (
               <InputAdornment position="start">
@@ -581,6 +623,28 @@ export default function SignUpModal({
           fullWidth
           required
           disabled={loading}
+          SelectProps={{
+            displayEmpty: true,
+            renderValue: (selected) => {
+              if (
+                !selected ||
+                (typeof selected === "string" && selected.length === 0)
+              ) {
+                return (
+                  <span
+                    style={{
+                      color: "#999",
+                      fontSize: "inherit",
+                      fontFamily: "Source Sans Pro",
+                    }}
+                  >
+                    Select your age group
+                  </span>
+                );
+              }
+              return selected as string;
+            },
+          }}
           InputProps={{
             startAdornment: (
               <InputAdornment position="start">

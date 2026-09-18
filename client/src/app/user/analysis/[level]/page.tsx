@@ -728,7 +728,7 @@ export default function LevelAnalysisPage() {
                   <FileUploadIcon sx={{ color: "#FFF" }} />
                 )
               }
-              text={sharingReport ? "Generating..." : "Share"}
+              text={sharingReport ? "Generating..." : "Share Report"}
               background="#5C5C5C"
               borderRadius="16px"
               padding="12px 12px"

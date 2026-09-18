@@ -693,7 +693,7 @@ export default function AdminUserDetail() {
                     >
                       {generatingPDF === lastTest._id
                         ? "Generating..."
-                        : "Download"}
+                        : "Download Report"}
                     </Button>
                   ) : lastCompletedLevel === 5 && lastTest ? (
                     <Button
@@ -728,7 +728,7 @@ export default function AdminUserDetail() {
                     >
                       {generatingPDF === lastTest._id
                         ? "Generating..."
-                        : "Download"}
+                        : "Download Report"}
                     </Button>
                   ) : (
                     <DownloadReportButton
@@ -1029,7 +1029,7 @@ export default function AdminUserDetail() {
                               },
                             }}
                           >
-                            {generatingPDF === test._id ? "Generating..." : "Download"}
+                            {generatingPDF === test._id ? "Generating..." : "Download Report"}
                           </Button>
                         ) : test.level === 5 ? (
                           <Button
@@ -1066,7 +1066,7 @@ export default function AdminUserDetail() {
                               },
                             }}
                           >
-                            {generatingPDF === test._id ? "Generating..." : "Download"}
+                            {generatingPDF === test._id ? "Generating..." : "Download Report"}
                           </Button>
                         ) : (
                           <DownloadReportButton

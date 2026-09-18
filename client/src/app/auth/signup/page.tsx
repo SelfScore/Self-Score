@@ -444,6 +444,26 @@ export default function SignUpPage() {
               required
               disabled={isLoading}
               SelectProps={{
+                displayEmpty: true,
+                renderValue: (selected) => {
+                  if (
+                    !selected ||
+                    (typeof selected === "string" && selected.length === 0)
+                  ) {
+                    return (
+                      <span
+                        style={{
+                          color: "#999",
+                          fontSize: "16px",
+                          fontFamily: "Source Sans Pro",
+                        }}
+                      >
+                        Select your country
+                      </span>
+                    );
+                  }
+                  return selected as string;
+                },
                 MenuProps: {
                   PaperProps: {
                     style: {
@@ -517,6 +537,28 @@ export default function SignUpPage() {
               fullWidth
               required
               disabled={isLoading}
+              SelectProps={{
+                displayEmpty: true,
+                renderValue: (selected) => {
+                  if (
+                    !selected ||
+                    (typeof selected === "string" && selected.length === 0)
+                  ) {
+                    return (
+                      <span
+                        style={{
+                          color: "#999",
+                          fontSize: "16px",
+                          fontFamily: "Source Sans Pro",
+                        }}
+                      >
+                        Select your gender
+                      </span>
+                    );
+                  }
+                  return selected as string;
+                },
+              }}
               InputProps={{
                 startAdornment: (
                   <InputAdornment position="start">
@@ -565,6 +607,28 @@ export default function SignUpPage() {
               fullWidth
               required
               disabled={isLoading}
+              SelectProps={{
+                displayEmpty: true,
+                renderValue: (selected) => {
+                  if (
+                    !selected ||
+                    (typeof selected === "string" && selected.length === 0)
+                  ) {
+                    return (
+                      <span
+                        style={{
+                          color: "#999",
+                          fontSize: "16px",
+                          fontFamily: "Source Sans Pro",
+                        }}
+                      >
+                        Select your age group
+                      </span>
+                    );
+                  }
+                  return selected as string;
+                },
+              }}
               InputProps={{
                 startAdornment: (
                   <InputAdornment position="start">
