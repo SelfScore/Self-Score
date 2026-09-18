@@ -2,8 +2,8 @@ import jwt from 'jsonwebtoken';
 import { UserResponse } from '../types/api';
 
 // JWT secret key from environment variables
-const JWT_SECRET = process.env.JWT_SECRET || 'your-super-secret-jwt-key-change-in-production';
-const JWT_EXPIRES_IN = process.env.JWT_EXPIRES_IN || '7d';
+export const JWT_SECRET = process.env.JWT_SECRET || 'your-super-secret-jwt-key-change-in-production';
+export const JWT_EXPIRES_IN = process.env.JWT_EXPIRES_IN || process.env.JWT_EXPIRE || '7d';
 
 // Token payload interface
 export interface TokenPayload {
@@ -100,18 +100,6 @@ export const extractTokenFromCookies = (cookies: any): string | null => {
 };
 
 // Cookie options for setting auth token
-// export const getCookieOptions = () => {
-//     const isProduction = process.env.NODE_ENV === 'production';
-
-//     return {
-//         httpOnly: true,        // Cannot be accessed via JavaScript
-//         secure: isProduction,  // Only sent over HTTPS in production
-//         sameSite: 'lax' as const, // CSRF protection
-//         maxAge: 7 * 24 * 60 * 60 * 1000, // 7 days in milliseconds
-//         path: '/'             // Cookie available for entire domain
-//     };
-// };
-
 export const getCookieOptions = (rememberMe: boolean = false) => {
     const isProduction = process.env.NODE_ENV === 'production';
 
@@ -121,19 +109,16 @@ export const getCookieOptions = (rememberMe: boolean = false) => {
         secure: boolean;
         sameSite: 'lax';
         path: string;
-        maxAge?: number;
+        maxAge: number;
     } = {
         httpOnly: true,
         secure: isProduction, // Only secure in production
         sameSite: 'lax' as 'lax', // 'lax' works better for same-site requests
-        path: '/'
+        path: '/',
+        // Default to 7 days persistent cookie to prevent tab sleep/idle logouts,
+        // or 30 days if rememberMe is enabled
+        maxAge: rememberMe ? 30 * 24 * 60 * 60 * 1000 : 7 * 24 * 60 * 60 * 1000
     };
-
-    // If "Remember Me" is checked, set cookie to expire in 30 days
-    // If not checked, don't set maxAge (session cookie - expires when browser closes)
-    if (rememberMe) {
-        options.maxAge = 30 * 24 * 60 * 60 * 1000; // 30 days in milliseconds
-    }
 
     return options;
 };

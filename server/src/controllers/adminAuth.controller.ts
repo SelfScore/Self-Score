@@ -3,10 +3,7 @@ import bcrypt from "bcryptjs";
 import AdminModel from "../models/admin";
 import { ApiResponse } from "../types/api";
 import jwt from "jsonwebtoken";
-import { getCookieOptions } from "../lib/jwt";
-
-const JWT_SECRET = process.env.JWT_SECRET || "your-secret-key";
-const JWT_EXPIRE = process.env.JWT_EXPIRE || "7d";
+import { getCookieOptions, JWT_SECRET, JWT_EXPIRES_IN } from "../lib/jwt";
 
 export class AdminAuthController {
   // Admin Login
@@ -57,10 +54,10 @@ export class AdminAuthController {
       };
 
       const token = jwt.sign(tokenPayload, JWT_SECRET, {
-        expiresIn: JWT_EXPIRE,
+        expiresIn: JWT_EXPIRES_IN,
       } as jwt.SignOptions);
 
-      const cookieOptions = getCookieOptions();
+      const cookieOptions = getCookieOptions(true); // Admin persistent cookie (30 days)
       res.cookie("adminAuthToken", token, cookieOptions);
       // Set HTTP-only cookie with different name for admin
       // res.cookie('adminAuthToken', token, {

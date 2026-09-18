@@ -5,6 +5,7 @@ import AdminSidebar from "../components/admin/AdminSidebar";
 import { useRouter, usePathname } from "next/navigation";
 import { useEffect, useState, useRef } from "react";
 import { getCurrentAdmin } from "@/services/adminAuthService";
+import SupportHubWidget from "../components/admin/SupportHubWidget";
 
 export default function AdminLayout({
   children,
@@ -89,6 +90,7 @@ export default function AdminLayout({
       >
         {children}
       </Box>
+      <SupportHubWidget />
     </Box>
   );
 }
