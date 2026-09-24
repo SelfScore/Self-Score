@@ -29,6 +29,8 @@ export interface AdminUser {
   countryCode: string;
   phoneNumber: string;
   country?: string;
+  gender?: "Male" | "Female" | "Non-binary" | "Prefer not to say" | string;
+  ageGroup?: "Under 18" | "18-24" | "25-34" | "35-44" | "45-54" | "55+" | string;
   isVerified: boolean;
   purchasedLevels: {
     level2: { purchased: boolean; purchaseDate?: Date; paymentId?: string };
@@ -92,10 +94,12 @@ export const adminService = {
     sortBy: "latest" | "oldest" = "latest",
     filter: "all" | "purchased" | "unpurchased" = "all",
     status: "all" | "active" | "pending" = "all",
+    gender: string = "all",
+    ageGroup: string = "all",
   ): Promise<UsersResponse> => {
     try {
       const response = await api.get(
-        `/api/admin/users?page=${page}&limit=${limit}&search=${search}&sortBy=${sortBy}&filter=${filter}&status=${status}`,
+        `/api/admin/users?page=${page}&limit=${limit}&search=${search}&sortBy=${sortBy}&filter=${filter}&status=${status}&gender=${gender}&ageGroup=${ageGroup}`,
       );
       return response.data;
     } catch (error) {

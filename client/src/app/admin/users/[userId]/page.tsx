@@ -367,7 +367,9 @@ export default function AdminUserDetail() {
                     color: "#2B2B2B",
                   }}
                 >
-                  +{user.countryCode} {user.phoneNumber}
+                  {user.countryCode && user.phoneNumber
+                    ? `+${user.countryCode} ${user.phoneNumber}`
+                    : user.phoneNumber || "N/A"}
                 </Typography>
               </Box>
             </Grid>
@@ -391,6 +393,52 @@ export default function AdminUserDetail() {
                   }}
                 >
                   {user.country || "N/A"}
+                </Typography>
+              </Box>
+            </Grid>
+            <Grid size={{ xs: 12, md: 6, lg: 3 }}>
+              <Box sx={{ mb: { xs: 2, lg: 0 } }}>
+                <Typography
+                  sx={{
+                    fontSize: { xs: "13px", md: "14px" },
+                    color: "#6B7280",
+                    mb: 0.5,
+                    fontWeight: 500,
+                  }}
+                >
+                  Gender
+                </Typography>
+                <Typography
+                  sx={{
+                    fontSize: { xs: "15px", md: "16px" },
+                    fontWeight: 600,
+                    color: "#2B2B2B",
+                  }}
+                >
+                  {user.gender || "N/A"}
+                </Typography>
+              </Box>
+            </Grid>
+            <Grid size={{ xs: 12, md: 6, lg: 3 }}>
+              <Box sx={{ mb: { xs: 2, lg: 0 } }}>
+                <Typography
+                  sx={{
+                    fontSize: { xs: "13px", md: "14px" },
+                    color: "#6B7280",
+                    mb: 0.5,
+                    fontWeight: 500,
+                  }}
+                >
+                  Age Group
+                </Typography>
+                <Typography
+                  sx={{
+                    fontSize: { xs: "15px", md: "16px" },
+                    fontWeight: 600,
+                    color: "#2B2B2B",
+                  }}
+                >
+                  {user.ageGroup || "N/A"}
                 </Typography>
               </Box>
             </Grid>

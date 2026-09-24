@@ -9,6 +9,7 @@ export interface UserData {
   ageGroup?: string;
   phoneNumber?: string;
   countryCode?: string;
+  createdAt?: string | Date;
 }
 
 export interface PurchasedLevelsData {

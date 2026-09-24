@@ -85,6 +85,7 @@ export default function AdminLayout({
         sx={{
           flex: 1,
           marginLeft: "280px",
+          minWidth: 0,
           p: 4,
         }}
       >

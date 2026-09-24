@@ -196,6 +196,18 @@ export class AdminController {
         queryConditions.push({ isVerified: false });
       }
 
+      // Gender filter
+      const gender = (req.query.gender as string) || "all";
+      if (gender && gender !== "all") {
+        queryConditions.push({ gender });
+      }
+
+      // Age Group filter
+      const ageGroup = (req.query.ageGroup as string) || "all";
+      if (ageGroup && ageGroup !== "all") {
+        queryConditions.push({ ageGroup });
+      }
+
       // Combine conditions into searchQuery
       const searchQuery = queryConditions.length > 0 ? { $and: queryConditions } : {};
 

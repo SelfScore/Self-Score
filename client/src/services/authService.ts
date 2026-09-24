@@ -24,6 +24,7 @@ export interface UserData {
   ageGroup?: string;
   countryCode?: string;
   phoneNumber?: string;
+  createdAt?: string | Date;
   purchasedLevels?: {
     level2: {
       purchased: boolean;
@@ -137,6 +138,7 @@ export const authService = {
               ageGroup: result.data.ageGroup,
               countryCode: result.data.countryCode,
               phoneNumber: result.data.phoneNumber,
+              createdAt: result.data.createdAt,
             },
             purchasedLevels: result.data.purchasedLevels,
             progress: result.data.progress,
@@ -192,6 +194,7 @@ export const authService = {
               ageGroup: result.data.ageGroup,
               countryCode: result.data.countryCode,
               phoneNumber: result.data.phoneNumber,
+              createdAt: result.data.createdAt,
             },
             purchasedLevels: result.data.purchasedLevels,
             progress: result.data.progress,
@@ -242,11 +245,15 @@ export const authService = {
     return state.auth.isAuthenticated;
   },
 
-  // Update user profile (username, phone)
+  // Update user profile
   updateProfile: async (data: {
     username?: string;
     email?: string;
     country?: string;
+    gender?: string;
+    ageGroup?: string;
+    countryCode?: string;
+    phoneNumber?: string;
   }): Promise<ApiResponse<UserData>> => {
     store.dispatch(setLoading(true));
 
@@ -266,8 +273,11 @@ export const authService = {
                 email: response.data.email,
                 username: response.data.username,
                 country: response.data.country,
+                gender: response.data.gender,
+                ageGroup: response.data.ageGroup,
                 countryCode: response.data.countryCode,
                 phoneNumber: response.data.phoneNumber,
+                createdAt: response.data.createdAt,
               },
               purchasedLevels: response.data.purchasedLevels,
               progress: response.data.progress,

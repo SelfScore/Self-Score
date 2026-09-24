@@ -15,6 +15,7 @@ export interface UserResponse {
     gender?: string;
     ageGroup?: string;
     isVerified?: boolean;
+    createdAt?: Date;
     purchasedLevels?: {
         level2: {
             purchased: boolean;

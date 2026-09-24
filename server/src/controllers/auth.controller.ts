@@ -203,6 +203,7 @@ export class AuthController {
         ageGroup: newUser.ageGroup,
         countryCode: newUser.countryCode,
         phoneNumber: newUser.phoneNumber,
+        createdAt: (newUser as any).createdAt,
         purchasedLevels: newUser.purchasedLevels,
         progress: newUser.progress,
       };
@@ -427,6 +428,7 @@ export class AuthController {
         ageGroup: user.ageGroup,
         countryCode: user.countryCode,
         phoneNumber: user.phoneNumber,
+        createdAt: (user as any).createdAt,
         purchasedLevels: user.purchasedLevels,
         progress: user.progress,
       };
@@ -578,6 +580,7 @@ export class AuthController {
         ageGroup: user.ageGroup,
         countryCode: user.countryCode,
         phoneNumber: user.phoneNumber,
+        createdAt: (user as any).createdAt,
         purchasedLevels: user.purchasedLevels,
         progress: user.progress,
       };
@@ -811,7 +814,7 @@ export class AuthController {
         return;
       }
 
-      const { username, countryCode, phoneNumber, email, country } =
+      const { username, countryCode, phoneNumber, email, country, gender, ageGroup } =
         validationResult.data;
 
       const user = await UserModel.findById(userId);
@@ -907,6 +910,8 @@ export class AuthController {
       if (countryCode) user.countryCode = countryCode;
       if (phoneNumber) user.phoneNumber = phoneNumber;
       if (country) user.country = country;
+      if (gender) user.gender = gender;
+      if (ageGroup) user.ageGroup = ageGroup;
 
       await user.save();
 
@@ -915,8 +920,11 @@ export class AuthController {
         email: user.email,
         username: user.username,
         country: user.country,
+        gender: user.gender,
+        ageGroup: user.ageGroup,
         countryCode: user.countryCode,
         phoneNumber: user.phoneNumber,
+        createdAt: (user as any).createdAt,
         purchasedLevels: user.purchasedLevels,
         progress: user.progress,
       };
@@ -1043,8 +1051,11 @@ export class AuthController {
         email: user.email,
         username: user.username,
         country: user.country,
+        gender: user.gender,
+        ageGroup: user.ageGroup,
         countryCode: user.countryCode,
         phoneNumber: user.phoneNumber,
+        createdAt: (user as any).createdAt,
         purchasedLevels: user.purchasedLevels,
         progress: user.progress,
       };

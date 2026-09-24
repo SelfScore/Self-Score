@@ -40,6 +40,22 @@ import LogoutConfirmationModal from "@/app/components/ui/LogoutConfirmationModal
 import { authService } from "@/services/authService";
 import { getUserFriendlyError, getSuccessMessage } from "@/utils/errorMessages";
 
+const GENDER_OPTIONS = [
+  "Male",
+  "Female",
+  "Non-binary",
+  "Prefer not to say",
+] as const;
+
+const AGE_GROUP_OPTIONS = [
+  "Under 18",
+  "18-24",
+  "25-34",
+  "35-44",
+  "45-54",
+  "55+",
+] as const;
+
 export default function ProfilePage() {
   const { user, isAuthenticated, isInitialized } = useAuth();
   const router = useRouter();
@@ -58,12 +74,16 @@ export default function ProfilePage() {
     username: "",
     email: "",
     country: "",
+    gender: "",
+    ageGroup: "",
   });
 
   const [originalData, setOriginalData] = useState({
     username: "",
     email: "",
     country: "",
+    gender: "",
+    ageGroup: "",
   });
 
   useEffect(() => {
@@ -75,6 +95,8 @@ export default function ProfilePage() {
         username: user.username || "",
         email: user.email || "",
         country: user.country || "",
+        gender: user.gender || "",
+        ageGroup: user.ageGroup || "",
       };
       setFormData(userData);
       setOriginalData(userData);
@@ -121,6 +143,12 @@ export default function ProfilePage() {
       }
       if (formData.email !== originalData.email) {
         updates.email = formData.email;
+      }
+      if (formData.gender !== originalData.gender && formData.gender) {
+        updates.gender = formData.gender;
+      }
+      if (formData.ageGroup !== originalData.ageGroup && formData.ageGroup) {
+        updates.ageGroup = formData.ageGroup;
       }
 
       if (Object.keys(updates).length === 0) {
@@ -398,10 +426,12 @@ export default function ProfilePage() {
                           fontFamily: "Source Sans Pro",
                         }}
                       >
-                        {new Date().toLocaleDateString("en-US", {
-                          month: "long",
-                          year: "numeric",
-                        })}
+                        {user?.createdAt
+                          ? new Date(user.createdAt).toLocaleDateString("en-US", {
+                              month: "long",
+                              year: "numeric",
+                            })
+                          : "N/A"}
                       </Typography>
                     </Box>
                   </Stack>
@@ -751,7 +781,7 @@ export default function ProfilePage() {
                     </TextField>
                   </Grid>
 
-                  {/* Gender (Read-only) */}
+                  {/* Gender */}
                   <Grid size={{ xs: 12, sm: 6 }}>
                     <Typography
                       variant="caption"
@@ -768,9 +798,31 @@ export default function ProfilePage() {
                       Gender
                     </Typography>
                     <TextField
+                      select
                       fullWidth
-                      value={user?.gender || "Not specified"}
-                      disabled
+                      value={formData.gender}
+                      onChange={handleInputChange("gender")}
+                      disabled={!isEditing}
+                      SelectProps={{
+                        displayEmpty: true,
+                        renderValue: (selected: any) => {
+                          if (!selected) {
+                            return (
+                              <span style={{ color: "#9ca3af" }}>
+                                Not specified
+                              </span>
+                            );
+                          }
+                          return selected;
+                        },
+                        MenuProps: {
+                          PaperProps: {
+                            style: {
+                              maxHeight: 300,
+                            },
+                          },
+                        },
+                      }}
                       InputProps={{
                         startAdornment: (
                           <WcIcon
@@ -782,16 +834,38 @@ export default function ProfilePage() {
                         "& .MuiOutlinedInput-root": {
                           borderRadius: "12px",
                           fontFamily: "Source Sans Pro",
-                          backgroundColor: "#F8FAFB",
+                          backgroundColor: isEditing ? "#fff" : "#F8FAFB",
                           "& fieldset": {
                             borderColor: "rgba(0, 95, 115, 0.2)",
                           },
+                          "&:hover fieldset": {
+                            borderColor: "rgba(0, 95, 115, 0.4)",
+                          },
+                          "&.Mui-focused fieldset": {
+                            borderColor: "#FF4F00",
+                            borderWidth: "2px",
+                          },
+                        },
+                        "& .MuiInputLabel-root": {
+                          fontFamily: "Source Sans Pro",
+                        },
+                        "& .MuiInputLabel-root.Mui-focused": {
+                          color: "#FF4F00",
                         },
                       }}
-                    />
+                    >
+                      <MenuItem value="" disabled>
+                        <em>Select Gender</em>
+                      </MenuItem>
+                      {GENDER_OPTIONS.map((option) => (
+                        <MenuItem key={option} value={option}>
+                          {option}
+                        </MenuItem>
+                      ))}
+                    </TextField>
                   </Grid>
 
-                  {/* Age Group (Read-only) */}
+                  {/* Age Group */}
                   <Grid size={{ xs: 12, sm: 6 }}>
                     <Typography
                       variant="caption"
@@ -808,9 +882,31 @@ export default function ProfilePage() {
                       Age Group
                     </Typography>
                     <TextField
+                      select
                       fullWidth
-                      value={user?.ageGroup || "Not specified"}
-                      disabled
+                      value={formData.ageGroup}
+                      onChange={handleInputChange("ageGroup")}
+                      disabled={!isEditing}
+                      SelectProps={{
+                        displayEmpty: true,
+                        renderValue: (selected: any) => {
+                          if (!selected) {
+                            return (
+                              <span style={{ color: "#9ca3af" }}>
+                                Not specified
+                              </span>
+                            );
+                          }
+                          return selected;
+                        },
+                        MenuProps: {
+                          PaperProps: {
+                            style: {
+                              maxHeight: 300,
+                            },
+                          },
+                        },
+                      }}
                       InputProps={{
                         startAdornment: (
                           <CakeIcon
@@ -822,13 +918,35 @@ export default function ProfilePage() {
                         "& .MuiOutlinedInput-root": {
                           borderRadius: "12px",
                           fontFamily: "Source Sans Pro",
-                          backgroundColor: "#F8FAFB",
+                          backgroundColor: isEditing ? "#fff" : "#F8FAFB",
                           "& fieldset": {
                             borderColor: "rgba(0, 95, 115, 0.2)",
                           },
+                          "&:hover fieldset": {
+                            borderColor: "rgba(0, 95, 115, 0.4)",
+                          },
+                          "&.Mui-focused fieldset": {
+                            borderColor: "#FF4F00",
+                            borderWidth: "2px",
+                          },
+                        },
+                        "& .MuiInputLabel-root": {
+                          fontFamily: "Source Sans Pro",
+                        },
+                        "& .MuiInputLabel-root.Mui-focused": {
+                          color: "#FF4F00",
                         },
                       }}
-                    />
+                    >
+                      <MenuItem value="" disabled>
+                        <em>Select Age Group</em>
+                      </MenuItem>
+                      {AGE_GROUP_OPTIONS.map((option) => (
+                        <MenuItem key={option} value={option}>
+                          {option}
+                        </MenuItem>
+                      ))}
+                    </TextField>
                   </Grid>
                 </Grid>
 

@@ -4,11 +4,11 @@ export const updateProfileSchema = z
   .object({
     username: z
       .string()
-      .min(3, "Username must be at least 3 characters")
-      .max(30, "Username must not exceed 30 characters")
+      .min(2, "Username must be at least 2 characters")
+      .max(50, "Username must not exceed 50 characters")
       .regex(
-        /^[a-zA-Z0-9_]+$/,
-        "Username can only contain letters, numbers, and underscores"
+        /^[a-zA-Z0-9\s@#$%&*()_+\-=\[\]{};':"\\|,.<>\/?!]+$/,
+        "Username contains invalid characters"
       )
       .optional(),
 
@@ -28,6 +28,18 @@ export const updateProfileSchema = z
       .string()
       .min(1, "Country must be at least 1 character")
       .max(50, "Country must not exceed 50 characters")
+      .optional(),
+
+    gender: z
+      .enum(["Male", "Female", "Non-binary", "Prefer not to say"], {
+        message: "Please select a valid gender option",
+      })
+      .optional(),
+
+    ageGroup: z
+      .enum(["Under 18", "18-24", "25-34", "35-44", "45-54", "55+"], {
+        message: "Please select a valid age group",
+      })
       .optional(),
 
     email: z.string().email("Invalid email format").optional(),

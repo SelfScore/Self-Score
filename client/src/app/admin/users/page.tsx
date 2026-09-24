@@ -36,6 +36,24 @@ import CheckCircleIcon from "@mui/icons-material/CheckCircle";
 import CancelIcon from "@mui/icons-material/Cancel";
 import FileDownloadIcon from "@mui/icons-material/FileDownload";
 
+const GENDER_OPTIONS = [
+  { value: "all", label: "All Genders" },
+  { value: "Male", label: "Male" },
+  { value: "Female", label: "Female" },
+  { value: "Non-binary", label: "Non-binary" },
+  { value: "Prefer not to say", label: "Prefer not to say" },
+];
+
+const AGE_GROUP_OPTIONS = [
+  { value: "all", label: "All Age Groups" },
+  { value: "Under 18", label: "Under 18" },
+  { value: "18-24", label: "18-24" },
+  { value: "25-34", label: "25-34" },
+  { value: "35-44", label: "35-44" },
+  { value: "45-54", label: "45-54" },
+  { value: "55+", label: "55+" },
+];
+
 function UsersListContent() {
   const router = useRouter();
   const searchParams = useSearchParams();
@@ -47,6 +65,8 @@ function UsersListContent() {
   const initialSortBy = (searchParams.get("sortBy") as "latest" | "oldest") || "latest";
   const initialFilter = (searchParams.get("filter") as "all" | "purchased" | "unpurchased") || "all";
   const initialStatus = (searchParams.get("status") as "all" | "active" | "pending") || "all";
+  const initialGender = searchParams.get("gender") || "all";
+  const initialAgeGroup = searchParams.get("ageGroup") || "all";
 
   const [users, setUsers] = useState<AdminUser[]>([]);
   const [pagination, setPagination] = useState({
@@ -59,6 +79,8 @@ function UsersListContent() {
   const [sortBy, setSortBy] = useState<"latest" | "oldest">(initialSortBy);
   const [filter, setFilter] = useState<"all" | "purchased" | "unpurchased">(initialFilter);
   const [status, setStatus] = useState<"all" | "active" | "pending">(initialStatus);
+  const [gender, setGender] = useState(initialGender);
+  const [ageGroup, setAgeGroup] = useState(initialAgeGroup);
   const [loading, setLoading] = useState(true);
   const [anchorEl, setAnchorEl] = useState<null | HTMLElement>(null);
   const [selectedUser, setSelectedUser] = useState<AdminUser | null>(null);
@@ -71,7 +93,9 @@ function UsersListContent() {
     searchVal: string,
     sortVal: string,
     filterVal: string,
-    statusVal: string
+    statusVal: string,
+    genderVal: string,
+    ageGroupVal: string
   ) => {
     const params = new URLSearchParams();
     if (page > 1) params.set("page", page.toString());
@@ -80,6 +104,8 @@ function UsersListContent() {
     if (sortVal !== "latest") params.set("sortBy", sortVal);
     if (filterVal !== "all") params.set("filter", filterVal);
     if (statusVal !== "all") params.set("status", statusVal);
+    if (genderVal !== "all") params.set("gender", genderVal);
+    if (ageGroupVal !== "all") params.set("ageGroup", ageGroupVal);
 
     const queryString = params.toString();
     const newUrl = `/admin/users${queryString ? `?${queryString}` : ""}`;
@@ -95,7 +121,9 @@ function UsersListContent() {
         search,
         sortBy,
         filter,
-        status
+        status,
+        gender,
+        ageGroup
       );
       setUsers(response.users);
       setPagination((prev) => ({
@@ -111,10 +139,10 @@ function UsersListContent() {
   };
 
   useEffect(() => {
-    updateUrlParams(pagination.currentPage, pagination.limit, search, sortBy, filter, status);
+    updateUrlParams(pagination.currentPage, pagination.limit, search, sortBy, filter, status, gender, ageGroup);
     fetchUsers();
     // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, [pagination.currentPage, pagination.limit, search, sortBy, filter, status]);
+  }, [pagination.currentPage, pagination.limit, search, sortBy, filter, status, gender, ageGroup]);
 
   const handleSearchChange = (event: React.ChangeEvent<HTMLInputElement>) => {
     setSearch(event.target.value);
@@ -191,7 +219,9 @@ function UsersListContent() {
         search,
         sortBy,
         filter,
-        status
+        status,
+        gender,
+        ageGroup
       );
 
       const allUsers = response.users || [];
@@ -202,6 +232,8 @@ function UsersListContent() {
         "Email",
         "Phone Number",
         "Country",
+        "Gender",
+        "Age Group",
         "Registration Date",
         "Levels Completed",
         "Purchased Levels",
@@ -215,6 +247,8 @@ function UsersListContent() {
         user.email,
         user.phoneNumber ? `+${user.countryCode || ""}${user.phoneNumber}` : "N/A",
         user.country || "N/A",
+        user.gender || "N/A",
+        user.ageGroup || "N/A",
         formatDate(user.createdAt),
         user.progress?.completedLevels?.length > 0
           ? user.progress.completedLevels.join(", ")
@@ -254,37 +288,73 @@ function UsersListContent() {
 
   return (
     <Box>
-      {/* Header */}
-      <Box sx={{ mb: 4 }}>
-        <Typography
+      {/* Header with Title and Export Button */}
+      <Box
+        sx={{
+          mb: 4,
+          display: "flex",
+          justifyContent: "space-between",
+          alignItems: "center",
+          flexWrap: "wrap",
+          gap: 2,
+        }}
+      >
+        <Box>
+          <Typography
+            sx={{
+              fontFamily: "Faustina",
+              fontSize: "32px",
+              fontWeight: 700,
+              color: "#2B2B2B",
+            }}
+          >
+            Users Management
+          </Typography>
+          <Typography
+            sx={{
+              fontFamily: "Source Sans Pro",
+              fontSize: "14px",
+              color: "#6B7280",
+              mt: 0.5,
+            }}
+          >
+            Manage all registered users
+          </Typography>
+        </Box>
+
+        <Button
+          variant="contained"
+          startIcon={<FileDownloadIcon />}
+          onClick={handleExport}
+          disabled={exporting}
           sx={{
-            fontFamily: "Faustina",
-            fontSize: "32px",
-            fontWeight: 700,
-            color: "#2B2B2B",
-          }}
-        >
-          Users Management
-        </Typography>
-        <Typography
-          sx={{
+            borderRadius: "12px",
+            height: "40px",
+            px: 3,
+            backgroundColor: "#005F73",
+            color: "#FFF",
             fontFamily: "Source Sans Pro",
-            fontSize: "14px",
-            color: "#6B7280",
-            mt: 0.5,
+            fontWeight: 600,
+            textTransform: "none",
+            boxShadow: "none",
+            whiteSpace: "nowrap",
+            "&:hover": {
+              backgroundColor: "#004d5e",
+              boxShadow: "none",
+            },
           }}
         >
-          Manage all registered users
-        </Typography>
+          {exporting ? "Exporting..." : "Export to Excel"}
+        </Button>
       </Box>
 
       {/* Search and Filters */}
-      <Box sx={{ mb: 3, display: "flex", gap: 2, alignItems: "center" }}>
+      <Box sx={{ mb: 3, display: "flex", gap: 2, alignItems: "center", flexWrap: "wrap" }}>
         <TextField
           placeholder="Search by email or username..."
           value={search}
           onChange={handleSearchChange}
-          sx={{ flex: 1 }}
+          sx={{ flex: { xs: "1 1 100%", md: "1 1 220px" }, minWidth: "180px" }}
           InputProps={{
             startAdornment: (
               <InputAdornment position="start">
@@ -301,7 +371,7 @@ function UsersListContent() {
           }}
         />
 
-        <FormControl sx={{ minWidth: 150 }}>
+        <FormControl sx={{ minWidth: 130, flex: { xs: "1 1 auto", sm: "0 0 auto" } }}>
           <Select
             value={sortBy}
             onChange={(e: SelectChangeEvent) => {
@@ -321,7 +391,7 @@ function UsersListContent() {
           </Select>
         </FormControl>
 
-        <FormControl sx={{ minWidth: 170 }}>
+        <FormControl sx={{ minWidth: 150, flex: { xs: "1 1 auto", sm: "0 0 auto" } }}>
           <Select
             value={filter}
             onChange={(e: SelectChangeEvent) => {
@@ -342,7 +412,7 @@ function UsersListContent() {
           </Select>
         </FormControl>
 
-        <FormControl sx={{ minWidth: 170 }}>
+        <FormControl sx={{ minWidth: 130, flex: { xs: "1 1 auto", sm: "0 0 auto" } }}>
           <Select
             value={status}
             onChange={(e: SelectChangeEvent) => {
@@ -363,29 +433,51 @@ function UsersListContent() {
           </Select>
         </FormControl>
 
-        <Button
-          variant="contained"
-          startIcon={<FileDownloadIcon />}
-          onClick={handleExport}
-          disabled={exporting}
-          sx={{
-            borderRadius: "12px",
-            height: "40px", // matching the standard MUI Select/TextField outlined heights in theme
-            px: 3,
-            backgroundColor: "#005F73",
-            color: "#FFF",
-            fontFamily: "Source Sans Pro",
-            fontWeight: 600,
-            textTransform: "none",
-            boxShadow: "none",
-            "&:hover": {
-              backgroundColor: "#004d5e",
-              boxShadow: "none",
-            },
-          }}
-        >
-          {exporting ? "Exporting..." : "Export to Excel"}
-        </Button>
+        <FormControl sx={{ minWidth: 140, flex: { xs: "1 1 auto", sm: "0 0 auto" } }}>
+          <Select
+            value={gender}
+            onChange={(e: SelectChangeEvent) => {
+              setGender(e.target.value);
+              setPagination((prev) => ({ ...prev, currentPage: 1 }));
+            }}
+            sx={{
+              borderRadius: "12px",
+              backgroundColor: "#FFF",
+              "& .MuiOutlinedInput-notchedOutline": {
+                borderColor: "#E0E0E0",
+              },
+            }}
+          >
+            {GENDER_OPTIONS.map((option) => (
+              <MenuItem key={option.value} value={option.value}>
+                {option.label}
+              </MenuItem>
+            ))}
+          </Select>
+        </FormControl>
+
+        <FormControl sx={{ minWidth: 150, flex: { xs: "1 1 auto", sm: "0 0 auto" } }}>
+          <Select
+            value={ageGroup}
+            onChange={(e: SelectChangeEvent) => {
+              setAgeGroup(e.target.value);
+              setPagination((prev) => ({ ...prev, currentPage: 1 }));
+            }}
+            sx={{
+              borderRadius: "12px",
+              backgroundColor: "#FFF",
+              "& .MuiOutlinedInput-notchedOutline": {
+                borderColor: "#E0E0E0",
+              },
+            }}
+          >
+            {AGE_GROUP_OPTIONS.map((option) => (
+              <MenuItem key={option.value} value={option.value}>
+                {option.label}
+              </MenuItem>
+            ))}
+          </Select>
+        </FormControl>
       </Box>
 
       {/* Users Table */}
@@ -395,9 +487,10 @@ function UsersListContent() {
           borderRadius: 4,
           border: "1px solid #E0E0E0",
           boxShadow: "none",
+          overflowX: "auto",
         }}
       >
-        <Table>
+        <Table sx={{ minWidth: 1200 }}>
           <TableHead>
             <TableRow sx={{ backgroundColor: "#F9FAFB" }}>
               <TableCell
@@ -406,6 +499,7 @@ function UsersListContent() {
                   fontWeight: 600,
                   color: "#6B7280",
                   fontSize: "14px",
+                  whiteSpace: "nowrap",
                 }}
               >
                 Username
@@ -416,6 +510,7 @@ function UsersListContent() {
                   fontWeight: 600,
                   color: "#6B7280",
                   fontSize: "14px",
+                  whiteSpace: "nowrap",
                 }}
               >
                 Email
@@ -426,6 +521,7 @@ function UsersListContent() {
                   fontWeight: 600,
                   color: "#6B7280",
                   fontSize: "14px",
+                  whiteSpace: "nowrap",
                 }}
               >
                 Country
@@ -436,6 +532,29 @@ function UsersListContent() {
                   fontWeight: 600,
                   color: "#6B7280",
                   fontSize: "14px",
+                  whiteSpace: "nowrap",
+                }}
+              >
+                Gender
+              </TableCell>
+              <TableCell
+                sx={{
+                  fontFamily: "Source Sans Pro",
+                  fontWeight: 600,
+                  color: "#6B7280",
+                  fontSize: "14px",
+                  whiteSpace: "nowrap",
+                }}
+              >
+                Age Group
+              </TableCell>
+              <TableCell
+                sx={{
+                  fontFamily: "Source Sans Pro",
+                  fontWeight: 600,
+                  color: "#6B7280",
+                  fontSize: "14px",
+                  whiteSpace: "nowrap",
                 }}
               >
                 Registration Date
@@ -446,6 +565,7 @@ function UsersListContent() {
                   fontWeight: 600,
                   color: "#6B7280",
                   fontSize: "14px",
+                  whiteSpace: "nowrap",
                 }}
               >
                 Levels Completed
@@ -456,6 +576,7 @@ function UsersListContent() {
                   fontWeight: 600,
                   color: "#6B7280",
                   fontSize: "14px",
+                  whiteSpace: "nowrap",
                 }}
               >
                 Purchased Levels
@@ -466,6 +587,7 @@ function UsersListContent() {
                   fontWeight: 600,
                   color: "#6B7280",
                   fontSize: "14px",
+                  whiteSpace: "nowrap",
                 }}
               >
                 Last Active
@@ -476,17 +598,18 @@ function UsersListContent() {
                   fontWeight: 600,
                   color: "#6B7280",
                   fontSize: "14px",
+                  whiteSpace: "nowrap",
                 }}
               >
                 Status
               </TableCell>
-              <TableCell align="center"></TableCell>
+              <TableCell align="center" sx={{ whiteSpace: "nowrap" }}></TableCell>
             </TableRow>
           </TableHead>
           <TableBody>
             {loading ? (
               <TableRow>
-                <TableCell colSpan={9} align="center" sx={{ py: 4 }}>
+                <TableCell colSpan={11} align="center" sx={{ py: 4 }}>
                   <Typography sx={{ color: "#6B7280" }}>
                     Loading users...
                   </Typography>
@@ -494,7 +617,7 @@ function UsersListContent() {
               </TableRow>
             ) : users.length === 0 ? (
               <TableRow>
-                <TableCell colSpan={9} align="center" sx={{ py: 4 }}>
+                <TableCell colSpan={11} align="center" sx={{ py: 4 }}>
                   <Typography sx={{ color: "#6B7280" }}>
                     No users found
                   </Typography>
@@ -512,7 +635,7 @@ function UsersListContent() {
                     },
                   }}
                 >
-                  <TableCell>
+                  <TableCell sx={{ whiteSpace: "nowrap" }}>
                     <Typography
                       sx={{
                         fontFamily: "Source Sans Pro",
@@ -524,7 +647,7 @@ function UsersListContent() {
                       {user.username}
                     </Typography>
                   </TableCell>
-                  <TableCell>
+                  <TableCell sx={{ whiteSpace: "nowrap" }}>
                     <Typography
                       sx={{
                         fontFamily: "Source Sans Pro",
@@ -535,7 +658,7 @@ function UsersListContent() {
                       {user.email}
                     </Typography>
                   </TableCell>
-                  <TableCell>
+                  <TableCell sx={{ whiteSpace: "nowrap" }}>
                     <Typography
                       sx={{
                         fontFamily: "Source Sans Pro",
@@ -546,7 +669,29 @@ function UsersListContent() {
                       {user.country || "N/A"}
                     </Typography>
                   </TableCell>
-                  <TableCell>
+                  <TableCell sx={{ whiteSpace: "nowrap" }}>
+                    <Typography
+                      sx={{
+                        fontFamily: "Source Sans Pro",
+                        color: "#6B7280",
+                        fontSize: "14px",
+                      }}
+                    >
+                      {user.gender || "N/A"}
+                    </Typography>
+                  </TableCell>
+                  <TableCell sx={{ whiteSpace: "nowrap" }}>
+                    <Typography
+                      sx={{
+                        fontFamily: "Source Sans Pro",
+                        color: "#6B7280",
+                        fontSize: "14px",
+                      }}
+                    >
+                      {user.ageGroup || "N/A"}
+                    </Typography>
+                  </TableCell>
+                  <TableCell sx={{ whiteSpace: "nowrap" }}>
                     <Typography
                       sx={{
                         fontFamily: "Source Sans Pro",
@@ -557,7 +702,7 @@ function UsersListContent() {
                       {formatDate(user.createdAt)}
                     </Typography>
                   </TableCell>
-                  <TableCell>
+                  <TableCell sx={{ whiteSpace: "nowrap" }}>
                     <Chip
                       label={`${user.progress?.completedLevels?.length || 0}/4`}
                       size="small"
@@ -569,7 +714,7 @@ function UsersListContent() {
                       }}
                     />
                   </TableCell>
-                  <TableCell>
+                  <TableCell sx={{ whiteSpace: "nowrap" }}>
                     <Typography
                       sx={{
                         fontFamily: "Source Sans Pro",
@@ -580,7 +725,7 @@ function UsersListContent() {
                       {getPurchasedLevels(user)}
                     </Typography>
                   </TableCell>
-                  <TableCell>
+                  <TableCell sx={{ whiteSpace: "nowrap" }}>
                     <Typography
                       sx={{
                         fontFamily: "Source Sans Pro",
@@ -591,7 +736,7 @@ function UsersListContent() {
                       {formatDate(user.lastActive)}
                     </Typography>
                   </TableCell>
-                  <TableCell>
+                  <TableCell sx={{ whiteSpace: "nowrap" }}>
                     {user.isVerified ? (
                       <Chip
                         icon={<CheckCircleIcon sx={{ fontSize: 16 }} />}
@@ -618,7 +763,7 @@ function UsersListContent() {
                       />
                     )}
                   </TableCell>
-                  <TableCell align="center">
+                  <TableCell align="center" sx={{ whiteSpace: "nowrap" }}>
                     <IconButton
                       onClick={(e) => {
                         e.stopPropagation();
