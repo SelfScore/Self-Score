@@ -423,9 +423,7 @@ const renderEmailLayout = ({
                           <!-- Follow us on section intentionally hidden for now -->
                         </td>
                         <td width="50%" valign="top" class="footer-column footer-column-right" style="padding:0 0 18px 20px; font-size:14px; line-height:1.6; word-break:break-word;">
-                          <p style="margin:0 0 14px 0;"><a href="mailto:info@selfscore.net" style="color:${BRAND_COLORS.muted}; text-decoration:none;">info@selfscore.net</a></p>
-                          <p style="margin:0 0 14px 0;"><a href="tel:+15614300610" style="color:${BRAND_COLORS.muted}; text-decoration:none;">+1 (561) 430-0610</a></p>
-                          <p style="margin:0;">Charlottesville, Virginia, United States</p>
+                          <p style="margin:0;"><a href="mailto:admin@selfscore.net" style="color:${BRAND_COLORS.muted}; text-decoration:none;">admin@selfscore.net</a></p>
                         </td>
                       </tr>
                       ${unsubscribeBlock}
