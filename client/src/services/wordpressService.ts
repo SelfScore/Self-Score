@@ -21,6 +21,7 @@ interface WordPressPost {
   };
   author: number;
   featured_media: number;
+  categories?: number[];
   _embedded?: {
     author?: Array<{
       id: number;
@@ -34,7 +35,24 @@ interface WordPressPost {
       source_url: string;
       alt_text: string;
     }>;
+    'wp:term'?: Array<
+      Array<{
+        id: number;
+        name: string;
+        slug: string;
+        taxonomy: string;
+      }>
+    >;
   };
+}
+
+// WordPress Category Response Interface
+interface WordPressCategory {
+  id: number;
+  count: number;
+  description: string;
+  name: string;
+  slug: string;
 }
 
 // Our internal BlogPost interface (matching your existing structure)
@@ -52,14 +70,39 @@ export interface BlogPost {
   image: string;
   date: string;
   readTime: string;
+  categories?: Array<{
+    id: number;
+    name: string;
+    slug: string;
+  }>;
 }
+
+export interface GetPostsOptions {
+  page?: number;
+  perPage?: number;
+  type?: 'blogs' | 'newsletter' | 'all';
+  search?: string;
+}
+
+export interface GetPostsResponse {
+  posts: BlogPost[];
+  total: number;
+  totalPages: number;
+  hasMore: boolean;
+  page: number;
+}
+
+// In-memory category cache
+let cachedCategories: WordPressCategory[] | null = null;
+let categoryCacheTimestamp = 0;
+const CACHE_TTL_MS = 60 * 1000; // 1 minute cache
 
 // Calculate estimated read time based on content
 function calculateReadTime(content: string): string {
   const wordsPerMinute = 200;
   const text = content.replace(/<[^>]*>/g, ''); // Strip HTML tags
   const wordCount = text.split(/\s+/).length;
-  const minutes = Math.ceil(wordCount / wordsPerMinute);
+  const minutes = Math.max(1, Math.ceil(wordCount / wordsPerMinute));
   return `${minutes} min read`;
 }
 
@@ -72,6 +115,12 @@ function stripHtml(html: string): string {
 function transformWordPressPost(wpPost: WordPressPost): BlogPost {
   const authorData = wpPost._embedded?.author?.[0];
   const featuredMedia = wpPost._embedded?.['wp:featuredmedia']?.[0];
+  const terms = wpPost._embedded?.['wp:term']?.[0] || [];
+  const categories = terms.map((term) => ({
+    id: term.id,
+    name: term.name,
+    slug: term.slug,
+  }));
   
   return {
     id: wpPost.id.toString(),
@@ -91,11 +140,118 @@ function transformWordPressPost(wpPost: WordPressPost): BlogPost {
       day: 'numeric',
     }),
     readTime: calculateReadTime(wpPost.content.rendered),
+    categories,
   };
 }
 
 // Service for WordPress API calls
 export const wordpressService = {
+  /**
+   * Fetch categories from WordPress
+   */
+  async getCategories(): Promise<WordPressCategory[]> {
+    const now = Date.now();
+    if (cachedCategories && now - categoryCacheTimestamp < CACHE_TTL_MS) {
+      return cachedCategories;
+    }
+
+    try {
+      const response = await axios.get<WordPressCategory[]>(`${WORDPRESS_API_URL}/categories`, {
+        params: {
+          per_page: 100,
+        },
+      });
+      cachedCategories = response.data;
+      categoryCacheTimestamp = now;
+      return response.data;
+    } catch (error) {
+      console.error('Error fetching WordPress categories:', error);
+      return [];
+    }
+  },
+
+  /**
+   * Get category ID by slug or name
+   */
+  async getCategoryIdBySlug(slug: string): Promise<number | null> {
+    const categories = await this.getCategories();
+    const targetSlug = slug.toLowerCase();
+    const category = categories.find(
+      (c) => c.slug.toLowerCase() === targetSlug || c.name.toLowerCase() === targetSlug
+    );
+    return category ? category.id : null;
+  },
+
+  /**
+   * Fetch paginated posts supporting 'blogs' vs 'newsletter' category filtering and search
+   */
+  async getPosts(options: GetPostsOptions = {}): Promise<GetPostsResponse> {
+    const { page = 1, perPage = 6, type = 'blogs', search } = options;
+
+    try {
+      const params: Record<string, any> = {
+        page,
+        per_page: perPage,
+        _embed: true, // Include author, media, and terms data
+        status: 'publish', // Only published posts
+      };
+
+      if (search && search.trim()) {
+        params.search = search.trim();
+      }
+
+      // Handle category filtering
+      if (type === 'newsletter') {
+        const newsletterCatId = await this.getCategoryIdBySlug('newsletter') 
+          || await this.getCategoryIdBySlug('newsletters');
+        
+        if (newsletterCatId) {
+          params.categories = newsletterCatId;
+        } else {
+          // If newsletter category doesn't exist yet on WordPress, return empty result gracefully
+          return {
+            posts: [],
+            total: 0,
+            totalPages: 0,
+            hasMore: false,
+            page,
+          };
+        }
+      } else if (type === 'blogs') {
+        const newsletterCatId = await this.getCategoryIdBySlug('newsletter')
+          || await this.getCategoryIdBySlug('newsletters');
+        
+        if (newsletterCatId) {
+          params.categories_exclude = newsletterCatId;
+        }
+      }
+
+      const response = await axios.get<WordPressPost[]>(`${WORDPRESS_API_URL}/posts`, { params });
+
+      const posts = response.data.map(transformWordPressPost);
+      const total = parseInt(response.headers['x-wp-total'] || '0', 10);
+      const totalPages = parseInt(response.headers['x-wp-totalpages'] || '1', 10);
+      const hasMore = page < totalPages;
+
+      return {
+        posts,
+        total,
+        totalPages,
+        hasMore,
+        page,
+      };
+    } catch (error: any) {
+      console.error('Error fetching WordPress posts:', error?.message || error);
+      return {
+        posts: [],
+        total: 0,
+        totalPages: 0,
+        hasMore: false,
+        page,
+      };
+    }
+  },
+
   /**
    * Fetch all blog posts from WordPress
    * @param page - Page number for pagination (default: 1)
@@ -106,34 +262,12 @@ export const wordpressService = {
     total: number;
     totalPages: number;
   }> {
-    try {
-      const response = await axios.get<WordPressPost[]>(`${WORDPRESS_API_URL}/posts`, {
-        params: {
-          page,
-          per_page: perPage,
-          _embed: true, // Include author and featured media data
-          status: 'publish', // Only published posts
-        },
-      });
-
-      const posts = response.data.map(transformWordPressPost);
-      const total = parseInt(response.headers['x-wp-total'] || '0', 10);
-      const totalPages = parseInt(response.headers['x-wp-totalpages'] || '1', 10);
-
-      return {
-        posts,
-        total,
-        totalPages,
-      };
-    } catch (error) {
-      console.error('Error fetching WordPress posts:', error);
-      // Return empty array on error instead of throwing
-      return {
-        posts: [],
-        total: 0,
-        totalPages: 0,
-      };
-    }
+    const result = await this.getPosts({ page, perPage, type: 'all' });
+    return {
+      posts: result.posts,
+      total: result.total,
+      totalPages: result.totalPages,
+    };
   },
 
   /**
@@ -166,20 +300,8 @@ export const wordpressService = {
    * @param searchQuery - Search term
    */
   async searchPosts(searchQuery: string): Promise<BlogPost[]> {
-    try {
-      const response = await axios.get<WordPressPost[]>(`${WORDPRESS_API_URL}/posts`, {
-        params: {
-          search: searchQuery,
-          _embed: true,
-          status: 'publish',
-          per_page: 100,
-        },
-      });
-
-      return response.data.map(transformWordPressPost);
-    } catch (error) {
-      console.error('Error searching WordPress posts:', error);
-      return [];
-    }
+    const result = await this.getPosts({ search: searchQuery, perPage: 100, type: 'all' });
+    return result.posts;
   },
 };
+

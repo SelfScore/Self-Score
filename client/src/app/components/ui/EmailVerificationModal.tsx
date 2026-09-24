@@ -165,6 +165,16 @@ export default function EmailVerificationModal({
           >
             {newEmail}
           </Typography>
+          <Typography
+            component="div"
+            sx={{
+              fontSize: "13px",
+              color: "#6B7280",
+              mt: 0.5,
+            }}
+          >
+            Please check your spam or junk folder if you don&apos;t see it in your inbox.
+          </Typography>
         </Alert>
 
         <Typography

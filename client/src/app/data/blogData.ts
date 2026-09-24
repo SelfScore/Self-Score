@@ -13,8 +13,14 @@ export interface BlogPost {
   image: string;
   date: string;
   readTime: string;
+  categories?: Array<{
+    id: number;
+    name: string;
+    slug: string;
+  }>;
 }
 
 // Note: Static blog data has been removed.
 // All blog posts are now fetched from WordPress via the wordpressService.
 // See /src/services/wordpressService.ts for the WordPress integration.
+

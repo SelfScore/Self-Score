@@ -139,6 +139,6 @@ export const generateReportHTML = (userData: UserReportData): string => {
     </html>
   `;
 
-  // Dynamically replace hardcoded " / 9" totals with the correct dynamic total
-  return html.replace(/ \/ 9/g, ` / ${totalPages}`);
+  // Dynamically replace hardcoded " / 9" in page number divs with the correct dynamic total
+  return html.replace(/(\d+)\s*\/\s*9(?=\s*<\/div>)/g, `$1 / ${totalPages}`);
 };

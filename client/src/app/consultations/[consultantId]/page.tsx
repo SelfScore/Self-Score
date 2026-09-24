@@ -20,7 +20,7 @@ import {
   Alert,
   SelectChangeEvent,
 } from "@mui/material";
-import StarIcon from "@mui/icons-material/Star";
+// import StarIcon from "@mui/icons-material/Star";
 import ArrowBackIcon from "@mui/icons-material/ArrowBack";
 import { useRouter, useParams } from "next/navigation";
 import {
@@ -35,9 +35,9 @@ import TimeSlotPicker from "@/app/components/booking/TimeSlotPicker";
 import { bookingService, TimeSlot } from "@/services/bookingService";
 import OutLineButton from "@/app/components/ui/OutLineButton";
 import ArrowBackIosIcon from "@mui/icons-material/ArrowBackIos";
-import LocationOnOutlinedIcon from "@mui/icons-material/LocationOnOutlined";
-import AccessTimeOutlinedIcon from "@mui/icons-material/AccessTimeOutlined";
-import WorkspacePremiumIcon from "@mui/icons-material/WorkspacePremium";
+// import LocationOnOutlinedIcon from "@mui/icons-material/LocationOnOutlined";
+// import AccessTimeOutlinedIcon from "@mui/icons-material/AccessTimeOutlined";
+// import WorkspacePremiumIcon from "@mui/icons-material/WorkspacePremium";
 
 interface TabPanelProps {
   children?: React.ReactNode;
@@ -432,10 +432,12 @@ export default function ConsultantProfilePage() {
                         mb: 1,
                       }}
                     >
-                      {consultant.coachingSpecialties}
+                      {Array.isArray(consultant.coachingSpecialties)
+                        ? consultant.coachingSpecialties.join(", ")
+                        : consultant.coachingSpecialties}
                     </Typography>
 
-                    <Box
+                    {/* <Box
                       sx={{ display: "flex", alignItems: "center", gap: 1.5 }}
                     >
                       <LocationOnOutlinedIcon
@@ -450,9 +452,9 @@ export default function ConsultantProfilePage() {
                       >
                         {consultant.location}
                       </Typography>
-                    </Box>
+                    </Box> */}
 
-                    <Box
+                    {/* <Box
                       sx={{ display: "flex", alignItems: "center", gap: 1.5 }}
                     >
                       <AccessTimeOutlinedIcon
@@ -467,7 +469,7 @@ export default function ConsultantProfilePage() {
                       >
                         {consultant.yearsOfExperience} years experience
                       </Typography>
-                    </Box>
+                    </Box> */}
                     <Box>
                       <Box sx={{ display: "flex", flexWrap: "wrap", gap: 1 }}>
                         {consultant.languagesSpoken.map((lang) => (
@@ -495,7 +497,7 @@ export default function ConsultantProfilePage() {
                     mt: { xs: 2, md: 0 },
                   }}
                 >
-                  <Box
+                  {/* <Box
                     sx={{
                       display: "flex",
                       alignItems: "right",
@@ -503,8 +505,8 @@ export default function ConsultantProfilePage() {
 
                       gap: 1,
                     }}
-                  >
-                    <StarIcon sx={{ color: "#FF4F00", fontSize: "20px" }} />
+                  > */}
+                    {/* <StarIcon sx={{ color: "#FF4F00", fontSize: "20px" }} />
                     <Typography
                       sx={{
                         fontFamily: "Source Sans Pro",
@@ -514,10 +516,10 @@ export default function ConsultantProfilePage() {
                       }}
                     >
                       4.8
-                    </Typography>
-                  </Box>
-                  <Box>
-                    <Typography
+                    </Typography> */}
+                  {/* </Box> */}
+                  {/* <Box> */}
+                    {/* <Typography
                       sx={{
                         fontFamily: "Source Sans Pro",
                         fontSize: "14px",
@@ -525,9 +527,9 @@ export default function ConsultantProfilePage() {
                       }}
                     >
                       (01 reviews)
-                    </Typography>
-                  </Box>
-                  <Box sx={{ mt: 2 }}>
+                    </Typography> */}
+                  {/* </Box> */}
+                  {/* <Box sx={{ mt: 2 }}>
                     <Typography
                       sx={{
                         fontFamily: "Source Sans Pro",
@@ -552,7 +554,7 @@ export default function ConsultantProfilePage() {
                           .map((s) => s.price || 0)
                       )}
                     </Typography>
-                  </Box>
+                  </Box> */}
                 </Box>
               </Paper>
 
@@ -593,7 +595,7 @@ export default function ConsultantProfilePage() {
                 >
                   <Tab label="About" />
                   <Tab label="Services" />
-                  <Tab label="Reviews" />
+                  {/* <Tab label="Reviews" /> */}
                 </Tabs>
 
                 {/* About Tab */}
@@ -621,7 +623,7 @@ export default function ConsultantProfilePage() {
                     {consultant.professionalBio}
                   </Typography>
 
-                  <Typography
+                  {/* <Typography
                     sx={{
                       fontFamily: "Faustina",
                       fontSize: "20px",
@@ -675,7 +677,7 @@ export default function ConsultantProfilePage() {
                         </Typography>
                       </Box>
                     ))}
-                  </Box>
+                  </Box> */}
 
                   <Typography
                     sx={{
@@ -795,7 +797,7 @@ export default function ConsultantProfilePage() {
                               >
                                 {service.duration} Minute Session
                               </Typography>
-                              <Typography
+                              {/* <Typography
                                 sx={{
                                   fontFamily: "Source Sans Pro",
                                   fontSize: "14px",
@@ -803,7 +805,7 @@ export default function ConsultantProfilePage() {
                                 }}
                               >
                                 ${consultant.hourlyRate}/session
-                              </Typography>
+                              </Typography> */}
                             </Box>
                             {/* <Box
                               sx={{
@@ -872,7 +874,7 @@ export default function ConsultantProfilePage() {
                 </TabPanel>
 
                 {/* Reviews Tab */}
-                <TabPanel value={tabValue} index={2}>
+                {/* <TabPanel value={tabValue} index={2}>
                   <Typography
                     sx={{
                       fontFamily: "Source Sans Pro",
@@ -884,7 +886,7 @@ export default function ConsultantProfilePage() {
                   >
                     No reviews yet. Be the first to book and review!
                   </Typography>
-                </TabPanel>
+                </TabPanel> */}
               </Paper>
             </Box>
 
@@ -953,8 +955,7 @@ export default function ConsultantProfilePage() {
                           key={service.duration}
                           value={service.duration.toString()}
                         >
-                          {service.duration} Minute Session - $
-                          {service.price || 0}
+                          {service.duration} Minute Session 
                         </MenuItem>
                       ))}
                   </Select>

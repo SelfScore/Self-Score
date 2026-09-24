@@ -9,8 +9,8 @@ import {
   Select,
   MenuItem,
   FormControl,
-  Checkbox,
-  FormControlLabel,
+  // Checkbox,
+  // FormControlLabel,
   Card,
   CardContent,
   Chip,
@@ -18,14 +18,14 @@ import {
   CircularProgress,
   Pagination,
   SelectChangeEvent,
-  Slider,
-  Drawer,
-  IconButton,
-  Autocomplete,
+  // Slider,
+  // Drawer,
+  // IconButton,
+  // Autocomplete,
 } from "@mui/material";
 import SearchIcon from "@mui/icons-material/Search";
-import FilterListIcon from "@mui/icons-material/FilterList";
-import CloseIcon from "@mui/icons-material/Close";
+// import FilterListIcon from "@mui/icons-material/FilterList";
+// import CloseIcon from "@mui/icons-material/Close";
 import LocationOnIcon from "@mui/icons-material/LocationOn";
 import StarIcon from "@mui/icons-material/Star";
 // import PersonIcon from "@mui/icons-material/Person";
@@ -34,8 +34,8 @@ import {
   consultantService,
   PublicConsultant,
 } from "@/services/consultantService";
-import GooglePlacesAutocomplete from "@/components/GooglePlacesAutocomplete";
-import { LANGUAGES } from "@/constants/languages";
+// import GooglePlacesAutocomplete from "@/components/GooglePlacesAutocomplete";
+// import { LANGUAGES } from "@/constants/languages";
 import { useAuth } from "@/hooks/useAuth";
 import SignUpModal from "@/app/user/SignUpModal";
 import ButtonSelfScore from "@/app/components/ui/ButtonSelfScore"; // Added import
@@ -53,18 +53,20 @@ export default function ConsultationsPage() {
     "nameAsc" | "nameDesc" | "priceAsc" | "priceDesc"
   >("nameAsc");
   const [showLoginModal, setShowLoginModal] = useState(false);
-  const [filterDrawerOpen, setFilterDrawerOpen] = useState(false);
+  // const [filterDrawerOpen, setFilterDrawerOpen] = useState(false);
 
-  // Filters
+  // Filters (Commented out)
+  /*
   const [locationFilter, setLocationFilter] = useState("");
   const [servicesFilter, setServicesFilter] = useState<string[]>([]);
   const [languageFilter, setLanguageFilter] = useState<string[]>([]);
   const [priceRange, setPriceRange] = useState<number[]>([0, 150]);
   const [minRating, setMinRating] = useState(0);
+  */
 
   // Pagination
   const [currentPage, setCurrentPage] = useState(1);
-  const itemsPerPage = 6;
+  const itemsPerPage = 8;
 
   useEffect(() => {
     fetchConsultants();
@@ -76,11 +78,13 @@ export default function ConsultationsPage() {
     consultants,
     searchQuery,
     sortBy,
+    /*
     locationFilter,
     servicesFilter,
     languageFilter,
     priceRange,
     minRating,
+    */
   ]);
 
   const fetchConsultants = async () => {
@@ -112,6 +116,7 @@ export default function ConsultationsPage() {
       );
     }
 
+    /*
     // Location filter
     if (locationFilter.trim()) {
       filtered = filtered.filter((c) =>
@@ -153,6 +158,7 @@ export default function ConsultationsPage() {
       const defaultRating = 4.8;
       filtered = filtered.filter(() => defaultRating >= minRating);
     }
+    */
 
     // Sort
     filtered.sort((a, b) => {
@@ -191,6 +197,7 @@ export default function ConsultationsPage() {
     router.push(`/consultations/${consultantId}`);
   };
 
+  /*
   const handleServiceFilterChange = (sessionType: string) => {
     setServicesFilter((prev) =>
       prev.includes(sessionType)
@@ -198,6 +205,7 @@ export default function ConsultationsPage() {
         : [...prev, sessionType]
     );
   };
+  */
 
   // Pagination
   const paginatedConsultants = filteredConsultants.slice(
@@ -245,8 +253,7 @@ export default function ConsultationsPage() {
                 color: "#666",
               }}
             >
-              Connect with certified wellness coaches who can guide you on your
-              journey to better health and well-being
+              Understand your results better, share what’s on your mind, and get support when you need it.
             </Typography>
           </Box>
 
@@ -326,6 +333,7 @@ export default function ConsultationsPage() {
             }}
           >
             {/* Mobile Filter Button */}
+            {/*
             <Box
               sx={{
                 display: { xs: "flex", md: "none" },
@@ -351,8 +359,10 @@ export default function ConsultationsPage() {
                 Filters
               </Button>
             </Box>
+            */}
 
             {/* Filters Sidebar - Desktop Only */}
+            {/*
             <Box sx={{ width: "300px", flexShrink: 0, display: { xs: "none", md: "block" } }}>
               <Box
                 sx={{
@@ -376,7 +386,7 @@ export default function ConsultationsPage() {
                   Filters
                 </Typography>
 
-                {/* Location */}
+                // Location
                 <Box sx={{ mb: 3 }}>
                   <Typography
                     sx={{
@@ -401,7 +411,7 @@ export default function ConsultationsPage() {
                   />
                 </Box>
 
-                {/* Services Offered */}
+                // Services Offered
                 <Box sx={{ mb: 3 }}>
                   <Typography
                     sx={{
@@ -446,7 +456,7 @@ export default function ConsultationsPage() {
                   />
                 </Box>
 
-                {/* Language */}
+                // Language
                 <Box sx={{ mb: 3 }}>
                   <Typography
                     sx={{
@@ -493,7 +503,7 @@ export default function ConsultationsPage() {
                   />
                 </Box>
 
-                {/* Price Range */}
+                // Price Range
                 <Box sx={{ mb: 3 }}>
                   <Typography
                     sx={{
@@ -518,7 +528,7 @@ export default function ConsultationsPage() {
                   />
                 </Box>
 
-                {/* Minimum Rating */}
+                // Minimum Rating
                 <Box sx={{ mb: 3 }}>
                   <Typography
                     sx={{
@@ -575,8 +585,10 @@ export default function ConsultationsPage() {
                 </Box>
               </Box>
             </Box>
+            */}
 
             {/* Mobile Filter Drawer */}
+            {/*
             <Drawer
               anchor="right"
               open={filterDrawerOpen}
@@ -606,7 +618,7 @@ export default function ConsultationsPage() {
                 </IconButton>
               </Box>
 
-              {/* Location */}
+              // Location
               <Box sx={{ mb: 3 }}>
                 <Typography
                   sx={{
@@ -631,7 +643,7 @@ export default function ConsultationsPage() {
                 />
               </Box>
 
-              {/* Services Offered */}
+              // Services Offered
               <Box sx={{ mb: 3 }}>
                 <Typography
                   sx={{
@@ -676,7 +688,7 @@ export default function ConsultationsPage() {
                 />
               </Box>
 
-              {/* Language */}
+              // Language
               <Box sx={{ mb: 3 }}>
                 <Typography
                   sx={{
@@ -723,7 +735,7 @@ export default function ConsultationsPage() {
                 />
               </Box>
 
-              {/* Price Range */}
+              // Price Range
               <Box sx={{ mb: 3 }}>
                 <Typography
                   sx={{
@@ -748,7 +760,7 @@ export default function ConsultationsPage() {
                 />
               </Box>
 
-              {/* Minimum Rating */}
+              // Minimum Rating
               <Box sx={{ mb: 3 }}>
                 <Typography
                   sx={{
@@ -804,7 +816,7 @@ export default function ConsultationsPage() {
                 ))}
               </Box>
 
-              {/* Apply Filters Button */}
+              // Apply Filters Button
               <Button
                 fullWidth
                 onClick={() => setFilterDrawerOpen(false)}
@@ -826,6 +838,7 @@ export default function ConsultationsPage() {
                 Apply Filters
               </Button>
             </Drawer>
+            */}
 
             {/* Consultants Grid */}
             <Box
@@ -868,7 +881,8 @@ export default function ConsultationsPage() {
                       gridTemplateColumns: {
                         xs: "1fr",
                         sm: "repeat(2, 1fr)",
-                        lg: "repeat(3, 1fr)",
+                        md: "repeat(3, 1fr)",
+                        lg: "repeat(4, 1fr)",
                       },
                       gap: 3,
                     }}
@@ -921,21 +935,19 @@ export default function ConsultationsPage() {
                           </Box>
                           <CardContent sx={{ p: 2 }}>
                             {/* Languages */}
-                            <Box sx={{ display: "flex", gap: 1, mb: 1.5 }}>
-                              {consultant.languagesSpoken
-                                .slice(0, 2)
-                                .map((lang) => (
-                                  <Chip
-                                    key={lang}
-                                    label={lang}
-                                    size="small"
-                                    sx={{
-                                      backgroundColor: "#F5F5F5",
-                                      fontSize: "12px",
-                                      height: "24px",
-                                    }}
-                                  />
-                                ))}
+                            <Box sx={{ display: "flex", flexWrap: "wrap", gap: 1, mb: 1.5 }}>
+                              {consultant.languagesSpoken.map((lang) => (
+                                <Chip
+                                  key={lang}
+                                  label={lang}
+                                  size="small"
+                                  sx={{
+                                    backgroundColor: "#F5F5F5",
+                                    fontSize: "12px",
+                                    height: "24px",
+                                  }}
+                                />
+                              ))}
                             </Box>
 
                             {/* Name */}
@@ -957,7 +969,7 @@ export default function ConsultationsPage() {
                                 display: "flex",
                                 alignItems: "center",
                                 gap: 0.5,
-                                mb: 1,
+                                mb: 2,
                               }}
                             >
                               <LocationOnIcon
@@ -973,39 +985,6 @@ export default function ConsultationsPage() {
                                 {consultant.location}
                               </Typography>
                             </Box>
-
-                            {/* Experience */}
-                            <Typography
-                              sx={{
-                                fontFamily: "Source Sans Pro",
-                                fontSize: "14px",
-                                color: "#666",
-                                mb: 1.5,
-                              }}
-                            >
-                              {consultant.yearsOfExperience} years experience
-                            </Typography>
-
-                            {/* Price */}
-                            <Typography
-                              sx={{
-                                fontFamily: "Source Sans Pro",
-                                fontSize: "16px",
-                                fontWeight: 600,
-                                color: "#1A1A1A",
-                                mb: 2,
-                              }}
-                            >
-                              Starting from{" "}
-                              <span style={{ color: "#005F73" }}>
-                                $
-                                {Math.min(
-                                  ...consultant.services
-                                    .filter((s) => s.enabled && s.price)
-                                    .map((s) => s.price || 0)
-                                )}
-                              </span>
-                            </Typography>
 
                             {/* Book Button */}
                             <Button

@@ -227,7 +227,7 @@ export const generateKeyOutcomesPage = (content: ReportContent, _currentLevel: n
       `).join('')}
       </div>
 
-      <h3 style="font-size: 28px; font-weight: 700; color: #2B2B2B; margin: 40px 0 16px 0; position: relative; z-index: 1;">Still Confused?</h3>
+      <h3 style="font-size: 28px; font-weight: 700; color: #2B2B2B; margin: 40px 0 16px 0; position: relative; z-index: 1;">Still confused?</h3>
 
       <div style="background: linear-gradient(135deg, #4A9EAE 0%, #5BB5C5 100%); border-radius: 16px; padding: 32px; color: white; position: relative; overflow: hidden; z-index: 1; min-height: 280px; display: flex; align-items: center;">
         <!-- People Image inside consultation box (behind content) -->
@@ -246,9 +246,8 @@ export const generateKeyOutcomesPage = (content: ReportContent, _currentLevel: n
         />
         
         <div style="position: relative; z-index: 2; max-width: 60%;">
-          <h4 style="font-size: 24px; font-weight: 700; margin: 0 0 8px 0; color: #FFFFFF;">Book a Consultation with a</h4>
-          <h4 style="font-size: 24px; font-weight: 700; margin: 0 0 16px 0; color: #FFFFFF;">Certified Life Coach</h4>
-          <p style="font-size: 14px; margin: 0 0 24px 0; line-height: 1.5; color: #FFFFFF;">Get one-on-one guidance from a certified life coach to help you understand your results and create a clear path forward.</p>
+          <h4 style="font-size: 22px; font-weight: 700; margin: 0 0 16px 0; color: #FFFFFF; line-height: 1.3;">Not Sure What Your Results Mean? Let’s Talk.</h4>
+          <p style="font-size: 14px; margin: 0 0 24px 0; line-height: 1.5; color: #FFFFFF;">Share your questions, challenges, or concerns with us and get a clearer understanding of what your results could mean for you.</p>
           <a href="${consultantUrl}" style="
             background: #FFFFFF;
             border-radius: 12px;
@@ -261,7 +260,7 @@ export const generateKeyOutcomesPage = (content: ReportContent, _currentLevel: n
             text-decoration: none;
             font-family: 'Source Sans Pro', -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif;
           ">
-            <span style="color: #FF4F00; font-weight: 400; display: inline-block;"> Book a Consultation Call</span>
+            <span style="color: #FF4F00; font-weight: 600; display: inline-block;">Book a Free Call</span>
           </a>
         </div>
       </div>
@@ -317,19 +316,12 @@ export const generateThankYouPage = (): string => {
       <h1 style="font-size: 64px; font-weight: 700; color: #0C677A; margin: 0 0 40px 0;">Thank You</h1>
 
       <div style="margin-bottom: 24px;">
-        <div style="display: flex; align-items: center; gap: 12px; margin-bottom: 16px;">
+        <div style="display: flex; align-items: center; gap: 12px;">
           <svg width="24" height="24" viewBox="0 0 24 24" fill="none">
             <rect x="2" y="4" width="20" height="16" rx="2" stroke="#666" stroke-width="2"/>
             <path d="M2 7L12 13L22 7" stroke="#666" stroke-width="2"/>
           </svg>
-          <span style="font-size: 18px; color: #666;">info@selfscore.net</span>
-        </div>
-
-        <div style="display: flex; align-items: center; gap: 12px;">
-          <svg width="24" height="24" viewBox="0 0 24 24" fill="none">
-            <path d="M22 16.92V19.92C22 20.47 21.55 20.92 21 20.92C10.95 20.42 3 12.47 2.5 2.42C2.5 1.87 2.95 1.42 3.5 1.42H6.5C7.05 1.42 7.5 1.87 7.5 2.42V6.92C7.5 7.47 7.05 7.92 6.5 7.92H4.5C4.95 13.42 10.5 18.97 16 19.42V17.42C16 16.87 16.45 16.42 17 16.42H21.5C22.05 16.42 22.5 16.87 22.5 17.42V16.92Z" stroke="#666" stroke-width="2"/>
-          </svg>
-          <span style="font-size: 18px; color: #666;">+1 (561) 430-0610</span>
+          <span style="font-size: 18px; color: #666;">support@selfscore.net</span>
         </div>
       </div>
 

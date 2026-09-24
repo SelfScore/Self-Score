@@ -6,9 +6,9 @@ import { formatDate } from '../utils/scoreUtils';
 export const generateUserDetailsPage = (userData: UserReportData): string => {
   // Format the phone number with country code
   const formattedPhoneNumber = userData.phoneNumber || 'Not provided';
-  
   const formattedDate = formatDate(userData.reportDate);
   const planBadge = userData.level === 1 ? 'FREE' : 'PREMIUM';
+  const maxScore = 900;
   
   return `
     <div style="
@@ -146,7 +146,7 @@ export const generateUserDetailsPage = (userData: UserReportData): string => {
             padding: 16px 20px;
             color: #2B2B2B;
             font-weight: 600;
-          ">${userData.score} / ${userData.maxScore}</td>
+          ">${userData.score} / ${maxScore}</td>
         </tr>
       </table>
 

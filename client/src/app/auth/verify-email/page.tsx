@@ -427,7 +427,7 @@ function VerifyEmailContent() {
             <Typography
               sx={{
                 textAlign: "center",
-                mb: 3,
+                mb: 1,
                 color: "#6B7280",
                 fontSize: "16px",
                 fontFamily: "Source Sans Pro",
@@ -463,6 +463,18 @@ function VerifyEmailContent() {
                   ? `Resend Code in ${countdown}s`
                   : "Resend Code"}
               </Link>
+            </Typography>
+
+            <Typography
+              sx={{
+                textAlign: "center",
+                mb: 3,
+                color: "#6B7280",
+                fontSize: { xs: "13px", md: "14px" },
+                fontFamily: "Source Sans Pro",
+              }}
+            >
+              Please check your spam or junk folder if you don&apos;t see it in your inbox.
             </Typography>
 
             <Button

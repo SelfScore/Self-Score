@@ -1,11 +1,11 @@
 // Score Summary Page Generator (Page 3)
 
 import { UserReportData } from '../types';
-import { getScoreMeaning, formatDate } from '../utils/scoreUtils';
+import { formatDate } from '../utils/scoreUtils';
 
 export const generateScoreSummaryPage = (userData: UserReportData): string => {
-  const meaning = getScoreMeaning(userData.score);
-  const percentage = (userData.score / userData.maxScore) * 100;
+  const maxScore = 900;
+  const percentage = (userData.score / maxScore) * 100;
   const formattedDate = formatDate(userData.reportDate);
   
   // Calculate position on slider (0-100%) based on the actual scale breakpoints
@@ -173,7 +173,7 @@ export const generateScoreSummaryPage = (userData: UserReportData): string => {
               font-size: 14px;
               color: #666;
               margin-top: 4px;
-            ">out of ${userData.maxScore}</div>
+            ">out of ${maxScore}</div>
           </div>
         </div>
       </div>
@@ -259,32 +259,6 @@ export const generateScoreSummaryPage = (userData: UserReportData): string => {
             <div style="font-size: 11px; color: #666;">(Score: 900)</div>
           </div>
         </div>
-      </div>
-
-      <!-- Meaning Box -->
-      <div style="
-        background: #FFEBE4;
-        border-radius: 16px;
-        border: 1px solid #FF6B354D;
-        padding: 20px 24px;
-        position: relative;
-        z-index: 1;
-        font-family: 'Source Sans Pro', -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif;
-      ">
-        <h4 style="
-          font-size: 18px;
-          font-weight: 700;
-          color: #2B2B2B;
-          margin: 0 0 12px 0;
-          font-family: 'Faustina', 'Source Sans Pro', -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif;
-        ">Your Self Score Meaning</h4>
-        
-        <p style="
-          font-size: 14px;
-          color: #666;
-          margin: 0;
-          line-height: 1.6;
-        ">${meaning}</p>
       </div>
 
       <!-- Page Number -->

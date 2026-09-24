@@ -903,7 +903,7 @@ export default function Step1PersonalInfo({
             }}
           >
             We've sent a 6-digit verification code to{" "}
-            <strong>{formData.email}</strong>
+            <strong>{formData.email}</strong>. Please check your spam or junk folder if you don&apos;t see it in your inbox.
           </Typography>
 
           {verificationError && (
@@ -968,6 +968,16 @@ export default function Step1PersonalInfo({
                   ? `Resend in ${countdown}s`
                   : "Resend"}
               </span>
+            </Typography>
+            <Typography
+              sx={{
+                fontFamily: "Source Sans Pro",
+                fontSize: "13px",
+                color: "#888",
+                mt: 1,
+              }}
+            >
+              Please check your spam or junk folder if you don&apos;t see it in your inbox.
             </Typography>
           </Box>
         </DialogContent>

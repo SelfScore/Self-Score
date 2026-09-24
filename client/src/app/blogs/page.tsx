@@ -8,54 +8,60 @@ export const dynamic = "force-dynamic";
 
 export const metadata: Metadata = {
   title:
-    "Self Score Blog | Personal Growth, Mindfulness & Self Awareness Insights",
+    "Self Score Blog & Newsletter | Personal Growth, Mindfulness & Self Awareness Insights",
   description:
-    "Read the Self Score blog for practical tips on self-improvement, happiness, mindfulness, inner peace, personal growth, and spiritual reflection.",
+    "Read the Self Score blog and newsletter for practical tips on self-improvement, happiness, mindfulness, inner peace, personal growth, and spiritual reflection.",
   keywords: [
     "personal growth blog",
     "self improvement articles",
     "mindfulness blog",
     "self awareness blog",
     "happiness tips",
+    "newsletter",
   ],
   openGraph: {
     title:
-      "Self Score Blog | Personal Growth, Mindfulness & Self Awareness Insights",
+      "Self Score Blog & Newsletter | Personal Growth, Mindfulness & Self Awareness Insights",
     description:
-      "Read the Self Score blog for practical tips on self-improvement, happiness, mindfulness, inner peace, personal growth, and spiritual reflection.",
+      "Read the Self Score blog and newsletter for practical tips on self-improvement, happiness, mindfulness, inner peace, personal growth, and spiritual reflection.",
     url: "https://www.selfscore.net/blogs/",
   },
   alternates: {
     canonical: "https://www.selfscore.net/blogs/",
   },
 };
-// Server Component - Fetch data at request time (SSR)
+
+// Server Component - Fetch initial batch at request time (SSR)
 export default async function BlogsPage() {
-  // Fetch all blog posts from WordPress
-  const { posts: blogPosts } = await wordpressService.getAllPosts();
+  // Fetch initial 6 blog posts from WordPress for "blogs" tab
+  const initialData = await wordpressService.getPosts({
+    page: 1,
+    perPage: 6,
+    type: "blogs",
+  });
 
   return (
     <Box
       sx={{
         minHeight: "100vh",
         bgcolor: "#FFF",
-        py: { xs: 10, md: 10 },
+        py: { xs: 8, md: 10 },
       }}
     >
       <Container maxWidth="lg">
         {/* Page Title */}
-        <Box sx={{ textAlign: "center", mb: { xs: 4, md: 6 } }}>
+        <Box sx={{ textAlign: "center", mb: { xs: 3, md: 4 } }}>
           <Typography
             sx={{
               fontWeight: "700",
               fontFamily: "faustina",
               color: "#000",
-              mb: 3,
+              mb: 2,
               mt: { xs: 0, md: 4 },
               fontSize: { xs: "2rem", sm: "2.5rem", md: "40px" },
             }}
           >
-            Blogs
+            Blogs & Newsletter
           </Typography>
           <Typography
             sx={{
@@ -72,9 +78,15 @@ export default async function BlogsPage() {
           </Typography>
         </Box>
 
-        {/* Client-side wrapper for search and pagination */}
-        <BlogsClientWrapper initialBlogs={blogPosts} />
+        {/* Client-side wrapper with category chips, search, and infinite scroll */}
+        <BlogsClientWrapper
+          initialPosts={initialData.posts}
+          initialTotal={initialData.total}
+          initialHasMore={initialData.hasMore}
+          initialType="blogs"
+        />
       </Container>
     </Box>
   );
 }
+

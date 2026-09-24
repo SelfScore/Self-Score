@@ -1031,7 +1031,7 @@ export default function SignUpModal({
         <Typography
           sx={{
             textAlign: "center",
-            mb: { xs: 2, sm: 2.5 },
+            mb: 0.75,
             color: "#6B7280",
             fontSize: { xs: "12px", sm: "14px" },
             fontFamily: "Source Sans Pro",
@@ -1064,6 +1064,18 @@ export default function SignUpModal({
               ? `Resend Code in ${countdown}s`
               : "Resend Code"}
           </Link>
+        </Typography>
+
+        <Typography
+          sx={{
+            textAlign: "center",
+            mb: { xs: 2, sm: 2.5 },
+            color: "#6B7280",
+            fontSize: { xs: "11px", sm: "12px" },
+            fontFamily: "Source Sans Pro",
+          }}
+        >
+          Please check your spam or junk folder if you don&apos;t see it in your inbox.
         </Typography>
 
         <ButtonSelfScore
