@@ -184,6 +184,9 @@ export default function TestInfo({ initialLevel }: TestInfoProps) {
 
     // Don't proceed if cannot attempt
     if (!attemptAccess.canAttempt) {
+      if (attemptAccess.reason === "AUTH_REQUIRED") {
+        router.push("/auth/signin");
+      }
       return;
     }
     // Proceed to test
@@ -1015,9 +1018,11 @@ export default function TestInfo({ initialLevel }: TestInfoProps) {
             >
               <ButtonSelfScore
                 text={
-                  showRemainingAttempts
-                    ? `Start Assessment (${remainingAttempts} attempt${remainingAttempts !== 1 ? "s" : ""} left)`
-                    : "Start Assessment"
+                  checkTestAttemptAccess(activeLevel + 1).reason === "AUTH_REQUIRED"
+                    ? "Log In to Start Assessment"
+                    : showRemainingAttempts
+                      ? `Start Assessment (${remainingAttempts} attempt${remainingAttempts !== 1 ? "s" : ""} left)`
+                      : "Start Assessment"
                 }
                 endIcon={<ArrowForwardIcon sx={{ color: "#FFF" }} />}
                 onClick={handleStartAssessment}
@@ -1026,18 +1031,27 @@ export default function TestInfo({ initialLevel }: TestInfoProps) {
                 borderRadius="12px"
                 fontSize="16px"
                 fullWidth={true}
-                disabled={!checkTestAttemptAccess(activeLevel + 1).canAttempt}
+                disabled={
+                  !checkTestAttemptAccess(activeLevel + 1).canAttempt &&
+                  checkTestAttemptAccess(activeLevel + 1).reason !== "AUTH_REQUIRED"
+                }
                 style={{
-                  backgroundColor: checkTestAttemptAccess(activeLevel + 1)
-                    .canAttempt
-                    ? "#FF5722"
-                    : "#CACACA",
-                  cursor: checkTestAttemptAccess(activeLevel + 1).canAttempt
-                    ? "pointer"
-                    : "not-allowed",
-                  opacity: checkTestAttemptAccess(activeLevel + 1).canAttempt
-                    ? 1
-                    : 0.6,
+                  backgroundColor:
+                    checkTestAttemptAccess(activeLevel + 1).canAttempt
+                      ? "#FF5722"
+                      : checkTestAttemptAccess(activeLevel + 1).reason === "AUTH_REQUIRED"
+                        ? "#005F73"
+                        : "#CACACA",
+                  cursor:
+                    checkTestAttemptAccess(activeLevel + 1).canAttempt ||
+                    checkTestAttemptAccess(activeLevel + 1).reason === "AUTH_REQUIRED"
+                      ? "pointer"
+                      : "not-allowed",
+                  opacity:
+                    checkTestAttemptAccess(activeLevel + 1).canAttempt ||
+                    checkTestAttemptAccess(activeLevel + 1).reason === "AUTH_REQUIRED"
+                      ? 1
+                      : 0.6,
                 }}
                 textStyle={{
                   fontWeight: 400,
@@ -1054,12 +1068,34 @@ export default function TestInfo({ initialLevel }: TestInfoProps) {
                     textAlign: "center",
                   }}
                 >
-                  {activeLevel === 4 && isLevel4PendingReview
-                    ? "⚠️ Level 4 review is pending. You can attempt Level 5 after admin reviews your Level 4 submission."
-                    : checkTestAttemptAccess(activeLevel + 1).reason ===
-                        "PREVIOUS_LEVEL_NOT_COMPLETED"
-                      ? `⚠️ Please complete Level ${checkTestAttemptAccess(activeLevel + 1).missingLevel || activeLevel} first`
-                      : `⚠️ Please purchase this level to continue`}
+                  {activeLevel === 4 && isLevel4PendingReview ? (
+                    "⚠️ Level 4 review is pending. You can attempt Level 5 after admin reviews your Level 4 submission."
+                  ) : checkTestAttemptAccess(activeLevel + 1).reason === "AUTH_REQUIRED" ? (
+                    <>
+                      ⚠️ Please{" "}
+                      <Box
+                        component="span"
+                        onClick={() => router.push("/auth/signin")}
+                        sx={{
+                          textDecoration: "underline",
+                          cursor: "pointer",
+                          fontWeight: 600,
+                          color: "#005F73",
+                          "&:hover": { color: "#FF5722" },
+                        }}
+                      >
+                        log in
+                      </Box>{" "}
+                      first to access {currentLevel.isFree ? "this free level" : "this assessment"}.
+                    </>
+                  ) : checkTestAttemptAccess(activeLevel + 1).reason ===
+                    "PREVIOUS_LEVEL_NOT_COMPLETED" ? (
+                    `⚠️ Please complete Level ${
+                      checkTestAttemptAccess(activeLevel + 1).missingLevel || activeLevel
+                    } first`
+                  ) : (
+                    `⚠️ Please purchase this level to continue`
+                  )}
                 </Typography>
               )}
             </Box>

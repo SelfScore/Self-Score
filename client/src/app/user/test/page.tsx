@@ -137,7 +137,10 @@ function TestContent() {
   const attemptAccess = checkTestAttemptAccess(level);
 
   if (!attemptAccess.canAttempt) {
-    if (attemptAccess.reason === "SUBSCRIPTION_REQUIRED") {
+    if (
+      attemptAccess.reason === "SUBSCRIPTION_REQUIRED" ||
+      attemptAccess.reason === "AUTH_REQUIRED"
+    ) {
       return <SubscriptionRequired level={level} />;
     }
     if (attemptAccess.reason === "PREVIOUS_LEVEL_NOT_COMPLETED") {

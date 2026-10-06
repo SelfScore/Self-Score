@@ -7,7 +7,7 @@ export interface LevelAccess {
 
 export interface TestAttemptAccess {
   canAttempt: boolean;
-  reason: "PREVIOUS_LEVEL_NOT_COMPLETED" | "SUBSCRIPTION_REQUIRED" | null;
+  reason: "PREVIOUS_LEVEL_NOT_COMPLETED" | "SUBSCRIPTION_REQUIRED" | "AUTH_REQUIRED" | null;
   missingLevel?: number; // Which level needs to be completed first
 }
 
@@ -52,7 +52,7 @@ export const useLevelAccess = () => {
 
     // Must be authenticated for levels 2+
     if (!user) {
-      return { canAttempt: false, reason: "SUBSCRIPTION_REQUIRED" };
+      return { canAttempt: false, reason: "AUTH_REQUIRED" };
     }
 
     // Check if ALL previous levels are completed (sequential requirement)

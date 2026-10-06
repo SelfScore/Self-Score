@@ -162,8 +162,28 @@ export default function SubscriptionRequired({
               flexWrap: "wrap",
             }}
           >
-            {/* Integrated Buy Level Button for Stripe Payment */}
-            {!isFreeLevel && <BuyLevelButton level={level} />}
+            {/* Integrated Buy Level Button for Stripe Payment or Sign In */}
+            {isFreeLevel ? (
+              <Button
+                onClick={() => router.push("/auth/signin")}
+                variant="contained"
+                sx={{
+                  backgroundColor: "#FF5722",
+                  color: "#fff",
+                  borderRadius: "25px",
+                  padding: "12px 32px",
+                  fontWeight: "bold",
+                  fontSize: "1rem",
+                  "&:hover": {
+                    backgroundColor: "#e04819",
+                  },
+                }}
+              >
+                Sign In to Continue
+              </Button>
+            ) : (
+              <BuyLevelButton level={level} />
+            )}
 
             <Button
               onClick={handleGoToLevel1}
