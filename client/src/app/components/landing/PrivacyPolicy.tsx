@@ -556,10 +556,6 @@ export default function PrivacyPolicy() {
               }}
             >
               Email: info@selfscore.net
-              <br />
-              Phone: +1 (561) 430-0610
-              <br />
-              Address: Charlottesville, Virginia, United States
             </Typography>
           </Box>
 

@@ -568,10 +568,6 @@ export default function RefundPolicy() {
             >
               Email: info@selfscore.net
               <br />
-              Phone: +1 (561) 430-0610
-              <br />
-              Address: Charlottesville, Virginia, United States
-              <br />
               Business Hours: Monday - Friday, 9:00 AM - 6:00 PM EST
             </Typography>
           </Box>
