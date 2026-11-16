@@ -106,9 +106,26 @@ function calculateReadTime(content: string): string {
   return `${minutes} min read`;
 }
 
-// Strip HTML tags and get plain text
+const NAMED_ENTITIES: Record<string, string> = {
+  amp: '&', lt: '<', gt: '>', quot: '"', apos: "'", nbsp: ' ',
+  hellip: '…', mdash: '—', ndash: '–', lsquo: '‘', rsquo: '’', ldquo: '“', rdquo: '”',
+  laquo: '«', raquo: '»', bull: '•', middot: '·', copy: '©', reg: '®', trade: '™',
+};
+
+// WordPress returns "rendered" text with HTML entities (e.g. &#8217; for ’)
+function decodeHtmlEntities(text: string): string {
+  return text.replace(/&(#x[0-9a-f]+|#\d+|[a-z]+);/gi, (match, entity: string) => {
+    if (entity[0] === '#') {
+      const code = entity[1].toLowerCase() === 'x' ? parseInt(entity.slice(2), 16) : parseInt(entity.slice(1), 10);
+      return Number.isFinite(code) && code > 0 && code <= 0x10ffff ? String.fromCodePoint(code) : match;
+    }
+    return NAMED_ENTITIES[entity.toLowerCase()] ?? match;
+  });
+}
+
+// Strip HTML tags, decode entities and collapse whitespace -> plain text
 function stripHtml(html: string): string {
-  return html.replace(/<[^>]*>/g, '').trim();
+  return decodeHtmlEntities(html.replace(/<[^>]*>/g, '')).replace(/\s+/g, ' ').trim();
 }
 
 // Transform WordPress post to our BlogPost interface

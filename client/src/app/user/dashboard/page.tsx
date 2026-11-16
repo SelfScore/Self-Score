@@ -640,7 +640,8 @@ export default function UserDashboard() {
               </Typography>
               <ButtonSelfScore
                 text={
-                  allLevelsCompleted ? "Book Consultation" : "Start Assessment"
+                  // Consultations hidden for now: was "Book Consultation" -> /consultations
+                  allLevelsCompleted ? "Contact Us" : "Start Assessment"
                 }
                 textStyle={{ color: "#FF4F00", fontSize: "20px" }}
                 background="#F7F7F7"
@@ -650,7 +651,7 @@ export default function UserDashboard() {
                 onClick={() =>
                   router.push(
                     allLevelsCompleted
-                      ? "/consultations"
+                      ? "/contact" // was "/consultations"
                       : `/testInfo?level=${nextLevel}`,
                   )
                 }

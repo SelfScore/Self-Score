@@ -148,7 +148,8 @@ export default function Header() {
       variant: "contained",
       FreeChip: true,
     },
-    { label: "Talk to Us", href: "/consultations" },
+    // Consultations hidden for now — re-enable with CONSULTATIONS_ENABLED in app/consultations/layout.tsx
+    // { label: "Talk to Us", href: "/consultations" },
     { label: "Blogs", href: "/blogs" },
      { label: "Contact Us", href: "/contact" },
   ];

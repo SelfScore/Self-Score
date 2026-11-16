@@ -530,6 +530,7 @@ function UserBookingsContent() {
                     >
                       No upcoming bookings
                     </Typography>
+                    {/* Consultations hidden for now
                     <Button
                       variant="contained"
                       onClick={() => router.push("/consultations")}
@@ -546,6 +547,7 @@ function UserBookingsContent() {
                     >
                       Browse Consultants
                     </Button>
+                    */}
                   </Box>
                 ) : (
                   <>

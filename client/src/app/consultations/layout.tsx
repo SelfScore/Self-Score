@@ -1,4 +1,9 @@
 import type { Metadata } from "next";
+import { notFound } from "next/navigation";
+
+// "Talk to Us" / consultations is hidden for now. Set to true to bring the pages back
+// (and uncomment the links in Header.tsx, sitemap.ts, user/dashboard and user/bookings).
+const CONSULTATIONS_ENABLED = false;
 
 export const metadata: Metadata = {
     title: "Consultation | Personal Growth & Self Awareness Guidance",
@@ -26,5 +31,6 @@ export default function ConsultationsLayout({
 }: {
     children: React.ReactNode;
 }) {
+    if (!CONSULTATIONS_ENABLED) notFound();
     return <>{children}</>;
 }
