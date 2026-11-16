@@ -101,9 +101,7 @@
 
   /* Font families */
   --font-geist-sans: var(--font-geist-sans);
-  --font-geist-mono: var(--font-geist-mono);
   --font-faustina: var(--font-faustina);
-  --font-space-grotesk: var(--font-space-grotesk);
   --font-source-sans-pro: 'Source Sans Pro', sans-serif;
 }
 
@@ -137,10 +135,6 @@ a {
   font-family: var(--font-faustina), serif;
 }
 
-.font-space-grotesk {
-  font-family: var(--font-space-grotesk), sans-serif;
-}
-
 .font-source-sans-pro {
   font-family: var(--font-source-sans-pro), sans-serif;
 }
@@ -149,9 +143,6 @@ a {
   font-family: var(--font-geist-sans), sans-serif;
 }
 
-.font-geist-mono {
-  font-family: var(--font-geist-mono), monospace;
-}
 
 /* Override Slick Carousel Font to use local file with font-display: swap */
 @font-face {

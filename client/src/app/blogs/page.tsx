@@ -3,8 +3,8 @@ import { Box, Container, Typography } from "@mui/material";
 import { wordpressService } from "../../services/wordpressService";
 import BlogsClientWrapper from "@/app/components/blogsComponent/BlogsClientWrapper";
 
-// Ensure latest WordPress posts are fetched on each request.
-export const dynamic = "force-dynamic";
+// Cached and refreshed in the background every 5 minutes (new posts appear within 5 min)
+export const revalidate = 300;
 
 export const metadata: Metadata = {
   title:
@@ -38,6 +38,7 @@ export default async function BlogsPage() {
     page: 1,
     perPage: 6,
     type: "blogs",
+    throwOnError: true, // keep the last good list if WordPress is briefly down
   });
 
   return (
@@ -52,6 +53,7 @@ export default async function BlogsPage() {
         {/* Page Title */}
         <Box sx={{ textAlign: "center", mb: { xs: 3, md: 4 } }}>
           <Typography
+            component="h1"
             sx={{
               fontWeight: "700",
               fontFamily: "faustina",

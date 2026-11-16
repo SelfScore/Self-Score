@@ -1,5 +1,5 @@
 import type { Metadata } from "next";
-import { Geist, Geist_Mono, Faustina, Space_Grotesk } from "next/font/google";
+import { Geist, Faustina } from "next/font/google";
 import "./globals.css";
 import { ReduxProvider } from "../store/ReduxProvider";
 import MainLayout from "./components/layout/MainLayout";
@@ -12,22 +12,11 @@ const geistSans = Geist({
   subsets: ["latin"],
 });
 
-const geistMono = Geist_Mono({
-  variable: "--font-geist-mono",
-  subsets: ["latin"],
-});
-
 const faustina = Faustina({
   variable: "--font-faustina",
   subsets: ["latin"],
   weight: ["300", "400", "500", "600", "700", "800"],
   style: ["normal", "italic"],
-});
-
-const spaceGrotesk = Space_Grotesk({
-  variable: "--font-space-grotesk",
-  subsets: ["latin"],
-  weight: ["300", "400", "500", "600", "700"],
 });
 
 // Base URL for the website
@@ -96,9 +85,7 @@ export const metadata: Metadata = {
       { url: "/favicon.png", sizes: "180x180", type: "image/png" },
     ],
   },
-  alternates: {
-    canonical: baseUrl,
-  },
+  // No site-wide canonical: it made every page without its own canonical point at the homepage
 };
 
 // Structured Data - Organization and WebSite schemas
@@ -134,11 +121,7 @@ const structuredData = {
       },
       description:
         "Discover your happiness, purpose, and self-awareness with Self Score assessments.",
-      potentialAction: {
-        "@type": "SearchAction",
-        target: `${baseUrl}/blogs/?search={search_term_string}`,
-        "query-input": "required name=search_term_string",
-      },
+      // SearchAction removed: Google retired the sitelinks search box in Nov 2024
     },
   ],
 };
@@ -184,7 +167,7 @@ j=d.createElement(s),dl=l!='dataLayer'?'&l='+l:'';j.async=true;j.src=
         </Script>
       </head>
       <body
-        className={`${geistSans.variable} ${geistMono.variable} ${faustina.variable} ${spaceGrotesk.variable}`}
+        className={`${geistSans.variable} ${faustina.variable}`}
       >
         {/* Google Tag Manager (noscript) */}
         <noscript><iframe src="https://www.googletagmanager.com/ns.html?id=GTM-MV38QC6S"

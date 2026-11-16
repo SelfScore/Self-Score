@@ -1,0 +1,29 @@
+# Self Score
+
+> Self Score is an online self-assessment for self-awareness, happiness, inner peace and personal growth. It works like a "credit score for your inner life": you answer reflective questions and get a score with insights and suggestions. Level 1 is free and takes 2–3 minutes; deeper levels are optional.
+
+Self Score is designed as a tool for honest self-inquiry, not a clinical or diagnostic test.
+
+## The levels
+
+- Level 1 (free, 2–3 minutes, 6 questions): how balanced you feel inside right now — happiness, love, peace, freedom, forgiveness and inner harmony.
+- Level 2 (5–7 minutes, 9 questions): habits, impulses and inner tendencies that affect your peace and clarity.
+- Level 3 (10–15 minutes, 60 questions): your deepest beliefs about life, self, happiness and truth.
+- Level 4 (35–40 minutes, 25 open-ended questions, voice answers supported): how consistently you live what you know; reviewed before results are shared.
+- Bonus (25–30 minutes): a one-on-one reflective conversation with an AI voice interviewer.
+
+Levels 4 and above require a verified email and a short profile (country, gender, age group).
+
+## Key pages
+
+- [Home](https://www.selfscore.net/): what Self Score is, how it works, FAQ
+- [Self Score Test](https://www.selfscore.net/testInfo/): details, duration and questions for each level; start the free test
+- [Our Mission](https://www.selfscore.net/ourMission/): why Self Score exists
+- [Blog](https://www.selfscore.net/blogs/): articles on self-awareness, overthinking, happiness, purpose and personal growth
+- [Contact](https://www.selfscore.net/contact/)
+
+## Policies
+
+- [Privacy Policy](https://www.selfscore.net/privacy-policy/)
+- [Terms & Conditions](https://www.selfscore.net/terms-conditions/)
+- [Refund Policy](https://www.selfscore.net/refund-policy/)

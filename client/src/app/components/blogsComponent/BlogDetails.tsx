@@ -71,12 +71,17 @@ export default function BlogDetails({ blog, relatedBlogs }: BlogDetailsProps) {
   const [copied, setCopied] = useState(false);
   const [showCopiedAlert, setShowCopiedAlert] = useState(false);
 
+  // `window` doesn't exist during server rendering; reading it there crashed SSR
+  // and left the article body out of the HTML search engines see.
+  const canonicalUrl = `https://www.selfscore.net/blog/${blog.slug}/`;
+  const getShareUrl = () => (typeof window !== "undefined" ? window.location.href : canonicalUrl);
+
   const handleAccordionChange = (id: string) => {
     setExpandedAccordion(expandedAccordion === id ? null : id);
   };
 
   const handleCopy = async () => {
-    const url = window.location.href;
+    const url = getShareUrl();
     try {
       await navigator.clipboard.writeText(url);
       setCopied(true);
@@ -93,7 +98,7 @@ export default function BlogDetails({ blog, relatedBlogs }: BlogDetailsProps) {
   };
 
   const handleShare = (platform: string) => {
-    const url = window.location.href;
+    const url = getShareUrl();
     const title = blog.title;
 
     switch (platform) {
@@ -384,7 +389,7 @@ export default function BlogDetails({ blog, relatedBlogs }: BlogDetailsProps) {
           {/* Link TextField with Copy Button */}
           <TextField
             fullWidth
-            value={window.location.href}
+            value={shareModalOpen ? getShareUrl() : canonicalUrl}
             variant="outlined"
             InputProps={{
               readOnly: true,

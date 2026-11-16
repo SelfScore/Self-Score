@@ -1,9 +1,11 @@
 import type { Metadata } from "next";
 import HeroSection from "../components/ourMissionComponents/HeroSection";
 import WhyWeBuild from "../components/ourMissionComponents/WhyWeBuild";
+import JsonLd, { breadcrumbSchema } from "../components/seo/JsonLd";
 
 export const metadata: Metadata = {
-  title: "Our Mission | Self Score: Transform Yourself, Transform the World",
+  // "| Self Score" is appended by the root title template
+  title: "Our Mission: Transform Yourself, Transform the World",
   description:
     "Discover how improving the self leads to a peaceful, meaningful life and contributes to a better world.",
   keywords: [
@@ -27,6 +29,7 @@ export const metadata: Metadata = {
 export default function OurMission() {
   return (
     <div>
+      <JsonLd data={breadcrumbSchema([["Home", "/"], ["Our Mission", "/ourMission/"]])} />
       <HeroSection />
       <WhyWeBuild />
     </div>

@@ -60,6 +60,7 @@ export default function BlogContent({ blog }: BlogContentProps) {
 
         {/* Blog Title */}
         <Typography
+          component="h1"
           sx={{
             fontFamily: "Faustina",
             fontSize: { xs: "28px", md: "40px" },

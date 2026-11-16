@@ -264,6 +264,21 @@ export default function TestInfo({ initialLevel }: TestInfoProps) {
           mb: { xs: 4, md: 8 },
         }}
       >
+        {/* The page has no visible title (the chip acts as one), so give it an H1 for
+            search engines and screen readers */}
+        <Typography
+          component="h1"
+          sx={{
+            position: "absolute",
+            width: 1,
+            height: 1,
+            overflow: "hidden",
+            clip: "rect(0 0 0 0)",
+            whiteSpace: "nowrap",
+          }}
+        >
+          {`Self Score Test: ${currentLevel.title} (${currentLevel.isFree ? "Free Assessment" : currentLevel.name})`}
+        </Typography>
         <Chip
           label={`${currentLevel.title} - ${
             currentLevel.isFree ? "Free Assessment" : currentLevel.name

@@ -1,38 +1,18 @@
-"use client";
-
-import { Suspense } from "react";
-import { useSearchParams } from "next/navigation";
-import { Box, Typography } from "@mui/material";
 import TestInfo from "./TestInfo";
 
-function TestInfoContent() {
-  const searchParams = useSearchParams();
-  const level = parseInt(searchParams.get("level") || "1");
+/**
+ * Server component: reads ?level= on the server so the level content is in the
+ * HTML search engines download (the old client-only version sent "Loading...").
+ */
+export default async function TestInfoPage({
+  searchParams,
+}: {
+  searchParams: Promise<{ level?: string | string[] }>;
+}) {
+  const { level } = await searchParams;
+  const parsed = parseInt(Array.isArray(level) ? level[0] : level || "1", 10);
+  const levelNumber = Number.isFinite(parsed) ? Math.min(5, Math.max(1, parsed)) : 1;
 
-  // Convert to 0-based index for the component
-  const initialLevel = level - 1;
-
-  return <TestInfo initialLevel={initialLevel} />;
-}
-
-export default function TestInfoPage() {
-  return (
-    <Suspense
-      fallback={
-        <Box
-          sx={{
-            display: "flex",
-            justifyContent: "center",
-            alignItems: "center",
-            height: "100vh",
-            backgroundColor: "#FAFAFA",
-          }}
-        >
-          <Typography>Loading...</Typography>
-        </Box>
-      }
-    >
-      <TestInfoContent />
-    </Suspense>
-  );
+  // TestInfo uses a 0-based index
+  return <TestInfo initialLevel={levelNumber - 1} />;
 }

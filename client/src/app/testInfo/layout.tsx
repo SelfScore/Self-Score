@@ -1,7 +1,9 @@
 import type { Metadata } from "next";
+import JsonLd, { breadcrumbSchema } from "../components/seo/JsonLd";
 
 export const metadata: Metadata = {
-    title: "Self Score Test | Personal Growth & Life Awareness Assessment",
+    // "| Self Score" is appended by the root title template
+    title: "Self Score Test: Personal Growth & Life Awareness Assessment",
     description:
         "Find your personal happiness score, inner peace level, and growth path with guided reflective questions designed for deep insight.",
     keywords: [
@@ -28,5 +30,10 @@ export default function TestInfoLayout({
 }: {
     children: React.ReactNode;
 }) {
-    return <>{children}</>;
+    return (
+        <>
+            <JsonLd data={breadcrumbSchema([["Home", "/"], ["Self Score Test", "/testInfo/"]])} />
+            {children}
+        </>
+    );
 }

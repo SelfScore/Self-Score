@@ -9,6 +9,9 @@ const WORDPRESS_API_URL = process.env.NEXT_PUBLIC_WORDPRESS_URL
 interface WordPressPost {
   id: number;
   date: string;
+  modified?: string;
+  date_gmt?: string;
+  modified_gmt?: string;
   slug: string;
   title: {
     rendered: string;
@@ -69,6 +72,9 @@ export interface BlogPost {
   };
   image: string;
   date: string;
+  /** ISO 8601 timestamps for structured data and article meta tags */
+  publishedAt: string;
+  modifiedAt: string;
   readTime: string;
   categories?: Array<{
     id: number;
@@ -82,6 +88,11 @@ export interface GetPostsOptions {
   perPage?: number;
   type?: 'blogs' | 'newsletter' | 'all';
   search?: string;
+  /**
+   * Throw on WordPress errors instead of returning an empty list. Cached (ISR) pages use
+   * this so a WordPress outage keeps the last good page instead of caching an empty one.
+   */
+  throwOnError?: boolean;
 }
 
 export interface GetPostsResponse {
@@ -91,6 +102,10 @@ export interface GetPostsResponse {
   hasMore: boolean;
   page: number;
 }
+
+// During `next build` WordPress errors are tolerated (empty result) so a CMS hiccup
+// can't fail a deploy; at runtime cached pages rethrow so the last good version is kept.
+export const IS_BUILD_PHASE = process.env.NEXT_PHASE === 'phase-production-build';
 
 // In-memory category cache
 let cachedCategories: WordPressCategory[] | null = null;
@@ -128,6 +143,12 @@ function stripHtml(html: string): string {
   return decodeHtmlEntities(html.replace(/<[^>]*>/g, '')).replace(/\s+/g, ' ').trim();
 }
 
+// WordPress *_gmt fields have no timezone suffix; mark them as UTC
+function toIso(gmt: string | undefined, local: string): string {
+  const d = gmt ? new Date(`${gmt}Z`) : new Date(local);
+  return Number.isNaN(d.getTime()) ? new Date(local).toISOString() : d.toISOString();
+}
+
 // Transform WordPress post to our BlogPost interface
 function transformWordPressPost(wpPost: WordPressPost): BlogPost {
   const authorData = wpPost._embedded?.author?.[0];
@@ -144,7 +165,8 @@ function transformWordPressPost(wpPost: WordPressPost): BlogPost {
     slug: wpPost.slug,
     title: stripHtml(wpPost.title.rendered),
     description: stripHtml(wpPost.excerpt.rendered),
-    content: wpPost.content.rendered, // Full HTML content
+    // Full HTML content. The page title is the only H1, so H1s inside the article become H2s
+    content: wpPost.content.rendered.replace(/<(\/?)h1(\s|>)/gi, '<$1h2$2'),
     author: {
       name: authorData?.name || 'Admin',
       role: authorData?.description || 'Author',
@@ -156,6 +178,8 @@ function transformWordPressPost(wpPost: WordPressPost): BlogPost {
       month: 'long',
       day: 'numeric',
     }),
+    publishedAt: toIso(wpPost.date_gmt, wpPost.date),
+    modifiedAt: toIso(wpPost.modified_gmt, wpPost.modified || wpPost.date),
     readTime: calculateReadTime(wpPost.content.rendered),
     categories,
   };
@@ -203,7 +227,7 @@ export const wordpressService = {
    * Fetch paginated posts supporting 'blogs' vs 'newsletter' category filtering and search
    */
   async getPosts(options: GetPostsOptions = {}): Promise<GetPostsResponse> {
-    const { page = 1, perPage = 6, type = 'blogs', search } = options;
+    const { page = 1, perPage = 6, type = 'blogs', search, throwOnError = false } = options;
 
     try {
       const params: Record<string, any> = {
@@ -259,6 +283,7 @@ export const wordpressService = {
       };
     } catch (error: any) {
       console.error('Error fetching WordPress posts:', error?.message || error);
+      if (throwOnError && !IS_BUILD_PHASE) throw error;
       return {
         posts: [],
         total: 0,
@@ -291,7 +316,7 @@ export const wordpressService = {
    * Fetch a single blog post by slug
    * @param slug - Post slug
    */
-  async getPostBySlug(slug: string): Promise<BlogPost | null> {
+  async getPostBySlug(slug: string, { throwOnError = false }: { throwOnError?: boolean } = {}): Promise<BlogPost | null> {
     try {
       const response = await axios.get<WordPressPost[]>(`${WORDPRESS_API_URL}/posts`, {
         params: {
@@ -308,8 +333,38 @@ export const wordpressService = {
       return transformWordPressPost(response.data[0]);
     } catch (error) {
       console.error(`Error fetching WordPress post with slug "${slug}":`, error);
+      // null means "doesn't exist" (404); a fetch error must not be cached as a 404
+      if (throwOnError && !IS_BUILD_PHASE) throw error;
       return null;
     }
+  },
+
+  /**
+   * Related posts: same category first, topped up with recent posts
+   */
+  async getRelatedPosts(blog: BlogPost, limit = 2): Promise<BlogPost[]> {
+    const fetchSome = async (extra: Record<string, unknown>): Promise<BlogPost[]> => {
+      try {
+        const response = await axios.get<WordPressPost[]>(`${WORDPRESS_API_URL}/posts`, {
+          params: { per_page: limit + 1, _embed: true, status: 'publish', exclude: blog.id, ...extra },
+        });
+        return response.data.map(transformWordPressPost);
+      } catch (error: any) {
+        console.error('Error fetching related posts:', error?.message || error);
+        return [];
+      }
+    };
+
+    const categoryIds = (blog.categories || []).map((c) => c.id);
+    const related = categoryIds.length ? await fetchSome({ categories: categoryIds.join(',') }) : [];
+    if (related.length < limit) {
+      const recent = await fetchSome({});
+      for (const post of recent) {
+        if (related.length >= limit) break;
+        if (!related.some((r) => r.id === post.id)) related.push(post);
+      }
+    }
+    return related.slice(0, limit);
   },
 
   /**

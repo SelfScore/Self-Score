@@ -37,6 +37,7 @@ export default function HeroSection() {
         }}
       >
         <Typography
+          component="h1"
           sx={{
             fontWeight: "700",
             fontFamily: "faustina",

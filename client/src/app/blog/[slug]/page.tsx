@@ -1,43 +1,52 @@
 import type { Metadata } from "next";
+import { cache } from "react";
 import { notFound } from "next/navigation";
 import BlogDetails from "../../components/blogsComponent/BlogDetails";
+import JsonLd, { SITE_URL, breadcrumbSchema } from "../../components/seo/JsonLd";
 import { wordpressService } from "../../../services/wordpressService";
 
-// Don't statically generate blog pages - they'll be SSR
-export const dynamic = "force-dynamic";
+// Rendered on first request, then cached and refreshed in the background every 5 minutes
+// (was force-dynamic: every visit re-fetched WordPress, ~2.9 s to first byte)
+export const revalidate = 300;
 export const dynamicParams = true;
 
-// Generate dynamic metadata from WordPress post
+// No posts pre-built at deploy; each is rendered on first visit, then cached (ISR)
+export async function generateStaticParams(): Promise<Array<{ slug: string }>> {
+  return [];
+}
+
+// generateMetadata and the page share one WordPress request per render
+// throwOnError: a WordPress outage keeps serving the cached page instead of caching a 404
+const getPost = cache((slug: string) => wordpressService.getPostBySlug(slug, { throwOnError: true }));
+
 export async function generateMetadata({
   params,
 }: {
   params: Promise<{ slug: string }>;
 }): Promise<Metadata> {
   const { slug } = await params;
-  const blog = await wordpressService.getPostBySlug(slug);
+  const blog = await getPost(slug);
 
   if (!blog) {
-    return {
-      title: "Blog Post Not Found",
-    };
+    return { title: "Blog Post Not Found", robots: { index: false } };
   }
 
+  const url = `${SITE_URL}/blog/${slug}/`;
   return {
     title: blog.title,
     description: blog.description,
+    authors: [{ name: blog.author.name }],
     openGraph: {
       title: blog.title,
       description: blog.description,
-      url: `https://www.selfscore.net/blog/${slug}/`,
+      url,
       type: "article",
-      images: blog.image
-        ? [
-          {
-            url: blog.image,
-            alt: blog.title,
-          },
-        ]
-        : undefined,
+      publishedTime: blog.publishedAt,
+      modifiedTime: blog.modifiedAt,
+      authors: [blog.author.name],
+      section: blog.categories?.[0]?.name,
+      tags: blog.categories?.map((c) => c.name),
+      images: blog.image ? [{ url: blog.image, alt: blog.title }] : undefined,
     },
     twitter: {
       card: "summary_large_image",
@@ -45,30 +54,57 @@ export async function generateMetadata({
       description: blog.description,
       images: blog.image ? [blog.image] : undefined,
     },
-    alternates: {
-      canonical: `https://www.selfscore.net/blog/${slug}/`,
-    },
+    alternates: { canonical: url },
   };
 }
 
-// Server Component - Fetch data at request time (SSR)
 export default async function BlogPage({
   params,
 }: {
   params: Promise<{ slug: string }>;
 }) {
   const { slug } = await params;
-
-  // Fetch the blog post from WordPress
-  const blog = await wordpressService.getPostBySlug(slug);
+  const blog = await getPost(slug);
 
   if (!blog) {
     notFound();
   }
 
-  // Fetch related blogs (get all posts and exclude current one)
-  const { posts: allPosts } = await wordpressService.getAllPosts();
-  const relatedBlogs = allPosts.filter((b) => b.slug !== slug).slice(0, 2); // Show only 2 related articles
+  // Same-category articles first (was: the first two posts, whatever the topic)
+  const relatedBlogs = await wordpressService.getRelatedPosts(blog, 2);
 
-  return <BlogDetails blog={blog} relatedBlogs={relatedBlogs} />;
+  const url = `${SITE_URL}/blog/${slug}/`;
+  const articleSchema = {
+    "@context": "https://schema.org",
+    "@type": "BlogPosting",
+    "@id": `${url}#article`,
+    mainEntityOfPage: url,
+    url,
+    headline: blog.title,
+    description: blog.description,
+    image: blog.image ? [blog.image] : undefined,
+    datePublished: blog.publishedAt,
+    dateModified: blog.modifiedAt,
+    author: { "@type": "Person", name: blog.author.name },
+    publisher: { "@id": `${SITE_URL}/#organization` },
+    articleSection: blog.categories?.[0]?.name,
+    keywords: blog.categories?.map((c) => c.name).join(", ") || undefined,
+    inLanguage: "en",
+  };
+
+  return (
+    <>
+      <JsonLd
+        data={[
+          articleSchema,
+          breadcrumbSchema([
+            ["Home", "/"],
+            ["Blog", "/blogs/"],
+            [blog.title, `/blog/${slug}/`],
+          ]),
+        ]}
+      />
+      <BlogDetails blog={blog} relatedBlogs={relatedBlogs} />
+    </>
+  );
 }

@@ -8,7 +8,9 @@ const nextConfig: NextConfig = {
     optimizeCss: true,
   },
   images: {
-    unoptimized: true, // Required for static export
+    // Optimisation on: images are resized and served as WebP/AVIF
+    // (was disabled for an old static-export setup that is no longer used)
+    formats: ["image/avif", "image/webp"],
     remotePatterns: [
       {
         protocol: "https",

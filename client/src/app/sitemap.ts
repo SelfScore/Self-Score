@@ -1,6 +1,11 @@
 import type { MetadataRoute } from "next";
 
-export const dynamic = "force-static";
+// Tolerate WordPress errors during `next build`; at runtime, rethrow so the last good sitemap is kept
+const IS_BUILD_PHASE = process.env.NEXT_PHASE === "phase-production-build";
+
+// Regenerated at most hourly so new blog posts appear without a redeploy
+// (force-static only refreshed it on each build)
+export const revalidate = 3600;
 
 // WordPress API for fetching blog posts
 const WORDPRESS_API_URL = process.env.NEXT_PUBLIC_WORDPRESS_URL
@@ -10,92 +15,83 @@ const WORDPRESS_API_URL = process.env.NEXT_PUBLIC_WORDPRESS_URL
 interface WordPressPost {
   slug: string;
   modified: string;
+  modified_gmt?: string;
 }
 
 async function getBlogPosts(): Promise<WordPressPost[]> {
+  const all: WordPressPost[] = [];
   try {
-    console.log("[Sitemap] Fetching blog posts from:", WORDPRESS_API_URL);
-    const response = await fetch(
-      `${WORDPRESS_API_URL}/posts?per_page=100&status=publish`,
-      {
-        cache: "no-store", // Always fetch fresh during build
-      },
-    );
-
-    if (!response.ok) {
-      console.error(
-        "[Sitemap] Failed to fetch blog posts. Status:",
-        response.status,
+    // WordPress caps per_page at 100, so page through everything
+    for (let page = 1; page <= 50; page++) {
+      const response = await fetch(
+        `${WORDPRESS_API_URL}/posts?per_page=100&page=${page}&status=publish&_fields=slug,modified_gmt,modified`,
+        { next: { revalidate: 3600 } },
       );
-      return [];
+      if (!response.ok) {
+        // WordPress answers 400 for a page past the end
+        if (page > 1 && response.status === 400) break;
+        throw new Error(`WordPress responded ${response.status}`);
+      }
+      const posts: WordPressPost[] = await response.json();
+      all.push(...posts);
+      const totalPages = Number(response.headers.get("x-wp-totalpages") || "1");
+      if (page >= totalPages || posts.length === 0) break;
     }
-
-    const posts = await response.json();
-    console.log(`[Sitemap] Successfully fetched ${posts.length} blog posts`);
-    return posts;
   } catch (error) {
     console.error("[Sitemap] Error fetching blog posts:", error);
-    return [];
+    if (!IS_BUILD_PHASE) throw error;
   }
+  return all;
 }
 
 export default async function sitemap(): Promise<MetadataRoute.Sitemap> {
   const baseUrl = "https://www.selfscore.net";
 
-  // Static pages with their priorities
+  // Static pages (no lastModified: we don't track real edit dates for these)
   const staticPages: MetadataRoute.Sitemap = [
     {
       url: baseUrl,
-      lastModified: new Date(),
       changeFrequency: "weekly",
       priority: 1.0,
     },
     {
       url: `${baseUrl}/ourMission/`,
-      lastModified: new Date(),
       changeFrequency: "monthly",
       priority: 0.8,
     },
     {
       url: `${baseUrl}/testInfo/`,
-      lastModified: new Date(),
       changeFrequency: "weekly",
       priority: 0.9,
     },
     {
       url: `${baseUrl}/contact/`,
-      lastModified: new Date(),
       changeFrequency: "monthly",
       priority: 0.7,
     },
     // Consultations hidden for now
     // {
     //   url: `${baseUrl}/consultations/`,
-    //   lastModified: new Date(),
     //   changeFrequency: "weekly",
     //   priority: 0.8,
     // },
     {
       url: `${baseUrl}/blogs/`,
-      lastModified: new Date(),
       changeFrequency: "daily",
       priority: 0.8,
     },
     {
       url: `${baseUrl}/privacy-policy/`,
-      lastModified: new Date(),
       changeFrequency: "yearly",
       priority: 0.3,
     },
     {
       url: `${baseUrl}/terms-conditions/`,
-      lastModified: new Date(),
       changeFrequency: "yearly",
       priority: 0.3,
     },
     {
       url: `${baseUrl}/refund-policy/`,
-      lastModified: new Date(),
       changeFrequency: "yearly",
       priority: 0.3,
     },
@@ -106,14 +102,11 @@ export default async function sitemap(): Promise<MetadataRoute.Sitemap> {
 
   const blogPages: MetadataRoute.Sitemap = blogPosts.map((post) => ({
     url: `${baseUrl}/blog/${post.slug}/`,
-    lastModified: new Date(post.modified),
+    lastModified: new Date(post.modified_gmt ? `${post.modified_gmt}Z` : post.modified),
     changeFrequency: "monthly" as const,
     priority: 0.6,
   }));
 
-  console.log(
-    `[Sitemap] Generated sitemap with ${staticPages.length} static pages and ${blogPages.length} blog posts`,
-  );
 
   return [...staticPages, ...blogPages];
 }
