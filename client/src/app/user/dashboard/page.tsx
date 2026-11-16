@@ -1,4 +1,5 @@
 "use client";
+import { AccountReminderBanner } from "../../components/auth/AccountReminders";
 
 import {
   Box,
@@ -535,6 +536,9 @@ export default function UserDashboard() {
       }}
     >
       <Box sx={{ maxWidth: "1280px", mx: "auto" }}>
+        {/* Verify email / complete profile / set password reminders */}
+        <AccountReminderBanner />
+
         {/* Header Section */}
         <Box
           sx={{

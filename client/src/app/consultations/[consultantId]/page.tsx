@@ -30,9 +30,11 @@ import {
 import { useAuth } from "@/hooks/useAuth";
 import TimezoneSelect from "react-timezone-select";
 import SignUpModal from "@/app/user/SignUpModal";
+import { useAccountGate } from "@/app/components/auth/AccountGateProvider";
 import BookingCalendar from "@/app/components/booking/BookingCalendar";
 import TimeSlotPicker from "@/app/components/booking/TimeSlotPicker";
 import { bookingService, TimeSlot } from "@/services/bookingService";
+import { authService } from "@/services/authService";
 import OutLineButton from "@/app/components/ui/OutLineButton";
 import ArrowBackIosIcon from "@mui/icons-material/ArrowBackIos";
 // import LocationOnOutlinedIcon from "@mui/icons-material/LocationOnOutlined";
@@ -65,6 +67,7 @@ export default function ConsultantProfilePage() {
   const router = useRouter();
   const params = useParams();
   const { isAuthenticated, isInitialized } = useAuth();
+  const { ensureAccountReady } = useAccountGate();
   const [consultant, setConsultant] = useState<PublicConsultant | null>(null);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState("");
@@ -173,6 +176,12 @@ export default function ConsultantProfilePage() {
   const handleBookSession = async () => {
     if (!selectedSlot || !selectedSessionType || !consultant) return;
 
+    // Bookings need a verified email and a complete profile
+    const ready = await ensureAccountReady({
+      reason: "Before booking a consultation, please verify your email and complete your profile.",
+    });
+    if (!ready) return;
+
     try {
       setBookingLoading(true);
       setBookingError("");
@@ -226,7 +235,8 @@ export default function ConsultantProfilePage() {
   const handleLoginModalClose = () => {
     setShowLoginModal(false);
     // Only navigate away if user is still not authenticated
-    if (!isAuthenticated) {
+    // (read from the store: this closure may be from before sign-in)
+    if (!authService.isAuthenticated()) {
       router.push("/consultations");
     }
   };

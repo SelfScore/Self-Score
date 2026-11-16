@@ -1,6 +1,9 @@
 // API Configuration
 export const API_BASE_URL = process.env.NEXT_PUBLIC_API_URL || 'http://localhost:5001';
 
+// Google Identity Services OAuth client id (Sign in with Google). Leave empty to hide the button.
+export const GOOGLE_CLIENT_ID = process.env.NEXT_PUBLIC_GOOGLE_CLIENT_ID || '';
+
 // API Endpoints
 export const API_ENDPOINTS = {
   // Questions endpoints
@@ -17,11 +20,4 @@ export const API_ENDPOINTS = {
     SUBMIT_LEVEL: '/api/questions-response/submit-level',
     GET_USER_RESPONSES: (userId: string) => `/api/questions-response/user/${userId}`,
   },
-  
-  // Auth endpoints
-  AUTH: {
-    LOGIN: '/api/auth/login',
-    REGISTER: '/api/auth/register',
-    VERIFY_EMAIL: '/api/auth/verify-email',
-  }
 };

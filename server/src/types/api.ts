@@ -3,6 +3,8 @@ export interface ApiResponse<T = any> {
     message: string;
     data?: T;
     errors?: any[];
+    /** Machine-readable error code, e.g. EMAIL_UNVERIFIED */
+    code?: string;
 }
 
 export interface UserResponse {
@@ -15,6 +17,12 @@ export interface UserResponse {
     gender?: string;
     ageGroup?: string;
     isVerified?: boolean;
+    isProfileComplete?: boolean;
+    hasPassword?: boolean;
+    authProviders?: string[];
+    avatarUrl?: string;
+    onboardingSkipped?: boolean;
+    verificationPending?: boolean;
     createdAt?: Date;
     purchasedLevels?: {
         level2: {

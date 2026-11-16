@@ -1,16 +1,9 @@
 import { z } from "zod";
+import { profileFields, sixDigitCode, emailField, usernameField } from "./common";
 
 export const updateProfileSchema = z
   .object({
-    username: z
-      .string()
-      .min(2, "Username must be at least 2 characters")
-      .max(50, "Username must not exceed 50 characters")
-      .regex(
-        /^[a-zA-Z0-9\s@#$%&*()_+\-=\[\]{};':"\\|,.<>\/?!]+$/,
-        "Username contains invalid characters"
-      )
-      .optional(),
+    username: usernameField.optional(),
 
     countryCode: z
       .string()
@@ -42,13 +35,23 @@ export const updateProfileSchema = z
       })
       .optional(),
 
-    email: z.string().email("Invalid email format").optional(),
+    email: emailField.optional(),
   })
   .refine((data) => Object.keys(data).length > 0, {
     message: "At least one field must be provided for update",
   });
 
 export const verifyEmailUpdateSchema = z.object({
-  newEmail: z.string().email("Invalid email format"),
-  verifyCode: z.string().length(6, "Verification code must be 6 digits"),
+  newEmail: emailField,
+  verifyCode: sixDigitCode,
 });
+
+// Onboarding step right after sign-up: either fill everything in, or skip
+export const onboardingSchema = z.union([
+  z.object({ skip: z.literal(true) }),
+  z.object({
+    country: profileFields.country,
+    gender: profileFields.gender,
+    ageGroup: profileFields.ageGroup,
+  }),
+]);

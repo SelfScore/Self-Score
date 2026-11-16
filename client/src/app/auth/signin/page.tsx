@@ -4,7 +4,6 @@ import {
   Box,
   Typography,
   TextField,
-  Button,
   Link,
   Alert,
   CircularProgress,
@@ -13,356 +12,290 @@ import {
   InputAdornment,
   Chip,
 } from "@mui/material";
-import { useState, useEffect } from "react";
-import { useRouter } from "next/navigation";
-import { useAuth } from "../../../hooks/useAuth";
+import { Suspense, useEffect, useState } from "react";
+import { useRouter, useSearchParams } from "next/navigation";
 import NextLink from "next/link";
-import Image from "next/image";
 import EmailIcon from "@mui/icons-material/Email";
+import { useAuth } from "../../../hooks/useAuth";
+import { authService, UserData } from "../../../services/authService";
 import { getUserFriendlyError } from "../../../utils/errorMessages";
+import AuthPageLayout from "../../components/auth/AuthPageLayout";
+import PasswordField from "../../components/auth/PasswordField";
+import GoogleSignInButton from "../../components/auth/GoogleSignInButton";
+import ButtonSelfScore from "../../components/ui/ButtonSelfScore";
+import { getPostAuthPath } from "../../components/auth/postAuthRedirect";
+import {
+  EMAIL_REGEX,
+  authCardSx,
+  authInputSx,
+  authLabelSx,
+  authLinkSx,
+} from "../../components/auth/authStyles";
 
-export default function SignInPage() {
+function SignInContent() {
   const router = useRouter();
-  const { login, isLoading, error, clearError, isAuthenticated } = useAuth();
+  const searchParams = useSearchParams();
+  const next = searchParams.get("next");
+  const { isAuthenticated, isInitialized, user } = useAuth();
 
-  const [formData, setFormData] = useState({
-    email: "",
-  });
-  const [localError, setLocalError] = useState("");
+  const [email, setEmail] = useState(searchParams.get("email") || "");
+  const [password, setPassword] = useState("");
   const [rememberMe, setRememberMe] = useState(false);
+  const [error, setError] = useState("");
+  // Sent here from email-first sign-up because the account already exists
+  const [notice, setNotice] = useState<React.ReactNode>(
+    searchParams.get("exists") === "1"
+      ? "You already have an account with this email. Sign in below — or use Google if that's how you signed up."
+      : ""
+  );
+  const [submitting, setSubmitting] = useState(false);
+  const [sendingCode, setSendingCode] = useState(false);
+  const [redirecting, setRedirecting] = useState(false);
 
-  // Redirect if already authenticated
+  // Already signed in (e.g. opened /auth/signin in a new tab)
   useEffect(() => {
-    if (isAuthenticated) {
-      router.push("/user/dashboard");
+    if (isInitialized && isAuthenticated && user && !redirecting) {
+      router.replace(getPostAuthPath(user, next));
     }
-  }, [isAuthenticated, router]);
+  }, [isInitialized, isAuthenticated, user, next, router, redirecting]);
 
-  const handleInputChange = (field: string, value: string) => {
-    setFormData((prev) => ({
-      ...prev,
-      [field]: value,
-    }));
-    setLocalError("");
-    clearError();
-  };
-
-  const validateForm = () => {
-    if (!formData.email.trim()) {
-      setLocalError("Please enter your email address");
-      return false;
-    }
-    if (!/^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(formData.email)) {
-      setLocalError(
-        "Please enter a valid email address (e.g., name@example.com)"
-      );
-      return false;
-    }
-    return true;
+  const finish = (signedIn: UserData) => {
+    setRedirecting(true);
+    router.push(getPostAuthPath(signedIn, next));
   };
 
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
+    setError("");
+    setNotice("");
+    const normalized = email.trim().toLowerCase();
 
-    if (!validateForm()) return;
+    if (!EMAIL_REGEX.test(normalized)) {
+      setError("Please enter a valid email address (e.g., name@example.com)");
+      return;
+    }
+    if (!password) {
+      setError("Please enter your password");
+      return;
+    }
 
+    setSubmitting(true);
     try {
-      const email = formData.email.trim().toLowerCase();
-      const response = await login({
-        email,
-        rememberMe,
-      });
-
-      if (response.success) {
-        // Redirect to verify-email with login mode
-        router.push(
-          `/auth/verify-email?email=${encodeURIComponent(email)}&mode=login&rememberMe=${rememberMe}`
-        );
-      }
+      const result = await authService.login({ email: normalized, password, rememberMe });
+      if (result.success && result.data) finish(result.data);
+      else setError(result.message);
     } catch (err: any) {
-      const errorMessage = getUserFriendlyError(err, "signin");
-      setLocalError(errorMessage);
+      const code = err?.response?.data?.code;
+      if (code === "PASSWORD_NOT_SET") {
+        // Account from before passwords existed (or Google-only)
+        setNotice(err.response.data.message);
+      } else {
+        setError(getUserFriendlyError(err, "signin"));
+      }
+    } finally {
+      setSubmitting(false);
     }
   };
 
+  const handleEmailCode = async () => {
+    setError("");
+    const normalized = email.trim().toLowerCase();
+    if (!EMAIL_REGEX.test(normalized)) {
+      setError("Enter your email address above first, then we'll send you a code.");
+      return;
+    }
+    setSendingCode(true);
+    try {
+      await authService.requestLoginCode(normalized);
+      const params = new URLSearchParams({ email: normalized, mode: "login" });
+      if (rememberMe) params.set("rememberMe", "true");
+      if (next) params.set("next", next);
+      router.push(`/auth/verify-email?${params.toString()}`);
+    } catch (err) {
+      setError(getUserFriendlyError(err, "signin"));
+    } finally {
+      setSendingCode(false);
+    }
+  };
+
+  const busy = submitting || sendingCode || redirecting;
+
   return (
-    <Box
-      sx={{
-        display: "flex",
-        alignItems: "center",
-        justifyContent: "center",
-        bgcolor: "#FFFFFF",
-        py: { xs: 2, sm: 3, md: 8 },
-      }}
-    >
-      <Box
-        sx={{
-          display: "flex",
-          flexDirection: { xs: "column", md: "row" },
-          width: "100%",
-          alignItems: { xs: "center", md: "flex-start" },
-          gap: { xs: 3, md: 3 },
-          marginTop: { xs: 8, md: 8 },
-        }}
-      >
-        {/* Left Side - Image */}
-        <Box
+    <AuthPageLayout title="Welcome Back" subtitle="Sign in to continue your SelfScore journey">
+      {error && (
+        <Alert severity="error" sx={{ mb: 3 }}>
+          {error}
+        </Alert>
+      )}
+      {notice && (
+        <Alert severity="info" sx={{ mb: 3 }}>
+          {notice}
+        </Alert>
+      )}
+
+      {/* Login type chips */}
+      <Box sx={{ display: "flex", gap: 2, mb: 3 }}>
+        <Chip
+          label="User"
           sx={{
-            position: "relative",
-            display: { xs: "none", md: "block" },
-            width: { md: "48%", lg: "50%" },
-            flexShrink: 0,
+            backgroundColor: "#FF5722",
+            color: "#fff",
+            fontFamily: "Source Sans Pro",
+            fontSize: "16px",
+            fontWeight: 600,
+            px: 3,
+            py: 0.5,
+            height: "auto",
+            borderRadius: "24px",
+            "&:hover": { backgroundColor: "#E64A19" },
           }}
-        >
-          <Box
+        />
+        <Chip
+          label="Consultant"
+          onClick={() => router.push("/consultant/login")}
+          sx={{
+            backgroundColor: "transparent",
+            color: "#666",
+            fontFamily: "Source Sans Pro",
+            fontSize: "16px",
+            fontWeight: 500,
+            px: 3,
+            py: 0.5,
+            height: "auto",
+            borderRadius: "24px",
+            border: "1px solid #E0E0E0",
+            cursor: "pointer",
+            "&:hover": { backgroundColor: "#F5F5F5" },
+          }}
+        />
+      </Box>
+
+      <Box sx={authCardSx} component="form" onSubmit={handleSubmit} noValidate>
+        <GoogleSignInButton
+          text="signin_with"
+          rememberMe={rememberMe}
+          onSuccess={finish}
+          onError={setError}
+        />
+
+        <Typography sx={authLabelSx}>Email Address</Typography>
+        <TextField
+          placeholder="Enter your email"
+          type="email"
+          name="email"
+          autoComplete="email"
+          value={email}
+          onChange={(e) => {
+            setEmail(e.target.value);
+            setError("");
+          }}
+          fullWidth
+          disabled={busy}
+          slotProps={{
+            input: {
+              startAdornment: (
+                <InputAdornment position="start">
+                  <EmailIcon sx={{ color: "#999" }} />
+                </InputAdornment>
+              ),
+            },
+          }}
+          sx={{ mb: 2, ...authInputSx() }}
+        />
+
+        <Box sx={{ display: "flex", justifyContent: "space-between", alignItems: "baseline" }}>
+          <Typography sx={authLabelSx}>Password</Typography>
+          <Link
+            component={NextLink}
+            href={`/auth/forgot-password${email ? `?email=${encodeURIComponent(email.trim())}` : ""}`}
+            sx={{ ...authLinkSx, fontSize: "14px" }}
+          >
+            Forgot password?
+          </Link>
+        </Box>
+        <PasswordField
+          value={password}
+          onChange={(v) => {
+            setPassword(v);
+            setError("");
+          }}
+          disabled={busy}
+          autoComplete="current-password"
+        />
+
+        <FormControlLabel
+          control={
+            <Checkbox
+              checked={rememberMe}
+              onChange={(e) => setRememberMe(e.target.checked)}
+              sx={{ color: "#999", "&.Mui-checked": { color: "#FF5722" } }}
+            />
+          }
+          label={
+            <Typography variant="body2" sx={{ color: "#666" }}>
+              Remember me (30 days)
+            </Typography>
+          }
+          sx={{ mb: 2 }}
+        />
+
+        <ButtonSelfScore
+          type="submit"
+          text={submitting || redirecting ? <CircularProgress size={22} sx={{ color: "#fff" }} /> : "Sign In"}
+          fullWidth
+          disabled={busy}
+          style={{ height: 48, borderRadius: 12 }}
+        />
+
+        <Box sx={{ textAlign: "center", mt: 2 }}>
+          <Typography
+            component="button"
+            type="button"
+            onClick={handleEmailCode}
+            disabled={busy}
             sx={{
-              position: "relative",
-              height: "582px",
-              width: "100%",
-              maxWidth: "690px",
+              background: "none",
+              border: "none",
+              color: "#005F73",
+              fontFamily: "Source Sans Pro",
+              fontSize: "15px",
+              fontWeight: 600,
+              cursor: busy ? "default" : "pointer",
+              "&:hover": { textDecoration: "underline" },
             }}
           >
-            <Image
-              src="/images/LandingPage/AuthImg.webp"
-              alt="Authentication"
-              fill
-              style={{
-                objectFit: "cover",
-                borderTopRightRadius: "60px",
-                borderBottomRightRadius: "60px",
-              }}
-              priority
-            />
-          </Box>
+            {sendingCode ? "Sending code…" : "Email me a login code instead"}
+          </Typography>
         </Box>
 
-        {/* Right Side - Form */}
-        <Box
-          sx={{
-            width: { xs: "100%", md: "48%", lg: "50%" },
-            maxWidth: { xs: "627px", md: "627px" },
-            px: { xs: 2, sm: 3, md: 0 },
-            display: "flex",
-            flexDirection: "column",
-            flexShrink: 0,
-          }}
-        >
-          <Box sx={{ textAlign: { xs: "center", md: "left" }, mb: 4 }}>
-            <Typography
-              sx={{
-                fontWeight: "700",
-                color: "#000",
-                mb: 0,
-                fontSize: { xs: "1.75rem", sm: "2rem", md: "40px" },
-                fontFamily: "Faustina",
-              }}
+        <Box sx={{ textAlign: "center", mt: 2 }}>
+          <Typography variant="body2" sx={{ color: "#666" }}>
+            Don&apos;t have an account?{" "}
+            <Link
+              component={NextLink}
+              href={`/auth/signup${
+                email || next
+                  ? `?${new URLSearchParams({
+                      ...(email ? { email: email.trim() } : {}),
+                      ...(next ? { next } : {}),
+                    }).toString()}`
+                  : ""
+              }`}
+              sx={{ ...authLinkSx, color: "#005F73" }}
             >
-              Welcome Back
-            </Typography>
-            <Typography
-              sx={{
-                color: "#6B7280",
-                fontSize: { xs: "16px", md: "18px" },
-                fontWeight: 400,
-                fontFamily: "Source Sans Pro",
-              }}
-            >
-              Enter your email to receive a secure login code
-            </Typography>
-          </Box>
-
-          {(error || localError) && (
-            <Alert severity="error" sx={{ mb: 3 }}>
-              {error || localError}
-            </Alert>
-          )}
-
-          {/* Login Type Chips */}
-          <Box
-            sx={{
-              display: "flex",
-              gap: 2,
-              mb: 3,
-              justifyContent: "flex-start",
-            }}
-          >
-            <Chip
-              label="User"
-              onClick={() => router.push("/auth/signin")}
-              sx={{
-                backgroundColor: "#FF5722",
-                color: "#fff",
-                fontFamily: "Source Sans Pro",
-                fontSize: "16px",
-                fontWeight: 600,
-                px: 3,
-                py: 0.5,
-                height: "auto",
-                borderRadius: "24px",
-                cursor: "pointer",
-                "&:hover": {
-                  backgroundColor: "#E64A19",
-                },
-              }}
-            />
-            <Chip
-              label="Consultant"
-              onClick={() => router.push("/consultant/login")}
-              sx={{
-                backgroundColor: "transparent",
-                color: "#666",
-                fontFamily: "Source Sans Pro",
-                fontSize: "16px",
-                fontWeight: 500,
-                px: 3,
-                py: 0.5,
-                height: "auto",
-                borderRadius: "24px",
-                border: "1px solid #E0E0E0",
-                cursor: "pointer",
-                "&:hover": {
-                  backgroundColor: "#F5F5F5",
-                },
-              }}
-            />
-          </Box>
-
-          <Box
-            sx={{
-              border: "1px solid #3A3A3A4D",
-              borderRadius: "16px",
-              py: { xs: 3, md: 4 },
-              px: { xs: 2, md: 2.5 },
-              width: "100%",
-              bgcolor: "#FFFFFF",
-            }}
-            component="form"
-            onSubmit={handleSubmit}
-          >
-            <Typography
-              sx={{
-                mb: 1,
-                color: "#2C3E50",
-                fontWeight: 400,
-                fontFamily: "Source Sans Pro",
-                fontSize: "16px",
-              }}
-            >
-              Email Address<span style={{ color: "#FF5722" }}>*</span>
-            </Typography>
-            <TextField
-              placeholder="Enter your email"
-              type="email"
-              value={formData.email}
-              onChange={(e) => handleInputChange("email", e.target.value)}
-              fullWidth
-              required
-              disabled={isLoading}
-              InputProps={{
-                startAdornment: (
-                  <InputAdornment position="start">
-                    <EmailIcon sx={{ color: "#999" }} />
-                  </InputAdornment>
-                ),
-              }}
-              sx={{
-                mb: 2,
-                "& .MuiOutlinedInput-root": {
-                  height: "48px",
-                  borderRadius: "8px",
-                  bgcolor: "#FFFFFF",
-                  "& fieldset": { border: "1px solid #3A3A3A4D" },
-                  "&:hover fieldset": { border: "1px solid #3A3A3A4D" },
-                  "&.Mui-focused fieldset": { border: "1px solid #FF5722" },
-                },
-                "& input:-webkit-autofill": {
-                  WebkitBoxShadow: "0 0 0 100px #FFFFFF inset",
-                  WebkitTextFillColor: "#000000",
-                },
-                "& input:-webkit-autofill:hover": {
-                  WebkitBoxShadow: "0 0 0 100px #FFFFFF inset",
-                  WebkitTextFillColor: "#000000",
-                },
-                "& input:-webkit-autofill:focus": {
-                  WebkitBoxShadow: "0 0 0 100px #FFFFFF inset",
-                  WebkitTextFillColor: "#000000",
-                },
-              }}
-            />
-
-            <Box
-              sx={{
-                display: "flex",
-                justifyContent: "space-between",
-                alignItems: "center",
-                mb: 3,
-              }}
-            >
-              <FormControlLabel
-                control={
-                  <Checkbox
-                    checked={rememberMe}
-                    onChange={(e) => setRememberMe(e.target.checked)}
-                    sx={{
-                      color: "#999",
-                      "&.Mui-checked": { color: "#FF5722" },
-                    }}
-                  />
-                }
-                label={
-                  <Typography variant="body2" sx={{ color: "#666" }}>
-                    Remember me (30 days)
-                  </Typography>
-                }
-              />
-            </Box>
-
-            <Button
-              type="submit"
-              fullWidth
-              disabled={isLoading}
-              sx={{
-                py: 1.5,
-                background: "#FF5722",
-                color: "#fff",
-                fontWeight: "600",
-                fontSize: "1.1rem",
-                borderRadius: "12px",
-                textTransform: "none",
-                height: "44px",
-                fontFamily: "Source Sans Pro",
-                "&:hover": { background: "#E64A19" },
-                "&:disabled": { background: "#ccc", opacity: 0.7 },
-                mb: 2,
-              }}
-            >
-              {isLoading ? (
-                <CircularProgress size={24} sx={{ color: "#fff" }} />
-              ) : (
-                "Get Login Code"
-              )}
-            </Button>
-
-            <Box sx={{ textAlign: "center" }}>
-              <Typography variant="body2" sx={{ color: "#666" }}>
-                Don't have an account?{" "}
-                <Link
-                  component={NextLink}
-                  href={`/auth/signup${formData.email ? `?email=${encodeURIComponent(formData.email)}` : ""}`}
-                  sx={{
-                    color: "#005F73",
-                    fontWeight: "600",
-                    textDecoration: "none",
-                    "&:hover": { textDecoration: "underline" },
-                  }}
-                >
-                  Sign Up
-                </Link>
-              </Typography>
-            </Box>
-          </Box>
+              Sign Up
+            </Link>
+          </Typography>
         </Box>
       </Box>
-    </Box>
+    </AuthPageLayout>
+  );
+}
+
+export default function SignInPage() {
+  return (
+    <Suspense fallback={null}>
+      <SignInContent />
+    </Suspense>
   );
 }

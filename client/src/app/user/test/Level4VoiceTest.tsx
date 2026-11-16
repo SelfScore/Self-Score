@@ -1,4 +1,5 @@
 "use client";
+import { ACCOUNT_GATE_EVENT } from "../../../lib/api";
 
 import { useState, useEffect, useRef, useCallback } from "react";
 import {
@@ -428,6 +429,15 @@ export default function Level4VoiceTest({
       );
 
       if (!response.ok) {
+        // Account not ready (unverified email / incomplete profile): open the gate modal
+        if (response.status === 403) {
+          const body = await response.json().catch(() => null);
+          if (body?.code === "EMAIL_UNVERIFIED" || body?.code === "PROFILE_INCOMPLETE") {
+            window.dispatchEvent(
+              new CustomEvent(ACCOUNT_GATE_EVENT, { detail: { code: body.code } })
+            );
+          }
+        }
         throw new Error("Failed to start interview session");
       }
 

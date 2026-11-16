@@ -1,5 +1,5 @@
 import { Router } from "express";
-import { authMiddleware } from "../middleware/auth";
+import { authMiddleware, requireVerifiedAndComplete } from "../middleware/auth";
 import {
   startRealtimeInterview,
   initializeAudioConnection,
@@ -15,7 +15,7 @@ const router = Router();
 router.use(authMiddleware);
 
 // Start new realtime interview
-router.post("/start", startRealtimeInterview);
+router.post("/start", requireVerifiedAndComplete, startRealtimeInterview);
 
 // Initialize audio connection (validates session before WebSocket)
 router.post("/connect", initializeAudioConnection);

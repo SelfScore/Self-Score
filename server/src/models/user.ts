@@ -9,11 +9,46 @@ export interface User extends Document {
   country?: string;
   gender?: "Male" | "Female" | "Non-binary" | "Prefer not to say";
   ageGroup?: "Under 18" | "18-24" | "25-34" | "35-44" | "45-54" | "55+";
-  verifyCode: string;
+  /** @deprecated legacy OTP fields — kept so old documents still load */
+  verifyCode?: string;
   isVerified: boolean;
-  verifyCodeExpiry: Date;
+  /** @deprecated */
+  verifyCodeExpiry?: Date;
   resetPasswordToken?: string;
   resetPasswordExpiry?: Date;
+  // ---- Auth (password + Google) ----
+  authProviders: ("password" | "google")[];
+  googleId?: string;
+  avatarUrl?: string;
+  // Incremented to revoke every existing session (password reset, account takeover, etc.)
+  tokenVersion: number;
+  failedLoginAttempts: number;
+  lockedUntil?: Date;
+  emailVerifiedAt?: Date;
+  // Email verification (link + code sent together)
+  emailVerification?: {
+    codeHash?: string;
+    tokenHash?: string;
+    expiresAt?: Date;
+    failedAttempts?: number;
+  };
+  // Passwordless login code (fallback sign-in method)
+  loginCode?: {
+    codeHash?: string;
+    expiresAt?: Date;
+    failedAttempts?: number;
+  };
+  // Pending email change from the profile page
+  emailChange?: {
+    newEmail?: string;
+    codeHash?: string;
+    expiresAt?: Date;
+    failedAttempts?: number;
+  };
+  // ---- Profile completion / onboarding ----
+  profileCompletedAt?: Date;
+  onboardingSkippedAt?: Date;
+  verificationReminderSentAt?: Date;
   lastOtpSentAt?: Date;
   otpRequestCount?: number;
   otpRequestCountResetAt?: Date;
@@ -74,6 +109,7 @@ const UserSchema: Schema<User> = new Schema(
       required: [true, "Email is required"],
       match: [/.+\@.+\..+/, "Please fill a valid email address"],
       trim: true,
+      lowercase: true,
     },
     password: {
       type: String,
@@ -119,6 +155,63 @@ const UserSchema: Schema<User> = new Schema(
       required: false,
     },
     resetPasswordExpiry: {
+      type: Date,
+      required: false,
+    },
+    authProviders: {
+      type: [{ type: String, enum: ["password", "google"] }],
+      default: [],
+    },
+    googleId: {
+      type: String,
+      required: false,
+    },
+    avatarUrl: {
+      type: String,
+      required: false,
+    },
+    tokenVersion: {
+      type: Number,
+      default: 0,
+    },
+    failedLoginAttempts: {
+      type: Number,
+      default: 0,
+    },
+    lockedUntil: {
+      type: Date,
+      required: false,
+    },
+    emailVerifiedAt: {
+      type: Date,
+      required: false,
+    },
+    emailVerification: {
+      codeHash: { type: String, required: false },
+      tokenHash: { type: String, required: false },
+      expiresAt: { type: Date, required: false },
+      failedAttempts: { type: Number, default: 0 },
+    },
+    loginCode: {
+      codeHash: { type: String, required: false },
+      expiresAt: { type: Date, required: false },
+      failedAttempts: { type: Number, default: 0 },
+    },
+    emailChange: {
+      newEmail: { type: String, required: false, lowercase: true, trim: true },
+      codeHash: { type: String, required: false },
+      expiresAt: { type: Date, required: false },
+      failedAttempts: { type: Number, default: 0 },
+    },
+    profileCompletedAt: {
+      type: Date,
+      required: false,
+    },
+    onboardingSkippedAt: {
+      type: Date,
+      required: false,
+    },
+    verificationReminderSentAt: {
       type: Date,
       required: false,
     },
@@ -236,6 +329,16 @@ const UserSchema: Schema<User> = new Schema(
     timestamps: true, // Adds createdAt and updatedAt fields
   }
 );
+
+// Google account id must be unique when present
+UserSchema.index({ googleId: 1 }, { unique: true, sparse: true });
+// Lookups for email-verification links and the reminder job
+UserSchema.index({ "emailVerification.tokenHash": 1 }, { sparse: true });
+UserSchema.index({ isVerified: 1, verificationReminderSentAt: 1, createdAt: 1 });
+
+/** Country, gender and age group are all filled in */
+export const isProfileComplete = (user: Pick<User, "country" | "gender" | "ageGroup">): boolean =>
+  Boolean(user.country && user.gender && user.ageGroup);
 
 const UserModel = mongoose.model<User>("User", UserSchema);
 

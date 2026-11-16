@@ -1,6 +1,7 @@
 import { Router } from 'express';
 import { AdminController } from '../controllers/admin.controller';
 import { adminAuthMiddleware } from '../middleware/adminAuth';
+import { getUserResponses } from '../controllers/questionsResponse.controller';
 
 const router = Router();
 
@@ -17,6 +18,9 @@ router.get('/users', adminAuthMiddleware, AdminController.getUsers);
 
 // GET /api/admin/users/:userId - Get specific user details
 router.get('/users/:userId', adminAuthMiddleware, AdminController.getUserById);
+
+// GET /api/admin/users/:userId/responses - A user's Level 1-3 answers (admin view)
+router.get('/users/:userId/responses', adminAuthMiddleware, getUserResponses);
 
 // PUT /api/admin/users/:userId - Update user
 router.put('/users/:userId', adminAuthMiddleware, AdminController.updateUser);

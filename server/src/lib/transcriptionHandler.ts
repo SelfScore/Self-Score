@@ -2,7 +2,7 @@ import { Server as WebSocketServer, WebSocket } from "ws";
 import { Server as HTTPServer } from "http";
 import { IncomingMessage } from "http";
 import deepgramService from "../services/deepgramService";
-import { verifyToken } from "./jwt";
+import { checkSession } from "../middleware/auth";
 
 // Environment check for logging
 const isDev = process.env.NODE_ENV !== "production";
@@ -68,8 +68,10 @@ export function setupTranscriptionWebSocket(
 
             // Verify the token
             try {
-                const decoded = verifyToken(token);
-                log(`✅ Authenticated user: ${decoded.email}`);
+                // Same checks as HTTP requests: signature, user exists, session not revoked
+                const session = await checkSession(token);
+                if (!session.ok) throw new Error(session.message);
+                log(`✅ Authenticated user: ${session.payload.email}`);
             } catch (tokenError: any) {
                 logError("❌ Invalid auth token:", tokenError.message);
                 ws.send(

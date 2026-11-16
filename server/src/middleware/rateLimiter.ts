@@ -1,6 +1,20 @@
 import rateLimit from "express-rate-limit";
 import { Request, Response } from "express";
 
+// Email-first sign-up lookup ("is this email already registered?")
+export const checkEmailLimiter = rateLimit({
+  windowMs: 15 * 60 * 1000,
+  max: 30,
+  standardHeaders: true,
+  legacyHeaders: false,
+  handler: (req: Request, res: Response) => {
+    res.status(429).json({
+      success: false,
+      message: "Too many requests from this IP address. Please try again after 15 minutes.",
+    });
+  },
+});
+
 /**
  * General Authentication Limiter:
  * Protects login, signup, forgot-password, and admin login against brute-force and spamming.
@@ -16,6 +30,26 @@ export const authLimiter = rateLimit({
       success: false,
       message:
         "Too many authentication attempts from this IP address. Please try again after 15 minutes.",
+    });
+  },
+});
+
+/**
+ * Sign-in Limiter (password + Google):
+ * Separate counter from sign-up/reset so a few typos don't block other actions.
+ * Per-account lockout (5 wrong passwords -> 15 min) is enforced in the controller.
+ * Max 20 requests per 15 minutes per IP.
+ */
+export const loginLimiter = rateLimit({
+  windowMs: 15 * 60 * 1000,
+  max: 20,
+  standardHeaders: true,
+  legacyHeaders: false,
+  handler: (req: Request, res: Response) => {
+    res.status(429).json({
+      success: false,
+      message:
+        "Too many sign-in attempts from this IP address. Please try again after 15 minutes.",
     });
   },
 });

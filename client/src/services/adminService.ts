@@ -108,6 +108,11 @@ export const adminService = {
     }
   },
 
+  // A user's Level 1-3 responses (admin-only endpoint)
+  getUserResponses: async (userId: string): Promise<{ success: boolean; data?: any[]; message?: string }> => {
+    return await api.get(`/api/admin/users/${userId}/responses`);
+  },
+
   // Get single user details
   getUserById: async (userId: string): Promise<UserDetailResponse> => {
     try {

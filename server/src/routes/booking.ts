@@ -1,6 +1,6 @@
 import { Router } from 'express';
 import { BookingController } from '../controllers/booking.controller';
-import { authMiddleware } from '../middleware/auth';
+import { authMiddleware, requireVerifiedAndComplete } from '../middleware/auth';
 import { consultantAuthMiddleware } from '../middleware/consultantAuth';
 
 const router = Router();
@@ -27,7 +27,7 @@ router.get('/availability/:consultantId', BookingController.getAvailableSlots);
  * @access  Private (User)
  * @body    consultantId, sessionType, startTime, duration, userTimezone, userNotes (optional)
  */
-router.post('/create', authMiddleware, BookingController.createBooking);
+router.post('/create', authMiddleware, requireVerifiedAndComplete, BookingController.createBooking);
 
 /**
  * @route   POST /api/booking/:bookingId/confirm
@@ -35,7 +35,7 @@ router.post('/create', authMiddleware, BookingController.createBooking);
  * @access  Private (User)
  * @body    paymentId
  */
-router.post('/:bookingId/confirm', authMiddleware, BookingController.confirmBooking);
+router.post('/:bookingId/confirm', authMiddleware, requireVerifiedAndComplete, BookingController.confirmBooking);
 
 /**
  * @route   POST /api/booking/:bookingId/cancel

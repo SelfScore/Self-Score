@@ -40,6 +40,11 @@ export const consultantAuthMiddleware = (req: Request, res: Response, next: Next
 
         // Verify token
         const decoded = verifyToken(token);
+
+        // End-user session tokens must never be accepted as consultant tokens
+        if ((decoded as any).type === "user") {
+            throw new Error("Invalid token");
+        }
         
         // Add consultant data to request object
         req.consultant = decoded as any;
@@ -78,7 +83,9 @@ export const optionalConsultantAuthMiddleware = (req: Request, res: Response, ne
         if (token) {
             try {
                 const decoded = verifyToken(token);
-                req.consultant = decoded as any;
+                if ((decoded as any).type !== "user") {
+                    req.consultant = decoded as any;
+                }
             } catch (error) {
                 console.log("Optional consultant auth: Invalid token, continuing without consultant");
                 res.clearCookie('consultantAuthToken');

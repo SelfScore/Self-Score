@@ -13,6 +13,8 @@ export interface ApiResponse<T = any> {
   message: string;
   data?: T;
   errors?: any[];
+  /** Machine-readable error code from the server, e.g. EMAIL_UNVERIFIED */
+  code?: string;
 }
 
 export interface UserData {
@@ -25,6 +27,15 @@ export interface UserData {
   countryCode?: string;
   phoneNumber?: string;
   createdAt?: string | Date;
+  isVerified?: boolean;
+  isProfileComplete?: boolean;
+  hasPassword?: boolean;
+  authProviders?: string[];
+  avatarUrl?: string;
+  onboardingSkipped?: boolean;
+  verificationPending?: boolean;
+  /** Only returned by Google sign-in */
+  isNewUser?: boolean;
   purchasedLevels?: {
     level2: {
       purchased: boolean;
@@ -63,115 +74,131 @@ export interface UserData {
 export interface SignUpData {
   username: string;
   email: string;
-  country: string;
-  gender?: string;
-  ageGroup?: string;
-  countryCode?: string;
-  phoneNumber?: string;
+  password: string;
+  rememberMe?: boolean;
 }
 
 export interface LoginData {
   email: string;
+  password: string;
   rememberMe?: boolean;
 }
 
-export interface VerifyEmailData {
-  email: string;
-  verifyCode: string;
-  rememberMe?: boolean;
+export interface OnboardingData {
+  country: string;
+  gender: string;
+  ageGroup: string;
 }
+
+/** Store a user returned by any auth endpoint in Redux */
+const storeUser = (data: UserData): void => {
+  store.dispatch(
+    loginSuccess({
+      user: {
+        userId: data.userId,
+        email: data.email,
+        username: data.username,
+        country: data.country,
+        gender: data.gender,
+        ageGroup: data.ageGroup,
+        countryCode: data.countryCode,
+        phoneNumber: data.phoneNumber,
+        createdAt: data.createdAt,
+        isVerified: data.isVerified,
+        isProfileComplete: data.isProfileComplete,
+        hasPassword: data.hasPassword,
+        authProviders: data.authProviders,
+        avatarUrl: data.avatarUrl,
+        onboardingSkipped: data.onboardingSkipped,
+        verificationPending: data.verificationPending,
+      },
+      purchasedLevels: data.purchasedLevels as any,
+      progress: data.progress,
+    })
+  );
+};
+
+/** POST helper: stores the returned user in Redux when present */
+const postAndStoreUser = async <T extends UserData>(
+  url: string,
+  body: unknown,
+  method: "post" | "patch" = "post"
+): Promise<ApiResponse<T>> => {
+  store.dispatch(setLoading(true));
+  store.dispatch(setError(null));
+  try {
+    const result = (await api[method](url, body)) as unknown as ApiResponse<T>;
+    if (result.success && result.data?.userId) {
+      storeUser(result.data);
+    }
+    return result;
+  } finally {
+    store.dispatch(setLoading(false));
+  }
+};
+
+const post = async (url: string, body?: unknown): Promise<ApiResponse> =>
+  (await api.post(url, body)) as unknown as ApiResponse;
 
 export const authService = {
-  // Sign up new user
-  signUp: async (data: SignUpData): Promise<ApiResponse<UserData>> => {
-    store.dispatch(setLoading(true));
-    store.dispatch(setError(null));
+  // ---- Sign up / sign in ----
 
-    try {
-      const response = await api.post("/api/auth/sign-up", data);
-      return response as unknown as ApiResponse<UserData>;
-    } catch (error) {
-      // Don't set generic error - let the specific backend error pass through
-      throw error;
-    } finally {
-      store.dispatch(setLoading(false));
-    }
-  },
+  /** Email + password sign-up. Signs the user in immediately. */
+  signUp: (data: SignUpData) => postAndStoreUser<UserData>("/api/auth/sign-up", data),
 
-  // Request login code (passwordless OTP)
-  login: async (data: LoginData): Promise<ApiResponse<{ email: string }>> => {
-    store.dispatch(setLoading(true));
-    store.dispatch(setError(null));
+  /** Email + password sign-in */
+  login: (data: LoginData) => postAndStoreUser<UserData>("/api/auth/login", data),
 
-    try {
-      const response = await api.post("/api/auth/login", data);
-      return response as unknown as ApiResponse<{ email: string }>;
-    } catch (error) {
-      // Don't set generic error - let the specific backend error pass through
-      throw error;
-    } finally {
-      store.dispatch(setLoading(false));
-    }
-  },
+  /** Google Identity Services credential (ID token) */
+  googleAuth: (credential: string, rememberMe = false) =>
+    postAndStoreUser<UserData>("/api/auth/google", { credential, rememberMe }),
 
-  // Verify email / login OTP
-  verifyEmail: async (
-    data: VerifyEmailData
-  ): Promise<ApiResponse<UserData>> => {
-    store.dispatch(setLoading(true));
-    store.dispatch(setError(null));
+  /** Custom Google button: one-time auth code from the popup, exchanged by the server */
+  googleAuthCode: (code: string, rememberMe = false) =>
+    postAndStoreUser<UserData>("/api/auth/google", { code, rememberMe }),
 
-    try {
-      const response = await api.post("/api/auth/verify-email", data);
-      const result = response as unknown as ApiResponse<UserData>;
+  /** Email-first sign-up: is there already an account for this email? */
+  checkEmail: (email: string) =>
+    post("/api/auth/check-email", { email }) as Promise<ApiResponse<{ exists: boolean }>>,
 
-      if (result.success && result.data) {
-        // Save to Redux store only (cookies handle persistence now)
-        store.dispatch(
-          loginSuccess({
-            user: {
-              userId: result.data.userId,
-              email: result.data.email,
-              username: result.data.username,
-              country: result.data.country,
-              gender: result.data.gender,
-              ageGroup: result.data.ageGroup,
-              countryCode: result.data.countryCode,
-              phoneNumber: result.data.phoneNumber,
-              createdAt: result.data.createdAt,
-            },
-            purchasedLevels: result.data.purchasedLevels,
-            progress: result.data.progress,
-          })
-        );
-      }
+  /** Fallback: email me a one-time login code */
+  requestLoginCode: (email: string) => post("/api/auth/login/code", { email }),
 
-      return result;
-    } catch (error) {
-      // Don't set generic error - let the specific backend error pass through
-      throw error;
-    } finally {
-      store.dispatch(setLoading(false));
-    }
-  },
+  verifyLoginCode: (email: string, code: string, rememberMe = false) =>
+    postAndStoreUser<UserData>("/api/auth/login/code/verify", { email, code, rememberMe }),
 
-  // Resend verification code
-  resendVerification: async (email: string): Promise<ApiResponse> => {
-    store.dispatch(setLoading(true));
-    store.dispatch(setError(null));
+  // ---- Email verification ----
 
-    try {
-      const response = await api.post("/api/auth/resend-verification", {
-        email,
-      });
-      return response as unknown as ApiResponse;
-    } catch (error) {
-      // Don't set generic error - let the specific backend error pass through
-      throw error;
-    } finally {
-      store.dispatch(setLoading(false));
-    }
-  },
+  /** (Re)send the verification link + code to the signed-in user */
+  sendVerificationEmail: () => post("/api/auth/verify-email/send"),
+
+  /** Signed-in user enters the 6-digit code */
+  verifyEmailCode: (code: string) =>
+    postAndStoreUser<UserData>("/api/auth/verify-email", { code }),
+
+  /** Token from the link in the email (works when signed out) */
+  verifyEmailLink: (token: string) => post("/api/auth/verify-email/link", { token }),
+
+  // ---- Passwords ----
+
+  forgotPassword: (email: string) => post("/api/auth/forgot-password", { email }),
+
+  resetPassword: (token: string, password: string, confirmPassword: string) =>
+    postAndStoreUser<UserData>("/api/auth/reset-password", { token, password, confirmPassword }),
+
+  /** Set a first password, or change it (currentPassword required then) */
+  setPassword: (newPassword: string, currentPassword?: string) =>
+    postAndStoreUser<UserData>("/api/auth/password", { newPassword, currentPassword }),
+
+  // ---- Onboarding ----
+
+  completeOnboarding: (data: OnboardingData) =>
+    postAndStoreUser<UserData>("/api/auth/onboarding", data, "patch"),
+
+  skipOnboarding: () =>
+    postAndStoreUser<UserData>("/api/auth/onboarding", { skip: true }, "patch"),
+
+  // ---- Session ----
 
   // Get current user from backend (using cookies for auth)
   getCurrentUser: async (): Promise<UserData | null> => {
@@ -179,36 +206,21 @@ export const authService = {
     store.dispatch(setError(null));
 
     try {
-      const response = await api.get("/api/auth/me");
-      const result = response as unknown as ApiResponse<UserData>;
+      const result = (await api.get("/api/auth/me")) as unknown as ApiResponse<UserData>;
 
       if (result.success && result.data) {
-        store.dispatch(
-          loginSuccess({
-            user: {
-              userId: result.data.userId,
-              email: result.data.email,
-              username: result.data.username,
-              country: result.data.country,
-              gender: result.data.gender,
-              ageGroup: result.data.ageGroup,
-              countryCode: result.data.countryCode,
-              phoneNumber: result.data.phoneNumber,
-              createdAt: result.data.createdAt,
-            },
-            purchasedLevels: result.data.purchasedLevels,
-            progress: result.data.progress,
-          })
-        );
+        storeUser(result.data);
         return result.data;
       }
 
       // No user but auth check is complete
       store.dispatch(setInitialized());
       return null;
-    } catch (error) {
-      // Don't show error for auth failures (user just not logged in)
-      console.log("Failed to get current user:", error);
+    } catch (error: any) {
+      // A 401 means the session is gone (expired / revoked): clear any stale state
+      if (error?.response?.status === 401 && store.getState().auth.isAuthenticated) {
+        store.dispatch(logout());
+      }
       store.dispatch(setInitialized());
       return null;
     } finally {
@@ -234,7 +246,6 @@ export const authService = {
       // Continue with logout even if backend fails
     }
 
-    // Clear Redux store
     store.dispatch(logout());
     store.dispatch(setLoading(false));
   },
@@ -245,7 +256,8 @@ export const authService = {
     return state.auth.isAuthenticated;
   },
 
-  // Update user profile
+  // ---- Profile ----
+
   updateProfile: async (data: {
     username?: string;
     email?: string;
@@ -258,38 +270,16 @@ export const authService = {
     store.dispatch(setLoading(true));
 
     try {
-      const response: ApiResponse<UserData> = await api.patch(
-        "/api/auth/profile",
-        data
-      );
+      const response: ApiResponse<UserData> = await api.patch("/api/auth/profile", data);
 
-      if (response.success && response.data) {
-        // If email change is pending, don't update Redux yet
-        if (!(response.data as any).emailVerificationPending) {
-          store.dispatch(
-            loginSuccess({
-              user: {
-                userId: response.data.userId,
-                email: response.data.email,
-                username: response.data.username,
-                country: response.data.country,
-                gender: response.data.gender,
-                ageGroup: response.data.ageGroup,
-                countryCode: response.data.countryCode,
-                phoneNumber: response.data.phoneNumber,
-                createdAt: response.data.createdAt,
-              },
-              purchasedLevels: response.data.purchasedLevels,
-              progress: response.data.progress,
-            })
-          );
-        }
+      // If an email change is pending, the user hasn't changed yet
+      if (response.success && response.data?.userId) {
+        storeUser(response.data);
       }
 
       return response;
     } catch (error: any) {
-      const errorMessage =
-        error.response?.data?.message || "Failed to update profile";
+      const errorMessage = error.response?.data?.message || "Failed to update profile";
       store.dispatch(setError(errorMessage));
       throw error;
     } finally {
@@ -297,7 +287,6 @@ export const authService = {
     }
   },
 
-  // Verify email update
   verifyEmailUpdate: async (data: {
     newEmail: string;
     verifyCode: string;
@@ -310,27 +299,13 @@ export const authService = {
         data
       );
 
-      if (response.success && response.data) {
-        store.dispatch(
-          loginSuccess({
-            user: {
-              userId: response.data.userId,
-              email: response.data.email,
-              username: response.data.username,
-              country: response.data.country,
-              countryCode: response.data.countryCode,
-              phoneNumber: response.data.phoneNumber,
-            },
-            purchasedLevels: response.data.purchasedLevels,
-            progress: response.data.progress,
-          })
-        );
+      if (response.success && response.data?.userId) {
+        storeUser(response.data);
       }
 
       return response;
     } catch (error: any) {
-      const errorMessage =
-        error.response?.data?.message || "Failed to verify email";
+      const errorMessage = error.response?.data?.message || "Failed to verify email";
       store.dispatch(setError(errorMessage));
       throw error;
     } finally {

@@ -16,6 +16,7 @@ import {
   Snackbar,
   CircularProgress,
   MenuItem,
+  Button,
 } from "@mui/material";
 import { useAuth } from "../../../hooks/useAuth";
 import { useRouter } from "next/navigation";
@@ -36,6 +37,8 @@ import { getNames } from "country-list";
 import ButtonSelfScore from "@/app/components/ui/ButtonSelfScore";
 import OutLineButton from "@/app/components/ui/OutLineButton";
 import EmailVerificationModal from "@/app/components/ui/EmailVerificationModal";
+import PasswordSection from "@/app/components/auth/PasswordSection";
+import { useAccountGate } from "@/app/components/auth/AccountGateProvider";
 import LogoutConfirmationModal from "@/app/components/ui/LogoutConfirmationModal";
 import { authService } from "@/services/authService";
 import { getUserFriendlyError, getSuccessMessage } from "@/utils/errorMessages";
@@ -69,6 +72,7 @@ export default function ProfilePage() {
   const [showLogoutModal, setShowLogoutModal] = useState(false);
   const [logoutLoading, setLogoutLoading] = useState(false);
   const { logout } = useAuth();
+  const { openGate } = useAccountGate();
 
   const [formData, setFormData] = useState({
     username: "",
@@ -1038,8 +1042,25 @@ export default function ProfilePage() {
                           fontFamily: "Source Sans Pro",
                         }}
                       >
-                        ✓ Verified
+                        {user?.isVerified ? "✓ Verified" : "Not verified"}
                       </Typography>
+                      {!user?.isVerified && (
+                        <Button
+                          size="small"
+                          onClick={() => void openGate(["verify"])}
+                          sx={{
+                            mt: 1,
+                            textTransform: "none",
+                            color: "#005F73",
+                            bgcolor: "#fff",
+                            fontWeight: 600,
+                            borderRadius: "8px",
+                            "&:hover": { bgcolor: "#f1f1f1" },
+                          }}
+                        >
+                          Verify now
+                        </Button>
+                      )}
                     </Box>
                   </Grid>
 
@@ -1061,7 +1082,7 @@ export default function ProfilePage() {
                           fontFamily: "Source Sans Pro",
                         }}
                       >
-                        Account Type
+                        Sign-in method
                       </Typography>
                       <Typography
                         variant="h6"
@@ -1070,13 +1091,17 @@ export default function ProfilePage() {
                           fontFamily: "Source Sans Pro",
                         }}
                       >
-                        User
+                        {(user?.authProviders || []).includes("google") ? "Google" : "Email"}
+                        {user?.hasPassword && (user?.authProviders || []).includes("google") ? " + password" : ""}
                       </Typography>
                     </Box>
                   </Grid>
                 </Grid>
               </CardContent>
             </Card>
+
+            {/* Set / change password */}
+            <PasswordSection />
           </Grid>
         </Grid>
 

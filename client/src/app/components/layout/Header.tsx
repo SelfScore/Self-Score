@@ -14,6 +14,7 @@ import {
   Menu,
   MenuItem,
   Divider,
+  Badge,
 } from "@mui/material";
 import {
   Menu as MenuIcon,
@@ -21,7 +22,11 @@ import {
   AccountCircle,
   Dashboard,
   ExitToApp,
+  MarkEmailUnread,
+  ManageAccounts,
+  Password,
 } from "@mui/icons-material";
+import { useAccountTasks, AccountTaskKey } from "../auth/useAccountTasks";
 import { useState, useEffect } from "react";
 import Link from "next/link";
 import Image from "next/image";
@@ -46,6 +51,17 @@ export default function Header() {
   const theme = useTheme();
   const isMobile = useMediaQuery(theme.breakpoints.down("md"));
   const { isAuthenticated, user, logout } = useAuth();
+  const accountTasks = useAccountTasks();
+  // Orange dot on the avatar while the user has account to-dos
+  const showAccountDot = isAuthenticated && !isConsultantAuth && accountTasks.length > 0;
+  const taskIcon = (key: AccountTaskKey) =>
+    key === "verify" ? (
+      <MarkEmailUnread sx={{ mr: 1.5, fontSize: 20, color: "#E87A42" }} />
+    ) : key === "profile" ? (
+      <ManageAccounts sx={{ mr: 1.5, fontSize: 20, color: "#E87A42" }} />
+    ) : (
+      <Password sx={{ mr: 1.5, fontSize: 20, color: "#E87A42" }} />
+    );
   const pathname = usePathname();
   const router = useRouter();
 
@@ -366,6 +382,35 @@ export default function Header() {
               </Link>
             </ListItem>
 
+            {showAccountDot &&
+              accountTasks.map((task) => (
+                <ListItem key={task.key} disablePadding sx={{ px: 1.5 }}>
+                  <Button
+                    fullWidth
+                    variant="text"
+                    onClick={() => {
+                      handleDrawerToggle();
+                      task.run();
+                    }}
+                    sx={{
+                      justifyContent: "flex-start",
+                      py: 0.75,
+                      px: 1.5,
+                      fontSize: "14px",
+                      fontWeight: 600,
+                      color: "#B34700",
+                      borderRadius: "8px",
+                      minHeight: "36px",
+                      textTransform: "none",
+                      "&:hover": { backgroundColor: "rgba(232, 122, 66, 0.08)" },
+                    }}
+                  >
+                    {taskIcon(task.key)}
+                    {task.label}
+                  </Button>
+                </ListItem>
+              ))}
+
             {/* Logout Button */}
             <ListItem disablePadding sx={{ px: 1.5 }}>
               <Button
@@ -530,6 +575,7 @@ export default function Header() {
                   <Box sx={{ display: "flex", alignItems: "center", gap: 1 }}>
                     <IconButton
                       onClick={handleProfileMenuOpen}
+                      aria-label={showAccountDot ? "Account menu (action needed)" : "Account menu"}
                       sx={{
                         color: "#005F73",
                         "&:hover": {
@@ -537,6 +583,13 @@ export default function Header() {
                         },
                       }}
                     >
+                      <Badge
+                        variant="dot"
+                        invisible={!showAccountDot}
+                        overlap="circular"
+                        anchorOrigin={{ vertical: "top", horizontal: "right" }}
+                        sx={{ "& .MuiBadge-dot": { backgroundColor: "#FF4F00", width: 12, height: 12, borderRadius: "50%", border: "2px solid #fff" } }}
+                      >
                       <Avatar
                         sx={{
                           width: 40,
@@ -554,6 +607,7 @@ export default function Header() {
                           user?.email?.charAt(0) ||
                           "U"}
                       </Avatar>
+                      </Badge>
                     </IconButton>
 
                     <Menu
@@ -668,6 +722,27 @@ export default function Header() {
                         </MenuItem>
                       </Box>
 
+                      {showAccountDot && (
+                        <Box sx={{ py: 1, borderTop: "1px solid #E8E8E8" }}>
+                          <Typography sx={{ px: 2.5, pb: 0.5, fontSize: "12px", color: "#6B7280", fontWeight: 600, textTransform: "uppercase", letterSpacing: "0.04em" }}>
+                            Finish setting up
+                          </Typography>
+                          {accountTasks.map((task) => (
+                            <MenuItem
+                              key={task.key}
+                              onClick={() => {
+                                handleProfileMenuClose();
+                                task.run();
+                              }}
+                              sx={{ py: 1.25, px: 2.5, fontSize: "14px", color: "#2B2B2B", "&:hover": { backgroundColor: "rgba(232, 122, 66, 0.08)" } }}
+                            >
+                              {taskIcon(task.key)}
+                              {task.label}
+                            </MenuItem>
+                          ))}
+                        </Box>
+                      )}
+
                       <Divider sx={{ my: 0 }} />
 
                       <Box sx={{ py: 1 }}>
@@ -706,7 +781,13 @@ export default function Header() {
               onClick={handleDrawerToggle}
               sx={{ color: "#005F73" }}
             >
-              <MenuIcon />
+              <Badge
+                variant="dot"
+                invisible={!showAccountDot}
+                sx={{ "& .MuiBadge-dot": { backgroundColor: "#FF4F00" } }}
+              >
+                <MenuIcon />
+              </Badge>
             </IconButton>
           )}
         </Box>

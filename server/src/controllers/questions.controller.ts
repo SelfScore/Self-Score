@@ -30,7 +30,10 @@ export const getQuestionsByLevel = async (
 ): Promise<Response> => {
   try {
     const { level } = req.params;
-    const { userId } = req.query; // Optional userId to include user responses
+    // Only the signed-in user's own responses are ever included (never trust ?userId=)
+    const requestedUserId = typeof req.query.userId === "string" ? req.query.userId : undefined;
+    const userId =
+      requestedUserId && req.user?.userId === requestedUserId ? requestedUserId : undefined;
 
     const questions = await QuestionModel.find({ level: Number(level) }).sort({ order: 1 });
 

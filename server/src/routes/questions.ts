@@ -1,5 +1,6 @@
 import { Router } from "express";
 import * as questionControllers from "../controllers/questions.controller";
+import { authMiddleware, optionalAuthMiddleware, requireSelfParam } from "../middleware/auth";
 
 const router = Router();
 
@@ -7,9 +8,9 @@ const router = Router();
 router.get("/", questionControllers.getAllQuestions);
 
 // GET /api/questions/level/:level - Fetch questions by level (with optional userId query param for responses)
-router.get("/level/:level", questionControllers.getQuestionsByLevel);
+router.get("/level/:level", optionalAuthMiddleware, questionControllers.getQuestionsByLevel);
 
 // GET /api/questions/user/:userId - Fetch questions with user responses
-router.get("/user/:userId", questionControllers.getQuestionsWithResponses);
+router.get("/user/:userId", authMiddleware, requireSelfParam("userId"), questionControllers.getQuestionsWithResponses);
 
 export default router;

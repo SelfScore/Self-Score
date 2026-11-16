@@ -6,6 +6,9 @@ import { useEffect, useRef } from "react";
 import { useAppDispatch } from "./hooks";
 import { authService } from "../services/authService";
 import { usePathname } from "next/navigation";
+import { GoogleOAuthProvider } from "@react-oauth/google";
+import { GOOGLE_CLIENT_ID } from "../lib/config";
+import { AccountGateProvider } from "../app/components/auth/AccountGateProvider";
 
 // Component to initialize auth state from backend
 function AuthInitializer({ children }: { children: React.ReactNode }) {
@@ -48,9 +51,18 @@ function AuthInitializer({ children }: { children: React.ReactNode }) {
 }
 
 export function ReduxProvider({ children }: { children: React.ReactNode }) {
-  return (
+  const content = (
     <Provider store={store}>
-      <AuthInitializer>{children}</AuthInitializer>
+      <AccountGateProvider>
+        <AuthInitializer>{children}</AuthInitializer>
+      </AccountGateProvider>
     </Provider>
+  );
+
+  // Google Identity Services script is only loaded when a client id is configured
+  return GOOGLE_CLIENT_ID ? (
+    <GoogleOAuthProvider clientId={GOOGLE_CLIENT_ID}>{content}</GoogleOAuthProvider>
+  ) : (
+    content
   );
 }

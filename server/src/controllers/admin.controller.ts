@@ -27,13 +27,20 @@ export class AdminController {
         startDate.setDate(startDate.getDate() - days);
       }
 
+      // Real users: verified accounts, plus accounts created with the new
+      // password/Google sign-up (which may not be verified yet). Excludes
+      // abandoned sign-ups from the old code-only flow.
+      const realUserFilter = {
+        $or: [{ isVerified: true }, { "authProviders.0": { $exists: true } }],
+      };
+
       // Total Users (all time)
-      const totalUsers = await UserModel.countDocuments({ isVerified: true });
+      const totalUsers = await UserModel.countDocuments(realUserFilter);
 
       // New Users Registered in period
       const newUsersQuery = startDate
-        ? { isVerified: true, createdAt: { $gte: startDate } }
-        : { isVerified: true };
+        ? { ...realUserFilter, createdAt: { $gte: startDate } }
+        : realUserFilter;
       const newUsers = await UserModel.countDocuments(newUsersQuery);
 
       // Total Tests Completed in period
@@ -60,7 +67,7 @@ export class AdminController {
       let chartStartDate: Date;
       if (period === "all") {
         // Get the earliest user registration date for true "all time" data
-        const earliestUser = (await UserModel.findOne({ isVerified: true })
+        const earliestUser = (await UserModel.findOne(realUserFilter)
           .sort({ createdAt: 1 })
           .select("createdAt")
           .lean()) as { createdAt?: Date } | null;
@@ -80,7 +87,7 @@ export class AdminController {
 
       // Daily new users
       const dailyUsers = await UserModel.aggregate([
-        { $match: { isVerified: true, createdAt: { $gte: chartStartDate } } },
+        { $match: { ...realUserFilter, createdAt: { $gte: chartStartDate } } },
         {
           $group: {
             _id: { $dateToString: { format: "%Y-%m-%d", date: "$createdAt" } },

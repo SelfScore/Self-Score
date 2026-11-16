@@ -6,6 +6,8 @@ import { paymentService } from "../../../services/paymentService";
 import { getLevelPrice } from "../../../lib/stripe";
 import LockOpenIcon from "@mui/icons-material/LockOpen";
 import { useAuth } from "../../../hooks/useAuth";
+import { useAccountGate } from "../auth/AccountGateProvider";
+import { store } from "../../../store";
 import SignUpModal from "../../user/SignUpModal";
 import ButtonSelfScore from "./ButtonSelfScore";
 
@@ -32,12 +34,21 @@ export default function BuyLevelButton({
 
   const price = getLevelPrice(level);
 
-  const handlePurchase = async () => {
-    // Check if user is authenticated
-    if (!isAuthenticated) {
+  const { ensureAccountReady } = useAccountGate();
+
+  // Reads auth state from the store (not this render's closure) so it also
+  // works right after signing in through the modal.
+  const startCheckout = async () => {
+    if (!store.getState().auth.isAuthenticated) {
       setShowSignUpModal(true);
       return;
     }
+
+    // Payments need a verified email and a complete profile
+    const ready = await ensureAccountReady({
+      reason: "Before you unlock Level 4, please verify your email and complete your profile. It only takes a minute.",
+    });
+    if (!ready) return;
 
     setLoading(true);
     setError("");
@@ -53,12 +64,22 @@ export default function BuyLevelButton({
       }
     } catch (err: any) {
       console.error("Purchase error:", err);
-      setError(
-        err.response?.data?.message || "Failed to start purchase process"
-      );
+      // EMAIL_UNVERIFIED / PROFILE_INCOMPLETE already open the gate modal
+      const code = err.response?.data?.code;
+      if (code !== "EMAIL_UNVERIFIED" && code !== "PROFILE_INCOMPLETE") {
+        setError(err.response?.data?.message || "Failed to start purchase process");
+      }
     } finally {
       setLoading(false);
     }
+  };
+
+  const handlePurchase = () => {
+    if (!isAuthenticated) {
+      setShowSignUpModal(true);
+      return;
+    }
+    void startCheckout();
   };
 
   if (!price) {
@@ -75,8 +96,8 @@ export default function BuyLevelButton({
         onClose={() => setShowSignUpModal(false)}
         onSuccess={() => {
           setShowSignUpModal(false);
-          // After successful sign up/login, attempt purchase again
-          handlePurchase();
+          // After sign up / sign in, continue to checkout
+          void startCheckout();
         }}
       />
 

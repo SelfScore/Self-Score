@@ -1,5 +1,5 @@
 import { Router } from "express";
-import { authMiddleware } from "../middleware/auth";
+import { authMiddleware, requireVerifiedAndComplete } from "../middleware/auth";
 import {
     startInterview,
     submitTextAnswer,
@@ -18,7 +18,7 @@ const router = Router();
 router.use(authMiddleware);
 
 // Start a new interview
-router.post("/start", startInterview);
+router.post("/start", requireVerifiedAndComplete, startInterview);
 
 // Submit answer for text mode
 router.post("/submit-answer", submitTextAnswer);

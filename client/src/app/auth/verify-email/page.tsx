@@ -1,562 +1,325 @@
 "use client";
 
-import {
-  Box,
-  Typography,
-  TextField,
-  Button,
-  Link,
-  Alert,
-  CircularProgress,
-  InputAdornment,
-} from "@mui/material";
-import { useState, useEffect, Suspense } from "react";
+import { Alert, Box, CircularProgress, Link, Typography } from "@mui/material";
+import { Suspense, useCallback, useEffect, useRef, useState } from "react";
 import { useRouter, useSearchParams } from "next/navigation";
-import { useAuth } from "../../../hooks/useAuth";
 import NextLink from "next/link";
-import Image from "next/image";
-import EmailIcon from "@mui/icons-material/Email";
-import {
-  getUserFriendlyError,
-  getSuccessMessage,
-} from "../../../utils/errorMessages";
+import CheckCircleIcon from "@mui/icons-material/CheckCircle";
+import { useAuth } from "../../../hooks/useAuth";
+import { authService } from "../../../services/authService";
+import { getUserFriendlyError } from "../../../utils/errorMessages";
+import AuthPageLayout from "../../components/auth/AuthPageLayout";
+import CodeInput from "../../components/auth/CodeInput";
+import ButtonSelfScore from "../../components/ui/ButtonSelfScore";
+import { VerifyEmailStep } from "../../components/auth/AccountGateModal";
+import { getPostAuthPath } from "../../components/auth/postAuthRedirect";
+import { authCardSx, authLinkSx, safeNextPath } from "../../components/auth/authStyles";
 
+/**
+ * Three uses:
+ *  1. ?token=...                    link from the verification email
+ *  2. ?mode=login&email=...         enter a passwordless login code
+ *  3. (signed in, no params)        enter the email verification code
+ */
 function VerifyEmailContent() {
-  const router = useRouter();
   const searchParams = useSearchParams();
-  const { verifyEmail, resendVerification, isLoading, error, clearError } =
-    useAuth();
+  const token = searchParams.get("token");
+  const mode = searchParams.get("mode");
 
-  const [verifyCode, setVerifyCode] = useState(["", "", "", "", "", ""]);
-  const [email, setEmail] = useState("");
-  const [mode, setMode] = useState<"login" | "signup">("signup");
-  const [rememberMe, setRememberMe] = useState(false);
-  const [localError, setLocalError] = useState("");
-  const [success, setSuccess] = useState("");
-  const [resendLoading, setResendLoading] = useState(false);
-  const [countdown, setCountdown] = useState(60);
+  if (token) return <LinkVerification token={token} />;
+  if (mode === "login") return <LoginCodeEntry />;
+  return <SignedInVerification />;
+}
 
-  useEffect(() => {
-    let timer: NodeJS.Timeout;
-    if (countdown > 0) {
-      timer = setInterval(() => {
-        setCountdown((prev) => Math.max(0, prev - 1));
-      }, 1000);
-    }
-    return () => {
-      if (timer) clearInterval(timer);
-    };
-  }, [countdown]);
+function LinkVerification({ token }: { token: string }) {
+  const { isAuthenticated } = useAuth();
+  const [state, setState] = useState<"loading" | "done" | "error" | "signin" | "other-account">("loading");
+  const [message, setMessage] = useState("");
+  // Come back to this same link after signing in
+  const signInHref = `/auth/signin?next=${encodeURIComponent(`/auth/verify-email?token=${token}`)}`;
+  const started = useRef(false);
 
   useEffect(() => {
-    const emailParam = searchParams.get("email");
-    const modeParam = searchParams.get("mode");
-    const rememberMeParam = searchParams.get("rememberMe");
-
-    if (emailParam) {
-      setEmail(emailParam);
-    }
-    if (modeParam === "login") {
-      setMode("login");
-    } else {
-      setMode("signup");
-    }
-    if (rememberMeParam === "true") {
-      setRememberMe(true);
-    }
-  }, [searchParams]);
-
-  const handleVerifyCode = async (e: React.FormEvent) => {
-    e.preventDefault();
-
-    const code = verifyCode.join("");
-    if (!code || code.length !== 6) {
-      setLocalError("Please enter all 6 digits of the verification code");
-      return;
-    }
-
-    if (!email.trim()) {
-      setLocalError("Email address is required for verification");
-      return;
-    }
-
-    try {
-      clearError();
-      const response = await verifyEmail({
-        email: email.trim().toLowerCase(),
-        verifyCode: code,
-        rememberMe,
-      });
-
-      if (response.success) {
-        setSuccess(
-          mode === "login"
-            ? "Login successful! Redirecting to dashboard..."
-            : getSuccessMessage("verify")
-        );
-        setTimeout(() => {
-          router.push("/user/dashboard");
-        }, 1500);
-      } else {
-        setLocalError(
-          getUserFriendlyError(
-            { response: { data: { message: response.message } } },
-            "verify"
-          )
-        );
+    // Strict Mode runs effects twice in dev; the token is single-use
+    if (started.current) return;
+    started.current = true;
+    (async () => {
+      try {
+        await authService.verifyEmailLink(token);
+        setState("done");
+        // Refresh the signed-in user (if this browser is signed in)
+        void authService.getCurrentUser();
+      } catch (err: any) {
+        const code = err?.response?.data?.code;
+        setMessage(err?.response?.data?.message || getUserFriendlyError(err, "verify"));
+        // The link only works while signed in to the account it belongs to
+        if (code === "SIGN_IN_REQUIRED") setState("signin");
+        else if (code === "SIGNED_IN_AS_OTHER") setState("other-account");
+        else setState("error");
       }
-    } catch (err: any) {
-      setLocalError(getUserFriendlyError(err, "verify"));
-    }
-  };
-
-  const handleCodeChange = (index: number, value: string) => {
-    // Only allow numbers
-    if (value && !/^\d$/.test(value)) return;
-
-    const newCode = [...verifyCode];
-    newCode[index] = value;
-    setVerifyCode(newCode);
-    setLocalError("");
-    clearError();
-
-    // Auto-focus next input
-    if (value && index < 5) {
-      const nextInput = document.getElementById(`code-input-${index + 1}`);
-      nextInput?.focus();
-    }
-  };
-
-  const handleKeyDown = (
-    index: number,
-    e: React.KeyboardEvent<HTMLInputElement>
-  ) => {
-    if (e.key === "Backspace" && !verifyCode[index] && index > 0) {
-      const prevInput = document.getElementById(`code-input-${index - 1}`);
-      prevInput?.focus();
-    }
-  };
-
-  const handlePaste = (e: React.ClipboardEvent) => {
-    e.preventDefault();
-    const pastedData = e.clipboardData.getData("text").slice(0, 6);
-    if (/^\d+$/.test(pastedData)) {
-      const newCode = pastedData
-        .split("")
-        .concat(Array(6).fill(""))
-        .slice(0, 6);
-      setVerifyCode(newCode);
-      // Focus the last filled input or the next empty one
-      const nextEmptyIndex = newCode.findIndex((val) => !val);
-      const focusIndex = nextEmptyIndex === -1 ? 5 : nextEmptyIndex;
-      const input = document.getElementById(`code-input-${focusIndex}`);
-      input?.focus();
-    }
-  };
-
-  const handleResendCode = async () => {
-    if (!email.trim()) {
-      setLocalError(
-        "Please enter your email address to resend the verification code"
-      );
-      return;
-    }
-
-    try {
-      setResendLoading(true);
-      clearError();
-      setLocalError("");
-
-      const response = await resendVerification(email.trim().toLowerCase());
-
-      if (response.success) {
-        setSuccess(getSuccessMessage("resend"));
-        setCountdown(60);
-      } else {
-        setLocalError(
-          getUserFriendlyError(
-            { response: { data: { message: response.message } } },
-            "verify"
-          )
-        );
-      }
-    } catch (err: any) {
-      setLocalError(getUserFriendlyError(err, "verify"));
-    } finally {
-      setResendLoading(false);
-    }
-  };
-
-  const isLoginMode = mode === "login";
+    })();
+  }, [token]);
 
   return (
-    <Box
-      sx={{
-        minHeight: "100vh",
-        display: "flex",
-        alignItems: "center",
-        justifyContent: "center",
-        bgcolor: "#FFFFFF",
-        py: { xs: 2, sm: 3, md: 4 },
-      }}
+    <AuthPageLayout title="Verify Your Email">
+      <Box sx={authCardSx}>
+        {state === "loading" && (
+          <Box sx={{ display: "flex", alignItems: "center", gap: 2 }}>
+            <CircularProgress size={24} sx={{ color: "#FF5722" }} />
+            <Typography sx={{ fontFamily: "Source Sans Pro" }}>Verifying your email…</Typography>
+          </Box>
+        )}
+        {state === "done" && (
+          <Box sx={{ textAlign: "center" }}>
+            <CheckCircleIcon sx={{ color: "#2e7d32", fontSize: 56, mb: 1 }} />
+            <Typography sx={{ fontFamily: "Faustina", fontWeight: 700, fontSize: "24px", mb: 1 }}>
+              Your email is verified
+            </Typography>
+            <Typography sx={{ color: "#6B7280", fontFamily: "Source Sans Pro", mb: 3 }}>
+              You can now unlock Level 4, book consultations and make payments.
+            </Typography>
+            <NextLink href={isAuthenticated ? "/user/dashboard" : "/auth/signin"} style={{ textDecoration: "none" }}>
+              <ButtonSelfScore
+                text={isAuthenticated ? "Go to dashboard" : "Sign in"}
+                fullWidth
+                style={{ height: 48, borderRadius: 12 }}
+              />
+            </NextLink>
+          </Box>
+        )}
+        {state === "signin" && (
+          <Box sx={{ textAlign: "center" }}>
+            <Typography sx={{ fontFamily: "Faustina", fontWeight: 700, fontSize: "24px", mb: 1 }}>
+              Sign in to finish verifying
+            </Typography>
+            <Typography sx={{ color: "#6B7280", fontFamily: "Source Sans Pro", mb: 3 }}>
+              For your security, please sign in to the account this email belongs to. We&apos;ll finish
+              verifying it straight after.
+            </Typography>
+            <NextLink href={signInHref} style={{ textDecoration: "none" }}>
+              <ButtonSelfScore text="Sign in" fullWidth style={{ height: 48, borderRadius: 12 }} />
+            </NextLink>
+          </Box>
+        )}
+        {state === "other-account" && (
+          <Alert severity="warning">
+            {message}{" "}
+            <Link component={NextLink} href="/auth/logout" sx={authLinkSx}>
+              Sign out
+            </Link>
+          </Alert>
+        )}
+        {state === "error" && (
+          <Box>
+            <Alert severity="error" sx={{ mb: 2 }}>
+              {message || "This verification link is invalid or has expired."}
+            </Alert>
+            <Typography sx={{ fontFamily: "Source Sans Pro", color: "#6B7280" }}>
+              Links expire after 24 hours and stop working once a newer one is sent.{" "}
+              {isAuthenticated ? (
+                <Link component={NextLink} href="/auth/verify-email" sx={authLinkSx}>
+                  Send a new one
+                </Link>
+              ) : (
+                <Link component={NextLink} href="/auth/signin?next=%2Fauth%2Fverify-email" sx={authLinkSx}>
+                  Sign in to get a new one
+                </Link>
+              )}
+            </Typography>
+          </Box>
+        )}
+      </Box>
+    </AuthPageLayout>
+  );
+}
+
+function LoginCodeEntry() {
+  const router = useRouter();
+  const searchParams = useSearchParams();
+  const email = (searchParams.get("email") || "").trim().toLowerCase();
+  const rememberMe = searchParams.get("rememberMe") === "true";
+  const next = searchParams.get("next");
+
+  const [code, setCode] = useState(["", "", "", "", "", ""]);
+  const [submitting, setSubmitting] = useState(false);
+  const [resending, setResending] = useState(false);
+  const [countdown, setCountdown] = useState(60);
+  const [error, setError] = useState("");
+  const [success, setSuccess] = useState("");
+
+  useEffect(() => {
+    if (countdown <= 0) return;
+    const t = setTimeout(() => setCountdown((c) => c - 1), 1000);
+    return () => clearTimeout(t);
+  }, [countdown]);
+
+  const submit = useCallback(
+    async (value?: string) => {
+      const full = value ?? code.join("");
+      if (full.length !== 6) {
+        setError("Please enter all 6 digits of the code");
+        return;
+      }
+      setSubmitting(true);
+      setError("");
+      try {
+        const res = await authService.verifyLoginCode(email, full, rememberMe);
+        if (res.success && res.data) {
+          setSuccess("Signed in! Redirecting…");
+          router.push(getPostAuthPath(res.data, next));
+          return;
+        }
+        setError(res.message);
+      } catch (err) {
+        setError(getUserFriendlyError(err, "verify"));
+        setCode(["", "", "", "", "", ""]);
+      }
+      setSubmitting(false);
+    },
+    [code, email, rememberMe, next, router]
+  );
+
+  const resend = async () => {
+    setResending(true);
+    setError("");
+    try {
+      await authService.requestLoginCode(email);
+      setSuccess("We've sent a new code.");
+      setCountdown(60);
+    } catch (err) {
+      setError(getUserFriendlyError(err, "verify"));
+    } finally {
+      setResending(false);
+    }
+  };
+
+  if (!email) {
+    return (
+      <AuthPageLayout title="Enter Login Code">
+        <Alert severity="warning">
+          Missing email address.{" "}
+          <Link component={NextLink} href="/auth/signin" sx={authLinkSx}>
+            Back to sign in
+          </Link>
+        </Alert>
+      </AuthPageLayout>
+    );
+  }
+
+  return (
+    <AuthPageLayout
+      title="Enter Login Code"
+      subtitle={
+        <>
+          If an account exists for <strong>{email}</strong>, we&apos;ve sent it a 6-digit code. It expires in 10 minutes.
+        </>
+      }
     >
-      <Box
-        sx={{
-          display: "flex",
-          flexDirection: { xs: "column", md: "row" },
-          width: "100%",
-          alignItems: { xs: "center", md: "flex-start" },
-          gap: { xs: 3, md: 3 },
-          marginTop: { xs: 8, md: 12 },
-        }}
-      >
-        {/* Left Side - Image */}
-        <Box
-          sx={{
-            position: "relative",
-            display: { xs: "none", md: "block" },
-            width: { md: "48%", lg: "50%" },
-            minHeight: "582px",
-            flexShrink: 0,
-          }}
-        >
-          <Box
-            sx={{
-              position: "relative",
-              height: "582px",
-              width: "100%",
-              maxWidth: "690px",
-            }}
-          >
-            <Image
-              src="/images/LandingPage/AuthImg.webp"
-              alt="Authentication"
-              fill
-              style={{
-                objectFit: "cover",
-                borderTopRightRadius: "60px",
-                borderBottomRightRadius: "60px",
-              }}
-              priority
-            />
-          </Box>
+      {error && (
+        <Alert severity="error" sx={{ mb: 3 }}>
+          {error}
+        </Alert>
+      )}
+      {success && !error && (
+        <Alert severity="success" sx={{ mb: 3 }}>
+          {success}
+        </Alert>
+      )}
+      <Box sx={authCardSx}>
+        <Box sx={{ mb: 3 }}>
+          <CodeInput value={code} onChange={setCode} disabled={submitting} onComplete={(c) => void submit(c)} />
         </Box>
-
-        {/* Right Side - Form */}
-        <Box
-          sx={{
-            width: { xs: "100%", md: "48%", lg: "50%" },
-            maxWidth: { xs: "627px", md: "627px" },
-            px: { xs: 2, sm: 3, md: 0 },
-            display: "flex",
-            flexDirection: "column",
-            flexShrink: 0,
-          }}
-        >
-          <Box sx={{ textAlign: { xs: "center", md: "left" }, mb: 4 }}>
-            <Typography
-              sx={{
-                fontWeight: "700",
-                color: "#000",
-                mb: 1,
-                fontSize: { xs: "1.75rem", sm: "2rem", md: "40px" },
-                fontFamily: "Faustina",
-              }}
-            >
-              {isLoginMode ? "Enter Login Code" : "Verify Your Email"}
-            </Typography>
-            <Typography
-              sx={{
-                color: "#6B7280",
-                fontSize: { xs: "14px", md: "18px" },
-                fontWeight: 400,
-                fontFamily: "Source Sans Pro",
-              }}
-            >
-              {isLoginMode
-                ? "We've sent a 6-digit login code to your email address"
-                : "We've sent a 6-digit verification code to your email address"}
-            </Typography>
-            <Typography
-              sx={{
-                fontWeight: "700",
-                color: "#005F73",
-                fontSize: { xs: "16px", md: "18px" },
-                fontFamily: "Source Sans Pro",
-                mt: 0.5,
-              }}
-            >
-              {email || "your email address"}
-            </Typography>
-          </Box>
-
-          {(error || localError) && (
-            <Alert severity="error" sx={{ mb: 3 }}>
-              {error || localError}
-            </Alert>
-          )}
-
-          {success && (
-            <Alert severity="success" sx={{ mb: 3 }}>
-              {success}
-            </Alert>
-          )}
-
-          <Box
-            sx={{
-              border: "1px solid #3A3A3A4D",
-              borderRadius: "16px",
-              py: { xs: 3, md: 4 },
-              px: { xs: 2, md: 2.5 },
-              width: "100%",
-              bgcolor: "#FFFFFF",
-            }}
-            component="form"
-            onSubmit={handleVerifyCode}
-          >
-            {!email && (
-              <>
-                <Typography
-                  sx={{
-                    mb: 1,
-                    color: "#2C3E50",
-                    fontWeight: 400,
-                    fontFamily: "Source Sans Pro",
-                    fontSize: "16px",
-                  }}
-                >
-                  Email Address<span style={{ color: "#FF5722" }}>*</span>
-                </Typography>
-                <TextField
-                  placeholder="Enter your email"
-                  type="email"
-                  value={email}
-                  onChange={(e) => setEmail(e.target.value)}
-                  fullWidth
-                  required
-                  disabled={isLoading}
-                  InputProps={{
-                    startAdornment: (
-                      <InputAdornment position="start">
-                        <EmailIcon sx={{ color: "#999" }} />
-                      </InputAdornment>
-                    ),
-                  }}
-                  sx={{
-                    mb: 2,
-                    "& .MuiOutlinedInput-root": {
-                      height: "48px",
-                      borderRadius: "8px",
-                      bgcolor: "#FFFFFF",
-                      "& fieldset": { border: "1px solid #3A3A3A4D" },
-                      "&:hover fieldset": { border: "1px solid #3A3A3A4D" },
-                      "&.Mui-focused fieldset": {
-                        border: "1px solid #FF5722",
-                      },
-                    },
-                  }}
-                />
-              </>
-            )}
-
-            <Typography
-              sx={{
-                mb: 2,
-                textAlign: "center",
-                color: "#141414",
-                fontWeight: 400,
-                fontFamily: "Source Sans Pro",
-                fontSize: "16px",
-              }}
-            >
-              Enter 6-Digit Code
-            </Typography>
-
-            {/* 6-digit code input boxes */}
-            <Box
-              sx={{
-                display: "flex",
-                gap: { xs: 1, sm: 1.5 },
-                justifyContent: "center",
-                mb: 3,
-              }}
-            >
-              {verifyCode.map((digit, index) => (
-                <TextField
-                  key={index}
-                  id={`code-input-${index}`}
-                  value={digit}
-                  onChange={(e) => handleCodeChange(index, e.target.value)}
-                  onKeyDown={(e) =>
-                    handleKeyDown(
-                      index,
-                      e as React.KeyboardEvent<HTMLInputElement>
-                    )
-                  }
-                  onPaste={index === 0 ? handlePaste : undefined}
-                  disabled={isLoading}
-                  inputProps={{
-                    maxLength: 1,
-                    style: {
-                      textAlign: "center",
-                      fontSize: "24px",
-                      fontWeight: "600",
-                      padding: "0",
-                    },
-                  }}
-                  sx={{
-                    width: { xs: "45px", sm: "56px" },
-                    "& .MuiOutlinedInput-root": {
-                      height: { xs: "45px", sm: "56px" },
-                      borderRadius: "8px",
-                      bgcolor: "#FFFFFF",
-                      "& fieldset": { border: "1px solid #E5E7EB" },
-                      "&:hover fieldset": { border: "1px solid #9CA3AF" },
-                      "&.Mui-focused fieldset": {
-                        border: "2px solid #FF5722",
-                      },
-                    },
-                    "& input": {
-                      fontFamily: "Source Sans Pro",
-                    },
-                  }}
-                />
-              ))}
-            </Box>
-
-            <Typography
-              sx={{
-                textAlign: "center",
-                mb: 1,
-                color: "#6B7280",
-                fontSize: "16px",
-                fontFamily: "Source Sans Pro",
-              }}
-            >
-              Didn't receive the code?{" "}
-              <Link
+        <ButtonSelfScore
+          text={submitting ? <CircularProgress size={22} sx={{ color: "#fff" }} /> : "Sign In"}
+          fullWidth
+          disabled={submitting}
+          onClick={() => void submit()}
+          style={{ height: 48, borderRadius: 12 }}
+        />
+        <Box sx={{ textAlign: "center", mt: 2 }}>
+          <Typography variant="body2" sx={{ color: "#666" }}>
+            Didn&apos;t get it?{" "}
+            {countdown > 0 ? (
+              <span>Resend in {countdown}s</span>
+            ) : (
+              <Typography
                 component="button"
                 type="button"
-                onClick={handleResendCode}
-                disabled={resendLoading || !email || countdown > 0}
-                sx={{
-                  color: "#005F73",
-                  fontWeight: "600",
-                  fontFamily: "Source Sans Pro",
-                  textDecoration: "none",
-                  cursor:
-                    resendLoading || !email || countdown > 0
-                      ? "not-allowed"
-                      : "pointer",
-                  opacity: resendLoading || !email || countdown > 0 ? 0.6 : 1,
-                  "&:hover": {
-                    textDecoration:
-                      !resendLoading && email && countdown === 0
-                        ? "underline"
-                        : "none",
-                  },
-                }}
+                onClick={resend}
+                disabled={resending}
+                sx={{ background: "none", border: "none", p: 0, ...authLinkSx, fontSize: "14px" }}
               >
-                {resendLoading
-                  ? "Sending..."
-                  : countdown > 0
-                  ? `Resend Code in ${countdown}s`
-                  : "Resend Code"}
-              </Link>
-            </Typography>
-
-            <Typography
-              sx={{
-                textAlign: "center",
-                mb: 3,
-                color: "#6B7280",
-                fontSize: { xs: "13px", md: "14px" },
-                fontFamily: "Source Sans Pro",
-              }}
-            >
-              Please check your spam or junk folder if you don&apos;t see it in your inbox.
-            </Typography>
-
-            <Button
-              type="submit"
-              fullWidth
-              disabled={isLoading || verifyCode.join("").length !== 6}
-              sx={{
-                py: 1.5,
-                background: "#FF5722",
-                color: "#fff",
-                fontWeight: "600",
-                fontSize: "1.1rem",
-                borderRadius: "12px",
-                textTransform: "none",
-                height: "48px",
-                fontFamily: "Source Sans Pro",
-                "&:hover": { background: "#E64A19" },
-                "&:disabled": { background: "#ccc", opacity: 0.7 },
-                mb: 2,
-              }}
-            >
-              {isLoading ? (
-                <CircularProgress size={24} sx={{ color: "#fff" }} />
-              ) : isLoginMode ? (
-                "Log In"
-              ) : (
-                "Verify & Continue"
-              )}
-            </Button>
-
-            <Box sx={{ textAlign: "center" }}>
-              <Typography variant="body2" sx={{ color: "#6B7280" }}>
-                Wrong Email? Back to{" "}
-                <Link
-                  component={NextLink}
-                  href={isLoginMode ? "/auth/signin" : "/auth/signup"}
-                  sx={{
-                    color: "#005F73",
-                    fontWeight: "600",
-                    textDecoration: "none",
-                    "&:hover": { textDecoration: "underline" },
-                  }}
-                >
-                  {isLoginMode ? "Sign In" : "Sign Up"}
-                </Link>
+                {resending ? "Sending…" : "Resend code"}
               </Typography>
-            </Box>
-          </Box>
+            )}
+          </Typography>
+          <Typography variant="body2" sx={{ color: "#666", mt: 1 }}>
+            <Link component={NextLink} href={`/auth/signin?email=${encodeURIComponent(email)}`} sx={{ ...authLinkSx, color: "#005F73" }}>
+              Back to sign in
+            </Link>
+          </Typography>
         </Box>
       </Box>
-    </Box>
+    </AuthPageLayout>
+  );
+}
+
+function SignedInVerification() {
+  const router = useRouter();
+  const searchParams = useSearchParams();
+  const next = safeNextPath(searchParams.get("next"));
+  const { user, isAuthenticated, isInitialized } = useAuth();
+
+  useEffect(() => {
+    if (isInitialized && !isAuthenticated) {
+      router.replace(`/auth/signin?next=${encodeURIComponent("/auth/verify-email")}`);
+    }
+  }, [isInitialized, isAuthenticated, router]);
+
+  if (!isInitialized || !user) {
+    return (
+      <AuthPageLayout title="Verify Your Email">
+        <CircularProgress sx={{ color: "#FF5722" }} />
+      </AuthPageLayout>
+    );
+  }
+
+  if (user.isVerified) {
+    return (
+      <AuthPageLayout title="Verify Your Email">
+        <Box sx={{ ...authCardSx, textAlign: "center" }}>
+          <CheckCircleIcon sx={{ color: "#2e7d32", fontSize: 56, mb: 1 }} />
+          <Typography sx={{ fontFamily: "Faustina", fontWeight: 700, fontSize: "24px", mb: 3 }}>
+            Your email is verified
+          </Typography>
+          <NextLink href={next} style={{ textDecoration: "none" }}>
+            <ButtonSelfScore text="Continue" fullWidth style={{ height: 48, borderRadius: 12 }} />
+          </NextLink>
+        </Box>
+      </AuthPageLayout>
+    );
+  }
+
+  return (
+    <AuthPageLayout
+      title="Verify Your Email"
+      subtitle="A verified email is needed before Level 4, consultations and payments."
+    >
+      <Box sx={authCardSx}>
+        <VerifyEmailStep
+          email={user.email}
+          isVerified={false}
+          verificationPending={Boolean(user.verificationPending)}
+          onVerified={() => undefined}
+        />
+      </Box>
+    </AuthPageLayout>
   );
 }
 
 export default function VerifyEmailPage() {
   return (
-    <Suspense
-      fallback={
-        <Box
-          sx={{
-            minHeight: "100vh",
-            display: "flex",
-            alignItems: "center",
-            justifyContent: "center",
-            bgcolor: "#FFFFFF",
-          }}
-        >
-          <Box sx={{ textAlign: "center" }}>
-            <CircularProgress sx={{ color: "#FF5722" }} />
-            <Typography
-              sx={{
-                mt: 2,
-                fontFamily: "Source Sans Pro",
-                color: "#6B7280",
-              }}
-            >
-              Loading...
-            </Typography>
-          </Box>
-        </Box>
-      }
-    >
+    <Suspense fallback={null}>
       <VerifyEmailContent />
     </Suspense>
   );

@@ -100,7 +100,7 @@ export const getUserFriendlyError = (
       );
     case 401:
       if (context === "signin") {
-        return "Invalid email or password. Please try again.";
+        return message || "Incorrect email or password. Please try again.";
       }
       return message || "Authentication failed. Please try again.";
     case 403:
@@ -110,8 +110,11 @@ export const getUserFriendlyError = (
         return "No account found with this email. Please check your email or sign up.";
       }
       return message || "The requested resource was not found.";
+    case 409:
+      return message || "This account already exists.";
     case 429:
-      return "Too many attempts. Please wait a few minutes before trying again.";
+      // Server messages here are specific ("wait 42 seconds"), so show them
+      return message || "Too many attempts. Please wait a few minutes before trying again.";
     case 500:
     case 502:
     case 503:
@@ -157,7 +160,7 @@ const formatValidationError = (message: string): string => {
     "Passwords don't match":
       "The passwords you entered don't match. Please try again.",
     "Password must be at least":
-      "Your password must be at least 6 characters long.",
+      "Your password must be at least 8 characters long.",
   };
 
   for (const [key, value] of Object.entries(validationMappings)) {
@@ -183,15 +186,13 @@ export const getSuccessMessage = (
     | "profile"
 ): string => {
   const successMappings: Record<typeof action, string> = {
-    signup:
-      "Account created successfully! Please check your email for the verification code.",
+    signup: "Account created! We've sent a verification link to your email.",
     signin: "Welcome back! Redirecting to your dashboard...",
-    verify: "Email verified successfully! You can now sign in to your account.",
+    verify: "Your email is verified.",
     forgot:
       "Password reset instructions have been sent to your email. Please check your inbox.",
-    reset:
-      "Your password has been reset successfully! You can now sign in with your new password.",
-    resend: "Verification code sent! Please check your email.",
+    reset: "Your password has been reset and you're signed in.",
+    resend: "We've sent a new verification link and code to your email.",
     profile: "Your profile has been updated successfully.",
   };
 

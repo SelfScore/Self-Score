@@ -18,7 +18,6 @@ import ArrowBackIcon from "@mui/icons-material/ArrowBack";
 import HelpOutlineIcon from "@mui/icons-material/HelpOutline";
 import StarsIcon from "@mui/icons-material/Stars";
 import { adminService, UserDetailResponse } from "@/services/adminService";
-import { questionsApi } from "@/services/questionsService";
 import { level4ReviewService } from "@/services/level4ReviewService";
 import { level5ReviewService } from "@/services/level5ReviewService";
 
@@ -65,7 +64,7 @@ function ResponsesContent() {
 
       if (level >= 1 && level <= 3) {
         // Fetch Level 1-3 responses
-        const res = await questionsApi.getUserResponses(userId);
+        const res = await adminService.getUserResponses(userId);
         if (res.success && res.data) {
           // Filter responses for the specific level
           const filtered = res.data.filter((r: any) => r.level === level);

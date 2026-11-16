@@ -10,6 +10,8 @@ import Level4Test from "./Level4Test";
 import { useLevelAccess } from "../../../hooks/useLevelAccess";
 import SubscriptionRequired from "../../components/ui/SubscriptionRequired";
 import LevelLocked from "../../components/ui/LevelLocked";
+import AccountSetupRequired from "../../components/auth/AccountSetupRequired";
+import { useAuth } from "../../../hooks/useAuth";
 import OutLineButton from "@/app/components/ui/OutLineButton";
 import ArrowBackIosIcon from "@mui/icons-material/ArrowBackIos";
 
@@ -18,6 +20,7 @@ function TestContent() {
   const router = useRouter();
   const level = parseInt(searchParams.get("level") || "1");
   const { checkTestAttemptAccess, getRemainingAttempts, progress } = useLevelAccess();
+  const { isAuthenticated, isAccountReady } = useAuth();
 
   // State for toast notification
   const [showToast, setShowToast] = useState(false);
@@ -149,6 +152,11 @@ function TestContent() {
       const isPendingReview = level === 5 && missingLevel === 4 && isLevel4PendingReview;
       return <LevelLocked level={level} requiredLevel={missingLevel} isPendingReview={isPendingReview} />;
     }
+  }
+
+  // Level 4 and 5 need a verified email and a complete profile (also enforced by the server)
+  if ((level === 4 || level === 5) && isAuthenticated && !isAccountReady) {
+    return <AccountSetupRequired level={level} />;
   }
 
   // If Level 4 or 5 has no attempts, show loading state while redirecting

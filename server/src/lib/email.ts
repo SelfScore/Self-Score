@@ -505,6 +505,68 @@ export const sendVerificationEmail = async (
   });
 };
 
+// Send account verification email (link + 6-digit code in one email).
+// Used at sign-up, when the user asks for a new one, and for the reminder email.
+export const sendAccountVerificationEmail = async (
+  email: string,
+  username: string,
+  verifyCode: string,
+  linkToken: string,
+  options: { reminder?: boolean; expiryHours?: number } = {}
+): Promise<boolean> => {
+  const safeUsername = escapeHtml(username);
+  const expiryHours = options.expiryHours ?? 24;
+  const verifyLink = `${CLIENT_URL}/auth/verify-email?token=${encodeURIComponent(linkToken)}`;
+  const subject = options.reminder
+    ? `Reminder: verify your ${APP_NAME} email`
+    : `Verify your ${APP_NAME} email`;
+  const intro = options.reminder
+    ? `Hi ${safeUsername}, you haven&apos;t verified your email yet. You&apos;ll need a verified email before unlocking Level 4, booking a consultation or making a payment.`
+    : `Hi ${safeUsername}, welcome to ${APP_NAME}! Please confirm this is your email address. You can keep taking Levels 1&ndash;3 in the meantime &mdash; a verified email is needed before Level 4, bookings and payments.`;
+
+  const html = renderEmailLayout({
+    previewText: subject,
+    recipientEmail: email,
+    emailType: "transactional",
+    bodyHtml: `
+      <h1 style="margin:0 0 22px 0; color:#111111; font-family:'Source Sans Pro', Arial, Helvetica, sans-serif; font-size:24px; line-height:1.3; font-weight:700;">
+        Confirm your email address
+      </h1>
+      <p style="margin:0 0 32px 0; color:#111111; font-family:'Source Sans Pro', Arial, Helvetica, sans-serif; font-size:18px; line-height:1.6;">
+        ${intro}
+      </p>
+      <div style="margin:0 0 36px 0; text-align:left;">
+        <a
+          href="${verifyLink}"
+          style="display:inline-block; padding:18px 36px; background:#0C677A; color:#FFFFFF; text-decoration:none; border-radius:16px; font-family:'Source Sans Pro', Arial, Helvetica, sans-serif; font-size:18px; line-height:1.2; font-weight:400;"
+        >
+          Verify my email
+        </a>
+      </div>
+      <div style="margin:0 0 30px 0;">
+        <p style="margin:0 0 14px 0; color:#9D9D9D; font-family:'Source Sans Pro', Arial, Helvetica, sans-serif; font-size:18px; line-height:1.4;">
+          Or enter this code on the website
+        </p>
+        <div style="margin:0; color:#B34700; font-family:'Source Sans Pro', Arial, Helvetica, sans-serif; font-size:48px; line-height:1; font-weight:400; letter-spacing:6px;">
+          ${verifyCode}
+        </div>
+      </div>
+      <p style="margin:0 0 36px 0; color:#9D9D9D; font-family:'Source Sans Pro', Arial, Helvetica, sans-serif; font-size:18px; line-height:1.5; font-weight:700;">
+        The link and code expire in ${expiryHours} hours. You&apos;ll be asked to sign in if you aren&apos;t already.
+      </p>
+      <p style="margin:0 0 20px 0; color:#111111; font-family:'Source Sans Pro', Arial, Helvetica, sans-serif; font-size:18px; line-height:1.6;">
+        If you didn&apos;t create an account with ${APP_NAME}, please ignore this email.
+      </p>
+      <p style="margin:0; color:#707070; font-family:'Source Sans Pro', Arial, Helvetica, sans-serif; font-size:14px; line-height:1.6; word-break:break-word;">
+        If the button doesn&apos;t work, open this link:
+        <a href="${verifyLink}" style="color:#0C677A; text-decoration:underline;">${verifyLink}</a>
+      </p>
+    `,
+  });
+
+  return await sendEmail({ to: email, subject, html });
+};
+
 // Send login OTP email
 export const sendLoginOtpEmail = async (
   email: string,

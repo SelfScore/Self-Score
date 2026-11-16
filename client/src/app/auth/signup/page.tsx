@@ -10,168 +10,116 @@ import {
   Checkbox,
   FormControlLabel,
   InputAdornment,
-  FormHelperText,
-  MenuItem,
 } from "@mui/material";
-import { useState, useEffect } from "react";
-import { useRouter } from "next/navigation";
-import { useAuth } from "../../../hooks/useAuth";
+import { Suspense, useEffect, useState } from "react";
+import { useRouter, useSearchParams } from "next/navigation";
 import NextLink from "next/link";
-import Image from "next/image";
 import EmailIcon from "@mui/icons-material/Email";
-import PublicIcon from "@mui/icons-material/Public";
 import PersonIcon from "@mui/icons-material/Person";
-import WcIcon from "@mui/icons-material/Wc";
-import CakeIcon from "@mui/icons-material/Cake";
+import { useAuth } from "../../../hooks/useAuth";
+import { authService, UserData } from "../../../services/authService";
+import { getUserFriendlyError } from "../../../utils/errorMessages";
+import AuthPageLayout from "../../components/auth/AuthPageLayout";
+import PasswordField from "../../components/auth/PasswordField";
+import GoogleSignInButton from "../../components/auth/GoogleSignInButton";
 import ButtonSelfScore from "../../components/ui/ButtonSelfScore";
-import { getNames } from "country-list";
+import { getPostAuthPath } from "../../components/auth/postAuthRedirect";
 import {
-  getUserFriendlyError,
-  getSuccessMessage,
-} from "../../../utils/errorMessages";
+  EMAIL_REGEX,
+  authCardSx,
+  authInputSx,
+  authLabelSx,
+  authLinkSx,
+  validatePassword,
+} from "../../components/auth/authStyles";
 
-const GENDER_OPTIONS = ["Male", "Female", "Non-binary", "Prefer not to say"] as const;
-const AGE_GROUP_OPTIONS = [
-  "Under 18",
-  "18-24",
-  "25-34",
-  "35-44",
-  "45-54",
-  "55+",
-] as const;
+type FieldErrors = { username?: string; email?: string; password?: string };
 
-export default function SignUpPage() {
+function SignUpContent() {
   const router = useRouter();
-  const { signUp, isLoading, error, clearError } = useAuth();
+  const searchParams = useSearchParams();
+  const next = searchParams.get("next");
+  const { isAuthenticated, isInitialized, user } = useAuth();
 
-  const [formData, setFormData] = useState({
-    username: "",
-    email: "",
-    country: "",
-    gender: "",
-    ageGroup: "",
-  });
-  const [localError, setLocalError] = useState("");
-  const [success, setSuccess] = useState("");
+  const [username, setUsername] = useState("");
+  const [email, setEmail] = useState(searchParams.get("email") || "");
+  const [password, setPassword] = useState("");
   const [agreedToTerms, setAgreedToTerms] = useState(false);
+  const [fieldErrors, setFieldErrors] = useState<FieldErrors>({});
+  const [error, setError] = useState<React.ReactNode>("");
+  const [submitting, setSubmitting] = useState(false);
+  const [redirecting, setRedirecting] = useState(false);
+  // Email-first: step 1 = Google or email, step 2 = name + password
+  const [step, setStep] = useState<"email" | "details">("email");
+  const [checkingEmail, setCheckingEmail] = useState(false);
 
-  // Field-specific errors for inline display
-  const [fieldErrors, setFieldErrors] = useState({
-    username: "",
-    email: "",
-    country: "",
-    gender: "",
-    ageGroup: "",
-  });
-
-  // Load form data from localStorage on mount
+  // Already signed in
   useEffect(() => {
-    const savedFormData = localStorage.getItem("signupFormData");
-    if (savedFormData) {
-      try {
-        const parsed = JSON.parse(savedFormData);
-        setFormData((prev) => ({ ...prev, ...parsed }));
-      } catch (error) {
-        console.error("Failed to parse saved form data:", error);
-      }
+    if (isInitialized && isAuthenticated && user && !redirecting) {
+      router.replace(getPostAuthPath(user, next));
+    }
+  }, [isInitialized, isAuthenticated, user, next, router, redirecting]);
+
+  // Old versions of this page saved a draft (incl. profile fields) — remove it
+  useEffect(() => {
+    try {
+      localStorage.removeItem("signupFormData");
+    } catch {
+      /* storage unavailable */
     }
   }, []);
 
-  // Save form data to localStorage whenever it changes
-  useEffect(() => {
-    if (
-      formData.username ||
-      formData.email ||
-      formData.country ||
-      formData.gender ||
-      formData.ageGroup
-    ) {
-      localStorage.setItem("signupFormData", JSON.stringify(formData));
-    }
-  }, [formData]);
-
-  const validateEmail = (email: string): string => {
-    if (!email.trim()) {
-      return "";
-    }
-    if (!/^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(email)) {
-      return "Please enter a valid email address";
-    }
-    return "";
+  const finish = (created: UserData) => {
+    setRedirecting(true);
+    router.push(getPostAuthPath(created, next));
   };
 
-  const handleInputChange = (field: string, value: string) => {
-    setFormData((prev) => ({
-      ...prev,
-      [field]: value,
-    }));
-    setLocalError("");
-    clearError();
-
-    // Real-time validation for specific fields
-    if (field === "email") {
-      const error = validateEmail(value);
-      setFieldErrors((prev) => ({ ...prev, email: error }));
-    } else if (field === "country") {
-      const error = !value ? "Country is required" : "";
-      setFieldErrors((prev) => ({ ...prev, country: error }));
-    } else if (field === "gender") {
-      setFieldErrors((prev) => ({ ...prev, gender: "" }));
-    } else if (field === "ageGroup") {
-      setFieldErrors((prev) => ({ ...prev, ageGroup: "" }));
-    }
+  const signInHref = (withEmail: boolean, exists = false) => {
+    const params = new URLSearchParams();
+    if (withEmail && email.trim()) params.set("email", email.trim().toLowerCase());
+    if (exists) params.set("exists", "1");
+    if (next) params.set("next", next);
+    const qs = params.toString();
+    return `/auth/signin${qs ? `?${qs}` : ""}`;
   };
 
-  const validateForm = () => {
-    // Username validation
-    if (!formData.username.trim()) {
-      setLocalError("Please enter your full name");
-      return false;
+  const handleContinue = async (e: React.FormEvent) => {
+    e.preventDefault();
+    setError("");
+    const normalized = email.trim().toLowerCase();
+    if (!EMAIL_REGEX.test(normalized)) {
+      setFieldErrors({ email: "Please enter a valid email address" });
+      return;
     }
-    if (formData.username.trim().length < 2) {
-      setLocalError("Name must be at least 2 characters long");
-      return false;
+    setCheckingEmail(true);
+    try {
+      const res = await authService.checkEmail(normalized);
+      if (res.success && res.data?.exists) {
+        setRedirecting(true);
+        router.push(signInHref(true, true));
+        return;
+      }
+    } catch {
+      // Lookup failed (offline / rate limited): carry on — sign-up itself reports EMAIL_IN_USE
+    } finally {
+      setCheckingEmail(false);
     }
-    if (formData.username.trim().length > 50) {
-      setLocalError("Name must not exceed 50 characters");
-      return false;
-    }
+    setEmail(normalized);
+    setStep("details");
+  };
 
-    // Email validation
-    if (!formData.email.trim()) {
-      setLocalError("Please enter your email address");
-      return false;
-    }
-    if (!/^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(formData.email)) {
-      setLocalError(
-        "Please enter a valid email address (e.g., name@example.com)"
-      );
-      return false;
-    }
-
-    // Country validation
-    if (!formData.country.trim()) {
-      setLocalError("Please select your country");
-      return false;
-    }
-
-    // Gender validation
-    if (!formData.gender) {
-      setLocalError("Please select your gender");
-      return false;
-    }
-
-    // Age Group validation
-    if (!formData.ageGroup) {
-      setLocalError("Please select your age group");
-      return false;
-    }
-
-    // Terms agreement validation
+  const validate = (): boolean => {
+    const errors: FieldErrors = {};
+    const name = username.trim();
+    if (name.length < 2) errors.username = "Please enter your full name (at least 2 characters)";
+    else if (name.length > 50) errors.username = "Name must not exceed 50 characters";
+    if (!EMAIL_REGEX.test(email.trim())) errors.email = "Please enter a valid email address";
+    const pw = validatePassword(password);
+    if (pw) errors.password = pw;
+    setFieldErrors(errors);
+    if (Object.keys(errors).length > 0) return false;
     if (!agreedToTerms) {
-      setLocalError(
-        "Please agree to the Terms of Service and Privacy Policy to continue"
-      );
+      setError("Please agree to the Terms of Service and Privacy Policy to continue");
       return false;
     }
     return true;
@@ -179,563 +127,243 @@ export default function SignUpPage() {
 
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
+    setError("");
+    if (!validate()) return;
 
-    if (!validateForm()) return;
-
+    setSubmitting(true);
     try {
-      const response = await signUp({
-        username: formData.username.trim(),
-        email: formData.email.trim().toLowerCase(),
-        country: formData.country.trim(),
-        gender: formData.gender,
-        ageGroup: formData.ageGroup,
+      const result = await authService.signUp({
+        username: username.trim(),
+        email: email.trim().toLowerCase(),
+        password,
       });
-
-      if (response.success) {
-        setSuccess(getSuccessMessage("signup"));
-        // Clear localStorage after successful signup
-        localStorage.removeItem("signupFormData");
-        // Redirect to verification page with email & mode=signup
-        setTimeout(() => {
-          router.push(
-            `/auth/verify-email?email=${encodeURIComponent(formData.email.trim().toLowerCase())}&mode=signup`
-          );
-        }, 1500);
-      } else {
-        setLocalError(
-          getUserFriendlyError(
-            { response: { data: { message: response.message } } },
-            "signup"
-          )
-        );
-      }
+      if (result.success && result.data) finish(result.data);
+      else setError(result.message);
     } catch (err: any) {
-      setLocalError(getUserFriendlyError(err, "signup"));
+      if (err?.response?.data?.code === "EMAIL_IN_USE") {
+        setError(
+          <>
+            An account with this email already exists.{" "}
+            <Link component={NextLink} href={signInHref(true)} sx={authLinkSx}>
+              Sign in instead
+            </Link>
+          </>
+        );
+      } else {
+        setError(getUserFriendlyError(err, "signup"));
+      }
+    } finally {
+      setSubmitting(false);
     }
   };
 
+  const busy = submitting || redirecting || checkingEmail;
+
   return (
-    <Box
-      sx={{
-        minHeight: "100vh",
-        display: "flex",
-        alignItems: "center",
-        justifyContent: "center",
-        bgcolor: "#FFFFFF",
-        py: { xs: 2, sm: 3, md: 4 },
-        mb: { xs: 0, md: 4 },
-      }}
-    >
-      <Box
-        sx={{
-          display: "flex",
-          flexDirection: { xs: "column", md: "row" },
-          width: "100%",
-          alignItems: { xs: "center", md: "flex-start" },
-          gap: { xs: 3, md: 3 },
-          marginTop: { xs: 8, md: 12 },
-        }}
-      >
-        {/* Left Side - Image */}
-        <Box
-          sx={{
-            position: "relative",
-            display: { xs: "none", md: "block" },
-            width: { md: "48%", lg: "50%" },
-            minHeight: "798px",
-            flexShrink: 0,
-          }}
-        >
-          <Box
-            sx={{
-              position: "relative",
-              height: "798px",
-              width: "100%",
-              maxWidth: "690px",
+    <AuthPageLayout title="Create Your Account" subtitle="Start your journey to self-discovery today">
+      {error && (
+        <Alert severity="error" sx={{ mb: 3 }}>
+          {error}
+        </Alert>
+      )}
+
+      {step === "email" ? (
+        <Box sx={authCardSx} component="form" onSubmit={handleContinue} noValidate>
+          <GoogleSignInButton
+            text="continue_with"
+            onSuccess={finish}
+            onError={(m) => setError(m)}
+          />
+
+          <Typography sx={authLabelSx}>Email Address</Typography>
+          <TextField
+            placeholder="name@example.com"
+            type="email"
+            name="email"
+            autoComplete="email"
+            autoFocus
+            value={email}
+            onChange={(e) => {
+              setEmail(e.target.value);
+              setFieldErrors((f) => ({ ...f, email: undefined }));
             }}
-          >
-            <Image
-              src="/images/LandingPage/AuthImg.webp"
-              alt="Authentication"
-              fill
-              style={{
-                objectFit: "cover",
-                borderTopRightRadius: "60px",
-                borderBottomRightRadius: "60px",
-              }}
-              priority
-            />
-          </Box>
-        </Box>
-
-        {/* Right Side - Form */}
-        <Box
-          sx={{
-            width: { xs: "100%", md: "48%", lg: "50%" },
-            maxWidth: { xs: "627px", md: "627px" },
-            px: { xs: 2, sm: 3, md: 0 },
-            display: "flex",
-            flexDirection: "column",
-            flexShrink: 0,
-          }}
-        >
-          <Box sx={{ textAlign: { xs: "center", md: "left" }, mb: 4 }}>
-            <Typography
-              sx={{
-                fontWeight: "700",
-                color: "#000",
-                mb: 0,
-                fontSize: { xs: "1.75rem", sm: "2rem", md: "40px" },
-                fontFamily: "Faustina",
-              }}
-            >
-              Create Your Account
-            </Typography>
-            <Typography
-              sx={{
-                color: "#6B7280",
-                fontSize: { xs: "16px", md: "18px" },
-                fontWeight: 400,
-                fontFamily: "Source Sans Pro",
-              }}
-            >
-              Start your journey to self-discovery today
-            </Typography>
-          </Box>
-
-          {(error || localError) && (
-            <Alert severity="error" sx={{ mb: 3 }}>
-              {error || localError}
-            </Alert>
-          )}
-
-          {success && (
-            <Alert severity="success" sx={{ mb: 3 }}>
-              {success}
-            </Alert>
-          )}
-
-          <Box
-            sx={{
-              border: "1px solid #3A3A3A4D",
-              borderRadius: "16px",
-              py: { xs: 3, md: 4 },
-              px: { xs: 2, md: 2.5 },
-              width: "100%",
-              bgcolor: "#FFFFFF",
-            }}
-            component="form"
-            onSubmit={handleSubmit}
-          >
-            {/* Full Name */}
-            <Typography
-              sx={{
-                mb: 1,
-                color: "#2C3E50",
-                fontWeight: 400,
-                fontFamily: "Source Sans Pro",
-                fontSize: "16px",
-              }}
-            >
-              Full Name<span style={{ color: "#FF5722" }}>*</span>
-            </Typography>
-            <TextField
-              placeholder="Enter your Full Name"
-              value={formData.username}
-              onChange={(e) => handleInputChange("username", e.target.value)}
-              fullWidth
-              required
-              disabled={isLoading}
-              InputProps={{
-                startAdornment: (
-                  <InputAdornment position="start">
-                    <PersonIcon sx={{ color: "#999" }} />
-                  </InputAdornment>
-                ),
-              }}
-              sx={{
-                mb: 2,
-                "& .MuiOutlinedInput-root": {
-                  height: "48px",
-                  borderRadius: "8px",
-                  bgcolor: "#FFFFFF",
-                  "& fieldset": { border: "1px solid #3A3A3A4D" },
-                  "&:hover fieldset": { border: "1px solid #3A3A3A4D" },
-                  "&.Mui-focused fieldset": { border: "1px solid #FF5722" },
-                },
-              }}
-            />
-
-            {/* Email Address */}
-            <Typography
-              sx={{
-                mb: 1,
-                color: "#2C3E50",
-                fontWeight: 400,
-                fontFamily: "Source Sans Pro",
-                fontSize: "16px",
-              }}
-            >
-              Email Address<span style={{ color: "#FF4F00" }}>*</span>
-            </Typography>
-            <TextField
-              placeholder="Enter your email"
-              type="email"
-              value={formData.email}
-              onChange={(e) => handleInputChange("email", e.target.value)}
-              fullWidth
-              required
-              disabled={isLoading}
-              error={!!fieldErrors.email}
-              InputProps={{
+            fullWidth
+            disabled={busy}
+            error={!!fieldErrors.email}
+            helperText={fieldErrors.email}
+            slotProps={{
+              input: {
                 startAdornment: (
                   <InputAdornment position="start">
                     <EmailIcon sx={{ color: "#999" }} />
                   </InputAdornment>
                 ),
-              }}
-              sx={{
-                mb: fieldErrors.email ? 0.5 : 2,
-                "& .MuiOutlinedInput-root": {
-                  height: "48px",
-                  borderRadius: "8px",
-                  bgcolor: "#FFFFFF",
-                  "& fieldset": {
-                    border: fieldErrors.email
-                      ? "1px solid #d32f2f"
-                      : "1px solid #3A3A3A4D",
-                  },
-                  "&:hover fieldset": {
-                    border: fieldErrors.email
-                      ? "1px solid #d32f2f"
-                      : "1px solid #3A3A3A4D",
-                  },
-                  "&.Mui-focused fieldset": {
-                    border: fieldErrors.email
-                      ? "1px solid #d32f2f"
-                      : "1px solid #FF5722",
-                  },
-                },
-              }}
-            />
-            {fieldErrors.email && (
-              <FormHelperText sx={{ color: "#d32f2f", mb: 2, mt: 0.5, ml: 0 }}>
-                {fieldErrors.email}
-              </FormHelperText>
-            )}
+              },
+            }}
+            sx={{ mb: 2.5, ...authInputSx(!!fieldErrors.email) }}
+          />
 
-            {/* Country */}
-            <Typography
-              sx={{
-                mb: 1,
-                color: "#2C3E50",
-                fontWeight: 400,
-                fontFamily: "Source Sans Pro",
-                fontSize: "16px",
-              }}
-            >
-              Country<span style={{ color: "#FF5722" }}>*</span>
+          <ButtonSelfScore
+            type="submit"
+            text={busy ? <CircularProgress size={22} sx={{ color: "#fff" }} /> : "Continue with email"}
+            fullWidth
+            disabled={busy}
+            style={{ height: 48, borderRadius: 12 }}
+          />
+
+          <Typography
+            sx={{ color: "#6B7280", fontSize: "13px", textAlign: "center", mt: 2, fontFamily: "Source Sans Pro", lineHeight: 1.5 }}
+          >
+            By continuing, you agree to our{" "}
+            <Link component={NextLink} href="/terms-conditions" target="_blank" sx={{ ...authLinkSx, fontSize: "13px" }}>
+              Terms of Service
+            </Link>{" "}
+            and{" "}
+            <Link component={NextLink} href="/privacy-policy" target="_blank" sx={{ ...authLinkSx, fontSize: "13px" }}>
+              Privacy Policy
+            </Link>
+            .
+          </Typography>
+
+          <Box sx={{ textAlign: "center", mt: 2.5 }}>
+            <Typography sx={{ color: "#4B5563", fontSize: "14px", fontFamily: "Source Sans Pro" }}>
+              Already have an account?{" "}
+              <Link component={NextLink} href={signInHref(false)} sx={{ ...authLinkSx, color: "#005F73" }}>
+                Sign In
+              </Link>
             </Typography>
-            <TextField
-              select
-              value={formData.country}
-              onChange={(e) => handleInputChange("country", e.target.value)}
-              fullWidth
-              required
-              disabled={isLoading}
-              SelectProps={{
-                displayEmpty: true,
-                renderValue: (selected) => {
-                  if (
-                    !selected ||
-                    (typeof selected === "string" && selected.length === 0)
-                  ) {
-                    return (
-                      <span
-                        style={{
-                          color: "#999",
-                          fontSize: "16px",
-                          fontFamily: "Source Sans Pro",
-                        }}
-                      >
-                        Select your country
-                      </span>
-                    );
-                  }
-                  return selected as string;
-                },
-                MenuProps: {
-                  PaperProps: {
-                    style: {
-                      maxHeight: 300,
-                    },
-                  },
-                },
-              }}
-              InputProps={{
-                startAdornment: (
-                  <InputAdornment position="start">
-                    <PublicIcon
-                      sx={{ color: "#999", fontSize: { xs: 20, sm: 24 } }}
-                    />
-                  </InputAdornment>
-                ),
-              }}
-              sx={{
-                mb: fieldErrors.country ? "4px" : "16px",
-                "& .MuiOutlinedInput-root": {
-                  height: "48px",
-                  borderRadius: "8px",
-                  bgcolor: "#FFFFFF",
-                  fontSize: "16px",
-                  "& fieldset": {
-                    border: fieldErrors.country
-                      ? "1px solid #d32f2f"
-                      : "1px solid #3A3A3A4D",
-                  },
-                  "&:hover fieldset": {
-                    border: fieldErrors.country
-                      ? "1px solid #d32f2f"
-                      : "1px solid #3A3A3A4D",
-                  },
-                  "&.Mui-focused fieldset": {
-                    border: fieldErrors.country
-                      ? "2px solid #d32f2f"
-                      : "2px solid #FF5722",
-                  },
-                },
-              }}
-            >
-              {getNames().map((name) => (
-                <MenuItem key={name} value={name}>
-                  {name}
-                </MenuItem>
-              ))}
-            </TextField>
-            {fieldErrors.country && (
-              <FormHelperText sx={{ color: "#d32f2f", mb: 2, mt: 0, ml: 0 }}>
-                {fieldErrors.country}
-              </FormHelperText>
-            )}
-
-            {/* Gender */}
-            <Typography
-              sx={{
-                mb: 1,
-                color: "#2C3E50",
-                fontWeight: 400,
-                fontFamily: "Source Sans Pro",
-                fontSize: "16px",
-              }}
-            >
-              Gender<span style={{ color: "#FF5722" }}>*</span>
-            </Typography>
-            <TextField
-              select
-              value={formData.gender}
-              onChange={(e) => handleInputChange("gender", e.target.value)}
-              fullWidth
-              required
-              disabled={isLoading}
-              SelectProps={{
-                displayEmpty: true,
-                renderValue: (selected) => {
-                  if (
-                    !selected ||
-                    (typeof selected === "string" && selected.length === 0)
-                  ) {
-                    return (
-                      <span
-                        style={{
-                          color: "#999",
-                          fontSize: "16px",
-                          fontFamily: "Source Sans Pro",
-                        }}
-                      >
-                        Select your gender
-                      </span>
-                    );
-                  }
-                  return selected as string;
-                },
-              }}
-              InputProps={{
-                startAdornment: (
-                  <InputAdornment position="start">
-                    <WcIcon
-                      sx={{ color: "#999", fontSize: { xs: 20, sm: 24 } }}
-                    />
-                  </InputAdornment>
-                ),
-              }}
-              sx={{
-                mb: "16px",
-                "& .MuiOutlinedInput-root": {
-                  height: "48px",
-                  borderRadius: "8px",
-                  bgcolor: "#FFFFFF",
-                  fontSize: "16px",
-                  "& fieldset": { border: "1px solid #3A3A3A4D" },
-                  "&:hover fieldset": { border: "1px solid #3A3A3A4D" },
-                  "&.Mui-focused fieldset": { border: "2px solid #FF5722" },
-                },
-              }}
-            >
-              {GENDER_OPTIONS.map((option) => (
-                <MenuItem key={option} value={option}>
-                  {option}
-                </MenuItem>
-              ))}
-            </TextField>
-
-            {/* Age Group */}
-            <Typography
-              sx={{
-                mb: 1,
-                color: "#2C3E50",
-                fontWeight: 400,
-                fontFamily: "Source Sans Pro",
-                fontSize: "16px",
-              }}
-            >
-              Age Group<span style={{ color: "#FF5722" }}>*</span>
-            </Typography>
-            <TextField
-              select
-              value={formData.ageGroup}
-              onChange={(e) => handleInputChange("ageGroup", e.target.value)}
-              fullWidth
-              required
-              disabled={isLoading}
-              SelectProps={{
-                displayEmpty: true,
-                renderValue: (selected) => {
-                  if (
-                    !selected ||
-                    (typeof selected === "string" && selected.length === 0)
-                  ) {
-                    return (
-                      <span
-                        style={{
-                          color: "#999",
-                          fontSize: "16px",
-                          fontFamily: "Source Sans Pro",
-                        }}
-                      >
-                        Select your age group
-                      </span>
-                    );
-                  }
-                  return selected as string;
-                },
-              }}
-              InputProps={{
-                startAdornment: (
-                  <InputAdornment position="start">
-                    <CakeIcon
-                      sx={{ color: "#999", fontSize: { xs: 20, sm: 24 } }}
-                    />
-                  </InputAdornment>
-                ),
-              }}
-              sx={{
-                mb: "16px",
-                "& .MuiOutlinedInput-root": {
-                  height: "48px",
-                  borderRadius: "8px",
-                  bgcolor: "#FFFFFF",
-                  fontSize: "16px",
-                  "& fieldset": { border: "1px solid #3A3A3A4D" },
-                  "&:hover fieldset": { border: "1px solid #3A3A3A4D" },
-                  "&.Mui-focused fieldset": { border: "2px solid #FF5722" },
-                },
-              }}
-            >
-              {AGE_GROUP_OPTIONS.map((option) => (
-                <MenuItem key={option} value={option}>
-                  {option}
-                </MenuItem>
-              ))}
-            </TextField>
-
-            <FormControlLabel
-              control={
-                <Checkbox
-                  checked={agreedToTerms}
-                  onChange={(e) => setAgreedToTerms(e.target.checked)}
-                  sx={{
-                    color: "#999",
-                    "&.Mui-checked": { color: "#FF5722" },
-                  }}
-                />
-              }
-              label={
-                <Typography variant="body2" sx={{ color: "#2B2B2B" }}>
-                  I agree to the{" "}
-                  <Link
-                    component={NextLink}
-                    href="/terms-conditions"
-                    sx={{ color: "#005F73", textDecoration: "none" }}
-                  >
-                    Terms of Service
-                  </Link>{" "}
-                  and{" "}
-                  <Link
-                    component={NextLink}
-                    href="/privacy-policy"
-                    sx={{ color: "#005F73", textDecoration: "none" }}
-                  >
-                    Privacy Policy
-                  </Link>
-                </Typography>
-              }
-              sx={{ mb: 2 }}
-            />
-
-            <ButtonSelfScore
-              type="submit"
-              fullWidth
-              disabled={isLoading}
-              text={
-                isLoading ? (
-                  <CircularProgress size={24} sx={{ color: "#fff" }} />
-                ) : (
-                  "Create Account & Get Code"
-                )
-              }
-              height="44px"
-              borderRadius="12px"
-              background="#FF5722"
-              fontSize="1.1rem"
-              textStyle={{
-                fontWeight: "600",
-              }}
-              style={{
-                marginBottom: "16px",
-                opacity: isLoading ? 0.7 : 1,
-              }}
-            />
-
-            <Box sx={{ textAlign: "center" }}>
-              <Typography variant="body2" sx={{ color: "#666" }}>
-                Already have an account?{" "}
-                <Link
-                  component={NextLink}
-                  href="/auth/signin"
-                  sx={{
-                    color: "#005F73",
-                    fontWeight: "600",
-                    textDecoration: "none",
-                    "&:hover": { textDecoration: "underline" },
-                  }}
-                >
-                  Login here
-                </Link>
-              </Typography>
-            </Box>
           </Box>
         </Box>
-      </Box>
-    </Box>
+      ) : (
+        <Box sx={authCardSx} component="form" onSubmit={handleSubmit} noValidate>
+          {/* Lets password managers save the new password against this email */}
+          <input type="email" name="username" autoComplete="username" value={email} readOnly hidden />
+
+          <Box
+            sx={{
+              display: "flex",
+              alignItems: "center",
+              justifyContent: "space-between",
+              gap: 1,
+              mb: 2.5,
+              px: 2,
+              py: 1.25,
+              bgcolor: "#F9FAFB",
+              border: "1px solid #E5E7EB",
+              borderRadius: "10px",
+            }}
+          >
+            <Box sx={{ display: "flex", alignItems: "center", gap: 1, minWidth: 0 }}>
+              <EmailIcon sx={{ color: "#9CA3AF", fontSize: 20 }} />
+              <Typography
+                sx={{ fontFamily: "Source Sans Pro", fontSize: "15px", color: "#1F2937", overflow: "hidden", textOverflow: "ellipsis", whiteSpace: "nowrap" }}
+              >
+                {email}
+              </Typography>
+            </Box>
+            <Link
+              component="button"
+              type="button"
+              disabled={busy}
+              onClick={() => {
+                setStep("email");
+                setError("");
+                setFieldErrors({});
+              }}
+              sx={{ ...authLinkSx, fontSize: "14px", flexShrink: 0 }}
+            >
+              Change
+            </Link>
+          </Box>
+
+          <Typography sx={authLabelSx}>
+            Full Name<span style={{ color: "#FF5722" }}>*</span>
+          </Typography>
+          <TextField
+            placeholder="Enter your full name"
+            name="name"
+            autoComplete="name"
+            autoFocus
+            value={username}
+            onChange={(e) => {
+              setUsername(e.target.value);
+              setFieldErrors((f) => ({ ...f, username: undefined }));
+            }}
+            fullWidth
+            disabled={busy}
+            error={!!fieldErrors.username}
+            helperText={fieldErrors.username}
+            slotProps={{
+              input: {
+                startAdornment: (
+                  <InputAdornment position="start">
+                    <PersonIcon sx={{ color: "#999" }} />
+                  </InputAdornment>
+                ),
+              },
+            }}
+            sx={{ mb: 2, ...authInputSx(!!fieldErrors.username) }}
+          />
+
+          <Typography sx={authLabelSx}>
+            Password<span style={{ color: "#FF5722" }}>*</span>
+          </Typography>
+          <PasswordField
+            value={password}
+            onChange={(v) => {
+              setPassword(v);
+              setFieldErrors((f) => ({ ...f, password: undefined }));
+            }}
+            placeholder="Create a password"
+            autoComplete="new-password"
+            disabled={busy}
+            error={fieldErrors.password}
+          />
+
+          <FormControlLabel
+            control={
+              <Checkbox
+                checked={agreedToTerms}
+                onChange={(e) => {
+                  setAgreedToTerms(e.target.checked);
+                  setError("");
+                }}
+                size="small"
+                sx={{ color: "#9CA3AF", "&.Mui-checked": { color: "#FF5722" } }}
+              />
+            }
+            label={
+              <Typography sx={{ color: "#4B5563", fontSize: "14px", fontFamily: "Source Sans Pro" }}>
+                I agree to the{" "}
+                <Link component={NextLink} href="/terms-conditions" target="_blank" sx={authLinkSx}>
+                  Terms of Service
+                </Link>{" "}
+                and{" "}
+                <Link component={NextLink} href="/privacy-policy" target="_blank" sx={authLinkSx}>
+                  Privacy Policy
+                </Link>
+              </Typography>
+            }
+            sx={{ mb: 2.5, mt: 0.5, ml: -0.75, alignItems: "center" }}
+          />
+
+          <ButtonSelfScore
+            type="submit"
+            text={busy ? <CircularProgress size={22} sx={{ color: "#fff" }} /> : "Create Account"}
+            fullWidth
+            disabled={busy}
+            style={{ height: 48, borderRadius: 12 }}
+          />
+        </Box>
+      )}
+    </AuthPageLayout>
+  );
+}
+
+export default function SignUpPage() {
+  return (
+    <Suspense fallback={null}>
+      <SignUpContent />
+    </Suspense>
   );
 }

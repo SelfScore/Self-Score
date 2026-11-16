@@ -10,6 +10,15 @@ export interface UserData {
   phoneNumber?: string;
   countryCode?: string;
   createdAt?: string | Date;
+  // Account status (from the server, never computed on the client)
+  isVerified?: boolean;
+  isProfileComplete?: boolean;
+  hasPassword?: boolean;
+  authProviders?: string[];
+  avatarUrl?: string;
+  onboardingSkipped?: boolean;
+  /** An unexpired verification email has already been sent */
+  verificationPending?: boolean;
 }
 
 export interface PurchasedLevelsData {

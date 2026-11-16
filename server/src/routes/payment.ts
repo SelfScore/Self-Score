@@ -1,6 +1,6 @@
 import { Router } from "express";
 import { PaymentController } from "../controllers/payment.controller";
-import { authMiddleware } from "../middleware/auth";
+import { authMiddleware, requireVerifiedAndComplete } from "../middleware/auth";
 
 const router = Router();
 
@@ -8,6 +8,8 @@ const router = Router();
 router.post(
   "/create-checkout",
   authMiddleware,
+  // Payments need a verified email and a complete profile
+  requireVerifiedAndComplete,
   PaymentController.createCheckoutSession
 );
 

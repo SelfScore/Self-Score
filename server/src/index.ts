@@ -13,6 +13,7 @@ import { requestLogger } from "./middleware/logger";
 import { setupWebSocketServer } from "./lib/websocketHandler";
 import { setupTranscriptionWebSocket } from "./lib/transcriptionHandler";
 import sessionRegistry from "./services/sessionManager";
+import { startVerificationReminderJob } from "./lib/verificationReminder";
 
 
 // Create Express app
@@ -72,8 +73,10 @@ app.get("/", (req, res) => {
       auth: {
         signUp: "POST /api/auth/sign-up",
         login: "POST /api/auth/login",
-        verifyEmail: "POST /api/auth/verify-email",
-        resendVerification: "POST /api/auth/resend-verification",
+        google: "POST /api/auth/google",
+        loginCode: "POST /api/auth/login/code",
+        verifyEmail: "POST /api/auth/verify-email (requires auth)",
+        sendVerification: "POST /api/auth/verify-email/send (requires auth)",
         getCurrentUser: "GET /api/auth/me (requires auth)",
         logout: "POST /api/auth/logout",
       },
@@ -114,6 +117,9 @@ const startServer = async (): Promise<void> => {
     
     // Create HTTP server (needed for WebSocket)
     const httpServer = http.createServer(app);
+    // Daily-ish job: remind users who haven't verified their email
+    startVerificationReminderJob();
+
     // Setup WebSocket server for realtime interviews
     setupWebSocketServer(httpServer);
 

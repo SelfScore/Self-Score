@@ -14,8 +14,7 @@ import {
 } from "@mui/material";
 import { questionsApi } from "../../../../services/questionsService";
 import { authService } from "../../../../services/authService";
-import { useAppSelector, useAppDispatch } from "../../../../store/hooks";
-import { loginSuccess } from "../../../../store/slices/authSlice";
+import { useAppSelector } from "../../../../store/hooks";
 import OutLineButton from "@/app/components/ui/OutLineButton";
 import ArrowBackIosIcon from "@mui/icons-material/ArrowBackIos";
 import ButtonSelfScore from "@/app/components/ui/ButtonSelfScore";
@@ -26,6 +25,7 @@ import RefreshIcon from "@mui/icons-material/Refresh";
 import SpeedIcon from "@mui/icons-material/Speed";
 import DownloadReportButton from "@/app/components/ui/DownloadReportButton";
 import ShareModal from "@/app/components/ui/ShareModal";
+import { AccountReminderDialog } from "@/app/components/auth/AccountReminders";
 
 export default function LevelAnalysisPage() {
   const params = useParams();
@@ -42,7 +42,6 @@ export default function LevelAnalysisPage() {
     isAuthenticated,
     user,
   } = useAppSelector((state) => state.auth);
-  const dispatch = useAppDispatch();
 
   const level = params.level as string;
   const levelNumber = parseInt(level.split("-")[1]); // Extract number from "level-1"
@@ -84,27 +83,8 @@ export default function LevelAnalysisPage() {
         console.log("User data from server:", user);
         console.log("Is Authenticated:", isAuthenticated);
 
-        // Always update Redux with the latest server data to keep in sync
-        if (user.progress) {
-          console.log("Updating Redux with server progress data...");
-          dispatch(
-            loginSuccess({
-              user: {
-                userId: user.userId,
-                email: user.email,
-                username: user.username,
-                countryCode: user.countryCode,
-                phoneNumber: user.phoneNumber,
-              },
-              purchasedLevels: user.purchasedLevels,
-              progress: user.progress,
-            }),
-          );
-          console.log(
-            "Redux updated successfully with progress:",
-            user.progress,
-          );
-        }
+        // authService.getCurrentUser() above already stored the latest user
+        // (including progress and account status) in Redux.
 
         // Fetch user's responses for this level
         // Level 3 uses a separate question model, so fetch from test history
@@ -999,6 +979,9 @@ export default function LevelAnalysisPage() {
           </Typography>
         </Box>
       </Container>
+
+      {/* One-time nudge to verify email / complete profile after the first result */}
+      {levelNumber === 1 && analysisData && <AccountReminderDialog />}
 
       {/* Share Modal */}
       <ShareModal

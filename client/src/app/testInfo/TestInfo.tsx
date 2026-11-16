@@ -13,6 +13,7 @@ import ButtonSelfScore from "../components/ui/ButtonSelfScore";
 import ArrowBackIosIcon from "@mui/icons-material/ArrowBackIos";
 import { useLevelAccess } from "../../hooks/useLevelAccess";
 import BuyLevelButton from "../components/ui/BuyLevelButton";
+import { useAccountGate } from "../components/auth/AccountGateProvider";
 import { formatPrice } from "../../lib/stripe";
 import FlareIcon from "@mui/icons-material/Flare";
 import LibraryBooksIcon from "@mui/icons-material/LibraryBooks";
@@ -32,6 +33,7 @@ export default function TestInfo({ initialLevel }: TestInfoProps) {
     progress,
   } = useLevelAccess();
   const [activeLevel, setActiveLevel] = useState(initialLevel);
+  const { ensureAccountReady } = useAccountGate();
   const [isLevel4PendingReview, setIsLevel4PendingReview] = useState(false);
 
   // Check if Level 4 is pending review (for Level 5 button state)
@@ -176,7 +178,9 @@ export default function TestInfo({ initialLevel }: TestInfoProps) {
     setActiveLevel(index);
   };
 
-  const handleStartAssessment = () => {
+  const signInPath = `/auth/signin?next=${encodeURIComponent(`/testInfo?level=${activeLevel + 1}`)}`;
+
+  const handleStartAssessment = async () => {
     const level = activeLevel + 1;
 
     // Check if user can attempt this level
@@ -185,9 +189,17 @@ export default function TestInfo({ initialLevel }: TestInfoProps) {
     // Don't proceed if cannot attempt
     if (!attemptAccess.canAttempt) {
       if (attemptAccess.reason === "AUTH_REQUIRED") {
-        router.push("/auth/signin");
+        router.push(signInPath);
       }
       return;
+    }
+
+    // Level 4 and 5 need a verified email and a complete profile
+    if (level >= 4) {
+      const ready = await ensureAccountReady({
+        reason: `Before starting Level ${level}, please verify your email and complete your profile.`,
+      });
+      if (!ready) return;
     }
     // Proceed to test
     if (level === 5) {
@@ -1075,7 +1087,7 @@ export default function TestInfo({ initialLevel }: TestInfoProps) {
                       ⚠️ Please{" "}
                       <Box
                         component="span"
-                        onClick={() => router.push("/auth/signin")}
+                        onClick={() => router.push(signInPath)}
                         sx={{
                           textDecoration: "underline",
                           cursor: "pointer",
