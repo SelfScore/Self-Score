@@ -16,8 +16,11 @@ export default function MainLayout({
   // Check if current route is an admin route
   const isAdminRoute = pathname?.startsWith("/admin");
 
+  // Full-screen, distraction-free onboarding (it has its own top bar)
+  const isOnboarding = pathname?.startsWith("/onboarding");
+
   // For admin routes, don't render Header and Footer
-  if (isAdminRoute) {
+  if (isAdminRoute || isOnboarding) {
     return <>{children}</>;
   }
 

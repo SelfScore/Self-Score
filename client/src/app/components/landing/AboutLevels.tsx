@@ -7,11 +7,12 @@ import { useRouter } from "next/navigation";
 import ArrowDownwardIcon from "@mui/icons-material/ArrowDownward";
 import ButtonSelfScore from "../ui/ButtonSelfScore";
 import { useLevelAccess } from "../../../hooks/useLevelAccess";
+import LevelCompletedTick from "../ui/LevelCompletedTick";
 
 export default function AboutLevels() {
   const [activeTab, setActiveTab] = useState(0);
   const router = useRouter();
-  const { getHighestUnlockedLevel } = useLevelAccess();
+  const { getHighestUnlockedLevel, isLevelCompleted } = useLevelAccess();
 
   // Get dynamic highest unlocked level from user progress
   const highestUnlockedLevel = getHighestUnlockedLevel() - 1; // Convert to 0-based index
@@ -315,7 +316,9 @@ export default function AboutLevels() {
                       px: index === 0 ? { xs: 1, md: 2 } : { xs: 1.5, md: 3 }, // Extra padding for overlapped segments
                     }}
                   >
-                    {!isLevelUnlocked(index) && (
+                    {isLevelCompleted(index + 1) ? (
+                      <LevelCompletedTick />
+                    ) : !isLevelUnlocked(index) && (
                       <LockIcon
                         sx={{
                           fontSize: { xs: "16px", md: "20px" },

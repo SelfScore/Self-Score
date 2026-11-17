@@ -10,7 +10,7 @@ import {
   Checkbox,
   FormControlLabel,
   InputAdornment,
-  Chip,
+  // Chip, // used by the hidden User / Consultant chips below
 } from "@mui/material";
 import { Suspense, useEffect, useState } from "react";
 import { useRouter, useSearchParams } from "next/navigation";
@@ -133,8 +133,9 @@ function SignInContent() {
         </Alert>
       )}
 
-      {/* Login type chips */}
-      <Box sx={{ display: "flex", gap: 2, mb: 3 }}>
+      {/* User / Consultant chips hidden — this page is user sign-in only.
+          Consultants sign in at /consultant/login.
+            <Box sx={{ display: "flex", gap: 2, mb: 3 }}>
         <Chip
           label="User"
           sx={{
@@ -169,6 +170,7 @@ function SignInContent() {
           }}
         />
       </Box>
+      */}
 
       <Box sx={authCardSx} component="form" onSubmit={handleSubmit} noValidate>
         <GoogleSignInButton

@@ -10,6 +10,7 @@ import EmojiEventsIcon from "@mui/icons-material/EmojiEvents";
 import ArrowForwardIcon from "@mui/icons-material/ArrowForward";
 import OutLineButton from "../components/ui/OutLineButton";
 import ButtonSelfScore from "../components/ui/ButtonSelfScore";
+import LevelCompletedTick from "../components/ui/LevelCompletedTick";
 import ArrowBackIosIcon from "@mui/icons-material/ArrowBackIos";
 import { useLevelAccess } from "../../hooks/useLevelAccess";
 import BuyLevelButton from "../components/ui/BuyLevelButton";
@@ -29,6 +30,7 @@ export default function TestInfo({ initialLevel }: TestInfoProps) {
     getBundleInfo,
     getRemainingAttempts,
     checkTestAttemptAccess,
+    isLevelCompleted,
     user,
     progress,
   } = useLevelAccess();
@@ -396,7 +398,9 @@ export default function TestInfo({ initialLevel }: TestInfoProps) {
                       px: index === 0 ? { xs: 1, md: 2 } : { xs: 1.5, md: 3 },
                     }}
                   >
-                    {!isLevelPurchased(index + 1) && index > 0 && (
+                    {isLevelCompleted(index + 1) ? (
+                      <LevelCompletedTick />
+                    ) : !isLevelPurchased(index + 1) && index > 0 && (
                       <LockIcon
                         sx={{
                           fontSize: { xs: "16px", md: "20px" },

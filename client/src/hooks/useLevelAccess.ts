@@ -114,7 +114,7 @@ export const useLevelAccess = () => {
   };
 
   const isLevelCompleted = (level: number): boolean => {
-    return progress?.completedLevels.includes(level) || false;
+    return progress?.completedLevels?.includes(level) || false;
   };
 
   const hasActiveSubscription = (): boolean => {
