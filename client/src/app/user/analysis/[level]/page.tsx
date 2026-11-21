@@ -975,7 +975,7 @@ export default function LevelAnalysisPage() {
             }}
           >
             Explore your next challenge and see how you can improve your
-            SelfScore.
+            Self Score.
           </Typography>
         </Box>
       </Container>

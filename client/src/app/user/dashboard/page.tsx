@@ -13,6 +13,8 @@ import {
   Select,
   MenuItem,
   FormControl,
+  IconButton,
+  Tooltip,
 } from "@mui/material";
 import { useAuth } from "../../../hooks/useAuth";
 import { useRouter } from "next/navigation";
@@ -33,7 +35,6 @@ import Image from "next/image";
 import ButtonSelfScore from "@/app/components/ui/ButtonSelfScore";
 import OutLineButton from "@/app/components/ui/OutLineButton";
 import RefreshIcon from "@mui/icons-material/Refresh";
-import FileUploadIcon from "@mui/icons-material/FileUpload";
 import DownloadIcon from "@mui/icons-material/Download";
 import DownloadReportButton from "@/app/components/ui/DownloadReportButton";
 import ReceiptIcon from "@mui/icons-material/Receipt";
@@ -52,6 +53,11 @@ import {
 } from "@/app/user/report/level5";
 import { Level5ReportData } from "@/app/user/report/level5/types";
 import ShareModal from "@/app/components/ui/ShareModal";
+import ReplayIcon from "@mui/icons-material/Replay";
+import FileDownloadOutlinedIcon from "@mui/icons-material/FileDownloadOutlined";
+import ShareOutlinedIcon from "@mui/icons-material/ShareOutlined";
+import CalendarTodayOutlinedIcon from "@mui/icons-material/CalendarTodayOutlined";
+import AccessTimeIcon from "@mui/icons-material/AccessTime";
 
 interface TestHistoryItem {
   _id: string;
@@ -501,6 +507,50 @@ export default function UserDashboard() {
 
   // Calculate score percentage
   const scorePercentage = Math.round((lastTestScore / 900) * 100);
+
+  // Retake target for a Test History row. Levels 4/5 are pay-per-attempt, so
+  // send users with no attempts left straight to the purchase page.
+  const getRetakeAction = (level: number) => {
+    if (level === 4 || level === 5) {
+      const remaining =
+        level === 4
+          ? purchasedLevels?.level4.remainingAttempts ?? 0
+          : purchasedLevels?.level5?.remainingAttempts ?? 0;
+      if (remaining <= 0) {
+        return { label: "Buy Attempt", href: `/testInfo?level=${level}` };
+      }
+    }
+    return { label: "Retake", href: `/user/test?level=${level}` };
+  };
+
+  // Test History row button styles
+  const historyButtonBase = {
+    height: 44,
+    minHeight: 44,
+    px: 2.5,
+    borderRadius: "12px",
+    textTransform: "none",
+    fontFamily: "Source Sans Pro",
+    fontSize: "16px",
+    fontWeight: 600,
+    whiteSpace: "nowrap",
+  } as const;
+  const historyRetakeSx = {
+    ...historyButtonBase,
+    color: "#005F73",
+    borderColor: "#005F73",
+    backgroundColor: "#FFF",
+    "&:hover": { borderColor: "#004A5C", backgroundColor: "#F3F7F8" },
+  } as const;
+  const historyDownloadSx = {
+    ...historyButtonBase,
+    padding: "0 20px",
+    color: "#FFF",
+    background: "#005F73",
+    boxShadow: "none",
+    "&:hover": { background: "#004A5C", boxShadow: "none" },
+    "&:disabled": { background: "#CCCCCC", color: "#666666" },
+  } as const;
 
   // Filter and sort test history
   const getFilteredAndSortedHistory = () => {
@@ -1150,36 +1200,43 @@ export default function UserDashboard() {
                 const testScorePercentage = test.score
                   ? Math.round((test.score / 900) * 100)
                   : 0;
+                const retake = getRetakeAction(test.level);
+                const isGenerating = generatingPDF === test._id;
+                const isSharing = sharingReport === test._id;
                 return (
                   <Box
                     key={test._id}
                     sx={{
                       display: "flex",
                       flexDirection: { xs: "column", md: "row" },
-                      borderBottom: "1px solid #E0E0E0",
-                      alignItems: { xs: "flex-start", md: "center" },
-                      justifyContent: "space-between",
+                      alignItems: { xs: "stretch", md: "center" },
+                      gap: { xs: 2.5, md: 3, lg: 4 },
                       p: { xs: 2, md: 3 },
                       backgroundColor: "#FFF",
-                      gap: { xs: 2, md: 0 },
+                      border: "1px solid #E5E7EB",
+                      borderRadius: "16px",
+                      transition: "box-shadow 0.2s, border-color 0.2s",
                       "&:hover": {
-                        backgroundColor: "#FFF",
+                        borderColor: "#D1D5DB",
+                        boxShadow: "0 4px 16px rgba(17, 24, 39, 0.06)",
                       },
                     }}
                   >
+                    {/* Level + date/time */}
                     <Box
                       sx={{
                         display: "flex",
                         alignItems: "center",
-                        gap: 3,
-                        flex: 1,
+                        gap: 2,
+                        flex: { md: "1 1 0" },
+                        minWidth: 0,
                       }}
                     >
                       <Box
                         sx={{
-                          width: { xs: 36, md: 50 },
-                          height: { xs: 36, md: 50 },
-                          borderRadius: 2,
+                          width: { xs: 44, md: 52 },
+                          height: { xs: 44, md: 52 },
+                          borderRadius: "12px",
                           backgroundColor: "#005F73",
                           display: "flex",
                           alignItems: "center",
@@ -1188,342 +1245,327 @@ export default function UserDashboard() {
                         }}
                       >
                         <TrendingUp
-                          sx={{ fontSize: { xs: 20, md: 28 }, color: "white" }}
+                          sx={{ fontSize: { xs: 22, md: 26 }, color: "white" }}
                         />
                       </Box>
-                      <Box sx={{ flex: 1 }}>
+                      <Box sx={{ minWidth: 0 }}>
+                        <Typography
+                          sx={{
+                            fontWeight: 600,
+                            fontSize: { xs: "17px", md: "20px" },
+                            fontFamily: "Source Sans Pro",
+                            color: "#2B2B2B",
+                            lineHeight: 1.3,
+                          }}
+                        >
+                          Level {test.level} Assessment
+                        </Typography>
                         <Box
                           sx={{
                             display: "flex",
                             alignItems: "center",
-                            gap: 2,
-                            mb: 0.5,
+                            flexWrap: "wrap",
+                            columnGap: 2,
+                            rowGap: 0.5,
+                            mt: 0.5,
+                            color: "#6B7280",
                           }}
                         >
-                          <Typography
-                            sx={{
-                              fontWeight: 400,
-                              fontSize: { xs: "16px", md: "20px" },
-                              fontFamily: "Source Sans Pro",
-                              color: "#3B3B3B",
-                            }}
-                          >
-                            Level {test.level} Assessment
-                          </Typography>
-                          {/* {test.attemptNumber && test.attemptNumber > 1 && (
-                            <Chip
-                              label={`Attempt ${test.attemptNumber}`}
-                              size="small"
+                          <Box sx={{ display: "flex", alignItems: "center", gap: 0.75 }}>
+                            <CalendarTodayOutlinedIcon sx={{ fontSize: 16 }} />
+                            <Typography
                               sx={{
-                                backgroundColor: "#FF4F0020",
-                                color: "#FF4F00",
-                                fontWeight: 600,
-                                fontSize: "12px",
+                                fontSize: "14px",
+                                fontFamily: "Source Sans Pro",
+                                color: "inherit",
+                                whiteSpace: "nowrap",
                               }}
-                            />
-                          )} */}
+                            >
+                              {test.date} · {test.time}
+                            </Typography>
+                          </Box>
+                          {test.timeSpent && (
+                            <Box sx={{ display: "flex", alignItems: "center", gap: 0.75 }}>
+                              <AccessTimeIcon sx={{ fontSize: 16 }} />
+                              <Typography
+                                sx={{
+                                  fontSize: "14px",
+                                  fontFamily: "Source Sans Pro",
+                                  color: "inherit",
+                                  whiteSpace: "nowrap",
+                                }}
+                              >
+                                {test.timeSpent}
+                              </Typography>
+                            </Box>
+                          )}
                         </Box>
-                        <Typography
-                          variant="body2"
-                          sx={{
-                            color: "#3B3B3B99",
-                            fontWeight: 400,
-                            fontSize: "14px",
-                            fontFamily: "source Sans Pro",
-                          }}
-                        >
-                          {test.date} at {test.time}
-                        </Typography>
                       </Box>
                     </Box>
 
-                    {/* verticsl line  */}
                     <Box
                       sx={{
                         width: "1px",
-                        height: "40px",
-                        backgroundColor: "#3B3B3B4D",
-                        mx: { xs: 0, md: 10 },
+                        alignSelf: "stretch",
+                        backgroundColor: "#E5E7EB",
                         display: { xs: "none", md: "block" },
+                        flexShrink: 0,
                       }}
                     />
 
-                    {/* Right Side - Score and Actions */}
-
+                    {/* Score */}
                     <Box
                       sx={{
-                        display: "flex",
-                        alignItems: { xs: "flex-start", md: "center" },
-                        gap: { xs: 2, md: 4 },
-                        flexDirection: { xs: "column", md: "row" },
-                        width: { xs: "100%", md: "auto" },
+                        width: { xs: "100%", md: 220, lg: 280 },
+                        flexShrink: 0,
                       }}
                     >
-                      <Box sx={{ minWidth: 200 }}>
-                        {isPendingReview ? (
-                          <>
-                            <Typography
-                              sx={{
-                                color: "#FF9800",
-                                fontWeight: 600,
-                                mb: 0.5,
-                                fontSize: "18px",
-                                fontFamily: "Source Sans Pro",
-                                display: "flex",
-                                alignItems: "center",
-                                gap: 1,
-                              }}
-                            >
-                              ⏳ Under Review
-                            </Typography>
-                            <Typography
-                              variant="body2"
-                              sx={{
-                                color: "#666",
-                                fontWeight: 400,
-                                fontSize: "13px",
-                                fontFamily: "Source Sans Pro",
-                              }}
-                            >
-                              Expert review in progress
-                            </Typography>
-                          </>
-                        ) : (
-                          <>
-                            <Typography
-                              sx={{
-                                color: "#FF4F00",
-                                fontWeight: 400,
-                                mb: 0.5,
-                                fontSize: "20px",
-                                fontFamily: "Source Sans Pro",
-                              }}
-                            >
-                              Score: {test.score}/900 ({testScorePercentage}%)
-                            </Typography>
-                            <Typography
-                              variant="body2"
-                              sx={{
-                                color: "#3B3B3B99",
-                                fontWeight: 400,
-                                fontSize: "14px",
-                                fontFamily: "Source Sans Pro",
-                              }}
-                            >
-                              Time Taken: {test.timeSpent || "N/A"}
-                            </Typography>
-                          </>
-                        )}
-                      </Box>
-
-                      {/* vertical line  */}
-                      <Box
-                        sx={{
-                          width: "1px",
-                          height: "40px",
-                          backgroundColor: "#3B3B3B4D",
-                          mx: 2,
-                          display: { xs: "none", md: "block" },
-                        }}
-                      />
-
-                      {/* Progress Bar Icon */}
-                      <Box
-                        sx={{
-                          width: 100,
-                          height: 8,
-                          backgroundColor: "#e2e8f0",
-                          borderRadius: 4,
-                          display: { xs: "none", md: "block" },
-                        }}
-                      >
-                        <Box
-                          sx={{
-                            width: `${testScorePercentage}%`,
-                            height: "100%",
-                            backgroundColor: "#FF4F00",
-                            borderRadius: 4,
-                          }}
-                        />
-                      </Box>
-
-                      {/* ✅ Action Buttons or Pending Status */}
-                      <Box
-                        sx={{
-                          display: "flex",
-                          gap: 1,
-                          flexDirection: { xs: "column", md: "row" },
-                          width: { xs: "100%", md: "auto" },
-                        }}
-                      >
-                        {isPendingReview ? (
-                          // ✅ Show "Report Not Ready" message for pending Level 4 reviews
+                      {isPendingReview ? (
+                        <>
                           <Box
                             sx={{
                               display: "flex",
                               alignItems: "center",
+                              justifyContent: "space-between",
                               gap: 1,
-                              padding: "12px 20px",
-                              borderRadius: "16px",
-                              backgroundColor: "#FFF4E6",
-                              border: "1px solid #FFB84D",
+                              mb: 1,
+                            }}
+                          >
+                            <Typography
+                              sx={{
+                                color: "#B45309",
+                                fontWeight: 600,
+                                fontSize: "18px",
+                                fontFamily: "Source Sans Pro",
+                              }}
+                            >
+                              Under review
+                            </Typography>
+                            <Box
+                              sx={{
+                                px: 1.25,
+                                py: 0.25,
+                                borderRadius: "999px",
+                                backgroundColor: "#FEF3C7",
+                                color: "#B45309",
+                                fontSize: "13px",
+                                fontWeight: 700,
+                                fontFamily: "Source Sans Pro",
+                              }}
+                            >
+                              Pending
+                            </Box>
+                          </Box>
+                          <Typography
+                            sx={{
+                              color: "#6B7280",
+                              fontSize: "14px",
+                              fontFamily: "Source Sans Pro",
+                            }}
+                          >
+                            Expert review in progress
+                          </Typography>
+                        </>
+                      ) : (
+                        <>
+                          <Box
+                            sx={{
+                              display: "flex",
+                              alignItems: "center",
+                              justifyContent: "space-between",
+                              gap: 1,
+                              mb: 1,
+                            }}
+                          >
+                            <Typography
+                              component="p"
+                              sx={{ fontFamily: "Source Sans Pro", lineHeight: 1 }}
+                            >
+                              <Box
+                                component="span"
+                                sx={{
+                                  color: "#FF4F00",
+                                  fontWeight: 700,
+                                  fontSize: { xs: "28px", md: "32px" },
+                                }}
+                              >
+                                {test.score ?? 0}
+                              </Box>
+                              <Box
+                                component="span"
+                                sx={{ color: "#6B7280", fontSize: "18px", ml: 0.75 }}
+                              >
+                                / 900
+                              </Box>
+                            </Typography>
+                            <Box
+                              sx={{
+                                px: 1.25,
+                                py: 0.25,
+                                borderRadius: "999px",
+                                backgroundColor: "#FFF1EA",
+                                color: "#C2410C",
+                                fontSize: "13px",
+                                fontWeight: 700,
+                                fontFamily: "Source Sans Pro",
+                              }}
+                            >
+                              {testScorePercentage}%
+                            </Box>
+                          </Box>
+                          <Box
+                            role="progressbar"
+                            aria-label={`Level ${test.level} score`}
+                            aria-valuenow={testScorePercentage}
+                            aria-valuemin={0}
+                            aria-valuemax={100}
+                            sx={{
+                              height: 8,
+                              borderRadius: "999px",
+                              backgroundColor: "#E5E7EB",
+                              overflow: "hidden",
                             }}
                           >
                             <Box
                               sx={{
-                                fontSize: "20px",
+                                width: `${testScorePercentage}%`,
+                                height: "100%",
+                                backgroundColor: "#FF4F00",
+                                borderRadius: "999px",
                               }}
-                            >
-                              🕒
-                            </Box>
-                            <Typography
-                              sx={{
-                                color: "#E65100",
-                                fontSize: "14px",
-                                fontWeight: 500,
-                              }}
-                            >
-                              Awaiting Admin Review
-                            </Typography>
+                            />
                           </Box>
-                        ) : (
-                          // ✅ Show Download and Share buttons when report is ready
-                          <>
-                            {test.score !== null &&
-                              (test.level === 4 ? (
-                                <Button
-                                  variant="outlined"
-                                  size="medium"
-                                  startIcon={
-                                    generatingPDF === test._id ? (
-                                      <CircularProgress
-                                        size={20}
-                                        sx={{ color: "white" }}
-                                      />
-                                    ) : (
-                                      <DownloadIcon />
-                                    )
-                                  }
-                                  onClick={() =>
-                                    handleDownloadLevel4PDF(test._id)
-                                  }
-                                  disabled={generatingPDF === test._id}
-                                  sx={{
-                                    background: "#005F73",
-                                    color: "white",
-                                    borderRadius: "16px",
-                                    padding: "12px 12px",
-                                    fontSize: "16px",
-                                    fontWeight: "400",
-                                    height: "40px",
-                                    textTransform: "none",
-                                    "&:hover": {
-                                      background: "#004A5C",
-                                    },
-                                    "&:disabled": {
-                                      background: "#CCCCCC",
-                                      color: "#666666",
-                                    },
-                                  }}
-                                >
-                                  {generatingPDF === test._id
-                                    ? "Generating..."
-                                    : "Download Report"}
-                                </Button>
-                              ) : test.level === 5 ? (
-                                <Button
-                                  variant="outlined"
-                                  size="medium"
-                                  startIcon={
-                                    generatingPDF === test._id ? (
-                                      <CircularProgress
-                                        size={20}
-                                        sx={{ color: "white" }}
-                                      />
-                                    ) : (
-                                      <DownloadIcon />
-                                    )
-                                  }
-                                  onClick={() =>
-                                    handleDownloadLevel5PDF(test._id)
-                                  }
-                                  disabled={generatingPDF === test._id}
-                                  sx={{
-                                    background: "#005F73",
-                                    color: "white",
-                                    borderRadius: "16px",
-                                    padding: "12px 12px",
-                                    fontSize: "16px",
-                                    fontWeight: "400",
-                                    height: "40px",
-                                    textTransform: "none",
-                                    "&:hover": {
-                                      background: "#004A5C",
-                                    },
-                                    "&:disabled": {
-                                      background: "#CCCCCC",
-                                      color: "#666666",
-                                    },
-                                  }}
-                                >
-                                  {generatingPDF === test._id
-                                    ? "Generating..."
-                                    : "Download Report"}
-                                </Button>
-                              ) : (
-                                <DownloadReportButton
-                                  userData={{
-                                    username: user.username,
-                                    email: user.email,
-                                    phoneNumber:
-                                      user.countryCode && user.phoneNumber
-                                        ? `+${user.countryCode}${user.phoneNumber}`
-                                        : user.phoneNumber || "",
-                                    reportDate: test.rawDate,
-                                    level: test.level,
-                                    score: test.score,
-                                    maxScore: 900,
-                                  }}
-                                />
-                              ))}
-                            <OutLineButton
-                              startIcon={
-                                sharingReport === test._id ? (
-                                  <CircularProgress
-                                    size={16}
-                                    sx={{ color: "#FF4F00" }}
-                                  />
+                        </>
+                      )}
+                    </Box>
+
+                    <Box
+                      sx={{
+                        width: "1px",
+                        alignSelf: "stretch",
+                        backgroundColor: "#E5E7EB",
+                        display: { xs: "none", md: "block" },
+                        flexShrink: 0,
+                      }}
+                    />
+
+                    {/* Actions */}
+                    <Box
+                      sx={{
+                        display: "flex",
+                        alignItems: "center",
+                        gap: 1.5,
+                        flexShrink: 0,
+                        width: { xs: "100%", md: "auto" },
+                      }}
+                    >
+                      {isPendingReview ? (
+                        <Box
+                          sx={{
+                            display: "flex",
+                            alignItems: "center",
+                            justifyContent: "center",
+                            gap: 1,
+                            height: 44,
+                            px: 2.5,
+                            borderRadius: "12px",
+                            backgroundColor: "#FFF7ED",
+                            border: "1px solid #FED7AA",
+                            color: "#C2410C",
+                            fontSize: "15px",
+                            fontWeight: 600,
+                            fontFamily: "Source Sans Pro",
+                            width: { xs: "100%", md: "auto" },
+                            whiteSpace: "nowrap",
+                          }}
+                        >
+                          <AccessTimeIcon sx={{ fontSize: 18 }} />
+                          Awaiting admin review
+                        </Box>
+                      ) : (
+                        <>
+                          <Button
+                            variant="outlined"
+                            startIcon={<ReplayIcon />}
+                            onClick={() => router.push(retake.href)}
+                            aria-label={`${retake.label} Level ${test.level} test`}
+                            sx={{ ...historyRetakeSx, flex: { xs: 1, md: "none" } }}
+                          >
+                            {retake.label}
+                          </Button>
+
+                          {test.score !== null &&
+                            (test.level === 4 || test.level === 5 ? (
+                              <Button
+                                variant="contained"
+                                disableElevation
+                                startIcon={
+                                  isGenerating ? (
+                                    <CircularProgress size={18} sx={{ color: "white" }} />
+                                  ) : (
+                                    <FileDownloadOutlinedIcon />
+                                  )
+                                }
+                                onClick={() =>
+                                  test.level === 4
+                                    ? handleDownloadLevel4PDF(test._id)
+                                    : handleDownloadLevel5PDF(test._id)
+                                }
+                                disabled={isGenerating}
+                                sx={{ ...historyDownloadSx, flex: { xs: 1, md: "none" } }}
+                              >
+                                {isGenerating ? "Generating..." : "Download report"}
+                              </Button>
+                            ) : (
+                              <DownloadReportButton
+                                variant="contained"
+                                buttonText="Download report"
+                                icon={<FileDownloadOutlinedIcon />}
+                                sx={{ ...historyDownloadSx, flex: { xs: 1, md: "none" } }}
+                                userData={{
+                                  username: user.username,
+                                  email: user.email,
+                                  phoneNumber:
+                                    user.countryCode && user.phoneNumber
+                                      ? `+${user.countryCode}${user.phoneNumber}`
+                                      : user.phoneNumber || "",
+                                  reportDate: test.rawDate,
+                                  level: test.level,
+                                  score: test.score,
+                                  maxScore: 900,
+                                }}
+                              />
+                            ))}
+
+                          <Tooltip title="Share report">
+                            <span>
+                              <IconButton
+                                aria-label={`Share Level ${test.level} report`}
+                                onClick={() => handleShareReport(test._id, test.level)}
+                                disabled={isSharing}
+                                sx={{
+                                  width: 44,
+                                  height: 44,
+                                  borderRadius: "12px",
+                                  border: "1px solid #D1D5DB",
+                                  color: "#005F73",
+                                  backgroundColor: "#FFF",
+                                  "&:hover": {
+                                    backgroundColor: "#F3F7F8",
+                                    borderColor: "#005F73",
+                                  },
+                                }}
+                              >
+                                {isSharing ? (
+                                  <CircularProgress size={18} sx={{ color: "#005F73" }} />
                                 ) : (
-                                  <FileUploadIcon />
-                                )
-                              }
-                              style={{
-                                background: "transparent",
-                                color: "#FF4F00",
-                                border: "1px solid #FF4F00",
-                                borderRadius: "16px",
-                                padding: "3.5px 14px",
-                                fontWeight: 400,
-                                fontSize: "18px",
-                                cursor:
-                                  sharingReport === test._id
-                                    ? "not-allowed"
-                                    : "pointer",
-                                transition: "all 0.2s",
-                                opacity: sharingReport === test._id ? 0.6 : 1,
-                              }}
-                              onClick={() =>
-                                handleShareReport(test._id, test.level)
-                              }
-                              disabled={sharingReport === test._id}
-                            >
-                              {sharingReport === test._id
-                                ? "Sharing..."
-                                : "Share Report"}
-                            </OutLineButton>
-                          </>
-                        )}
-                      </Box>
+                                  <ShareOutlinedIcon fontSize="small" />
+                                )}
+                              </IconButton>
+                            </span>
+                          </Tooltip>
+                        </>
+                      )}
                     </Box>
                   </Box>
                 );

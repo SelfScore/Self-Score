@@ -86,7 +86,7 @@ export default function SharedReportPage() {
 
       // Generate HTML and PDF
       const htmlContent = generateReportHTML(userData);
-      const filename = `SelfScore_Level${reportData.level}_Report_${
+      const filename = `Self_Score_Level${reportData.level}_Report_${
         userData.username
       }_${new Date().toISOString().split("T")[0]}.pdf`;
 

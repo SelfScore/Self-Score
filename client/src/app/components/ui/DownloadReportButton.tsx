@@ -1,7 +1,7 @@
 "use client";
 
-import { useState } from "react";
-import { Button, CircularProgress } from "@mui/material";
+import { ReactNode, useState } from "react";
+import { Button, CircularProgress, SxProps, Theme } from "@mui/material";
 import DownloadIcon from "@mui/icons-material/Download";
 import { UserReportData } from "../../user/report/types";
 import { generateReportHTML } from "../../user/report/reportGenerator";
@@ -19,6 +19,10 @@ interface DownloadReportButtonProps {
   size?: "small" | "medium" | "large";
   disabled?: boolean;
   buttonText?: string;
+  /** Style overrides, merged over the default look */
+  sx?: SxProps<Theme>;
+  /** Replaces the default download icon */
+  icon?: ReactNode;
 }
 
 export default function DownloadReportButton({
@@ -28,6 +32,8 @@ export default function DownloadReportButton({
   size = "medium",
   disabled = false,
   buttonText = "Download Report",
+  sx,
+  icon,
 }: DownloadReportButtonProps) {
   const [isGenerating, setIsGenerating] = useState(false);
   const [progress, setProgress] = useState(0);
@@ -89,11 +95,12 @@ export default function DownloadReportButton({
       size={size}
       fullWidth={fullWidth}
       startIcon={
-        isGenerating ? <CircularProgress size={20} /> : <DownloadIcon />
+        isGenerating ? <CircularProgress size={20} /> : icon ?? <DownloadIcon />
       }
       onClick={handleDownload}
       disabled={disabled || isGenerating}
-      sx={{
+      sx={[
+        {
         background: "#005F73",
         color: "white",
         borderRadius: "16px",
@@ -109,7 +116,9 @@ export default function DownloadReportButton({
           background: "#CCCCCC",
           color: "#666666",
         },
-      }}
+        },
+        ...(Array.isArray(sx) ? sx : [sx]),
+      ]}
     >
       {isGenerating ? `Generating... ${progress}%` : buttonText}
     </Button>

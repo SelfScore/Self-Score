@@ -30,7 +30,7 @@ export const updateProfileSchema = z
       .optional(),
 
     ageGroup: z
-      .enum(["Under 18", "18-24", "25-34", "35-44", "45-54", "55+"], {
+      .enum(["Under 18", "18-24", "25-34", "35-44", "45-54", "55+", "Prefer not to say"], {
         message: "Please select a valid age group",
       })
       .optional(),

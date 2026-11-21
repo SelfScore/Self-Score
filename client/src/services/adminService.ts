@@ -30,7 +30,7 @@ export interface AdminUser {
   phoneNumber: string;
   country?: string;
   gender?: "Male" | "Female" | "Non-binary" | "Prefer not to say" | string;
-  ageGroup?: "Under 18" | "18-24" | "25-34" | "35-44" | "45-54" | "55+" | string;
+  ageGroup?: "Under 18" | "18-24" | "25-34" | "35-44" | "45-54" | "55+" | "Prefer not to say" | string;
   isVerified: boolean;
   purchasedLevels: {
     level2: { purchased: boolean; purchaseDate?: Date; paymentId?: string };

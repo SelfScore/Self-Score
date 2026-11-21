@@ -88,7 +88,7 @@ export default function PrivacyPolicy() {
                 fontSize: { xs: "1rem", md: "1.1rem" },
               }}
             >
-              At SelfScore, we are committed to protecting your privacy and
+              At Self Score, we are committed to protecting your privacy and
               ensuring the security of your personal information. This Privacy
               Policy explains how we collect, use, disclose, and safeguard your
               information when you visit our website and use our services.
@@ -307,7 +307,7 @@ export default function PrivacyPolicy() {
                 fontSize: { xs: "1rem", md: "1.1rem" },
               }}
             >
-              SelfScore accesses Google Calendar event data only after explicit
+              Self Score accesses Google Calendar event data only after explicit
               user consent for the purpose of:
             </Typography>
             <List sx={{ pl: 2 }}>

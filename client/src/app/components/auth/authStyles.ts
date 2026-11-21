@@ -46,7 +46,7 @@ export const authLinkSx: SxProps<Theme> = {
 };
 
 export const GENDER_OPTIONS = ["Male", "Female", "Non-binary", "Prefer not to say"] as const;
-export const AGE_GROUP_OPTIONS = ["Under 18", "18-24", "25-34", "35-44", "45-54", "55+"] as const;
+export const AGE_GROUP_OPTIONS = ["Under 18", "18-24", "25-34", "35-44", "45-54", "55+", "Prefer not to say"] as const;
 
 export const EMAIL_REGEX = /^[^\s@]+@[^\s@]+\.[^\s@]+$/;
 export const MIN_PASSWORD_LENGTH = 8;

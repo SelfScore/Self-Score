@@ -500,7 +500,7 @@ export default function Header() {
             >
               <Image
                 src={LogoWithText}
-                alt="Life Score Logo"
+                alt="Self Score Logo"
                 height={isMobile ? 50 : 60}
                 width={isMobile ? 100 : 120}
                 style={{

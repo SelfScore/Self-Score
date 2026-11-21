@@ -57,6 +57,7 @@ const AGE_GROUP_OPTIONS = [
   "35-44",
   "45-54",
   "55+",
+  "Prefer not to say",
 ] as const;
 
 export default function ProfilePage() {

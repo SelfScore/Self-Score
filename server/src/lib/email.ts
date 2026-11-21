@@ -16,7 +16,7 @@ export const resend = new Resend(resendApiKey || "dummy-key");
 
 // Email sender configuration
 const FROM_EMAIL = process.env.FROM_EMAIL || "onboarding@resend.dev";
-const APP_NAME = "SelfScore";
+const APP_NAME = "Self Score";
 const CLIENT_URL = process.env.CLIENT_URL || "http://localhost:3000";
 const PUBLIC_SITE_URL =
   process.env.PUBLIC_SITE_URL ||
@@ -286,7 +286,7 @@ const renderEmailLayout = ({
         </p>
       `
       : `
-        <p style="margin:0 0 18px 0; color:${BRAND_COLORS.muted};">SelfScore Communications</p>
+        <p style="margin:0 0 18px 0; color:${BRAND_COLORS.muted};">Self Score Communications</p>
         <p style="margin:0; color:${BRAND_COLORS.muted};">Support and notifications</p>
       `;
   const unsubscribeBlock = unsubscribeUrl
@@ -304,7 +304,7 @@ const renderEmailLayout = ({
               line-height:1.4;
               text-align:center;
             "
-          >Unsubscribe from SelfScore</a>
+          >Unsubscribe from Self Score</a>
         </td>
       </tr>
     `
@@ -691,7 +691,7 @@ export const sendWelcomeEmail = async (
       <div style="margin:0 0 34px 0; text-align:center;">
         <img
           src="${welcomeImageSrc}"
-          alt="Welcome to SelfScore"
+          alt="Welcome to Self Score"
           width="360"
           style="display:inline-block; width:100%; max-width:360px; height:auto; border:0;"
         />
@@ -1548,7 +1548,7 @@ export const sendSubscriberWelcomeEmail = async (data: {
 
         <!-- Message -->
         <p style="margin: 0 0 16px 0; font-family: 'Source Sans Pro', Arial, Helvetica, sans-serif; font-size: 17px; color: ${BRAND_COLORS.text}; line-height: 1.6;">
-          Welcome to the SelfScore community!
+          Welcome to the Self Score community!
         </p>
         <p style="margin: 0 0 16px 0; font-family: 'Source Sans Pro', Arial, Helvetica, sans-serif; font-size: 17px; color: ${BRAND_COLORS.text}; line-height: 1.6;">
           We're happy to have you with us.
@@ -1593,7 +1593,7 @@ export const sendSubscriberWelcomeEmail = async (data: {
 
         <!-- Signoff -->
         <p style="margin: 32px 0 0 0; font-family: 'Source Sans Pro', Arial, Helvetica, sans-serif; font-size: 16px; font-weight: 700; color: ${BRAND_COLORS.text}; line-height: 1.5; text-align: center;">
-          The SelfScore Team
+          The Self Score Team
         </p>
 
       </td>
@@ -1601,7 +1601,7 @@ export const sendSubscriberWelcomeEmail = async (data: {
   `;
 
   const html = renderEmailLayout({
-    previewText: "Welcome to SelfScore! We're excited to be part of your journey.",
+    previewText: "Welcome to Self Score! We're excited to be part of your journey.",
     bodyHtml,
     recipientEmail: email,
     audience: "user",
@@ -1611,7 +1611,7 @@ export const sendSubscriberWelcomeEmail = async (data: {
 
   return sendEmail({
     to: email,
-    subject: "Welcome to SelfScore!",
+    subject: "Welcome to Self Score!",
     html,
   });
 };

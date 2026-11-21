@@ -52,6 +52,7 @@ const AGE_GROUP_OPTIONS = [
   { value: "35-44", label: "35-44" },
   { value: "45-54", label: "45-54" },
   { value: "55+", label: "55+" },
+  { value: "Prefer not to say", label: "Prefer not to say" },
 ];
 
 function UsersListContent() {

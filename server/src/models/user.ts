@@ -8,7 +8,7 @@ export interface User extends Document {
   phoneNumber?: string;
   country?: string;
   gender?: "Male" | "Female" | "Non-binary" | "Prefer not to say";
-  ageGroup?: "Under 18" | "18-24" | "25-34" | "35-44" | "45-54" | "55+";
+  ageGroup?: "Under 18" | "18-24" | "25-34" | "35-44" | "45-54" | "55+" | "Prefer not to say";
   /** @deprecated legacy OTP fields — kept so old documents still load */
   verifyCode?: string;
   isVerified: boolean;
@@ -122,7 +122,7 @@ const UserSchema: Schema<User> = new Schema(
     },
     ageGroup: {
       type: String,
-      enum: ["Under 18", "18-24", "25-34", "35-44", "45-54", "55+"],
+      enum: ["Under 18", "18-24", "25-34", "35-44", "45-54", "55+", "Prefer not to say"],
       required: false,
     },
     verifyCode: {

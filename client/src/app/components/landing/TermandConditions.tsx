@@ -76,7 +76,7 @@ export default function TermandConditions() {
                 fontFamily: "Faustina",
               }}
             >
-              Welcome to SelfScore
+              Welcome to Self Score
             </Typography>
             <Typography
               variant="body1"
@@ -89,7 +89,7 @@ export default function TermandConditions() {
               }}
             >
               These Terms and Conditions ("Terms") govern your use of the
-              SelfScore website and services operated by SelfScore ("us", "we",
+              Self Score website and services operated by Self Score ("us", "we",
               or "our"). By accessing or using our service, you agree to be
               bound by these Terms.
             </Typography>
@@ -118,7 +118,7 @@ export default function TermandConditions() {
                 fontSize: { xs: "1rem", md: "1.1rem" },
               }}
             >
-              By accessing and using SelfScore, you accept and agree to be bound
+              By accessing and using Self Score, you accept and agree to be bound
               by the terms and provision of this agreement. If you do not agree
               to abide by the above, please do not use this service.
             </Typography>
@@ -148,7 +148,7 @@ export default function TermandConditions() {
               }}
             >
               Permission is granted to temporarily download one copy of
-              SelfScore materials for personal, non-commercial transitory
+              Self Score materials for personal, non-commercial transitory
               viewing only. This is the grant of a license, not a transfer of
               title, and under this license you may not:
             </Typography>
@@ -479,10 +479,10 @@ export default function TermandConditions() {
                 fontSize: { xs: "1rem", md: "1.1rem" },
               }}
             >
-              In no event shall SelfScore or its suppliers be liable for any
+              In no event shall Self Score or its suppliers be liable for any
               damages (including, without limitation, damages for loss of data
               or profit, or due to business interruption) arising out of the use
-              or inability to use SelfScore materials, even if SelfScore or an
+              or inability to use Self Score materials, even if Self Score or an
               authorized representative has been notified orally or in writing
               of the possibility of such damage.
             </Typography>

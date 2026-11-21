@@ -85,5 +85,5 @@ export const generateLevel4ReportHTML = (data: Level4ReportData): string => {
 export const generateLevel4ReportFilename = (data: Level4ReportData): string => {
   const date = new Date().toISOString().slice(0, 10);
   const safeName = data.username.replace(/[^a-zA-Z0-9]/g, '_');
-  return `SelfScore_Level4_${safeName}_Attempt${data.attemptNumber}_${date}.pdf`;
+  return `Self_Score_Level4_${safeName}_Attempt${data.attemptNumber}_${date}.pdf`;
 };

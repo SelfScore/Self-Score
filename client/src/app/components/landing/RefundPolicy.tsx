@@ -88,7 +88,7 @@ export default function RefundPolicy() {
                 fontSize: { xs: "1rem", md: "1.1rem" },
               }}
             >
-              At SelfScore, we are committed to your satisfaction and personal
+              At Self Score, we are committed to your satisfaction and personal
               growth journey. We understand that investing in personal
               development is important, and we want you to feel confident in
               your decision to use our services.

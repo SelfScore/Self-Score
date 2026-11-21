@@ -175,7 +175,7 @@ const Footer: React.FC = () => {
             color: "transparent",
           }}
         >
-          SELFSCORE
+          SELF SCORE
         </Typography>
       </Box>
 
@@ -205,7 +205,7 @@ const Footer: React.FC = () => {
               color: "#F7F7F7",
             }}
           >
-            &copy; {new Date().getFullYear()} SelfScore. All rights reserved.
+            &copy; {new Date().getFullYear()} Self Score. All rights reserved.
           </Typography>
         </Box>
         <Box

@@ -121,7 +121,7 @@ function SignInContent() {
   const busy = submitting || sendingCode || redirecting;
 
   return (
-    <AuthPageLayout title="Welcome Back" subtitle="Sign in to continue your SelfScore journey">
+    <AuthPageLayout title="Welcome Back" subtitle="Sign in to continue your Self Score journey">
       {error && (
         <Alert severity="error" sx={{ mb: 3 }}>
           {error}

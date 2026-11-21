@@ -167,7 +167,7 @@ export default function SubscribePopup() {
                   opacity: 0.85,
                 }}
               >
-                Get practical insights, thoughtful tips, and the latest from SelfScore to support your journey of self-discovery and personal growth.
+                Get practical insights, thoughtful tips, and the latest from Self Score to support your journey of self-discovery and personal growth.
               </Typography>
 
               {/* Error */}

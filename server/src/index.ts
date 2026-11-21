@@ -67,7 +67,7 @@ app.use("/api", routes);
 app.get("/", (req, res) => {
   res.json({
     success: true,
-    message: "LifeScore API Server is running!",
+    message: "Self Score API Server is running!",
     version: "1.0.0",
     endpoints: {
       auth: {

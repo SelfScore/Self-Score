@@ -145,5 +145,5 @@ export const generatePDFFromHTML = async (
 export const generateReportFilename = (userData: UserReportData): string => {
   const date = new Date().toISOString().slice(0, 10);
   const safeName = userData.username.replace(/[^a-zA-Z0-9]/g, '_');
-  return `SelfScore_Level${userData.level}_${safeName}_${date}.pdf`;
+  return `Self_Score_Level${userData.level}_${safeName}_${date}.pdf`;
 };

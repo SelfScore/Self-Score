@@ -2,7 +2,7 @@
 
 ## Overview
 
-This directory contains the blog-related components for the LifeScore application.
+This directory contains the blog-related components for the Self Score application.
 
 ## Components Created
 

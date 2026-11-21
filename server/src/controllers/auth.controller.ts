@@ -125,7 +125,7 @@ export const toUserResponse = (user: UserDoc): UserResponse => ({
 /** Google display names can be empty or very long */
 const sanitizeDisplayName = (name: unknown, email: string): string => {
   const cleaned = typeof name === "string" ? name.replace(/[\u0000-\u001F<>]/g, "").trim() : "";
-  const fallback = email.split("@")[0] || "SelfScore User";
+  const fallback = email.split("@")[0] || "Self Score User";
   const value = cleaned.length >= 2 ? cleaned : fallback;
   return value.slice(0, 50);
 };
@@ -158,7 +158,7 @@ export class AuthController {
                 <table role="presentation" cellpadding="0" cellspacing="0" border="0" width="100%" style="max-width:640px;">
                   <tr>
                     <td style="padding:0 0 18px 0;">
-                      <img src="${publicSiteUrl}/images/logos/LogoWithText.png" alt="SelfScore" width="257" style="display:block; width:257px; max-width:100%; height:auto; border:0;">
+                      <img src="${publicSiteUrl}/images/logos/LogoWithText.png" alt="Self Score" width="257" style="display:block; width:257px; max-width:100%; height:auto; border:0;">
                     </td>
                   </tr>
                   <tr>
@@ -1461,7 +1461,7 @@ export class AuthController {
         AuthController.renderUnsubscribeResponsePage({
           title: "You're Unsubscribed",
           message:
-            "You will no longer receive promotional emails from SelfScore. Important transactional emails like password resets, booking updates, and assessment notifications will still be sent when needed.",
+            "You will no longer receive promotional emails from Self Score. Important transactional emails like password resets, booking updates, and assessment notifications will still be sent when needed.",
         })
       );
     } catch (error) {

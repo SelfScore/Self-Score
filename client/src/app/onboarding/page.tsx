@@ -81,12 +81,15 @@ function OptionCard({
   loading,
   disabled,
   onSelect,
+  fullRow,
 }: {
   label: string;
   selected: boolean;
   loading?: boolean;
   disabled?: boolean;
   onSelect: () => void;
+  /** Span the whole grid row (used for "Prefer not to say") */
+  fullRow?: boolean;
 }) {
   return (
     <Box
@@ -97,6 +100,7 @@ function OptionCard({
       disabled={disabled}
       onClick={onSelect}
       sx={{
+        ...(fullRow && { gridColumn: "1 / -1" }),
         display: "flex",
         alignItems: "center",
         justifyContent: "space-between",
@@ -317,7 +321,7 @@ function OnboardingContent() {
           </Box>
           <Image
             src={LogoWithText}
-            alt="SelfScore"
+            alt="Self Score"
             priority
             style={{ height: "auto", width: "clamp(110px, 28vw, 150px)" }}
           />
@@ -498,6 +502,7 @@ function OnboardingContent() {
                   label={option}
                   selected={ageGroup === option}
                   loading={saving && ageGroup === option}
+                  fullRow={option === "Prefer not to say"}
                   disabled={busy}
                   onSelect={() => {
                     setAgeGroup(option);

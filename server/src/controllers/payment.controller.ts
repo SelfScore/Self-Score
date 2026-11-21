@@ -58,7 +58,7 @@ export class PaymentController {
       }
 
       // Create Stripe Checkout Session for the Level 4 bundle
-      const productName = `SelfScore Bundle (Levels 4 & 5)`;
+      const productName = `Self Score Bundle (Levels 4 & 5)`;
       const productDescription = `Unlock all premium assessments: Levels 4 and 5`;
 
       const session = await stripe.checkout.sessions.create({
@@ -571,14 +571,14 @@ export class PaymentController {
         payment.createdAt.getMonth() + 1,
       ).padStart(2, "0")}-${sessionId.slice(-8).toUpperCase()}`;
 
-      let productName = `LifeScore Level ${payment.level} Access`;
+      let productName = `Self Score Level ${payment.level} Access`;
       let productDescription = `One-time purchase to unlock Level ${payment.level} assessment`;
 
       if (payment.level === 3) {
-        productName = `LifeScore Levels 2 & 3 Bundle`;
+        productName = `Self Score Levels 2 & 3 Bundle`;
         productDescription = `Unlock both Level 2 and Level 3 assessments`;
       } else if (payment.level === 4) {
-        productName = `SelfScore Test Bundle (Levels 4 & 5)`;
+        productName = `Self Score Test Bundle (Levels 4 & 5)`;
         productDescription = `Unlock all premium assessments: Levels 4 and 5`;
       }
 
@@ -607,7 +607,7 @@ export class PaymentController {
       doc
         .fontSize(12)
         .fillColor("#666666")
-        .text("LifeScore Assessment Platform", 50, yPosition);
+        .text("Self Score Assessment Platform", 50, yPosition);
 
       // Horizontal line
       yPosition += 25;
@@ -830,7 +830,7 @@ export class PaymentController {
         .fontSize(8)
         .fillColor("#999999")
         .text(
-          `LifeScore © ${new Date().getFullYear()}. All rights reserved.`,
+          `Self Score © ${new Date().getFullYear()}. All rights reserved.`,
           50,
           yPosition,
           { align: "center", width: 495 },

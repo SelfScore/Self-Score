@@ -231,7 +231,7 @@ function ConsultantRegisterContent() {
               mt: 8,
             }}
           >
-            Become a SelfScore Coach
+            Become a Self Score Coach
           </Typography>
           <Typography
             sx={{

@@ -128,7 +128,7 @@ export default function AboutUs() {
                 fontWeight: "400",
               }}
             >
-              At SelfScore, we believe that every individual has the potential
+              At Self Score, we believe that every individual has the potential
               for extraordinary growth. Our comprehensive assessment system is
               designed to meet you exactly where you are in your life journey
               and guide you toward where you want to be.
